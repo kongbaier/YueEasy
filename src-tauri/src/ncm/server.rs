@@ -9,7 +9,6 @@ pub async fn start() -> Result<(u16, tokio::task::JoinHandle<()>), String> {
 
     let client = ncm_api_rs::create_client(None);
     let app = ncm_api_rs::server::build_app(client);
-
     let listener = tokio::net::TcpListener::bind(addr)
         .await
         .map_err(|e| format!("NCM server failed to bind: {}", e))?;

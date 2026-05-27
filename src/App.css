@@ -4,9 +4,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  --color-primary-hue: 20;
+  --color-primary-chroma: 0.18;
+
   --background: #ffffff;
   --foreground: #0f0f0f;
-  --primary: #1db954;
+  --primary: oklch(0.55 var(--color-primary-chroma) var(--color-primary-hue));
   --primary-foreground: #ffffff;
   --secondary: #f3f4f6;
   --secondary-foreground: #1f2937;

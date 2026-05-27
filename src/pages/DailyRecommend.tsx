@@ -1,4 +1,4 @@
-import { Play } from "lucide-react";
+import { Crown, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ncm } from "@/services/ncm";
@@ -30,10 +30,15 @@ function TrackRow({
         {index + 1}
       </span>
       <div className="flex-1 min-w-0">
-        <p className="truncate font-medium">{track.name}</p>
+        <p className="flex items-center gap-1 min-w-0 font-medium">
+          <span className="truncate">{track.name}</span>
+          {track.fee === 1 && (
+            <Crown className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+          )}
+        </p>
         <p className="truncate text-xs text-muted-foreground">
-          {track.artists?.map((a) => a.name).join("/") || "未知歌手"}
-          {track.album?.name && ` · ${track.album.name}`}
+          {track.ar?.map((a) => a.name).join("/") || "未知歌手"}
+          {track.al?.name && ` · ${track.al.name}`}
         </p>
       </div>
       <button
@@ -56,6 +61,7 @@ export function DailyRecommend() {
   const [songs, setSongs] = useState<Track[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [playError, setPlayError] = useState("");
   const play = usePlayerStore((s) => s.play);
 
   useEffect(() => {
@@ -86,15 +92,17 @@ export function DailyRecommend() {
   }, [isLoggedIn]);
 
   const handlePlay = async (track: Track) => {
+    setPlayError("");
     try {
       const resolved = await resolveTrack(track);
       play(resolved);
-    } catch {
-      /* ignore */
+    } catch (e) {
+      setPlayError(e instanceof Error ? e.message : "播放失败");
     }
   };
 
   const handlePlayAll = async () => {
+    setPlayError("");
     for (const song of songs) {
       try {
         const resolved = await resolveTrack(song);
@@ -104,6 +112,7 @@ export function DailyRecommend() {
         /* try next */
       }
     }
+    setPlayError("没有可播放的歌曲");
   };
 
   if (!isLoggedIn) {
@@ -145,6 +154,10 @@ export function DailyRecommend() {
               播放全部
             </button>
           </div>
+
+          {playError && (
+            <p className="mt-2 text-sm text-red-500">{playError}</p>
+          )}
 
           <div className="mt-3 space-y-0.5">
             {songs.map((track, index) => (

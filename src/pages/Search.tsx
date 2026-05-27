@@ -1,4 +1,4 @@
-import { Play, Search as SearchIcon } from "lucide-react";
+import { Crown, Play, Search as SearchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ncm } from "@/services/ncm";
@@ -15,6 +15,7 @@ function TrackRow({
   index: number;
   onPlay: (t: Track) => void;
 }) {
+  console.log(track);
   return (
     // biome-ignore lint/a11y/useSemanticElements: compound widget with nested button
     <div
@@ -30,10 +31,15 @@ function TrackRow({
         {index + 1}
       </span>
       <div className="flex-1 min-w-0">
-        <p className="truncate font-medium">{track.name}</p>
+        <p className="flex items-center gap-1 min-w-0 font-medium">
+          <span className="truncate">{track.name}</span>
+          {track.fee === 1 && (
+            <Crown className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+          )}
+        </p>
         <p className="truncate text-xs text-muted-foreground">
-          {track.artists?.map((a) => a.name).join("/") || "未知歌手"}
-          {track.album?.name && ` · ${track.album.name}`}
+          {track.ar?.map((a) => a.name).join("/") || "未知歌手"}
+          {track.al?.name && ` · ${track.al.name}`}
         </p>
       </div>
       <button
@@ -57,6 +63,7 @@ export function Search() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [playError, setPlayError] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
   const play = usePlayerStore((s) => s.play);
 
@@ -96,15 +103,17 @@ export function Search() {
   }, [debouncedKeyword]);
 
   const handlePlay = async (track: Track) => {
+    setPlayError("");
     try {
       const resolved = await resolveTrack(track);
       play(resolved);
-    } catch {
-      /* ignore */
+    } catch (e) {
+      setPlayError(e instanceof Error ? e.message : "播放失败");
     }
   };
 
   const handlePlayAll = async () => {
+    setPlayError("");
     for (const track of results) {
       try {
         const resolved = await resolveTrack(track);
@@ -114,6 +123,7 @@ export function Search() {
         /* try next */
       }
     }
+    setPlayError("没有可播放的歌曲");
   };
 
   return (
@@ -150,6 +160,10 @@ export function Search() {
                 播放全部
               </button>
             </div>
+
+            {playError && (
+              <p className="mb-3 text-sm text-red-500">{playError}</p>
+            )}
 
             <div className="space-y-0.5">
               {results.map((track, index) => (

@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/cn";
 import { ncm } from "@/services/ncm";
 import { useUiStore } from "@/stores";
@@ -20,6 +21,7 @@ export function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const ncmReady = useUiStore((s) => s.ncmReady);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!ncmReady) return;
@@ -72,9 +74,13 @@ export function Home() {
             style={{ transform: `translateX(-${bannerIdx * 100}%)` }}
           >
             {banners.map((b, _i) => (
-              <div
-                className="relative aspect-[3/1] w-full flex-shrink-0"
+              <button
+                className="relative aspect-[3/1] w-full flex-shrink-0 cursor-pointer"
                 key={b.imageUrl}
+                onClick={() =>
+                  b.targetId && navigate(`/playlist/${b.targetId}`)
+                }
+                type="button"
               >
                 <img
                   alt={b.typeTitle}
@@ -87,7 +93,7 @@ export function Home() {
                 >
                   {b.typeTitle}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
           {banners.length > 1 && (
@@ -130,9 +136,11 @@ export function Home() {
         <h2 className="mb-4 text-lg font-bold">推荐歌单</h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {playlists.map((pl) => (
-            <div
-              className="group cursor-pointer overflow-hidden rounded-lg bg-card transition-colors hover:bg-accent"
+            <button
+              className="group cursor-pointer overflow-hidden rounded-lg bg-card text-left transition-colors hover:bg-accent"
               key={pl.id}
+              onClick={() => navigate(`/playlist/${pl.id}`)}
+              type="button"
             >
               <div className="relative aspect-square overflow-hidden">
                 <img
@@ -149,7 +157,7 @@ export function Home() {
               <div className="p-2">
                 <p className="truncate text-sm">{pl.name}</p>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </section>
@@ -159,9 +167,11 @@ export function Home() {
           <h2 className="mb-4 text-lg font-bold">热门歌单</h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {topPlaylists.map((pl) => (
-              <div
-                className="group cursor-pointer overflow-hidden rounded-lg bg-card transition-colors hover:bg-accent"
+              <button
+                className="group cursor-pointer overflow-hidden rounded-lg bg-card text-left transition-colors hover:bg-accent"
                 key={pl.id}
+                onClick={() => navigate(`/playlist/${pl.id}`)}
+                type="button"
               >
                 <div className="relative aspect-square overflow-hidden">
                   <img
@@ -173,7 +183,7 @@ export function Home() {
                 <div className="p-2">
                   <p className="truncate text-sm">{pl.name}</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </section>

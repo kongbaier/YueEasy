@@ -11,9 +11,11 @@ export async function resolveTrack(track: Track): Promise<PlayerTrack> {
   return {
     id: track.id,
     name: track.name,
-    artists: track.artists.map((a) => ({ id: a.id, name: a.name })),
-    album: { id: track.album.id, name: track.album.name },
-    duration: track.duration,
+    artists: (track.ar || []).map((a) => ({ id: a.id, name: a.name })),
+    album: track.al
+      ? { id: track.al.id, name: track.al.name }
+      : { id: 0, name: "" },
+    duration: track.dt,
     url,
   };
 }

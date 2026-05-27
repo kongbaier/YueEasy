@@ -13,13 +13,12 @@ export interface Album {
 export interface Track {
   id: number;
   name: string;
-  artists: Artist[];
-  album: Album;
-  duration: number;
+  ar: Artist[];
+  al: Album;
+  dt: number;
   url?: string;
-  mvId?: number;
+  mv?: number;
   fee?: number;
-  lyricId?: number;
 }
 
 export interface Playlist {

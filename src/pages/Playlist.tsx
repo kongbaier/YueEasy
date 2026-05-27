@@ -1,4 +1,4 @@
-import { Play } from "lucide-react";
+import { Crown, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getPlaylistDetail } from "@/services/playlist";
@@ -30,9 +30,14 @@ function TrackRow({
         {index + 1}
       </span>
       <div className="flex-1 min-w-0">
-        <p className="truncate font-medium">{track.name}</p>
+        <p className="flex items-center gap-1 min-w-0 font-medium">
+          <span className="truncate">{track.name}</span>
+          {track.fee === 1 && (
+            <Crown className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+          )}
+        </p>
         <p className="truncate text-xs text-muted-foreground">
-          {track.artists?.map((a) => a.name).join("/")}
+          {track.ar?.map((a) => a.name).join("/")}
         </p>
       </div>
       <button
@@ -55,6 +60,7 @@ export function Playlist() {
   const [playlist, setPlaylist] = useState<PlaylistType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [playError, setPlayError] = useState("");
   const play = usePlayerStore((s) => s.play);
 
   useEffect(() => {
@@ -84,17 +90,19 @@ export function Playlist() {
   }, [id]);
 
   const handlePlay = async (track: Track) => {
+    setPlayError("");
     try {
       const resolved = await resolveTrack(track);
       play(resolved);
-    } catch {
-      /* ignore */
+    } catch (e) {
+      setPlayError(e instanceof Error ? e.message : "播放失败");
     }
   };
 
   const handlePlayAll = async () => {
     const tracks = playlist?.tracks;
     if (!tracks?.length) return;
+    setPlayError("");
     for (const track of tracks) {
       try {
         const resolved = await resolveTrack(track);
@@ -104,6 +112,7 @@ export function Playlist() {
         /* try next */
       }
     }
+    setPlayError("没有可播放的歌曲");
   };
 
   if (loading) {
@@ -122,7 +131,7 @@ export function Playlist() {
         {playlist.coverImgUrl && (
           <img
             alt={playlist.name}
-            className="h-40 w-40 flex-shrink-0 rounded-lg object-cover"
+            className="h-40 w-40 shrink-0 rounded-lg object-cover"
             src={playlist.coverImgUrl}
           />
         )}
@@ -151,6 +160,9 @@ export function Playlist() {
               {playlist.trackCount} 首
             </span>
           </div>
+          {playError && (
+            <p className="mt-2 text-xs text-red-500">{playError}</p>
+          )}
         </div>
       </div>
 
