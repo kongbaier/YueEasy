@@ -1,50 +1,32 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { MainLayout } from "./components/layout/MainLayout";
+import { useNcmHealth } from "./hooks/useNcmHealth";
+import { usePlayer } from "./hooks/usePlayer";
+import { DailyRecommend } from "./pages/DailyRecommend";
+import { Home } from "./pages/Home";
+import { Login } from "./pages/Login";
+import { Playlist } from "./pages/Playlist";
+import { Search } from "./pages/Search";
+import { Settings } from "./pages/Settings";
 import "./App.css";
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  usePlayer();
+  useNcmHealth();
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<MainLayout />}>
+          <Route element={<Home />} index />
+          <Route element={<Search />} path="search" />
+          <Route element={<Playlist />} path="playlist/:id" />
+          <Route element={<DailyRecommend />} path="daily" />
+          <Route element={<Settings />} path="settings" />
+        </Route>
+        <Route element={<Login />} path="login" />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on", //组织导入
+        "useSortedAttributes": "on", //强制执行 JSX 元素中的属性排序。
+        "useSortedKeys": "off", //使用有序的键
+        "useSortedProperties": "on" //使用有序的css属性
+      }
+    }
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": ["src/**/*.{ts,tsx,js,jsx,css}", "vite.config.{ts,js}"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "lineWidth": 80
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    }
+  },
+  "linter": {
+    "domains": {
+      "react": "recommended",
+      "test": "recommended"
+    },
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "style": {
+        //对于没有修改过的let，使用const
+        "useConst": {
+          "level": "warn",
+          "fix": "none",
+          "options": {}
+        },
+        "useImportType": {
+          "fix": "safe",
+          "level": "info",
+          "options": {
+            "style": "separatedType"
+          }
+        }
+      }
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "json": {
+    "formatter": {
+      "trailingCommas": "none"
+    }
+  },
+  "vcs": {
+    "clientKind": "git",
+    "enabled": false,
+    "useIgnoreFile": false
+  }
+}
