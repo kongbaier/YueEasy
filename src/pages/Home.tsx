@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
 import { ncm } from "@/services/ncm";
+import { useUiStore } from "@/stores";
 import type { Playlist } from "@/types/music";
 
 interface Banner {
@@ -18,8 +19,10 @@ export function Home() {
   const [topPlaylists, setTopPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const ncmReady = useUiStore((s) => s.ncmReady);
 
   useEffect(() => {
+    if (!ncmReady) return;
     let cancelled = false;
 
     Promise.all([
@@ -45,7 +48,7 @@ export function Home() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [ncmReady]);
 
   if (loading) {
     return <div className="p-6 text-sm text-muted-foreground">加载中...</div>;

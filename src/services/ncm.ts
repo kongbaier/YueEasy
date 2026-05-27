@@ -1,7 +1,22 @@
 import type { Playlist, Track } from "@/types/music";
 import type { LoginResponse } from "@/types/user";
 
-const NCM_BASE = "http://127.0.0.1:3000";
+let ncmPort = 0;
+
+let resolvePort: (() => void) | null = null;
+const portReady = new Promise<void>((resolve) => {
+  resolvePort = resolve;
+});
+
+export function setNcmPort(port: number) {
+  console.log(`NCM API port set to ${port}`);
+  ncmPort = port;
+  resolvePort?.();
+}
+
+function baseUrl(): string {
+  return `http://127.0.0.1:${ncmPort}`;
+}
 let cookie = "";
 
 export function setNcmCookie(c: string) {
@@ -25,7 +40,8 @@ async function ncmGet<T>(
   endpoint: string,
   params?: Record<string, string>,
 ): Promise<T> {
-  const url = new URL(`${NCM_BASE}${endpoint}`);
+  if (ncmPort === 0) await portReady;
+  const url = new URL(`${baseUrl()}${endpoint}`);
   if (params) {
     for (const [k, v] of Object.entries(params)) {
       url.searchParams.set(k, v);
@@ -44,7 +60,8 @@ async function ncmPost<T>(
   endpoint: string,
   body?: Record<string, unknown>,
 ): Promise<T> {
-  const url = new URL(`${NCM_BASE}${endpoint}`);
+  if (ncmPort === 0) await portReady;
+  const url = new URL(`${baseUrl()}${endpoint}`);
   if (cookie) {
     url.searchParams.set("cookie", cookie);
   }

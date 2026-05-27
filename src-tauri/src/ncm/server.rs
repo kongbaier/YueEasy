@@ -1,15 +1,9 @@
 use std::net::SocketAddr;
 
-const DEFAULT_HOST: &str = "127.0.0.1";
-const DEFAULT_PORT: u16 = 3000;
+use super::NcmState;
 
-pub fn default_port() -> u16 {
-    DEFAULT_PORT
-}
-
-pub async fn start(port: Option<u16>) -> Result<tokio::task::JoinHandle<()>, String> {
-    let port = port.unwrap_or(DEFAULT_PORT);
-    let addr: SocketAddr = format!("{}:{}", DEFAULT_HOST, port)
+pub async fn start() -> Result<(u16, tokio::task::JoinHandle<()>), String> {
+    let addr: SocketAddr = "127.0.0.1:0"
         .parse()
         .map_err(|e| format!("invalid address: {}", e))?;
 
@@ -18,7 +12,9 @@ pub async fn start(port: Option<u16>) -> Result<tokio::task::JoinHandle<()>, Str
 
     let listener = tokio::net::TcpListener::bind(addr)
         .await
-        .map_err(|e| format!("NCM server failed to bind port {}: {}", port, e))?;
+        .map_err(|e| format!("NCM server failed to bind: {}", e))?;
+
+    let port = listener.local_addr().map(|a| a.port()).unwrap_or(0);
 
     let handle = tokio::spawn(async move {
         if let Err(e) = axum::serve(listener, app).await {
@@ -26,14 +22,26 @@ pub async fn start(port: Option<u16>) -> Result<tokio::task::JoinHandle<()>, Str
         }
     });
 
-    Ok(handle)
+    Ok((port, handle))
 }
 
 #[tauri::command]
-pub async fn ncm_health_check() -> Result<bool, String> {
-    let addr = format!("127.0.0.1:{}", DEFAULT_PORT);
-    match tokio::net::TcpStream::connect(addr).await {
-        Ok(_) => Ok(true),
-        Err(_) => Ok(false),
+pub async fn ncm_health_check(state: tauri::State<'_, NcmState>) -> Result<bool, String> {
+    let port = *state.port.lock().unwrap();
+    match port {
+        Some(p) => {
+            let addr = format!("127.0.0.1:{}", p);
+            Ok(tokio::net::TcpStream::connect(addr).await.is_ok())
+        }
+        None => Ok(false),
     }
+}
+
+#[tauri::command]
+pub fn get_ncm_port(state: tauri::State<'_, NcmState>) -> Result<u16, String> {
+    state
+        .port
+        .lock()
+        .unwrap()
+        .ok_or_else(|| "NCM server not started".to_string())
 }

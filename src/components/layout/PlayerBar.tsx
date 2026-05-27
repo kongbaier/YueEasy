@@ -10,7 +10,7 @@ import { cn } from "@/lib/cn";
 import { formatDuration } from "@/lib/format";
 import { usePlayerStore } from "@/stores";
 
-export function PlayerBar() {
+export function PlayerBar({ className }: { className?: string }) {
   const {
     currentTrack,
     state,
@@ -26,7 +26,12 @@ export function PlayerBar() {
 
   if (!currentTrack) {
     return (
-      <div className="flex h-16 items-center justify-center border-t border-border bg-card text-sm text-muted-foreground">
+      <div
+        className={cn(
+          "flex h-16 items-center justify-center border-t border-border bg-card text-sm text-muted-foreground",
+          className,
+        )}
+      >
         未在播放
       </div>
     );
@@ -35,7 +40,7 @@ export function PlayerBar() {
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="border-t border-border bg-card px-4 pb-2">
+    <div className={cn("border-t border-border bg-card px-4 pb-2", className)}>
       <div className="h-1 w-full bg-secondary">
         <div
           className="h-full bg-primary transition-[width] duration-100 ease-linear"
@@ -45,7 +50,7 @@ export function PlayerBar() {
 
       <div className="flex items-center gap-4 pt-2">
         <div className="flex w-48 min-w-0 items-center gap-3">
-          <div className="h-10 w-10 flex-shrink-0 rounded bg-secondary" />
+          <div className="h-10 w-10 shrink-0 rounded bg-secondary" />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{currentTrack.name}</p>
             <p className="truncate text-xs text-muted-foreground">

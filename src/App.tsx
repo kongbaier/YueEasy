@@ -8,7 +8,7 @@ import { Login } from "./pages/Login";
 import { Playlist } from "./pages/Playlist";
 import { Search } from "./pages/Search";
 import { Settings } from "./pages/Settings";
-import "./App.css";
+import "./index.css";
 
 function App() {
   usePlayer();
