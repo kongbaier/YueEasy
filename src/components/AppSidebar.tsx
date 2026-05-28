@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -17,8 +18,9 @@ const items = [
   { to: "/", icon: Home, label: "发现" },
   { to: "/search", icon: Search, label: "搜索" },
   { to: "/daily", icon: Sparkles, label: "每日推荐" },
-  { to: "/settings", icon: Settings, label: "设置" },
 ];
+
+const footerItems = [{ to: "/settings", icon: Settings, label: "设置" }];
 
 export function AppSidebar() {
   const location = useLocation();
@@ -26,7 +28,12 @@ export function AppSidebar() {
   const { state } = useSidebar();
 
   return (
-    <Sidebar collapsible="icon" side="left" variant="sidebar">
+    <Sidebar
+      collapsible="icon"
+      data-tauri-drag-region
+      side="left"
+      variant="sidebar"
+    >
       <SidebarHeader
         className="h-10 flex-row items-center shrink-0"
         data-tauri-drag-region
@@ -59,6 +66,25 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu className="space-y-0.5">
+          {footerItems.map((item) => {
+            const isActive = location.pathname === item.to;
+            return (
+              <SidebarMenuItem key={item.to}>
+                <SidebarMenuButton
+                  className="gap-x-2"
+                  isActive={isActive}
+                  onClick={() => navigate(item.to)}
+                >
+                  <item.icon fill={isActive ? "black" : "none"} />
+                  <span>{item.label}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

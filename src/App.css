@@ -92,3 +92,11 @@ body {
   color: var(--foreground);
   background-color: var(--background);
 }
+
+[data-slot="sidebar-container"][data-side="left"] {
+  border-right-width: 0;
+}
+
+[data-slot="sidebar-inner"] {
+  border-right: 1px solid var(--sidebar-border);
+}

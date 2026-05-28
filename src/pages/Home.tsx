@@ -66,7 +66,7 @@ export function Home() {
   }
 
   return (
-    <div className="space-y-8 p-6">
+    <div className="space-y-8 px-6 pb-3">
       {banners.length > 0 && (
         <div className="relative overflow-hidden rounded-xl">
           <div
@@ -75,7 +75,7 @@ export function Home() {
           >
             {banners.map((b, _i) => (
               <button
-                className="relative aspect-[3/1] w-full flex-shrink-0 cursor-pointer"
+                className="relative aspect-3/1 w-full shrink-0 cursor-pointer"
                 key={b.imageUrl}
                 onClick={() =>
                   b.targetId && navigate(`/playlist/${b.targetId}`)
