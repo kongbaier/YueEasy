@@ -10,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const items = [
@@ -22,12 +23,16 @@ const items = [
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { state } = useSidebar();
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar">
-      <SidebarHeader>
+      <SidebarHeader
+        className="h-10 flex-row items-center shrink-0"
+        data-tauri-drag-region
+      >
         <span className="text-lg font-bold tracking-wide text-sidebar-primary">
-          乐易
+          {state === "collapsed" ? "乐" : "乐易"}
         </span>
       </SidebarHeader>
       <SidebarContent>
