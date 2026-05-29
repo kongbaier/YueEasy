@@ -8,6 +8,8 @@ interface LenisScrollbarProps {
   className?: string;
   /** 滚动条顶部偏移，对应 header 高度 */
   overflowTop?: number;
+  /** 当内容尺寸变化时递增，触发滚动条重新计算 */
+  resizeVersion?: number;
 }
 
 const STEP = 80;
@@ -17,6 +19,7 @@ export function LenisScrollbar({
   ready,
   className,
   overflowTop = 0,
+  resizeVersion,
 }: LenisScrollbarProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [thumbHeight, setThumbHeight] = useState(0);
@@ -35,25 +38,25 @@ export function LenisScrollbar({
     if (!lenis) return;
 
     const { scrollHeight, height: viewportHeight } = lenis.dimensions;
-    const effectiveViewport = viewportHeight - overflowTop;
     const maxScroll = scrollHeight - viewportHeight;
     scrollInfo.current.maxScroll = maxScroll;
     scrollInfo.current.animatedScroll = lenis.animatedScroll;
 
-    if (scrollHeight <= effectiveViewport) {
+    if (maxScroll <= 0) {
       setVisible(false);
       return;
     }
 
     setVisible(true);
 
-    const trackHeight = trackRef.current?.offsetHeight ?? effectiveViewport;
-    const ratio = effectiveViewport / scrollHeight;
+    const trackHeight =
+      trackRef.current?.offsetHeight ?? viewportHeight - overflowTop;
+    const ratio = viewportHeight / scrollHeight;
     const thumbH = Math.max(Math.round(ratio * trackHeight), 24);
     dragState.current.thumbH = thumbH;
     setThumbHeight(thumbH);
 
-    const scrollRatio = maxScroll > 0 ? lenis.animatedScroll / maxScroll : 0;
+    const scrollRatio = lenis.animatedScroll / maxScroll;
     const thumbT = scrollRatio * (trackHeight - thumbH);
     setThumbTop(thumbT);
   }, [lenisRef, overflowTop]);
@@ -72,6 +75,11 @@ export function LenisScrollbar({
       cancelAnimationFrame(raf);
     };
   }, [ready, lenisRef, updateThumb]);
+
+  useEffect(() => {
+    if (resizeVersion === undefined) return;
+    updateThumb();
+  }, [resizeVersion, updateThumb]);
 
   const scrollBy = useCallback(
     (delta: number) => {
@@ -196,9 +204,9 @@ export function LenisScrollbar({
       aria-valuemin={0}
       aria-valuenow={Math.round(scrollInfo.current.animatedScroll)}
       className={cn(
-        "absolute right-0 bottom-0 z-10 outline-none",
-        "w-1.5 hover:w-2.5 focus-visible:w-2.5",
-        "rounded-full bg-[rgba(128,128,128,0.1)] dark:bg-[rgba(255,255,255,0.08)]",
+        "absolute right-1 bottom-0 z-10 outline-none",
+        "w-2",
+        "rounded-full bg-[rgba(128,128,128,0.04)] dark:bg-[rgba(255,255,255,0.03)]",
         "transition-all duration-150",
         !visible && "opacity-0 pointer-events-none",
         className,
@@ -211,12 +219,7 @@ export function LenisScrollbar({
       tabIndex={0}
     >
       <div
-        className={cn(
-          "absolute left-0 right-0 rounded-full cursor-pointer",
-          "bg-[rgba(128,128,128,0.3)] dark:bg-[rgba(255,255,255,0.2)]",
-          "hover:bg-[rgba(128,128,128,0.45)] dark:hover:bg-[rgba(255,255,255,0.35)]",
-          "active:bg-[rgba(128,128,128,0.55)] dark:active:bg-[rgba(255,255,255,0.45)]",
-        )}
+        className="group absolute left-0 right-0 cursor-pointer"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -224,7 +227,18 @@ export function LenisScrollbar({
           height: thumbHeight,
           transform: `translateY(${thumbTop}px)`,
         }}
-      />
+      >
+        <div
+          className={cn(
+            "absolute left-0.5 right-0.5 top-0 bottom-0 rounded-full",
+            "group-hover:left-0 group-hover:right-0",
+            "transition-[left,right] duration-200",
+            "bg-[rgba(128,128,128,0.35)] dark:bg-[rgba(255,255,255,0.25)]",
+            "group-hover:bg-[rgba(128,128,128,0.45)] dark:group-hover:bg-[rgba(255,255,255,0.35)]",
+            "active:bg-[rgba(128,128,128,0.55)] dark:active:bg-[rgba(255,255,255,0.45)]",
+          )}
+        />
+      </div>
     </div>
   );
 }

@@ -15,17 +15,15 @@ function TrackRow({
   index: number;
   onPlay: (t: Track) => void;
 }) {
-  console.log(track);
   return (
-    // biome-ignore lint/a11y/useSemanticElements: compound widget with nested button
-    <div
+    <button
       className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
       onDoubleClick={() => onPlay(track)}
       onKeyDown={(e) => {
         if (e.key === "Enter") onPlay(track);
       }}
-      role="button"
       tabIndex={0}
+      type="button"
     >
       <span className="w-6 text-right text-xs text-muted-foreground">
         {index + 1}
@@ -53,7 +51,7 @@ function TrackRow({
       >
         <Play className="h-4 w-4" />
       </button>
-    </div>
+    </button>
   );
 }
 

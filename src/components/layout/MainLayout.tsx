@@ -12,7 +12,7 @@ export function MainLayout() {
         <div className="relative flex flex-1 overflow-hidden">
           <AppSidebar />
 
-          <main className="relative flex flex-1 flex-col bg-background">
+          <main className="relative flex flex-1 flex-col bg-background/70">
             <header
               className="absolute top-0 left-0 right-0 h-10 z-10 flex items-center bg-white/50 backdrop-blur-lg backdrop-brightness-150"
               data-tauri-drag-region
