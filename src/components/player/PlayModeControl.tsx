@@ -17,6 +17,7 @@ export function PlayModeControl() {
 
   return (
     <Button
+      className="border-none"
       onClick={cyclePlayMode}
       size="icon-sm"
       type="button"

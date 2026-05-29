@@ -27,9 +27,9 @@ function App() {
           <Route element={<DailyRecommend />} path="daily" />
           <Route element={<Settings />} path="settings" />
         </Route>
-        <Route element={<PlayerPage />} path="player" />
         <Route element={<Login />} path="login" />
       </Routes>
+      <PlayerPage />
     </BrowserRouter>
   );
 }

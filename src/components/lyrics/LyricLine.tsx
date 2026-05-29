@@ -27,8 +27,8 @@ export function LyricLine({
     <li
       className={cn(
         "block leading-7 transition-[color,scale] scale-100 origin-left ease-in-out duration-300 cursor-pointer",
-        isActive && "font-medium scale-110 text-foreground",
-        isPast && "text-muted-foreground",
+        isActive && "font-medium scale-110 text-primary",
+        isPast && "text-foreground",
         !isActive && !isPast && "text-foreground/70",
       )}
       data-line={lineIndex}

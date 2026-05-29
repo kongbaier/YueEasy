@@ -32,6 +32,7 @@ interface PlayerStore {
   setVolume: (volume: number) => void;
   addToQueue: (track: Track) => void;
   playNext: (track: Track) => void;
+  playFromIndex: (index: number) => void;
   removeFromQueue: (index: number) => void;
   clearQueue: () => void;
 }
@@ -135,6 +136,14 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       const idx = player.index + 1;
       player.insert(track, idx);
       set({ queue: player.queue });
+    },
+
+    playFromIndex: (index) => {
+      const queue = player.queue;
+      if (index < 0 || index >= queue.length) return;
+      player.index = index;
+      player.load();
+      player.play();
     },
 
     removeFromQueue: (index) => {

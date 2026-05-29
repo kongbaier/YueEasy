@@ -1,114 +1,143 @@
-import { ChevronDown } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { ChevronDown, Download, Ellipsis, Heart, Share2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Lyrics } from "@/components/lyrics/Lyrics";
 import { PlayerPageControls } from "@/components/player-page/PlayerPageControls";
 import { PlayerPageProgress } from "@/components/player-page/PlayerPageProgress";
-import { PlayerPageQueue } from "@/components/player-page/PlayerPageQueue";
 import { PlayerPageVolume } from "@/components/player-page/PlayerPageVolume";
-import { usePlayerStore } from "@/stores";
+import WindowControls from "@/components/system/WindowControls";
+import type { Track } from "@/core/player/types";
+import { cn } from "@/lib/cn";
+import { usePlayerPageStore, usePlayerStore } from "@/stores";
 
 export function PlayerPage() {
-  const navigate = useNavigate();
   const currentTrack = usePlayerStore((s) => s.currentTrack);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const isOpen = usePlayerPageStore((s) => s.isOpen);
+  const close = usePlayerPageStore((s) => s.close);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (el) {
-      requestAnimationFrame(() => {
-        el.style.transform = "translateY(0)";
-      });
+    if (isOpen) {
+      const raf = requestAnimationFrame(() => setVisible(true));
+      return () => cancelAnimationFrame(raf);
     }
-  }, []);
+    setVisible(false);
+  }, [isOpen]);
 
-  const handleClose = () => {
-    const el = containerRef.current;
-    if (el) {
-      el.style.transform = "translateY(100%)";
-      setTimeout(() => navigate(-1), 300);
-    } else {
-      navigate(-1);
-    }
+  const handleBack = () => {
+    setVisible(false);
+    setTimeout(() => close(), 300);
   };
 
-  if (!currentTrack) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">未在播放</p>
-      </div>
-    );
-  }
+  if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-background transition-transform duration-300 ease-in-out"
-      ref={containerRef}
-      style={{ transform: "translateY(100%)" }}
+      className={cn(
+        "fixed top-0 left-0 w-screen h-screen z-50 bg-background flex flex-col transition-transform duration-300 ease-out",
+        visible ? "translate-y-0" : "translate-y-full",
+      )}
     >
-      <div className="flex items-center justify-between px-6 py-3">
+      <header
+        className="flex items-center h-10 px-2 shrink-0"
+        data-tauri-drag-region
+      >
         <button
-          className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
-          onClick={handleClose}
+          className="flex items-center justify-center size-8 rounded hover:bg-accent"
+          onClick={handleBack}
           type="button"
         >
-          <ChevronDown className="size-6" />
+          <ChevronDown className="size-5" />
         </button>
-        <span className="text-xs text-muted-foreground">正在播放</span>
-        <div className="w-8" />
-      </div>
+        <div className="flex-1" />
+        <WindowControls />
+      </header>
 
-      <div className="flex-1 flex overflow-hidden px-6 pb-4">
-        {/* Left: Album art + info */}
-        <div className="w-80 shrink-0 flex flex-col items-center justify-center gap-4">
-          <div className="w-64 h-64 rounded-xl overflow-hidden shadow-2xl">
-            {currentTrack.album?.picUrl ? (
-              <img
-                alt={currentTrack.album.name}
-                className="w-full h-full object-cover"
-                src={currentTrack.album.picUrl}
-              />
-            ) : (
-              <div className="w-full h-full bg-secondary" />
-            )}
-          </div>
+      <div className="flex-1 grid grid-cols-[1fr_1fr] overflow-hidden">
+        <div className="w-full min-w-0 h-full min-h-0 flex flex-col items-center pb-4 gap-2">
+          {currentTrack && (
+            <>
+              <PlayerTitle currentTrack={currentTrack} />
 
-          <div className="text-center max-w-xs">
-            <h1 className="text-lg font-bold truncate">{currentTrack.name}</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {currentTrack.artists?.map((a) => a.name).join(" / ")}
-            </p>
-            {currentTrack.album?.name && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {currentTrack.album.name}
-              </p>
-            )}
-          </div>
+              <PlayerCover currentTrack={currentTrack} />
+
+              <PlayerPageProgress className="shrink-0 w-3/5" />
+
+              <PlayerPageControls className="w-3/5" />
+
+              <PlayerPageVolume className="shrink-0 w-3/5" />
+
+              <PlayerMenu currentTrack={currentTrack} />
+            </>
+          )}
         </div>
 
-        {/* Center: Lyrics */}
-        <div className="flex-1 flex flex-col justify-center min-w-0">
-          <Lyrics />
-        </div>
-
-        {/* Right: Queue */}
-        <div className="w-72 shrink-0 border-l border-border ml-4">
-          <PlayerPageQueue />
-        </div>
-      </div>
-
-      {/* Bottom: Controls */}
-      <div className="px-6 pb-4 space-y-3">
-        <div className="max-w-2xl mx-auto w-full">
-          <PlayerPageProgress />
-        </div>
-        <div className="max-w-2xl mx-auto w-full">
-          <PlayerPageControls />
-        </div>
-        <div className="max-w-2xl mx-auto w-full">
-          <PlayerPageVolume />
-        </div>
+        <Lyrics className="border-l border-border overflow-hidden" />
       </div>
     </div>
   );
 }
+
+const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
+  return (
+    <div className="w-7/10 h-14 overflow-hidden shrink-0">
+      <h1 className="text-xl font-semibold truncate">{currentTrack.name}</h1>
+      <p className="text-sm text-muted-foreground mt-1 truncate">
+        {currentTrack.artists?.map((a) => a.name).join(" / ")}
+      </p>
+    </div>
+  );
+};
+
+const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
+  return (
+    <div className="flex-1 w-full min-h-0 shrink-0 flex justify-center items-center my-4">
+      <div className="max-h-full max-w-3/5 aspect-square rounded-lg bg-secondary overflow-hidden shadow-lg">
+        {currentTrack.album?.picUrl ? (
+          <img
+            alt={currentTrack.album.name}
+            className="w-full h-full object-cover"
+            src={currentTrack.album.picUrl}
+          />
+        ) : (
+          <div className="w-full h-full bg-secondary" />
+        )}
+      </div>
+    </div>
+  );
+};
+const PlayerMenu = ({ currentTrack }: { currentTrack: Track }) => {
+  // const toggleFavorite = usePlayerStore((s) => s.toggleFavorite);
+  return (
+    <div className="shrink-0 w-3/5 h-1/10 flex justify-between items-center gap-1">
+      <button
+        className="flex items-center justify-center size-9 rounded hover:bg-surface-hover"
+        // onClick={() => toggleFavorite()}
+        type="button"
+      >
+        <Heart
+          className="size-5"
+          // fill={currentTrack.isFavorite ? "currentColor" : "none"}
+          strokeWidth={1.5}
+        />
+      </button>
+      <button
+        className="flex items-center justify-center size-9 rounded hover:bg-surface-hover opacity-40"
+        type="button"
+      >
+        <Download className="size-5" strokeWidth={1.5} />
+      </button>
+      <button
+        className="flex items-center justify-center size-9 rounded hover:bg-surface-hover opacity-40"
+        type="button"
+      >
+        <Share2 className="size-5" strokeWidth={1.5} />
+      </button>
+      <button
+        className="flex items-center justify-center size-9 rounded hover:bg-surface-hover opacity-40"
+        type="button"
+      >
+        <Ellipsis className="size-5" strokeWidth={1.5} />
+      </button>
+    </div>
+  );
+};

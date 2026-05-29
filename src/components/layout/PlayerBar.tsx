@@ -5,11 +5,11 @@ import {
   Pause,
   Play,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useQueuePanel } from "@/hooks/use-queue-panel";
 import { usePlayerAction } from "@/hooks/usePlayerAction";
 import { useProgress } from "@/hooks/useProgress";
 import { cn } from "@/lib/cn";
-import { usePlayerStore } from "@/stores";
+import { usePlayerPageStore, usePlayerStore } from "@/stores";
 import { PlayModeControl } from "../player/PlayModeControl";
 import { SeekBar } from "../player/SeekBar";
 import { VolumeControl } from "../player/VolumeControl";
@@ -46,7 +46,11 @@ const PlayerControls = () => {
         <PlayModeControl />
       </section>
       <section className="flex text-4xl gap-x-3 justify-center items-center-safe">
-        <Button onPointerUp={handlePrev} variant="icon">
+        <Button
+          className="border-none"
+          onPointerUp={handlePrev}
+          variant="destructive"
+        >
           <ChevronFirst className="size-5" />
         </Button>
 
@@ -62,7 +66,11 @@ const PlayerControls = () => {
           )}
         </Button>
 
-        <Button onPointerUp={handleNext} variant="icon">
+        <Button
+          className="border-none"
+          onPointerUp={handleNext}
+          variant="destructive"
+        >
           <ChevronLast className="size-5" />
         </Button>
       </section>
@@ -74,8 +82,9 @@ const PlayerControls = () => {
 };
 
 export function PlayerBar({ className }: { className?: string }) {
-  const navigate = useNavigate();
   const { currentTrack } = usePlayerStore();
+  const { openPanel } = useQueuePanel();
+  const openPlayerPage = usePlayerPageStore((s) => s.open);
 
   return (
     <div
@@ -89,7 +98,7 @@ export function PlayerBar({ className }: { className?: string }) {
       <div className="flex-1 min-w-0">
         <button
           className="flex gap-3 min-w-45 max-w-70 items-center rounded p-0.5 text-left transition-colors hover:bg-accent"
-          onClick={() => navigate("/player")}
+          onClick={openPlayerPage}
           type="button"
         >
           {currentTrack?.album.picUrl ? (
@@ -115,7 +124,9 @@ export function PlayerBar({ className }: { className?: string }) {
       <PlayerControls />
 
       <div className="flex-1 flex items-center justify-end">
-        <ListMusic />
+        <Button onClick={openPanel} type="button" variant="destructive">
+          <ListMusic />
+        </Button>
       </div>
     </div>
   );

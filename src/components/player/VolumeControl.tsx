@@ -67,6 +67,7 @@ export function VolumeControl() {
         onPointerLeave={handleControlLeave}
       >
         <Button
+          className="border-none"
           onClick={toggleMute}
           size="icon-sm"
           type="button"
@@ -82,7 +83,7 @@ export function VolumeControl() {
 
       {open && (
         <div
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 p-2 bg-popover border border-border rounded-lg shadow-lg flex flex-col items-center gap-1.5 z-50"
+          className="absolute bg-background bottom-full left-1/2 -translate-x-1/2 mb-1 p-2 bg-popover border border-border rounded-lg shadow-lg flex flex-col items-center gap-1.5 z-50"
           onPointerEnter={handlePopupEnter}
           onPointerLeave={handlePopupLeave}
         >
