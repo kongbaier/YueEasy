@@ -26,9 +26,16 @@ function TrackRow({
       role="button"
       tabIndex={0}
     >
-      <span className="w-6 text-right text-xs text-muted-foreground">
-        {index + 1}
+      <span className="w-8 text-center text-xs text-muted-foreground">
+        {String(index + 1).padStart(2, "0")}
       </span>
+      {track.al?.picUrl && (
+        <img
+          alt={track.al.name}
+          className="h-9 w-9 shrink-0 rounded object-cover"
+          src={track.al.picUrl}
+        />
+      )}
       <div className="flex-1 min-w-0">
         <p className="flex items-center gap-1 min-w-0 font-medium">
           <span className="truncate">{track.name}</span>

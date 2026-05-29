@@ -1,5 +1,14 @@
-export type PlayerState = "idle" | "loading" | "playing" | "paused" | "error";
-export type PlayMode = "sequential" | "repeat" | "repeatOne" | "shuffle";
+export type PlayerState =
+  | "idle"
+  | "loading"
+  | "ready"
+  | "playing"
+  | "paused"
+  | "ended"
+  | "error";
+
+export const PlayModes = ["sequential", "shuffle", "repeatOne"] as const;
+export type PlayMode = (typeof PlayModes)[number];
 
 export interface TrackArtist {
   id: number;
@@ -9,6 +18,7 @@ export interface TrackArtist {
 export interface TrackAlbum {
   id: number;
   name: string;
+  picUrl?: string;
 }
 
 export interface Track {
@@ -17,5 +27,5 @@ export interface Track {
   artists: TrackArtist[];
   album: TrackAlbum;
   duration: number;
-  url?: string;
+  url: string;
 }

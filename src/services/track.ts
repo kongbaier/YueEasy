@@ -13,7 +13,7 @@ export async function resolveTrack(track: Track): Promise<PlayerTrack> {
     name: track.name,
     artists: (track.ar || []).map((a) => ({ id: a.id, name: a.name })),
     album: track.al
-      ? { id: track.al.id, name: track.al.name }
+      ? { id: track.al.id, name: track.al.name, picUrl: track.al.picUrl }
       : { id: 0, name: "" },
     duration: track.dt,
     url,

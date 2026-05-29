@@ -24,7 +24,7 @@ export function MainLayout() {
             </LenisScroll>
           </main>
         </div>
-        <PlayerBar className="" />
+        <PlayerBar className="h-19 bg-background rounded-b-md" />
       </div>
     </SidebarProvider>
   );

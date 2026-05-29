@@ -20,7 +20,7 @@
         "resizable": true,
         "transparent": true,
         "decorations": false,
-        "additionalBrowserArgs": "--disable-features=MediaSessionService,msWebOOUI,msPdfOOUI,msSmartScreenProtection",
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection",
         "windowEffects": {
           "effects": [
             "mica"

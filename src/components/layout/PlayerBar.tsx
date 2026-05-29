@@ -1,143 +1,121 @@
 import {
+  ChevronFirst,
+  ChevronLast,
+  ListMusic,
   Pause,
   Play,
-  Repeat,
-  Shuffle,
-  SkipBack,
-  SkipForward,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { usePlayerAction } from "@/hooks/usePlayerAction";
+import { useProgress } from "@/hooks/useProgress";
 import { cn } from "@/lib/cn";
-import { formatDuration } from "@/lib/format";
 import { usePlayerStore } from "@/stores";
+import { PlayModeControl } from "../player/PlayModeControl";
+import { SeekBar } from "../player/SeekBar";
+import { VolumeControl } from "../player/VolumeControl";
+import { Button } from "../ui/button";
 
-export function PlayerBar({ className }: { className?: string }) {
-  const {
-    currentTrack,
-    state,
-    mode,
-    currentTime,
-    duration,
-    pause,
-    resume,
-    next,
-    prev,
-    setMode,
-  } = usePlayerStore();
-
-  if (!currentTrack) {
-    return (
-      <div
-        className={cn(
-          "flex h-16 items-center justify-center border-t border-border bg-card text-sm text-muted-foreground",
-          className,
-        )}
-      >
-        未在播放
-      </div>
-    );
-  }
-
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+const PlayerProgress = () => {
+  const { percentage } = useProgress();
+  const seek = usePlayerStore((s) => s.seek);
+  const duration = usePlayerStore((s) => s.duration);
 
   return (
-    <div className={cn("border-t border-border bg-card px-4 pb-2", className)}>
-      <div className="h-1 w-full bg-secondary">
+    <SeekBar
+      barClassName="w-full h-1 origin-center transition-transform group-hover:scale-y-200 bg-surface-active relative select-none"
+      className="absolute w-full -top-1.5 left-0 h-3 cursor-pointer flex items-center group"
+      duration={duration}
+      onSeek={seek}
+      percentage={percentage}
+    >
+      {({ displayPercentage }) => (
         <div
-          className="h-full bg-primary transition-[width] duration-100 ease-linear"
-          style={{ width: `${progress}%` }}
+          className="h-full bg-primary rounded-r-full"
+          style={{ width: `${displayPercentage}%` }}
         />
-      </div>
+      )}
+    </SeekBar>
+  );
+};
 
-      <div className="flex items-center gap-4 pt-2">
-        <div className="flex w-48 min-w-0 items-center gap-3">
-          <div className="h-10 w-10 shrink-0 rounded bg-secondary" />
+const PlayerControls = () => {
+  const { handlePlay, handleNext, handlePrev, isPlaying } = usePlayerAction();
+  return (
+    <article className="flex items-center gap-x-6">
+      <section className="flex items-center">
+        <PlayModeControl />
+      </section>
+      <section className="flex text-4xl gap-x-3 justify-center items-center-safe">
+        <Button onPointerUp={handlePrev} variant="icon">
+          <ChevronFirst className="size-5" />
+        </Button>
+
+        <Button
+          className="relative w-12 h-8 bg-primary rounded-2xl flex justify-center items-center cursor-pointer focus:outline-none"
+          onClick={handlePlay}
+          type="button"
+        >
+          {isPlaying ? (
+            <Pause className="size-4" />
+          ) : (
+            <Play className="size-4" />
+          )}
+        </Button>
+
+        <Button onPointerUp={handleNext} variant="icon">
+          <ChevronLast className="size-5" />
+        </Button>
+      </section>
+      <section className="flex items-center">
+        <VolumeControl />
+      </section>
+    </article>
+  );
+};
+
+export function PlayerBar({ className }: { className?: string }) {
+  const navigate = useNavigate();
+  const { currentTrack } = usePlayerStore();
+
+  return (
+    <div
+      className={cn(
+        "relative border-t border-border bg-card px-4 flex items-center justify-between",
+        className,
+      )}
+    >
+      <PlayerProgress />
+
+      <div className="flex-1 min-w-0">
+        <button
+          className="flex gap-3 min-w-45 max-w-70 items-center rounded p-0.5 text-left transition-colors hover:bg-accent"
+          onClick={() => navigate("/player")}
+          type="button"
+        >
+          {currentTrack?.album.picUrl ? (
+            <img
+              alt={currentTrack.album.name}
+              className="h-10 w-10 shrink-0 rounded object-cover"
+              src={currentTrack.album.picUrl}
+            />
+          ) : (
+            <div className="h-10 w-10 shrink-0 rounded bg-secondary" />
+          )}
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{currentTrack.name}</p>
+            <p className="truncate text-sm font-medium">
+              {currentTrack?.name ?? "未在播放"}
+            </p>
             <p className="truncate text-xs text-muted-foreground">
-              {currentTrack.artists?.map((a) => a.name).join("/")}
+              {currentTrack?.artists?.map((a) => a.name).join("/") ?? " "}
             </p>
           </div>
-        </div>
+        </button>
+      </div>
 
-        <div className="flex flex-1 flex-col items-center gap-0.5">
-          <div className="flex items-center gap-2">
-            <button
-              className={cn(
-                "rounded p-1 transition-colors hover:text-foreground",
-                mode === "shuffle" ? "text-primary" : "text-muted-foreground",
-              )}
-              onClick={() =>
-                setMode(mode === "shuffle" ? "sequential" : "shuffle")
-              }
-              title="随机播放"
-              type="button"
-            >
-              <Shuffle className="h-4 w-4" />
-            </button>
+      <PlayerControls />
 
-            <button
-              className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
-              onClick={prev}
-              title="上一首"
-              type="button"
-            >
-              <SkipBack className="h-5 w-5" />
-            </button>
-
-            <button
-              className="rounded-full bg-primary p-2 text-primary-foreground transition-transform hover:scale-105 active:scale-95"
-              onClick={state === "playing" ? pause : resume}
-              type="button"
-            >
-              {state === "playing" ? (
-                <Pause className="h-5 w-5" />
-              ) : (
-                <Play className="h-5 w-5" />
-              )}
-            </button>
-
-            <button
-              className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
-              onClick={next}
-              title="下一首"
-              type="button"
-            >
-              <SkipForward className="h-5 w-5" />
-            </button>
-
-            <button
-              className={cn(
-                "rounded p-1 transition-colors hover:text-foreground",
-                mode === "repeat" || mode === "repeatOne"
-                  ? "text-primary"
-                  : "text-muted-foreground",
-              )}
-              onClick={() =>
-                setMode(
-                  mode === "repeatOne"
-                    ? "repeat"
-                    : mode === "repeat"
-                      ? "sequential"
-                      : "repeat",
-                )
-              }
-              title="循环模式"
-              type="button"
-            >
-              <Repeat className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <span className="w-8 text-right">
-              {formatDuration(currentTime)}
-            </span>
-            <span>/</span>
-            <span className="w-8">{formatDuration(duration)}</span>
-          </div>
-        </div>
-
-        <div className="w-48" />
+      <div className="flex-1 flex items-center justify-end">
+        <ListMusic />
       </div>
     </div>
   );
