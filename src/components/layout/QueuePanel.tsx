@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { VirtuosoScroller } from "@/components/virtuoso/VirtuosoScroller";
 import type { Track } from "@/core/player/types";
 import { useQueuePanel } from "@/hooks/use-queue-panel";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
 
 function QueueItem({

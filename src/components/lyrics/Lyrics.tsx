@@ -1,7 +1,7 @@
 import { Music } from "lucide-react";
 import { useLyricScroll } from "@/hooks/useLyricScroll";
 import { useLyrics } from "@/hooks/useLyrics";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import { LyricLine } from "./LyricLine";
 
 export function Lyrics({ className }: { className?: string }) {

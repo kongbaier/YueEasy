@@ -8,7 +8,7 @@ import {
 import { useQueuePanel } from "@/hooks/use-queue-panel";
 import { usePlayerAction } from "@/hooks/usePlayerAction";
 import { useProgress } from "@/hooks/useProgress";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import { usePlayerPageStore, usePlayerStore } from "@/stores";
 import { PlayModeControl } from "../player/PlayModeControl";
 import { SeekBar } from "../player/SeekBar";

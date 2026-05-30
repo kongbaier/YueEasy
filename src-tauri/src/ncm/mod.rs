@@ -1,19 +1,23 @@
-pub mod server;
+pub mod commands;
 
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 pub struct NcmState {
-    pub port: Arc<Mutex<Option<u16>>>,
+    pub inner: Mutex<NcmInner>,
+}
+
+pub struct NcmInner {
+    pub client: ncm_api_rs::ApiClient,
+    pub cookie: String,
 }
 
 impl NcmState {
     pub fn new() -> Self {
         Self {
-            port: Arc::new(Mutex::new(None)),
+            inner: Mutex::new(NcmInner {
+                client: ncm_api_rs::create_client(None),
+                cookie: String::new(),
+            }),
         }
-    }
-
-    pub fn clone_port(&self) -> Arc<Mutex<Option<u16>>> {
-        self.port.clone()
     }
 }

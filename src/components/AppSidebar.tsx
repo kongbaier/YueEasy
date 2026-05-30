@@ -1,4 +1,4 @@
-import { Home, Search, Settings, Sparkles } from "lucide-react";
+import { Home, LogIn, Search, Settings, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useAuthStore, useUiStore } from "@/stores";
 
 const items = [
   { to: "/", icon: Home, label: "发现" },
@@ -26,6 +27,8 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { state } = useSidebar();
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
 
   return (
     <Sidebar
@@ -68,6 +71,17 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu className="space-y-0.5">
+          {!isLoggedIn && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                className="gap-x-2"
+                onClick={() => setLoginDialogOpen(true)}
+              >
+                <LogIn />
+                <span>登录</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           {footerItems.map((item) => {
             const isActive = location.pathname === item.to;
             return (

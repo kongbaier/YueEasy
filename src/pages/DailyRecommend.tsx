@@ -1,9 +1,8 @@
 import { Crown, Play } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { ncm } from "@/services/ncm";
 import { resolveTrack } from "@/services/track";
-import { useAuthStore, usePlayerStore } from "@/stores";
+import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
 import type { Track } from "@/types/music";
 
 function TrackRow({
@@ -122,15 +121,21 @@ export function DailyRecommend() {
     setPlayError("没有可播放的歌曲");
   };
 
+  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
+
   if (!isLoggedIn) {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold">每日推荐</h1>
         <p className="mt-4 text-sm text-muted-foreground">
           请先
-          <Link className="mx-1 text-primary underline" to="/login">
+          <button
+            className="mx-1 cursor-pointer text-primary underline"
+            onClick={() => setLoginDialogOpen(true)}
+            type="button"
+          >
             登录
-          </Link>
+          </button>
           后查看每日推荐歌曲
         </p>
       </div>

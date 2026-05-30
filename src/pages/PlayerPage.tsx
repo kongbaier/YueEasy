@@ -6,7 +6,7 @@ import { PlayerPageProgress } from "@/components/player-page/PlayerPageProgress"
 import { PlayerPageVolume } from "@/components/player-page/PlayerPageVolume";
 import WindowControls from "@/components/system/WindowControls";
 import type { Track } from "@/core/player/types";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import { usePlayerPageStore, usePlayerStore } from "@/stores";
 
 export function PlayerPage() {

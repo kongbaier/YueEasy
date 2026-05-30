@@ -4,15 +4,15 @@ type Theme = "light" | "dark";
 
 interface UiStore {
   theme: Theme;
-  ncmReady: boolean;
+  loginDialogOpen: boolean;
   setTheme: (theme: Theme) => void;
-  setNcmReady: (ready: boolean) => void;
+  setLoginDialogOpen: (open: boolean) => void;
 }
 
 export const useUiStore = create<UiStore>((set) => ({
   theme: "dark" as Theme,
-  ncmReady: false,
+  loginDialogOpen: false,
 
   setTheme: (theme) => set({ theme }),
-  setNcmReady: (ready) => set({ ncmReady: ready }),
+  setLoginDialogOpen: (open) => set({ loginDialogOpen: open }),
 }));

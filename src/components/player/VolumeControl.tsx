@@ -1,7 +1,7 @@
 import { Volume2, VolumeX } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
 
 export function VolumeControl() {

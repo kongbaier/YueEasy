@@ -18,28 +18,47 @@ pub fn run() {
 
             let db = db::connection::Database::new(app_data.clone())
                 .map_err(|e| Box::<dyn std::error::Error>::from(e.to_string()))?;
+
+            let saved_cookie = db
+                .conn
+                .lock()
+                .ok()
+                .and_then(|conn| {
+                    conn.query_row::<String, _, _>(
+                        "SELECT value FROM settings WHERE key = 'auth_cookie'",
+                        [],
+                        |row| row.get(0),
+                    )
+                    .ok()
+                })
+                .unwrap_or_default();
+
+            if saved_cookie.is_empty() {
+                log::info!("[setup] no saved cookie found in SQLite");
+            } else {
+                log::info!(
+                    "[setup] restored cookie from SQLite (len={})",
+                    saved_cookie.len()
+                );
+            }
+
             app.manage(db);
 
             let ncm_state = ncm::NcmState::new();
-            let port_cell = ncm_state.clone_port();
-            app.manage(ncm_state);
-
-            tauri::async_runtime::spawn(async move {
-                match ncm::server::start().await {
-                    Ok((port, _handle)) => {
-                        *port_cell.lock().unwrap() = Some(port);
-                    }
-                    Err(e) => {
-                        eprintln!("NCM server error: {}", e);
-                    }
+            if !saved_cookie.is_empty() {
+                if let Ok(mut inner) = ncm_state.inner.lock() {
+                    inner.cookie = saved_cookie;
                 }
-            });
+            }
+            app.manage(ncm_state);
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            ncm::server::ncm_health_check,
-            ncm::server::get_ncm_port,
+            ncm::commands::ncm_request,
+            ncm::commands::ncm_set_cookie,
+            ncm::commands::ncm_get_cookie,
+            ncm::commands::ncm_clear_cookie,
             commands::cache::cache_get,
             commands::cache::cache_set,
             commands::cache::cache_delete,

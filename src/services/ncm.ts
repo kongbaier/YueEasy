@@ -1,83 +1,33 @@
+import { invoke } from "@tauri-apps/api/core";
 import type { Playlist, Track } from "@/types/music";
 import type { LoginResponse } from "@/types/user";
 
-let ncmPort = 0;
-
-let resolvePort: (() => void) | null = null;
-const portReady = new Promise<void>((resolve) => {
-  resolvePort = resolve;
-});
-
-export function setNcmPort(port: number) {
-  console.log(`NCM API port set to ${port}`);
-  ncmPort = port;
-  resolvePort?.();
-}
-
-function baseUrl(): string {
-  return `http://127.0.0.1:${ncmPort}`;
-}
-let cookie = "";
-
-export function setNcmCookie(c: string) {
-  cookie = c;
-}
-
-export function getNcmCookie(): string {
-  return cookie;
-}
-
-class NcmError extends Error {
-  constructor(
-    public status: number,
-    public body: unknown,
-  ) {
-    super(`NCM API error: ${status}`);
-  }
-}
-
-async function ncmGet<T>(
-  endpoint: string,
+async function ncmApi<T>(
+  method: string,
   params?: Record<string, string>,
 ): Promise<T> {
-  if (ncmPort === 0) await portReady;
-  const url = new URL(`${baseUrl()}${endpoint}`);
-  if (params) {
-    for (const [k, v] of Object.entries(params)) {
-      url.searchParams.set(k, v);
-    }
-  }
-  if (cookie) {
-    url.searchParams.set("cookie", cookie);
-  }
-  const res = await fetch(url.toString());
-  if (!res.ok)
-    throw new NcmError(res.status, await res.json().catch(() => ({})));
-  return res.json();
+  const body = await invoke<unknown>("ncm_request", {
+    method,
+    params: params ?? {},
+  });
+  return body as T;
 }
 
-async function ncmPost<T>(
-  endpoint: string,
-  body?: Record<string, unknown>,
-): Promise<T> {
-  if (ncmPort === 0) await portReady;
-  const url = new URL(`${baseUrl()}${endpoint}`);
-  if (cookie) {
-    url.searchParams.set("cookie", cookie);
-  }
-  const res = await fetch(url.toString(), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (!res.ok)
-    throw new NcmError(res.status, await res.json().catch(() => ({})));
-  return res.json();
+export function setNcmCookie(cookie: string) {
+  return invoke("ncm_set_cookie", { cookie });
+}
+
+export function getNcmCookie(): Promise<string> {
+  return invoke<string>("ncm_get_cookie");
+}
+
+export function clearNcmCookie(): Promise<void> {
+  return invoke("ncm_clear_cookie");
 }
 
 export const ncm = {
   search: (keywords: string, limit = 30, offset = 0) =>
-    ncmGet<{ result: { songs: Track[]; songCount: number } }>("/cloudsearch", {
+    ncmApi<{ result: { songs: Track[]; songCount: number } }>("cloudsearch", {
       keywords,
       type: "1",
       limit: String(limit),
@@ -85,63 +35,79 @@ export const ncm = {
     }),
 
   songUrl: (id: number) =>
-    ncmGet<{ data: { url: string; type: string; id: number }[] }>(
-      "/song/url/v1",
-      {
-        id: String(id),
-        level: "standard",
-      },
+    ncmApi<{ data: { url: string; type: string; id: number }[] }>(
+      "song_url_v1",
+      { id: String(id), level: "standard" },
     ),
 
   songDetail: (ids: number[]) =>
-    ncmGet<{ songs: Track[] }>("/song/detail", {
-      ids: ids.join(","),
-    }),
+    ncmApi<{ songs: Track[] }>("song_detail", { ids: ids.join(",") }),
 
   lyric: (id: number) =>
-    ncmGet<{ lrc?: { lyric: string }; tlyric?: { lyric: string } }>("/lyric", {
+    ncmApi<{ lrc?: { lyric: string }; tlyric?: { lyric: string } }>("lyric", {
       id: String(id),
     }),
 
   playlistDetail: (id: number) =>
-    ncmGet<{ playlist: Playlist }>("/playlist/detail", {
-      id: String(id),
-    }),
+    ncmApi<{ playlist: Playlist }>("playlist_detail", { id: String(id) }),
 
   userPlaylist: (uid: number) =>
-    ncmGet<{ playlist: Playlist[] }>("/user/playlist", {
-      uid: String(uid),
+    ncmApi<{ playlist: Playlist[] }>("user_playlist", { uid: String(uid) }),
+
+  loginCellphone: (phone: string, captcha: string) =>
+    ncmApi<LoginResponse>("login_cellphone", { phone, captcha }),
+
+  captchaSent: (phone: string) =>
+    ncmApi<{ code: number; data: boolean; message?: string }>("captcha_sent", {
+      phone,
     }),
 
-  loginCellphone: (phone: string, password: string) =>
-    ncmPost<LoginResponse>("/login/cellphone", { phone, password }),
+  captchaVerify: (phone: string, captcha: string) =>
+    ncmApi<{ code: number; data: boolean; message?: string }>(
+      "captcha_verify",
+      { phone, captcha },
+    ),
+
+  qrKey: () => ncmApi<{ code: number; unikey: string }>("login_qr_key"),
+
+  qrCreate: (key: string) =>
+    ncmApi<{ code: number; data: { qrurl: string; qrimg: string } }>(
+      "login_qr_create",
+      { key, qrimg: "true" },
+    ),
+
+  qrCheck: (key: string) =>
+    ncmApi<{ code: number; message: string; cookie: string }>(
+      "login_qr_check",
+      { key },
+    ),
 
   loginStatus: () =>
-    ncmPost<{
+    ncmApi<{
       data: {
         code: number;
         profile?: { userId: number; nickname: string; avatarUrl: string };
       };
-    }>("/login/status"),
+    }>("login_status"),
 
   recommendSongs: () =>
-    ncmGet<{ data: { dailySongs: Track[] } }>("/recommend/songs"),
+    ncmApi<{ data: { dailySongs: Track[] } }>("recommend_songs"),
 
   personalizedPlaylist: (limit = 30) =>
-    ncmGet<{ result: Playlist[] }>("/personalized", { limit: String(limit) }),
+    ncmApi<{ result: Playlist[] }>("personalized", { limit: String(limit) }),
 
   banner: () =>
-    ncmGet<{
+    ncmApi<{
       banners: {
         imageUrl: string;
         targetId: number;
         titleColor: string;
         typeTitle: string;
       }[];
-    }>("/banner", { type: "0" }),
+    }>("banner", { type: "0" }),
 
   topPlaylist: (cat = "全部", limit = 30, offset = 0) =>
-    ncmGet<{ playlists: Playlist[] }>("/top/playlist", {
+    ncmApi<{ playlists: Playlist[] }>("top_playlist", {
       cat,
       limit: String(limit),
       offset: String(offset),

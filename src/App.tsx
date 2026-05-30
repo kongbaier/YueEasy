@@ -1,11 +1,11 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { LoginDialog } from "./components/LoginDialog";
 import { MainLayout } from "./components/layout/MainLayout";
+import { useAuthRestore } from "./hooks/useAuthRestore";
 import { useMediaSession } from "./hooks/useMediaSession";
-import { useNcmHealth } from "./hooks/useNcmHealth";
 import { usePlayerKeyboard } from "./hooks/usePlayerKeyboard";
 import { DailyRecommend } from "./pages/DailyRecommend";
 import { Home } from "./pages/Home";
-import { Login } from "./pages/Login";
 import { PlayerPage } from "./pages/PlayerPage";
 import { Playlist } from "./pages/Playlist";
 import { Search } from "./pages/Search";
@@ -13,7 +13,7 @@ import { Settings } from "./pages/Settings";
 import "./index.css";
 
 function App() {
-  useNcmHealth();
+  useAuthRestore();
   usePlayerKeyboard();
   useMediaSession();
 
@@ -27,9 +27,9 @@ function App() {
           <Route element={<DailyRecommend />} path="daily" />
           <Route element={<Settings />} path="settings" />
         </Route>
-        <Route element={<Login />} path="login" />
       </Routes>
       <PlayerPage />
+      <LoginDialog />
     </BrowserRouter>
   );
 }

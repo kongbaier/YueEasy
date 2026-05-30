@@ -1,5 +1,5 @@
 import type { LyricLine as LyricLineType } from "@/core/lyrics/parser";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
 
 interface LyricLineProps {
