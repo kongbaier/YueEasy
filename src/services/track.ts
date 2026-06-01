@@ -1,8 +1,8 @@
 import type { Track as PlayerTrack } from "@/core/player/types";
-import type { Track } from "@/types/music";
+import type { SongRef } from "@/core/playlist/types";
 import { ncm } from "./ncm";
 
-export async function resolveTrack(track: Track): Promise<PlayerTrack> {
+export async function resolveTrack(track: SongRef): Promise<PlayerTrack> {
   const result = await ncm.songUrl(track.id);
   const url = result.data?.[0]?.url || "";
   if (!url) {
@@ -11,11 +11,13 @@ export async function resolveTrack(track: Track): Promise<PlayerTrack> {
   return {
     id: track.id,
     name: track.name,
-    artists: (track.ar || []).map((a) => ({ id: a.id, name: a.name })),
-    album: track.al
-      ? { id: track.al.id, name: track.al.name, picUrl: track.al.picUrl }
-      : { id: 0, name: "" },
-    duration: track.dt,
+    artists: track.artists.map((a) => ({ id: a.id, name: a.name })),
+    album: {
+      id: track.album.id,
+      name: track.album.name,
+      picUrl: track.album.picUrl,
+    },
+    duration: track.duration,
     url,
   };
 }

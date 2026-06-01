@@ -13,7 +13,7 @@ interface LyricsState {
 
 export function useLyrics(): LyricsState {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
-  const preciseCurrentTime = usePlayerStore((s) => s.preciseCurrentTime);
+  const currentTime = usePlayerStore((s) => s.currentTime);
   const [cache, setCache] = useState<Record<number, LyricsResult>>({});
 
   const trackId = currentTrack?.id;
@@ -40,7 +40,7 @@ export function useLyrics(): LyricsState {
 
   const activeLineIndex = useMemo(() => {
     if (lines.length === 0) return -1;
-    const ms = preciseCurrentTime * 1000;
+    const ms = currentTime * 1000;
 
     for (let i = lines.length - 1; i >= 0; i--) {
       if (ms >= lines[i].startMs) {
@@ -48,7 +48,7 @@ export function useLyrics(): LyricsState {
       }
     }
     return -1;
-  }, [lines, preciseCurrentTime]);
+  }, [lines, currentTime]);
 
   return {
     lines,

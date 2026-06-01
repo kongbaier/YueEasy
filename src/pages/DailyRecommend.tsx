@@ -1,18 +1,18 @@
 import { Crown, Play } from "lucide-react";
 import { useEffect, useState } from "react";
-import { ncm } from "@/services/ncm";
+import type { SongRef } from "@/core/playlist/types";
+import { ncm, toSongRef } from "@/services/ncm";
 import { resolveTrack } from "@/services/track";
 import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
-import type { Track } from "@/types/music";
 
 function TrackRow({
   track,
   index,
   onPlay,
 }: {
-  track: Track;
+  track: SongRef;
   index: number;
-  onPlay: (t: Track) => void;
+  onPlay: (t: SongRef) => void;
 }) {
   return (
     // biome-ignore lint/a11y/useSemanticElements: compound widget with nested button
@@ -28,11 +28,11 @@ function TrackRow({
       <span className="w-8 text-center text-xs text-muted-foreground">
         {String(index + 1).padStart(2, "0")}
       </span>
-      {track.al?.picUrl && (
+      {track.album.picUrl && (
         <img
-          alt={track.al.name}
+          alt={track.album.name}
           className="h-9 w-9 shrink-0 rounded object-cover"
-          src={track.al.picUrl}
+          src={track.album.picUrl}
         />
       )}
       <div className="flex-1 min-w-0">
@@ -43,8 +43,8 @@ function TrackRow({
           )}
         </p>
         <p className="truncate text-xs text-muted-foreground">
-          {track.ar?.map((a) => a.name).join("/") || "未知歌手"}
-          {track.al?.name && ` · ${track.al.name}`}
+          {track.artists.map((a) => a.name).join("/") || "未知歌手"}
+          {track.album.name && ` · ${track.album.name}`}
         </p>
       </div>
       <button
@@ -64,7 +64,7 @@ function TrackRow({
 
 export function DailyRecommend() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const [songs, setSongs] = useState<Track[]>([]);
+  const [songs, setSongs] = useState<SongRef[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [playError, setPlayError] = useState("");
@@ -81,7 +81,7 @@ export function DailyRecommend() {
       .recommendSongs()
       .then((res) => {
         if (!cancelled) {
-          setSongs(res.data?.dailySongs || []);
+          setSongs((res.data ?? []).map(toSongRef));
           setLoading(false);
         }
       })
@@ -97,7 +97,7 @@ export function DailyRecommend() {
     };
   }, [isLoggedIn]);
 
-  const handlePlay = async (track: Track) => {
+  const handlePlay = async (track: SongRef) => {
     setPlayError("");
     try {
       const resolved = await resolveTrack(track);

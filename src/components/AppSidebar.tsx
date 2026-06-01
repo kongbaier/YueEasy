@@ -1,5 +1,6 @@
 import { Home, LogIn, Search, Settings, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import Icon from "@/assets/icon.svg?react";
 import {
   Sidebar,
   SidebarContent,
@@ -11,9 +12,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { useAuthStore, useUiStore } from "@/stores";
+import { Brand } from "./Brand";
 
 const items = [
   { to: "/", icon: Home, label: "发现" },
@@ -38,13 +43,22 @@ export function AppSidebar() {
       variant="sidebar"
     >
       <SidebarHeader
-        className="h-10 flex-row items-center shrink-0"
+        className={cn(
+          "h-10 flex-row items-center shrink-0 justify-between",
+          state === "collapsed" && "justify-center",
+        )}
         data-tauri-drag-region
       >
-        <span className="text-lg font-bold tracking-wide text-sidebar-primary">
-          {state === "collapsed" ? "乐" : "乐易"}
-        </span>
+        {state === "expanded" && (
+          <div className={cn("flex items-center gap-2")}>
+            <Icon width={14} />
+            <Brand className="text-sm" />
+          </div>
+        )}
+
+        <SidebarTrigger />
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>导航</SidebarGroupLabel>
@@ -69,6 +83,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter>
         <SidebarMenu className="space-y-0.5">
           {!isLoggedIn && (
@@ -99,6 +114,8 @@ export function AppSidebar() {
           })}
         </SidebarMenu>
       </SidebarFooter>
+
+      {state !== "collapsed" && <SidebarRail />}
     </Sidebar>
   );
 }

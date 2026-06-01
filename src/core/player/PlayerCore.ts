@@ -3,6 +3,7 @@ import { AudioEngine } from "./AudioEngine";
 import { PlayQueue } from "./PlayQueue";
 import { StateMachine } from "./StateMachine";
 import type { PlayModeStrategy } from "./Strategy";
+import type { PlayerState } from "./types";
 
 export class PlayerCore<T extends { id: number; url: string }> {
   index = -1;
@@ -10,6 +11,7 @@ export class PlayerCore<T extends { id: number; url: string }> {
   #engine: AudioEngine;
   #strategy: PlayModeStrategy<T>;
   #stateMachine: StateMachine;
+  #stateListeners = new Set<(state: PlayerState) => void>();
 
   constructor(mode: PlayModeStrategy<T>) {
     this.#queue = new PlayQueue();
@@ -18,6 +20,25 @@ export class PlayerCore<T extends { id: number; url: string }> {
     this.#strategy = mode;
 
     this.#bindEvents();
+  }
+
+  get state(): PlayerState {
+    return this.#stateMachine.state;
+  }
+
+  onStateChange(cb: (state: PlayerState) => void) {
+    this.#stateListeners.add(cb);
+    return () => {
+      this.#stateListeners.delete(cb);
+    };
+  }
+
+  #transition(to: PlayerState): boolean {
+    if (!this.#stateMachine.transition(to)) return false;
+    for (const cb of this.#stateListeners) {
+      cb(to);
+    }
+    return true;
   }
 
   initialize(prefs: {
@@ -31,37 +52,50 @@ export class PlayerCore<T extends { id: number; url: string }> {
   }
 
   load() {
-    if (!this.#stateMachine.transition("loading")) return;
     const track = this.currentTrack;
     if (!track) return;
+    if (!this.#transition("loading")) return;
 
-    if (this.#engine.currentSrc !== track.url) {
-      this.#engine.load(track.url);
-    }
+    this.#engine.load(track.url);
   }
 
   #bindEvents() {
     this.#engine.on("canPlay", () => {
-      this.#stateMachine.transition("ready");
+      this.#transition("ready");
     });
     this.#engine.on("ended", () => {
-      this.#stateMachine.transition("ended");
+      this.#transition("ended");
       this.ended();
     });
   }
 
   async play() {
+    const track = this.currentTrack;
+    if (!track) return;
+
+    if (this.#engine.currentSrc !== track.url) {
+      this.load();
+      if (this.state === "loading") {
+        await new Promise<void>((resolve) => {
+          const off = this.#engine.on("canPlay", () => {
+            off();
+            resolve();
+          });
+        });
+      }
+    }
+
     try {
       await this.#engine.play();
-      this.#stateMachine.transition("playing");
+      this.#transition("playing");
     } catch (_err) {
-      this.#stateMachine.transition("error");
+      this.#transition("error");
     }
   }
 
   pause() {
     this.#engine.pause();
-    this.#stateMachine.transition("paused");
+    this.#transition("paused");
   }
 
   next() {

@@ -27,7 +27,7 @@ export function LenisScroll({
   useEffect(() => {
     scrollToTop();
     resize();
-  }, [location.pathname, scrollToTop, resize]);
+  }, [location.pathname]);
 
   return (
     <div className={cn("relative", className)}>

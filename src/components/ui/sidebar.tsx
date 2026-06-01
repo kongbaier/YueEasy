@@ -206,9 +206,25 @@ function Sidebar({
     );
   }
 
+  // Extract rail children so they sit outside the inner flex column,
+  // and as direct children of the group div so absolute positioning
+  // references the full-height group (flex-stretched) rather than
+  // the container (whose h-full can't resolve without a definite parent).
+  const childrenArray = React.Children.toArray(children);
+  const railChildren = childrenArray.filter(
+    (child) =>
+      React.isValidElement(child) &&
+      (child.props as Record<string, unknown>)["data-sidebar"] === "rail",
+  );
+  const otherChildren = childrenArray.filter(
+    (child) =>
+      !React.isValidElement(child) ||
+      (child.props as Record<string, unknown>)["data-sidebar"] !== "rail",
+  );
+
   return (
     <div
-      className="group peer hidden text-sidebar-foreground md:block"
+      className="group peer relative hidden text-sidebar-foreground md:block"
       data-collapsible={state === "collapsed" ? collapsible : ""}
       data-side={side}
       data-slot="sidebar"
@@ -245,9 +261,10 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
         >
-          {children}
+          {otherChildren}
         </div>
       </div>
+      {railChildren}
     </div>
   );
 }
@@ -279,25 +296,89 @@ function SidebarTrigger({
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
-  const { toggleSidebar } = useSidebar();
+  const dragStartX = React.useRef(0);
+  const dragStartWidth = React.useRef(0);
+  const pressTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  const gapEl = React.useRef<HTMLElement | null>(null);
+  const containerEl = React.useRef<HTMLElement | null>(null);
+
+  const onMouseMove = React.useCallback((e: MouseEvent) => {
+    const wrapper = document.querySelector(
+      '[data-slot="sidebar-wrapper"]',
+    ) as HTMLElement;
+    if (!wrapper) return;
+
+    const deltaX = e.clientX - dragStartX.current;
+    const newWidth = Math.max(
+      200,
+      Math.min(500, dragStartWidth.current + deltaX),
+    );
+    wrapper.style.setProperty("--sidebar-width", `${newWidth}px`);
+  }, []);
+
+  const onMouseUp = React.useCallback(() => {
+    clearTimeout(pressTimer.current);
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+    // restore transitions
+    if (gapEl.current) gapEl.current.style.transition = "";
+    if (containerEl.current) containerEl.current.style.transition = "";
+  }, [onMouseMove]);
+
+  const handleMouseDown = React.useCallback(
+    (e: React.MouseEvent) => {
+      // only respond to main button
+      if (e.button !== 0) return;
+      e.preventDefault();
+
+      pressTimer.current = setTimeout(() => {
+        dragStartX.current = e.clientX;
+
+        const wrapper = document.querySelector(
+          '[data-slot="sidebar-wrapper"]',
+        ) as HTMLElement;
+        if (wrapper) {
+          gapEl.current = wrapper.querySelector(
+            '[data-slot="sidebar-gap"]',
+          ) as HTMLElement;
+          containerEl.current = wrapper.querySelector(
+            '[data-slot="sidebar-container"]',
+          ) as HTMLElement;
+          dragStartWidth.current = containerEl.current
+            ? containerEl.current.getBoundingClientRect().width
+            : 256;
+          // disable transitions during drag
+          if (gapEl.current) gapEl.current.style.transition = "none";
+          if (containerEl.current)
+            containerEl.current.style.transition = "none";
+        }
+
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      }, 200);
+    },
+    [onMouseMove, onMouseUp],
+  );
 
   return (
     <button
-      aria-label="Toggle Sidebar"
+      aria-label="Resize Sidebar"
       className={cn(
-        "absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:inset-s-1/2 after:w-0.5 hover:after:bg-sidebar-border sm:flex ltr:-translate-x-1/2 rtl:-translate-x-1/2",
+        "absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear group-data-[side=left]:right-0 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:right-0 after:w-1 hover:after:bg-sidebar-border sm:flex",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
         "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
-        "group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full hover:group-data-[collapsible=offcanvas]:bg-sidebar",
-        "[[data-side=left][data-collapsible=offcanvas]_&]:-right-2",
-        "[[data-side=right][data-collapsible=offcanvas]_&]:-left-2",
         className,
       )}
       data-sidebar="rail"
       data-slot="sidebar-rail"
-      onClick={toggleSidebar}
-      tabIndex={-1}
-      title="Toggle Sidebar"
+      onMouseDown={handleMouseDown}
+      title="Resize Sidebar"
       {...props}
     />
   );

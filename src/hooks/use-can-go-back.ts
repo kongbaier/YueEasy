@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigationType } from "react-router-dom";
+import { useNavigationType } from "react-router-dom";
 
 export function useCanGoBack() {
   const navigationType = useNavigationType();
-  const location = useLocation();
   const [canGoBack, setCanGoBack] = useState(false);
   const depthRef = useRef(0);
 
@@ -14,7 +13,7 @@ export function useCanGoBack() {
       depthRef.current -= 1;
     }
     setCanGoBack(depthRef.current > 0);
-  }, [location, navigationType]);
+  }, [navigationType]);
 
   return canGoBack;
 }

@@ -1,6 +1,7 @@
+import { Howl } from "howler";
+
 export type AudioEvents = {
   timeupdate: (currentTime: number, duration: number) => void;
-  precisetimeupdate: (currentTime: number, duration: number) => void;
   ended: () => void;
   play: () => void;
   pause: () => void;
@@ -9,149 +10,171 @@ export type AudioEvents = {
 };
 
 export class AudioEngine {
-  #audioElement: HTMLAudioElement;
+  #howl: Howl | null = null;
   #listeners: { [K in keyof AudioEvents]: Set<AudioEvents[K]> };
-  #preciseRafId: number | null;
+  #rafId: number | null = null;
+  #src = "";
+  #playing = false;
+  #duration = 0;
+  #muted = false;
+  #volume = 1;
 
   constructor() {
-    this.#audioElement = new Audio();
     this.#listeners = {
       timeupdate: new Set(),
-      precisetimeupdate: new Set(),
       ended: new Set(),
       play: new Set(),
       pause: new Set(),
       loadedmetadata: new Set(),
       canPlay: new Set(),
     };
-    this.#preciseRafId = null;
-    this.#bindEvents();
-    this.#audioElement.preload = "metadata";
-    this.#audioElement.controls = false;
   }
 
   async play() {
-    await this.#audioElement.play()?.catch((err) => {
-      if (err.name !== "AbortError") throw err;
+    return new Promise<void>((resolve, reject) => {
+      this.#howl?.once("play", () => resolve());
+      this.#howl?.once("playerror", (_soundId, err) => {
+        reject(err || new Error("Play failed"));
+      });
+      this.#howl?.play();
     });
   }
 
   pause() {
-    this.#audioElement.pause();
+    this.#howl?.pause();
   }
 
   load(src: string) {
-    this.#stopPreciseLoop();
-    this.#audioElement.src = src;
-    this.#audioElement.load();
+    this.#cleanup();
+    this.#src = src;
+    this.#howl = new Howl({
+      src: [src],
+      html5: true,
+      preload: true,
+      volume: this.#volume,
+      mute: this.#muted,
+    });
+    this.#bindHowlEvents();
   }
 
   on<K extends keyof AudioEvents>(event: K, handler: AudioEvents[K]) {
     this.#listeners[event].add(handler);
-    return () => this.#listeners[event].delete(handler);
+    return () => {
+      this.#listeners[event].delete(handler);
+    };
   }
 
   get loaded() {
-    return this.#audioElement.src !== "";
+    return this.#src !== "";
   }
 
   get currentSrc() {
-    return this.#audioElement.src;
+    return this.#src;
   }
 
   get playing() {
-    return !this.#audioElement.paused;
+    return this.#playing;
   }
 
   get buffered() {
-    return this.#audioElement.buffered;
+    return null;
   }
 
   get muted() {
-    return this.#audioElement.muted;
+    return this.#muted;
   }
-  set muted(muted: boolean) {
-    this.#audioElement.muted = muted;
+  set muted(value: boolean) {
+    this.#muted = value;
+    this.#howl?.mute(value);
   }
 
   get readyState() {
-    return this.#audioElement.readyState;
+    if (!this.#howl) return 0;
+    return this.#howl.state() === "loaded" ? 4 : 2;
   }
 
   get volume() {
-    return this.#audioElement.volume;
+    return this.#volume;
   }
-  set volume(volume: number) {
-    this.#audioElement.volume = volume;
+  set volume(value: number) {
+    this.#volume = value;
+    this.#howl?.volume(value);
   }
 
   get currentTime() {
-    return this.#audioElement.currentTime;
+    return (this.#howl?.seek() as number) ?? 0;
   }
-
   set currentTime(time: number) {
-    this.#audioElement.currentTime = time;
+    this.#howl?.seek(time);
   }
 
   get duration() {
-    return this.#audioElement.duration;
+    return this.#duration;
   }
 
-  #startPreciseLoop() {
-    if (!this.playing || this.#preciseRafId !== null) return;
-    const tick = () => {
-      if (!this.playing) return;
-      for (const fn of this.#listeners.precisetimeupdate) {
-        fn(this.#audioElement.currentTime, this.#audioElement.duration);
-      }
-      this.#preciseRafId = requestAnimationFrame(tick);
-    };
-    this.#preciseRafId = requestAnimationFrame(tick);
-  }
+  #bindHowlEvents() {
+    const h = this.#howl;
+    if (!h) return;
 
-  #stopPreciseLoop() {
-    if (this.#preciseRafId !== null) {
-      cancelAnimationFrame(this.#preciseRafId);
-      this.#preciseRafId = null;
-    }
-  }
-
-  #bindEvents() {
-    this.#audioElement.addEventListener("timeupdate", () => {
-      for (const fn of this.#listeners.timeupdate) {
-        fn(this.#audioElement.currentTime, this.#audioElement.duration);
-      }
-    });
-
-    this.#audioElement.addEventListener("ended", () => {
-      for (const fn of this.#listeners.ended) {
-        fn();
-      }
-    });
-
-    this.#audioElement.addEventListener("play", () => {
-      this.#startPreciseLoop();
-      for (const fn of this.#listeners.play) {
-        fn();
-      }
-    });
-
-    this.#audioElement.addEventListener("pause", () => {
-      this.#stopPreciseLoop();
-      for (const fn of this.#listeners.pause) {
-        fn();
-      }
-    });
-
-    this.#audioElement.addEventListener("loadedmetadata", () => {
+    h.on("load", () => {
+      this.#duration = h.duration();
       for (const fn of this.#listeners.loadedmetadata) {
-        fn(this.#audioElement.duration);
+        fn(this.#duration);
       }
-    });
-    this.#audioElement.addEventListener("canplay", () => {
       for (const fn of this.#listeners.canPlay) {
         fn();
       }
     });
+
+    h.on("play", () => {
+      this.#playing = true;
+      this.#startLoop();
+      for (const fn of this.#listeners.play) fn();
+    });
+
+    h.on("pause", () => {
+      this.#playing = false;
+      this.#stopLoop();
+      for (const fn of this.#listeners.pause) fn();
+    });
+
+    h.on("end", () => {
+      this.#playing = false;
+      this.#stopLoop();
+      for (const fn of this.#listeners.ended) fn();
+    });
+
+    h.on("stop", () => {
+      this.#playing = false;
+      this.#stopLoop();
+    });
+  }
+
+  #cleanup() {
+    this.#stopLoop();
+    if (this.#howl) {
+      this.#howl.unload();
+      this.#howl = null;
+    }
+  }
+
+  #startLoop() {
+    if (this.#rafId !== null) return;
+    const tick = () => {
+      if (!this.#playing || !this.#howl) return;
+      const ct = this.#howl.seek() as number;
+      for (const fn of this.#listeners.timeupdate) {
+        fn(ct, this.#duration);
+      }
+      this.#rafId = requestAnimationFrame(tick);
+    };
+    this.#rafId = requestAnimationFrame(tick);
+  }
+
+  #stopLoop() {
+    if (this.#rafId !== null) {
+      cancelAnimationFrame(this.#rafId);
+      this.#rafId = null;
+    }
   }
 }

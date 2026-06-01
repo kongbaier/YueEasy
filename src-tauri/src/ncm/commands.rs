@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use ncm_api_rs::Query;
 use serde_json::Value;
 
-use crate::db::connection::Database;
 use super::NcmState;
+use crate::db::connection::Database;
 
 fn merge_cookies(existing: &str, new_cookies: &[String]) -> String {
     let mut map: HashMap<String, String> = HashMap::new();
@@ -78,7 +78,10 @@ pub async fn ncm_request(
         "personalized" => client.personalized(&query).await,
         "banner" => client.banner(&query).await,
         "top_playlist" => client.top_playlist(&query).await,
-        _ => return Err(format!("Unknown method: {}", method)),
+        "playlist_hot" => client.playlist_hot(&query).await,
+        "recommend_resource" => client.recommend_resource(&query).await,
+        "personal_fm" => client.personal_fm(&query).await,
+        _ => return Err(format!("Unknown method: {method}",)),
     };
 
     match response {

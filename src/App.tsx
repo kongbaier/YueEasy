@@ -4,6 +4,8 @@ import { MainLayout } from "./components/layout/MainLayout";
 import { useAuthRestore } from "./hooks/useAuthRestore";
 import { useMediaSession } from "./hooks/useMediaSession";
 import { usePlayerKeyboard } from "./hooks/usePlayerKeyboard";
+import { usePlayerRestore } from "./hooks/usePlayerRestore";
+import { useQueuePersistence } from "./hooks/useQueuePersistence";
 import { DailyRecommend } from "./pages/DailyRecommend";
 import { Home } from "./pages/Home";
 import { PlayerPage } from "./pages/PlayerPage";
@@ -14,6 +16,8 @@ import "./index.css";
 
 function App() {
   useAuthRestore();
+  usePlayerRestore();
+  useQueuePersistence();
   usePlayerKeyboard();
   useMediaSession();
 

@@ -1,6 +1,6 @@
-import type { Playlist } from "@/types/music";
+import type { Playlist } from "@/core/playlist/types";
 import { CacheKeys, cacheGet, cacheSet } from "./cache";
-import { ncm } from "./ncm";
+import { ncm, toPlaylist, toSongRef } from "./ncm";
 
 export async function getPlaylistDetail(
   id: number,
@@ -11,7 +11,10 @@ export async function getPlaylistDetail(
 
   try {
     const fresh = await ncm.playlistDetail(id);
-    const playlist = fresh.playlist;
+    const playlist: Playlist = {
+      ...toPlaylist(fresh.playlist),
+      tracks: fresh.playlist.tracks?.map(toSongRef),
+    };
 
     if (!cached || cached.value.trackCount !== playlist.trackCount) {
       await cacheSet(key, playlist);

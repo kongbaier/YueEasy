@@ -102,7 +102,7 @@ export function LoginDialog() {
     setLoading(true);
     setError("");
     try {
-      const res = await ncm.loginCellphone(phone, password);
+      const res = await ncm.loginCellphone({ phone, password });
       if (res.code === 200) {
         onAuthSuccess(res.cookie, res.profile);
       } else {
@@ -140,7 +140,7 @@ export function LoginDialog() {
     setLoading(true);
     setError("");
     try {
-      const res = await ncm.loginCellphone(phone, code);
+      const res = await ncm.loginCellphone({ phone, captcha: code });
       console.log(res);
       if (res.code === 200) {
         onAuthSuccess(res.cookie, res.profile);
@@ -328,7 +328,11 @@ export function LoginDialog() {
               {qrLoading ? (
                 <div className="h-full w-full animate-pulse rounded-lg bg-muted-foreground/10" />
               ) : qrImg ? (
-                <img alt="QR code" className="h-48 w-48 rounded-lg" src={qrImg} />
+                <img
+                  alt="QR code"
+                  className="h-48 w-48 rounded-lg"
+                  src={qrImg}
+                />
               ) : (
                 <p className="text-sm text-muted-foreground">二维码加载失败</p>
               )}

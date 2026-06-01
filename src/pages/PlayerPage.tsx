@@ -1,11 +1,13 @@
 import { ChevronDown, Download, Ellipsis, Heart, Share2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Lyrics } from "@/components/lyrics/Lyrics";
 import { PlayerPageControls } from "@/components/player-page/PlayerPageControls";
 import { PlayerPageProgress } from "@/components/player-page/PlayerPageProgress";
 import { PlayerPageVolume } from "@/components/player-page/PlayerPageVolume";
+import { RatioContainer } from "@/components/RatioContainer";
 import WindowControls from "@/components/system/WindowControls";
 import type { Track } from "@/core/player/types";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 import { usePlayerPageStore, usePlayerStore } from "@/stores";
 
@@ -13,8 +15,12 @@ export function PlayerPage() {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const isOpen = usePlayerPageStore((s) => s.isOpen);
   const close = usePlayerPageStore((s) => s.close);
+  const isWide = useMediaQuery("(min-width: 1024px)");
   const [visible, setVisible] = useState(false);
-
+  const handleBack = () => {
+    setVisible(false);
+    setTimeout(() => close(), 300);
+  };
   useEffect(() => {
     if (isOpen) {
       const raf = requestAnimationFrame(() => setVisible(true));
@@ -22,11 +28,6 @@ export function PlayerPage() {
     }
     setVisible(false);
   }, [isOpen]);
-
-  const handleBack = () => {
-    setVisible(false);
-    setTimeout(() => close(), 300);
-  };
 
   if (!isOpen) return null;
 
@@ -37,49 +38,60 @@ export function PlayerPage() {
         visible ? "translate-y-0" : "translate-y-full",
       )}
     >
-      <header
-        className="flex items-center h-10 px-2 shrink-0"
-        data-tauri-drag-region
+      <PlayerHeader handleBack={handleBack} />
+
+      <RatioContainer
+        className="flex-1 min-h-0"
+        ratio={isWide ? 16 / 9 : 4 / 3}
       >
-        <button
-          className="flex items-center justify-center size-8 rounded hover:bg-accent"
-          onClick={handleBack}
-          type="button"
-        >
-          <ChevronDown className="size-5" />
-        </button>
-        <div className="flex-1" />
-        <WindowControls />
-      </header>
+        <div className="grid grid-cols-[1fr_1fr] overflow-hidden">
+          <div className="w-4/5 justify-self-center min-w-0 h-full min-h-0 flex flex-col items-center pb-4 gap-2 px-4">
+            {currentTrack && (
+              <React.Fragment>
+                <PlayerTitle currentTrack={currentTrack} />
 
-      <div className="flex-1 grid grid-cols-[1fr_1fr] overflow-hidden">
-        <div className="w-full min-w-0 h-full min-h-0 flex flex-col items-center pb-4 gap-2">
-          {currentTrack && (
-            <>
-              <PlayerTitle currentTrack={currentTrack} />
+                <PlayerCover currentTrack={currentTrack} />
 
-              <PlayerCover currentTrack={currentTrack} />
+                <PlayerPageProgress className="shrink-0 w-full" />
 
-              <PlayerPageProgress className="shrink-0 w-3/5" />
+                <PlayerPageControls className="w-full" />
 
-              <PlayerPageControls className="w-3/5" />
+                <PlayerPageVolume className="shrink-0 w-full" />
 
-              <PlayerPageVolume className="shrink-0 w-3/5" />
+                <PlayerMenu currentTrack={currentTrack} />
+              </React.Fragment>
+            )}
+          </div>
 
-              <PlayerMenu currentTrack={currentTrack} />
-            </>
-          )}
+          <Lyrics className="border-l border-border overflow-hidden" />
         </div>
-
-        <Lyrics className="border-l border-border overflow-hidden" />
-      </div>
+      </RatioContainer>
     </div>
   );
 }
 
+const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
+  return (
+    <header
+      className="flex items-center h-10 px-2 shrink-0"
+      data-tauri-drag-region
+    >
+      <button
+        className="flex items-center justify-center size-8 rounded hover:bg-accent"
+        onClick={handleBack}
+        type="button"
+      >
+        <ChevronDown className="size-5" />
+      </button>
+      <div className="flex-1" />
+      <WindowControls />
+    </header>
+  );
+};
+
 const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
   return (
-    <div className="w-7/10 h-14 overflow-hidden shrink-0">
+    <div className="w-full h-14 overflow-hidden shrink-0">
       <h1 className="text-xl font-semibold truncate">{currentTrack.name}</h1>
       <p className="text-sm text-muted-foreground mt-1 truncate">
         {currentTrack.artists?.map((a) => a.name).join(" / ")}
@@ -90,25 +102,28 @@ const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
 
 const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
   return (
-    <div className="flex-1 w-full min-h-0 shrink-0 flex justify-center items-center my-4">
-      <div className="max-h-full max-w-3/5 aspect-square rounded-lg bg-secondary overflow-hidden shadow-lg">
-        {currentTrack.album?.picUrl ? (
-          <img
-            alt={currentTrack.album.name}
-            className="w-full h-full object-cover"
-            src={currentTrack.album.picUrl}
-          />
-        ) : (
-          <div className="w-full h-full bg-secondary" />
-        )}
-      </div>
-    </div>
+    <RatioContainer>
+      {currentTrack.album?.picUrl ? (
+        <img
+          alt={currentTrack.album.name}
+          className={cn("w-full h-full object-cover", "rounded-lg shadow-lg")}
+          src={currentTrack.album.picUrl}
+        />
+      ) : (
+        <div className="w-full h-full bg-secondary" />
+      )}
+    </RatioContainer>
   );
 };
-const PlayerMenu = ({ currentTrack }: { currentTrack: Track }) => {
+
+const PlayerMenu = ({
+  currentTrack: _currentTrack,
+}: {
+  currentTrack: Track;
+}) => {
   // const toggleFavorite = usePlayerStore((s) => s.toggleFavorite);
   return (
-    <div className="shrink-0 w-3/5 h-1/10 flex justify-between items-center gap-1">
+    <div className="w-full shrink-0 h-1/10 flex justify-between items-center gap-1">
       <button
         className="flex items-center justify-center size-9 rounded hover:bg-surface-hover"
         // onClick={() => toggleFavorite()}

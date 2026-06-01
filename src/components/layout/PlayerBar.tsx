@@ -2,6 +2,7 @@ import {
   ChevronFirst,
   ChevronLast,
   ListMusic,
+  Loader2,
   Pause,
   Play,
 } from "lucide-react";
@@ -39,7 +40,8 @@ const PlayerProgress = () => {
 };
 
 const PlayerControls = () => {
-  const { handlePlay, handleNext, handlePrev, isPlaying } = usePlayerAction();
+  const { handlePlay, handleNext, handlePrev, isPlaying, isLoading } =
+    usePlayerAction();
   return (
     <article className="flex items-center gap-x-6">
       <section className="flex items-center">
@@ -56,10 +58,13 @@ const PlayerControls = () => {
 
         <Button
           className="relative w-12 h-8 bg-primary rounded-2xl flex justify-center items-center cursor-pointer focus:outline-none"
+          disabled={isLoading}
           onClick={handlePlay}
           type="button"
         >
-          {isPlaying ? (
+          {isLoading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : isPlaying ? (
             <Pause className="size-4" />
           ) : (
             <Play className="size-4" />

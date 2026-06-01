@@ -1,19 +1,19 @@
 import { Crown, Play, Search as SearchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import type { SongRef } from "@/core/playlist/types";
 import { useDebounce } from "@/hooks/useDebounce";
-import { ncm } from "@/services/ncm";
+import { ncm, toSongRef } from "@/services/ncm";
 import { resolveTrack } from "@/services/track";
 import { usePlayerStore } from "@/stores";
-import type { Track } from "@/types/music";
 
 function TrackRow({
   track,
   index,
   onPlay,
 }: {
-  track: Track;
+  track: SongRef;
   index: number;
-  onPlay: (t: Track) => void;
+  onPlay: (t: SongRef) => void;
 }) {
   return (
     // biome-ignore lint/a11y/useSemanticElements: compound widget with nested button
@@ -29,11 +29,11 @@ function TrackRow({
       <span className="w-8 text-center text-xs text-muted-foreground">
         {String(index + 1).padStart(2, "0")}
       </span>
-      {track.al?.picUrl && (
+      {track.album.picUrl && (
         <img
-          alt={track.al.name}
+          alt={track.album.name}
           className="h-9 w-9 shrink-0 rounded object-cover"
-          src={track.al.picUrl}
+          src={track.album.picUrl}
         />
       )}
       <div className="flex-1 min-w-0">
@@ -44,8 +44,8 @@ function TrackRow({
           )}
         </p>
         <p className="truncate text-xs text-muted-foreground">
-          {track.ar?.map((a) => a.name).join("/") || "未知歌手"}
-          {track.al?.name && ` · ${track.al.name}`}
+          {track.artists.map((a) => a.name).join("/") || "未知歌手"}
+          {track.album.name && ` · ${track.album.name}`}
         </p>
       </div>
       <button
@@ -65,7 +65,7 @@ function TrackRow({
 
 export function Search() {
   const [keyword, setKeyword] = useState("");
-  const [results, setResults] = useState<Track[]>([]);
+  const [results, setResults] = useState<SongRef[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -91,7 +91,7 @@ export function Search() {
       .search(debouncedKeyword, 30, 0)
       .then((res) => {
         if (!cancelled) {
-          setResults(res.result.songs || []);
+          setResults((res.result.songs || []).map(toSongRef));
           setTotal(res.result.songCount);
           setLoading(false);
         }
@@ -108,7 +108,7 @@ export function Search() {
     };
   }, [debouncedKeyword]);
 
-  const handlePlay = async (track: Track) => {
+  const handlePlay = async (track: SongRef) => {
     setPlayError("");
     try {
       const resolved = await resolveTrack(track);

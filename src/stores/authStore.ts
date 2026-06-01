@@ -1,6 +1,13 @@
 import { create } from "zustand";
-import type { AuthState } from "@/types/user";
 import { clearNcmCookie } from "@/services/ncm";
+
+interface AuthState {
+  isLoggedIn: boolean;
+  cookie: string;
+  userId: number | null;
+  nickname: string;
+  avatarUrl: string;
+}
 
 interface AuthStore extends AuthState {
   setAuth: (state: Partial<AuthState>) => void;

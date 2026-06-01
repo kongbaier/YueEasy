@@ -1,19 +1,19 @@
 import { Crown, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import type { Playlist as PlaylistType, SongRef } from "@/core/playlist/types";
 import { getPlaylistDetail } from "@/services/playlist";
 import { resolveTrack } from "@/services/track";
 import { usePlayerStore } from "@/stores";
-import type { Playlist as PlaylistType, Track } from "@/types/music";
 
 function TrackRow({
   track,
   index,
   onPlay,
 }: {
-  track: Track;
+  track: SongRef;
   index: number;
-  onPlay: (t: Track) => void;
+  onPlay: (t: SongRef) => void;
 }) {
   return (
     // biome-ignore lint/a11y/useSemanticElements: compound widget with nested button
@@ -29,11 +29,11 @@ function TrackRow({
       <span className="w-8 text-center text-xs text-muted-foreground">
         {String(index + 1).padStart(2, "0")}
       </span>
-      {track.al?.picUrl && (
+      {track.album.picUrl && (
         <img
-          alt={track.al.name}
+          alt={track.album.name}
           className="h-9 w-9 shrink-0 rounded object-cover"
-          src={track.al.picUrl}
+          src={track.album.picUrl}
         />
       )}
       <div className="flex-1 min-w-0">
@@ -44,7 +44,7 @@ function TrackRow({
           )}
         </p>
         <p className="truncate text-xs text-muted-foreground">
-          {track.ar?.map((a) => a.name).join("/")}
+          {track.artists.map((a) => a.name).join("/")}
         </p>
       </div>
       <button
@@ -96,7 +96,7 @@ export function Playlist() {
     };
   }, [id]);
 
-  const handlePlay = async (track: Track) => {
+  const handlePlay = async (track: SongRef) => {
     setPlayError("");
     try {
       const resolved = await resolveTrack(track);
@@ -135,11 +135,11 @@ export function Playlist() {
   return (
     <div className="p-6">
       <div className="flex gap-6">
-        {playlist.coverImgUrl && (
+        {playlist.coverUrl && (
           <img
             alt={playlist.name}
             className="h-40 w-40 shrink-0 rounded-lg object-cover"
-            src={playlist.coverImgUrl}
+            src={playlist.coverUrl}
           />
         )}
         <div className="flex-1 min-w-0">

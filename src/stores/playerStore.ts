@@ -4,7 +4,7 @@ import {
   PlayerCore,
   SequenceStrategy,
 } from "@/core/player";
-import type { PlayMode, Track } from "@/core/player/types";
+import type { PlayerState, PlayMode, Track } from "@/core/player/types";
 
 const player = new PlayerCore<Track>(new SequenceStrategy());
 
@@ -13,9 +13,9 @@ interface PlayerStore {
   currentTrack: Track | null;
   queue: Track[];
   playing: boolean;
+  playerState: PlayerState;
   playMode: PlayMode;
   currentTime: number;
-  preciseCurrentTime: number;
   duration: number;
   muted: boolean;
   volume: number;
@@ -42,10 +42,6 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     set({ currentTime });
   });
 
-  player.on("precisetimeupdate", (preciseCurrentTime) => {
-    set({ preciseCurrentTime });
-  });
-
   player.on("loadedmetadata", (duration) => {
     set({ duration });
   });
@@ -61,14 +57,18 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     set({ playing: false });
   });
 
+  player.onStateChange((playerState) => {
+    set({ playerState });
+  });
+
   return {
     core: player,
     currentTrack: player.currentTrack ?? null,
     queue: player.queue,
     playing: false,
+    playerState: player.state,
     playMode: "sequential",
     currentTime: 0,
-    preciseCurrentTime: 0,
     duration: 0,
     muted: player.muted,
     volume: player.volume,
@@ -87,7 +87,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     prev: () => player.prev(),
 
     seek: (time) => {
-      set({ currentTime: time, preciseCurrentTime: time });
+      set({ currentTime: time });
       player.seek(time);
     },
 
