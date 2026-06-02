@@ -7,5 +7,9 @@ export interface PersonalFmResponse {
 
 // NCM API Response: /recommend_songs
 export interface RecommendSongsResponse {
-  data: NcmSong[];
+  code: number;
+  data: {
+    dailySongs: NcmSong[];
+    fromCache: boolean;
+  };
 }

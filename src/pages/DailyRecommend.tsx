@@ -1,11 +1,12 @@
+import { useQuery } from "@tanstack/react-query";
 import { Crown, Play } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { SongRef } from "@/core/playlist/types";
 import { ncm, toSongRef } from "@/services/ncm";
 import { resolveTrack } from "@/services/track";
 import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
 
-function TrackRow({
+const TrackRow = ({
   track,
   index,
   onPlay,
@@ -13,17 +14,16 @@ function TrackRow({
   track: SongRef;
   index: number;
   onPlay: (t: SongRef) => void;
-}) {
+}) => {
   return (
-    // biome-ignore lint/a11y/useSemanticElements: compound widget with nested button
-    <div
-      className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+    <button
+      className="w-full text-left flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
       onDoubleClick={() => onPlay(track)}
       onKeyDown={(e) => {
         if (e.key === "Enter") onPlay(track);
       }}
-      role="button"
       tabIndex={0}
+      type="button"
     >
       <span className="w-8 text-center text-xs text-muted-foreground">
         {String(index + 1).padStart(2, "0")}
@@ -47,6 +47,7 @@ function TrackRow({
           {track.album.name && ` · ${track.album.name}`}
         </p>
       </div>
+
       <button
         className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
         onClick={(e) => {
@@ -58,44 +59,29 @@ function TrackRow({
       >
         <Play className="h-4 w-4" />
       </button>
-    </div>
+    </button>
   );
-}
+};
 
 export function DailyRecommend() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const [songs, setSongs] = useState<SongRef[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [playError, setPlayError] = useState("");
   const play = usePlayerStore((s) => s.play);
 
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    let cancelled = false;
-    setLoading(true);
-    setError("");
-
-    ncm
-      .recommendSongs()
-      .then((res) => {
-        if (!cancelled) {
-          setSongs((res.data ?? []).map(toSongRef));
-          setLoading(false);
-        }
-      })
-      .catch((e) => {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "加载失败");
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoggedIn]);
+  const {
+    data: songs = [],
+    isPending,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["dailyRecommend"],
+    queryFn: () =>
+      ncm
+        .recommendSongs()
+        .then((res) => (res.data.dailySongs ?? []).map(toSongRef)),
+    enabled: isLoggedIn,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const handlePlay = async (track: SongRef) => {
     setPlayError("");
@@ -146,12 +132,16 @@ export function DailyRecommend() {
     <div className="p-6">
       <h1 className="text-2xl font-bold">每日推荐</h1>
 
-      {loading && (
+      {isPending && (
         <p className="mt-4 text-sm text-muted-foreground">加载中...</p>
       )}
-      {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
+      {isError && (
+        <p className="mt-4 text-sm text-red-500">
+          {error instanceof Error ? error.message : "加载失败"}
+        </p>
+      )}
 
-      {!loading && !error && songs.length > 0 && (
+      {!isPending && !isError && songs.length > 0 && (
         <>
           <div className="mt-4 flex items-center gap-3">
             <p className="text-sm text-muted-foreground">
@@ -184,7 +174,7 @@ export function DailyRecommend() {
         </>
       )}
 
-      {!loading && !error && songs.length === 0 && (
+      {!isPending && !isError && songs.length === 0 && (
         <p className="mt-4 text-sm text-muted-foreground">暂无推荐歌曲</p>
       )}
     </div>

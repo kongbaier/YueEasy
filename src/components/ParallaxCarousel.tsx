@@ -16,8 +16,13 @@ function shortestDir(from: number, to: number, len: number): 1 | -1 {
 }
 
 interface AnimationState {
+  /** @param target — The index of the item to move to. */
   target: number;
-  dir: 1 | -1;
+  /**
+   * @param direction — The direction of the animation. 1 = forward, -1 = backward. Determines which side the target item comes
+   *  from and parallax direction.
+   */
+  direction: 1 | -1;
 }
 
 interface ParallaxCarouselProps<T> {
@@ -29,12 +34,15 @@ interface ParallaxCarouselProps<T> {
    *   Content must be wider than container to avoid gaps.
    * @param isAnimating — true while CSS transition is active.
    */
-  renderItem: (
-    item: T,
-    index: number,
-    parallaxOffset: number,
-    isAnimating: boolean,
-  ) => React.ReactNode;
+  children?:
+    | ((
+        item: T,
+        index: number,
+        parallaxOffset: number,
+        isAnimating: boolean,
+      ) => React.ReactNode)
+    | React.ReactNode;
+
   className?: string;
   /** Fraction of wrapper speed for the inner parallax. 0 = no parallax, 0.5 = 50%. Default 0. */
   parallaxSpeed?: number;
@@ -46,7 +54,7 @@ const DURATION_MS = 700;
 
 export function ParallaxCarousel<T>({
   items,
-  renderItem,
+  children,
   className,
   parallaxSpeed = 0,
   getKey,
@@ -54,7 +62,7 @@ export function ParallaxCarousel<T>({
   const len = items.length;
 
   const [current, setCurrent] = useState(0);
-  const [anim, setAnim] = useState<AnimationState | null>(null);
+  const [animation, setAnimation] = useState<AnimationState | null>(null);
   const [started, setStarted] = useState(false);
 
   // Guard against double transitionend firing.
@@ -67,13 +75,13 @@ export function ParallaxCarousel<T>({
 
   const move = useCallback(
     (targetIndex: number) => {
-      if (anim !== null || targetIndex === current || len <= 1) return;
+      if (animation !== null || targetIndex === current || len <= 1) return;
       const dir = shortestDir(current, targetIndex, len);
-      setAnim({ target: targetIndex, dir });
+      setAnimation({ target: targetIndex, direction: dir });
       setStarted(false);
       endedRef.current = false;
     },
-    [anim, current, len],
+    [animation, current, len],
   );
 
   const goNext = useCallback(
@@ -87,65 +95,72 @@ export function ParallaxCarousel<T>({
 
   // After the browser paints the start positions, enable CSS transitions.
   useLayoutEffect(() => {
-    if (anim && !started) {
+    if (animation && !started) {
       const raf = requestAnimationFrame(() => setStarted(true));
       return () => cancelAnimationFrame(raf);
     }
-  }, [anim, started]);
+  }, [animation, started]);
 
   const handleTransitionEnd = useCallback(() => {
-    if (!anim || !started || endedRef.current) return;
+    if (!animation || !started || endedRef.current) return;
     endedRef.current = true;
-    setCurrent(anim.target);
-    setAnim(null);
+    setCurrent(animation.target);
+    setAnimation(null);
     setStarted(false);
-  }, [anim, started]);
+  }, [animation, started]);
 
   if (len === 0) return null;
 
-  const isAnimating = anim !== null && started;
-  const dir = anim?.dir ?? 1;
-  const targetIdx = anim?.target ?? 0;
+  const isAnimating = animation !== null && started;
+  const dir = animation?.direction ?? 1;
+  const targetIdx = animation?.target ?? 0;
 
   // Counter-shift offsets: content inside wrapper moves opposite to wrapper at a fraction of speed.
   const currentOffset = started ? dir * parallaxSpeed : 0;
   const targetOffset = started ? 0 : -dir * parallaxSpeed;
 
-  const displayIndex = anim?.target ?? current;
+  const displayIndex = animation?.target ?? current;
 
   return (
-    <div className={cn("relative h-full w-full overflow-hidden", className)}>
+    <div
+      className={cn("relative h-full w-full group overflow-hidden", className)}
+    >
       {/* Current item */}
       <div
-        className="absolute inset-0"
+        className={cn(
+          "absolute inset-0",
+          `transform duration-${DURATION_MS} ease-out`,
+        )}
+        key={current}
         onTransitionEnd={handleTransitionEnd}
         style={{
-          transform: isAnimating
+          transform: started
             ? `translateX(${dir === 1 ? "-" : ""}100%)`
             : "translateX(0)",
-          transition: isAnimating
-            ? `transform ${DURATION_MS}ms ease-out`
-            : "none",
         }}
       >
-        {renderItem(items[current], current, currentOffset, isAnimating)}
+        {typeof children === "function"
+          ? children(items[current], current, currentOffset, isAnimating)
+          : children}
       </div>
 
       {/* Target item — only mounted during animation */}
-      {anim && (
+      {animation && (
         <div
-          className="absolute inset-0"
+          className={cn(
+            "absolute inset-0",
+            `transition-transform duration-${DURATION_MS} ease-out`,
+          )}
           onTransitionEnd={handleTransitionEnd}
           style={{
             transform: started
               ? "translateX(0)"
               : `translateX(${dir === 1 ? "" : "-"}100%)`,
-            transition: started
-              ? `transform ${DURATION_MS}ms ease-out`
-              : "none",
           }}
         >
-          {renderItem(items[targetIdx], targetIdx, targetOffset, isAnimating)}
+          {typeof children === "function"
+            ? children(items[targetIdx], targetIdx, targetOffset, isAnimating)
+            : children}
         </div>
       )}
 
@@ -153,30 +168,45 @@ export function ParallaxCarousel<T>({
       {len > 1 && (
         <>
           <button
-            className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/40 p-1 text-white hover:bg-black/60"
+            className={cn(
+              "absolute left-2 top-1/2 z-10 -translate-y-1/2 transition-all duration-150 ease-out",
+              "rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90",
+              "opacity-0 group-hover:opacity-100",
+            )}
             onClick={goPrev}
             type="button"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
-            className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/40 p-1 text-white hover:bg-black/60"
+            className={cn(
+              "absolute right-2 top-1/2 z-10 -translate-y-1/2 transition-all duration-150 ease-out",
+              "rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90",
+              "opacity-0 group-hover:opacity-100",
+            )}
             onClick={goNext}
             type="button"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
-          <div className="absolute right-4 bottom-4 z-10 flex gap-1.5">
+
+          <div className="absolute h-4 right-4 bottom-4 z-10 flex gap-1.5 items-center">
             {items.map((item, i) => (
               <button
-                className={cn(
-                  "h-1.5 w-1.5 rounded-full transition-colors",
-                  i === displayIndex ? "bg-white" : "bg-white/50",
-                )}
+                className="group/btn cursor-pointer h-full"
                 key={getKey ? getKey(item, i) : i}
                 onClick={() => move(i)}
                 type="button"
-              />
+              >
+                <div
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full drop-shadow-2xl transition-[colors,scale] origin-center",
+                    i === displayIndex
+                      ? "bg-white scale-110"
+                      : "bg-white/50 group-hover/btn:bg-white/70 group-hover/btn:scale-110",
+                  )}
+                />
+              </button>
             ))}
           </div>
         </>

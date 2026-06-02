@@ -1,7 +1,11 @@
+import { useMediaQuery } from "@base-ui/react/unstable-use-media-query";
 import { useQuery } from "@tanstack/react-query";
+import React from "react";
 import { HorizontalScrollSection } from "@/components/HorizontalScrollSection";
 import { ParallaxCarousel } from "@/components/ParallaxCarousel";
 import { PlaylistCard, toPlaylistDisplay } from "@/components/PlaylistCard";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ncm } from "@/services/ncm";
 
 export function Home() {
@@ -23,6 +27,8 @@ export function Home() {
         .topPlaylist("全部", 20)
         .then((r) => r.playlists.map(toPlaylistDisplay)),
   });
+
+  const isWide = useMediaQuery("(min-width: 1024px)", {});
 
   const isLoading =
     bannerQuery.isPending ||
@@ -52,44 +58,42 @@ export function Home() {
 
   return (
     <div className="space-y-8 px-6 pb-3">
-      <div className="grid grid-rows-2 grid-cols-5 w-full aspect-9/2 gap-4">
-        <div className="row-span-2 col-span-3">
+      <div className="grid grid-rows-2 grid-cols-5 w-full aspect-9/5 lg:aspect-3/1  gap-2 md:gap-3 lg:gap-4">
+        <div className="row-span-2 col-span-5 lg:col-span-3">
           <ParallaxCarousel
-            className="rounded-xl"
+            className="rounded-xl shadow-lg"
             items={banners}
             parallaxSpeed={0.25}
-            renderItem={(banner, _index, parallaxOffset, isAnimating) => (
-              <button
-                className="relative w-full h-full overflow-hidden"
-                type="button"
-              >
+          >
+            {(banner, _index, parallaxOffset) => (
+              <button className="w-full h-full overflow-hidden" type="button">
                 <img
                   alt={banner.typeTitle}
-                  className="absolute top-0 max-w-none"
-                  src={banner.imageUrl}
+                  className={cn(
+                    "block inset-0",
+                    "transition-transform duration-700 ease-out",
+                  )}
+                  src={banner.bigImageUrl}
                   style={{
-                    width: "100%",
-                    left: "50%",
-                    transform: `translateX(calc(-50% + ${parallaxOffset * 64.5}%))`,
-                    transition: isAnimating
-                      ? "transform 700ms ease-out"
-                      : "none",
+                    transform: `translateX(calc( ${parallaxOffset * 90}%))`,
                   }}
                 />
-                {/*<span
-                  className="absolute right-2 bottom-2 rounded bg-black/50 px-2 py-0.5 text-xs"
-                  style={{ color: banner.titleColor }}
-                >
+                <span className="absolute right-2 top-2 rounded px-2 py-1 text-xs leading-3 bg-background/50 backdrop-blur-xl text-foreground">
                   {banner.typeTitle}
-                </span>*/}
+                </span>
               </button>
             )}
-          />
+          </ParallaxCarousel>
         </div>
 
-        <div className="row-span-1 col-span-2 bg-amber-300"></div>
-        <div className="row-span-1 col-span-1 bg-emerald-400"></div>
-        <div className="row-span-1 col-span-1 bg-pink-400"></div>
+        {isWide && (
+          <React.Fragment>
+            <div className="row-span-1 col-span-2 bg-amber-300 rounded-xl shadow-lg block" />
+            <div className="row-span-1 col-span-1 bg-emerald-400 rounded-xl shadow-lg block" />
+            <div className="row-span-1 col-span-1 bg-pink-400 rounded-xl shadow-lg block" />
+          </React.Fragment>
+        )}
+
         {/*<div className="hidden lg:flex lg:w-2/5 lg:flex-col lg:gap-3">
           <QuickEntry
             className="flex-1"

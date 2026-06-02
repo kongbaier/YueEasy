@@ -11,6 +11,11 @@ body {
   user-select: none;
 }
 
+button {
+  box-sizing: border-box; /* 统一盒模型 */
+  cursor: pointer; /* 你需要保留的指针样式 */
+}
+
 img,
 a {
   -webkit-user-drag: none;

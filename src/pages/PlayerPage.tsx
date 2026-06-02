@@ -1,3 +1,4 @@
+import { useMediaQuery } from "@base-ui/react/unstable-use-media-query";
 import { ChevronDown, Download, Ellipsis, Heart, Share2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Lyrics } from "@/components/lyrics/Lyrics";
@@ -7,7 +8,6 @@ import { PlayerPageVolume } from "@/components/player-page/PlayerPageVolume";
 import { RatioContainer } from "@/components/RatioContainer";
 import WindowControls from "@/components/system/WindowControls";
 import type { Track } from "@/core/player/types";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 import { usePlayerPageStore, usePlayerStore } from "@/stores";
 
@@ -15,7 +15,7 @@ export function PlayerPage() {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const isOpen = usePlayerPageStore((s) => s.isOpen);
   const close = usePlayerPageStore((s) => s.close);
-  const isWide = useMediaQuery("(min-width: 1024px)");
+  const isWide = useMediaQuery("(min-width: 1280px)", {});
   const [visible, setVisible] = useState(false);
   const handleBack = () => {
     setVisible(false);
@@ -72,19 +72,15 @@ export function PlayerPage() {
 
 const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
   return (
-    <header
-      className="flex items-center h-10 px-2 shrink-0"
-      data-tauri-drag-region
-    >
+    <header className="flex items-center h-10 shrink-0" data-tauri-drag-region>
       <button
-        className="flex items-center justify-center size-8 rounded hover:bg-accent"
+        className="flex items-center justify-center size-8 rounded ml-1 hover:bg-accent"
         onClick={handleBack}
         type="button"
       >
         <ChevronDown className="size-5" />
       </button>
-      <div className="flex-1" />
-      <WindowControls />
+      <WindowControls className="ml-auto mr-1" />
     </header>
   );
 };
