@@ -10,7 +10,7 @@ interface UiStore {
 }
 
 export const useUiStore = create<UiStore>((set) => ({
-  theme: "dark" as Theme,
+  theme: "dark",
   loginDialogOpen: false,
 
   setTheme: (theme) => set({ theme }),

@@ -6,15 +6,17 @@ import {
   Pause,
   Play,
 } from "lucide-react";
-import { useQueuePanel } from "@/hooks/use-queue-panel";
+import { useShallow } from "zustand/shallow";
 import { usePlayerAction } from "@/hooks/usePlayerAction";
 import { useProgress } from "@/hooks/useProgress";
 import { cn } from "@/lib/utils";
 import { usePlayerPageStore, usePlayerStore } from "@/stores";
+import { useQueuePanelStore } from "@/stores/queuePanelStore";
 import { PlayModeControl } from "../player/PlayModeControl";
 import { SeekBar } from "../player/SeekBar";
 import { VolumeControl } from "../player/VolumeControl";
 import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
 
 const PlayerProgress = () => {
   const { percentage } = useProgress();
@@ -86,11 +88,50 @@ const PlayerControls = () => {
   );
 };
 
-export function PlayerBar({ className }: { className?: string }) {
+const PlayerInfo = () => {
   const { currentTrack } = usePlayerStore();
-  const { openPanel } = useQueuePanel();
   const openPlayerPage = usePlayerPageStore((s) => s.open);
+  return (
+    <div className="flex-1 min-w-0 flex items-center gap-3">
+      <button
+        className="rounded overflow-hidden shadow h-10 w-10 shrink-0 hover:scale-110 transition-transform origin-bottom-left"
+        onClick={openPlayerPage}
+        type="button"
+      >
+        {currentTrack?.album.picUrl ? (
+          <img
+            alt={currentTrack.album.name}
+            className="object-cover"
+            src={currentTrack.album.picUrl}
+          />
+        ) : (
+          <Skeleton className="" />
+        )}
+      </button>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium">
+          {currentTrack?.name ?? "未在播放"}
+        </p>
+        <p className="truncate text-xs text-muted-foreground">
+          {currentTrack?.artists?.map((a) => a.name).join("/") ?? " "}
+        </p>
+      </div>
+    </div>
+  );
+};
 
+const PlayerMenu = () => {
+  const { open } = useQueuePanelStore(useShallow((s) => ({ open: s.open })));
+  return (
+    <div className="flex-1 flex items-center justify-end">
+      <Button onClick={open} type="button" variant="destructive">
+        <ListMusic />
+      </Button>
+    </div>
+  );
+};
+
+export const PlayerBar = ({ className }: { className?: string }) => {
   return (
     <div
       className={cn(
@@ -100,39 +141,11 @@ export function PlayerBar({ className }: { className?: string }) {
     >
       <PlayerProgress />
 
-      <div className="flex-1 min-w-0">
-        <button
-          className="flex gap-3 min-w-45 max-w-70 items-center rounded p-0.5 text-left transition-colors hover:bg-accent"
-          onClick={openPlayerPage}
-          type="button"
-        >
-          {currentTrack?.album.picUrl ? (
-            <img
-              alt={currentTrack.album.name}
-              className="h-10 w-10 shrink-0 rounded object-cover"
-              src={currentTrack.album.picUrl}
-            />
-          ) : (
-            <div className="h-10 w-10 shrink-0 rounded bg-secondary" />
-          )}
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">
-              {currentTrack?.name ?? "未在播放"}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {currentTrack?.artists?.map((a) => a.name).join("/") ?? " "}
-            </p>
-          </div>
-        </button>
-      </div>
+      <PlayerInfo />
 
       <PlayerControls />
 
-      <div className="flex-1 flex items-center justify-end">
-        <Button onClick={openPanel} type="button" variant="destructive">
-          <ListMusic />
-        </Button>
-      </div>
+      <PlayerMenu />
     </div>
   );
-}
+};

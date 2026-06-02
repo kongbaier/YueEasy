@@ -1,15 +1,16 @@
 import { Music, Trash2, X } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { VirtuosoHandle } from "react-virtuoso";
 import { Virtuoso } from "react-virtuoso";
+import { useShallow } from "zustand/shallow";
 import { Button } from "@/components/ui/button";
 import { VirtuosoScroller } from "@/components/virtuoso/VirtuosoScroller";
 import type { Track } from "@/core/player/types";
-import { useQueuePanel } from "@/hooks/use-queue-panel";
 import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
+import { useQueuePanelStore } from "@/stores/queuePanelStore";
 
-function QueueItem({
+const QueueItem = ({
   track,
   index,
   isCurrent,
@@ -21,22 +22,24 @@ function QueueItem({
   isCurrent: boolean;
   onPlay: (index: number) => void;
   onRemove: (index: number) => void;
-}) {
-  return (
+}) => (
+  <div
+    className={cn(
+      "group flex items-center px-4 py-2 w-full cursor-pointer transition-colors hover:bg-surface-hover",
+      isCurrent && "bg-primary/10",
+    )}
+  >
     <button
-      className={cn(
-        "group flex items-center gap-3 px-4 py-2.5 w-full text-left cursor-pointer transition-colors hover:bg-surface-hover",
-        isCurrent && "bg-primary/10",
-      )}
+      className="flex-1 items-center flex text-left gap-3"
       onDoubleClick={() => onPlay(index)}
       tabIndex={0}
       type="button"
     >
-      <div className="w-8 h-8 rounded bg-surface flex items-center justify-center shrink-0 overflow-hidden">
+      <div className="w-8 h-8 rounded shadow flex items-center justify-center shrink-0 overflow-hidden">
         {track.album.picUrl ? (
           <img
             alt={track.album.name}
-            className="w-full h-full object-cover"
+            className="inset-0 object-cover"
             src={track.album.picUrl}
           />
         ) : (
@@ -44,7 +47,7 @@ function QueueItem({
         )}
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0">
         <p className={cn("text-sm truncate", isCurrent && "text-primary")}>
           {track.name}
         </p>
@@ -52,40 +55,54 @@ function QueueItem({
           {track.artists.map((a) => a.name).join(" / ")}
         </p>
       </div>
-
-      <Button
-        className="opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={(e: React.MouseEvent) => {
-          e.stopPropagation();
-          onRemove(index);
-        }}
-        type="button"
-        variant="default"
-      >
-        <Trash2 className="size-4" />
-      </Button>
     </button>
-  );
-}
+
+    <Button
+      className="opacity-0 group-hover:opacity-100 transition-opacity border-none hover:bg-red-500 hover:text-white"
+      onClick={(e: React.MouseEvent) => {
+        e.stopPropagation();
+        onRemove(index);
+      }}
+      type="button"
+      variant="outline"
+    >
+      <Trash2 className="size-3" />
+    </Button>
+  </div>
+);
 
 export function QueuePanel() {
-  const queue = usePlayerStore((s) => s.queue);
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
-  const playFromIndex = usePlayerStore((s) => s.playFromIndex);
-  const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
-  const { open, animating, closePanel, finishClose } = useQueuePanel();
-  const [closing, setClosing] = useState(false);
+  const { queue, currentTrack, playFromIndex, removeFromQueue } =
+    usePlayerStore(
+      useShallow((s) => ({
+        queue: s.queue,
+        currentTrack: s.currentTrack,
+        playFromIndex: s.playFromIndex,
+        removeFromQueue: s.removeFromQueue,
+      })),
+    );
+  const { opened, close } = useQueuePanelStore(
+    useShallow((s) => ({
+      opened: s.opened,
+      close: s.close,
+    })),
+  );
+  const [visible, setVisible] = useState(false);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
+  useEffect(() => {
+    if (opened) {
+      setVisible(true);
+    }
+  }, [opened]);
+
   const handleClose = () => {
-    setClosing(true);
-    closePanel();
+    setVisible(false);
   };
 
   const handleTransitionEnd = () => {
-    if (closing) {
-      setClosing(false);
-      finishClose();
+    if (!visible) {
+      close();
     }
   };
 
@@ -112,7 +129,7 @@ export function QueuePanel() {
     }
   }, [currentIndex]);
 
-  if (!open) return null;
+  if (!opened) return null;
 
   return (
     <div className="isolate fixed inset-0 z-50 flex justify-end">
@@ -126,7 +143,7 @@ export function QueuePanel() {
       <aside
         className={cn(
           "relative w-80 h-full bg-white dark:bg-black shadow-xl flex flex-col z-10 transition-transform duration-300 ease-out",
-          animating ? "translate-x-0" : "translate-x-full",
+          visible ? "translate-x-0" : "translate-x-full",
         )}
         onTransitionEnd={handleTransitionEnd}
       >
@@ -139,7 +156,12 @@ export function QueuePanel() {
               </span>
             )}
           </h2>
-          <Button onClick={handleClose} type="button" variant="default">
+          <Button
+            className="border-none"
+            onClick={handleClose}
+            type="button"
+            variant="outline"
+          >
             <X className="size-4" />
           </Button>
         </header>
