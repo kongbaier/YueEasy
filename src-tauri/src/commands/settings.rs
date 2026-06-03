@@ -4,11 +4,9 @@ use tauri::State;
 #[tauri::command]
 pub fn get_setting(db: State<'_, Database>, key: String) -> Result<String, String> {
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    conn.query_row(
-        "SELECT value FROM settings WHERE key = ?1",
-        [&key],
-        |row| row.get(0),
-    )
+    conn.query_row("SELECT value FROM settings WHERE key = ?1", [&key], |row| {
+        row.get(0)
+    })
     .map_err(|e| e.to_string())
 }
 

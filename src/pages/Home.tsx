@@ -4,7 +4,6 @@ import React from "react";
 import { HorizontalScrollSection } from "@/components/HorizontalScrollSection";
 import { ParallaxCarousel } from "@/components/ParallaxCarousel";
 import { PlaylistCard, toPlaylistDisplay } from "@/components/PlaylistCard";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ncm } from "@/services/ncm";
 

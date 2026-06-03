@@ -1,7 +1,7 @@
-import { RepeatOneStrategy } from "./RepeatOneStrategy";
-import { SequenceStrategy } from "./SequenceStrategy";
-import { ShuffleStrategy } from "./ShuffleStrategy";
-import type { PlayModeStrategy } from "./Strategy";
+import { RepeatOneStrategy } from "./strategy/RepeatOneStrategy";
+import { SequenceStrategy } from "./strategy/SequenceStrategy";
+import { ShuffleStrategy } from "./strategy/ShuffleStrategy";
+import type { PlayModeStrategy } from "./strategy/Strategy";
 import type { PlayMode } from "./types";
 
 export function createPlayModeStrategy(

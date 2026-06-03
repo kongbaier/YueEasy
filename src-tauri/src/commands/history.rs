@@ -69,11 +69,8 @@ pub fn history_mark_synced(db: State<'_, Database>, ids: Vec<i64>) -> Result<(),
     }
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
     for id in ids {
-        conn.execute(
-            "UPDATE play_history SET synced = 1 WHERE id = ?1",
-            [id],
-        )
-        .map_err(|e| e.to_string())?;
+        conn.execute("UPDATE play_history SET synced = 1 WHERE id = ?1", [id])
+            .map_err(|e| e.to_string())?;
     }
     Ok(())
 }

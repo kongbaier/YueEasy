@@ -1,5 +1,5 @@
+import type { PlayMode } from "../types";
 import type { PlayContext, PlayModeStrategy } from "./Strategy";
-import type { PlayMode } from "./types";
 
 export class ShuffleStrategy<T> implements PlayModeStrategy<T> {
   name: PlayMode = "shuffle";

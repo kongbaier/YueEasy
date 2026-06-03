@@ -106,7 +106,6 @@ export function usePlayerRestore() {
       usePlayerStore.setState({
         queue: player.queue,
         currentTrack: player.currentTrack ?? null,
-        playerState: player.state,
         playMode: data.playMode ?? "sequential",
         volume: player.volume,
         muted: player.muted,

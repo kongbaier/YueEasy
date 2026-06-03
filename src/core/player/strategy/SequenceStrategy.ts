@@ -1,15 +1,15 @@
+import type { PlayMode } from "../types";
 import type { PlayContext, PlayModeStrategy } from "./Strategy";
-import type { PlayMode } from "./types";
 
-export class RepeatOneStrategy<T> implements PlayModeStrategy<T> {
-  name: PlayMode = "repeatOne";
+export class SequenceStrategy<T> implements PlayModeStrategy<T> {
+  name: PlayMode = "sequential";
 
   next(ctx: PlayContext<T>): number {
     return (ctx.index + 1) % ctx.queue.length;
   }
 
   ended(ctx: PlayContext<T>) {
-    return ctx.index;
+    return this.next(ctx);
   }
 
   prev(ctx: PlayContext<T>): number {

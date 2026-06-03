@@ -1,4 +1,4 @@
-import type { PlayMode } from "./types";
+import type { PlayMode } from "../types";
 
 export type PlayContext<T> = {
   index: number;

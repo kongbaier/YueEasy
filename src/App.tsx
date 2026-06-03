@@ -12,7 +12,7 @@ import { PlayerPage } from "./pages/PlayerPage";
 import { Playlist } from "./pages/Playlist";
 import { Search } from "./pages/Search";
 import { Settings } from "./pages/Settings";
-import "./index.css";
+import "./styles/index.css";
 
 function App() {
   useAuthRestore();

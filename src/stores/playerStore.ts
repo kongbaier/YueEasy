@@ -4,7 +4,7 @@ import {
   PlayerCore,
   SequenceStrategy,
 } from "@/core/player";
-import type { PlayerState, PlayMode, Track } from "@/core/player/types";
+import type { PlayMode, Track } from "@/core/player/types";
 
 const player = new PlayerCore<Track>(new SequenceStrategy());
 
@@ -13,7 +13,6 @@ interface PlayerStore {
   currentTrack: Track | null;
   queue: Track[];
   playing: boolean;
-  playerState: PlayerState;
   playMode: PlayMode;
   currentTime: number;
   duration: number;
@@ -57,16 +56,11 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     set({ playing: false });
   });
 
-  player.onStateChange((playerState) => {
-    set({ playerState });
-  });
-
   return {
     core: player,
     currentTrack: player.currentTrack ?? null,
     queue: player.queue,
     playing: false,
-    playerState: player.state,
     playMode: "sequential",
     currentTime: 0,
     duration: 0,

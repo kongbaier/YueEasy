@@ -20,7 +20,7 @@
         "resizable": true,
         "transparent": true,
         "decorations": false,
-        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection",
+        "additionalBrowserArgs": "--disable-features=MediaSessionService,msWebOOUI,msPdfOOUI,msSmartScreenProtection",
         "windowEffects": {
           "effects": [
             "mica"
@@ -35,7 +35,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": "nsis",
     "windows": {
       "allowDowngrades": true,
       "certificateThumbprint": null,

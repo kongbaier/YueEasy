@@ -2,17 +2,14 @@ import type { AudioEvents } from "./AudioEngine";
 import { AudioEngine } from "./AudioEngine";
 import { PlayQueue } from "./PlayQueue";
 import { StateMachine } from "./StateMachine";
-import type { PlayModeStrategy } from "./Strategy";
+import type { PlayModeStrategy } from "./strategy/Strategy";
 import type { PlayerState } from "./types";
 
 export class PlayerCore<T extends { id: number; url: string }> {
-  index = -1;
   #queue: PlayQueue<T>;
   #engine: AudioEngine;
   #strategy: PlayModeStrategy<T>;
   #stateMachine: StateMachine;
-  #stateListeners = new Set<(state: PlayerState) => void>();
-
   constructor(mode: PlayModeStrategy<T>) {
     this.#queue = new PlayQueue();
     this.#engine = new AudioEngine();
@@ -22,23 +19,20 @@ export class PlayerCore<T extends { id: number; url: string }> {
     this.#bindEvents();
   }
 
+  get index() {
+    return this.#queue.activeIndex;
+  }
+
+  set index(v: number) {
+    this.#queue.activeIndex = v;
+  }
+
   get state(): PlayerState {
     return this.#stateMachine.state;
   }
 
-  onStateChange(cb: (state: PlayerState) => void) {
-    this.#stateListeners.add(cb);
-    return () => {
-      this.#stateListeners.delete(cb);
-    };
-  }
-
   #transition(to: PlayerState): boolean {
-    if (!this.#stateMachine.transition(to)) return false;
-    for (const cb of this.#stateListeners) {
-      cb(to);
-    }
-    return true;
+    return this.#stateMachine.transition(to);
   }
 
   initialize(prefs: {
@@ -99,28 +93,19 @@ export class PlayerCore<T extends { id: number; url: string }> {
   }
 
   next() {
-    this.index = this.#strategy.next({
-      index: this.index,
-      queue: this.#queue.tracks,
-    });
+    this.#queue.activeIndex = this.#strategy.next(this.#queue.context);
     this.load();
     this.play();
   }
 
   prev() {
-    this.index = this.#strategy.prev({
-      index: this.index,
-      queue: this.#queue.tracks,
-    });
+    this.#queue.activeIndex = this.#strategy.prev(this.#queue.context);
     this.load();
     this.play();
   }
 
   ended() {
-    this.index = this.#strategy.ended({
-      index: this.index,
-      queue: this.#queue.tracks,
-    });
+    this.#queue.activeIndex = this.#strategy.ended(this.#queue.context);
     this.load();
     this.play();
   }
@@ -136,11 +121,11 @@ export class PlayerCore<T extends { id: number; url: string }> {
   set mode(mode: PlayModeStrategy<T>) {
     this.#strategy.destroy?.();
     this.#strategy = mode;
-    this.#strategy.init?.({ index: this.index, queue: this.#queue.tracks });
+    this.#strategy.init?.(this.#queue.context);
   }
 
   get currentTrack() {
-    return this.#queue.tracks[this.index];
+    return this.#queue.current;
   }
 
   get queue() {
@@ -149,54 +134,27 @@ export class PlayerCore<T extends { id: number; url: string }> {
 
   replace(tracks: T[]) {
     this.#queue.replace(tracks);
-    if (tracks.length === 0) {
-      this.index = -1;
-    } else {
-      this.index = Math.min(Math.max(this.index, 0), tracks.length - 1);
-    }
-    this.#strategy.init?.({ index: this.index, queue: this.#queue.tracks });
+    this.#strategy.init?.(this.#queue.context);
   }
 
   add(track: T) {
     this.#queue.add(track);
-    if (this.index === -1 && this.#queue.length > 0) {
-      this.index = 0;
-    }
-    this.#strategy.init?.({ index: this.index, queue: this.#queue.tracks });
+    this.#strategy.init?.(this.#queue.context);
   }
 
   insert(track: T, index: number) {
-    if (index <= this.index) {
-      this.index++;
-    }
     this.#queue.insert(index, track);
-    this.#strategy.init?.({ index: this.index, queue: this.#queue.tracks });
+    this.#strategy.init?.(this.#queue.context);
   }
 
   remove(id: string | number) {
-    const removedIdx = this.#queue.indexOf(id);
-    if (removedIdx < 0) return;
-
-    if (removedIdx < this.index) {
-      this.index--;
-    } else if (removedIdx === this.index) {
-      this.index = Math.min(this.index, this.#queue.length - 2);
-    }
-
-    this.#queue.remove(id);
-    this.#strategy.init?.({ index: this.index, queue: this.#queue.tracks });
+    if (!this.#queue.remove(id)) return;
+    this.#strategy.init?.(this.#queue.context);
   }
 
   setQueue(tracks: T[], startIndex = 0) {
-    this.#queue.replace(tracks);
-    if (tracks.length > 0 && startIndex >= 0 && startIndex < tracks.length) {
-      this.index = startIndex;
-    } else if (tracks.length > 0) {
-      this.index = 0;
-    } else {
-      this.index = -1;
-    }
-    this.#strategy.init?.({ index: this.index, queue: this.#queue.tracks });
+    this.#queue.set(tracks, startIndex);
+    this.#strategy.init?.(this.#queue.context);
   }
 
   on<K extends keyof AudioEvents>(event: K, handler: AudioEvents[K]) {

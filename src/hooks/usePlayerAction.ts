@@ -2,18 +2,18 @@ import { useShallow } from "zustand/shallow";
 import { usePlayerStore } from "@/stores";
 
 export function usePlayerAction() {
-  const { next, pause, resume, prev, playing, playerState } = usePlayerStore(
+  const { next, pause, resume, prev, playing, core } = usePlayerStore(
     useShallow((state) => ({
       pause: state.pause,
       resume: state.resume,
       next: state.next,
       prev: state.prev,
       playing: state.playing,
-      playerState: state.playerState,
+      core: state.core,
     })),
   );
 
-  const isLoading = playerState === "loading";
+  const isLoading = core.state === "loading";
 
   const handlePlay = () => {
     if (isLoading) return;

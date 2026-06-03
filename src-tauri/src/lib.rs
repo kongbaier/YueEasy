@@ -3,11 +3,33 @@ mod db;
 mod ncm;
 mod utils;
 
-use tauri::Manager;
+use serde::Serialize;
+use tauri::{Emitter, Manager};
+use tauri_plugin_media::{MediaControlEventType, MediaExt};
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(tag = "event", rename_all = "camelCase")]
+enum SmtcEvent {
+    Play,
+    Pause,
+    Toggle,
+    Next,
+    Previous,
+    Stop,
+    FastForward,
+    Rewind,
+    #[serde(rename = "setPosition")]
+    SetPosition { position: f64 },
+    #[serde(rename = "seekTo")]
+    SeekTo { position: f64 },
+    #[serde(rename = "setPlaybackRate")]
+    SetPlaybackRate { rate: f64 },
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_media::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let app_data = app
@@ -52,6 +74,29 @@ pub fn run() {
             }
             app.manage(ncm_state);
 
+            // 将系统媒体控制事件桥接到前端
+            let handle = app.handle().clone();
+            app.media().set_event_handler(move |event| {
+                let payload = match event.event_type {
+                    MediaControlEventType::Play => SmtcEvent::Play,
+                    MediaControlEventType::Pause => SmtcEvent::Pause,
+                    MediaControlEventType::PlayPause => SmtcEvent::Toggle,
+                    MediaControlEventType::Stop => SmtcEvent::Stop,
+                    MediaControlEventType::Next => SmtcEvent::Next,
+                    MediaControlEventType::Previous => SmtcEvent::Previous,
+                    MediaControlEventType::FastForward => SmtcEvent::FastForward,
+                    MediaControlEventType::Rewind => SmtcEvent::Rewind,
+                    MediaControlEventType::SeekTo(pos) => SmtcEvent::SeekTo { position: pos },
+                    MediaControlEventType::SetPosition(pos) => {
+                        SmtcEvent::SetPosition { position: pos }
+                    }
+                    MediaControlEventType::SetPlaybackRate(rate) => {
+                        SmtcEvent::SetPlaybackRate { rate }
+                    }
+                };
+                let _ = handle.emit("smtc-event", payload);
+            });
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -69,6 +114,10 @@ pub fn run() {
             commands::settings::get_setting,
             commands::settings::set_setting,
             commands::download::download_song,
+            commands::smtc::init_smtc,
+            commands::smtc::update_smtc_metadata,
+            commands::smtc::update_smtc_status,
+            commands::smtc::update_smtc_position,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
