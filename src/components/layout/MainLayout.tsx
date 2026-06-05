@@ -1,5 +1,6 @@
 import { ChevronLeft } from "lucide-react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import KeepAliveRouteOutlet from "keepalive-for-react-router";
 import { AppSidebar } from "@/components/AppSidebar";
 import { LenisScroll } from "@/components/lenis-scroll";
 import WindowControls from "@/components/system/WindowControls";
@@ -41,7 +42,7 @@ export function MainLayout() {
           <main className="relative flex flex-1 flex-col bg-background">
             <Header />
             <LenisScroll className="flex-1 min-h-0" overflowTop={40}>
-              <Outlet />
+              <KeepAliveRouteOutlet max={5} />
             </LenisScroll>
           </main>
         </div>

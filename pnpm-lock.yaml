@@ -11,6 +11,9 @@ importers:
       '@base-ui/react':
         specifier: ^1.5.0
         version: 1.5.0(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@chenglou/pretext':
+        specifier: ^0.0.7
+        version: 0.0.7
       '@tanstack/react-query':
         specifier: ^5.100.14
         version: 5.100.14(react@19.2.6)
@@ -29,6 +32,12 @@ importers:
       howler:
         specifier: ^2.2.4
         version: 2.2.4
+      keepalive-for-react:
+        specifier: ^5.0.11
+        version: 5.0.11(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      keepalive-for-react-router:
+        specifier: ^5.0.7
+        version: 5.0.7(keepalive-for-react@5.0.11(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-router@7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
       lenis:
         specifier: ^1.3.23
         version: 1.3.23(react@19.2.6)
@@ -266,6 +275,9 @@ packages:
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
+
+  '@chenglou/pretext@0.0.7':
+    resolution: {integrity: sha512-FV5hj3fGqpBlzbANUbR+s+6XuNRrghVVyuNs33zdH2SzU7MvK+7GlW6xREjDCreixKbexEn7OEkDgAFeWuu5Hg==}
 
   '@esbuild/aix-ppc64@0.27.7':
     resolution: {integrity: sha512-EKX3Qwmhz1eMdEJokhALr0YiD0lhQNwDqkPYyPhiSwKrh7/4KRjQc04sZ8db+5DVVnZ1LmbNDI1uAMPEUBnQPg==}
@@ -1038,6 +1050,20 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
+  keepalive-for-react-router@5.0.7:
+    resolution: {integrity: sha512-HOp8S8y9zTHuIU2T/JSpGYdr0ogwtDe2x90kDlAYzuL/iP/Yp/Njrpx8aeMpoCHEJjUcJPepThMAVKCq2QDH4A==}
+    peerDependencies:
+      keepalive-for-react: ^5.0.7
+      react: '>=16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0'
+      react-dom: '>=16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0'
+      react-router: '>=6.0.0'
+
+  keepalive-for-react@5.0.11:
+    resolution: {integrity: sha512-TzOm6ubwdElbu17SL7UXqe+hyIr7SIs8JQ5kG+fU/QIF0659kVkxYPKR5B/94zar/rY5NIE/dy1/DjYsnOrHIQ==}
+    peerDependencies:
+      react: '>=16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0'
+      react-dom: '>=16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0'
+
   lenis@1.3.23:
     resolution: {integrity: sha512-YxYq3TJqj9sJNv0V9SkyQHejt14xwyIwgDaaMK89Uf9SxQfIszu+gTQSSphh6BWlLTNVKvvXAGkg+Zf+oFIevg==}
     peerDependencies:
@@ -1142,6 +1168,9 @@ packages:
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
+
+  mitt@3.0.1:
+    resolution: {integrity: sha512-vKivATfr97l2/QBCYAkXYDbrIWPM2IIKEl7YPhjCvKlG3kE2gm+uBo6nEXK3M5/Ffh/FLpKExzOQ3JJoJGFKBw==}
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
@@ -1527,6 +1556,8 @@ snapshots:
 
   '@biomejs/cli-win32-x64@2.4.13':
     optional: true
+
+  '@chenglou/pretext@0.0.7': {}
 
   '@esbuild/aix-ppc64@0.27.7':
     optional: true
@@ -2104,6 +2135,19 @@ snapshots:
 
   json5@2.2.3: {}
 
+  keepalive-for-react-router@5.0.7(keepalive-for-react@5.0.11(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-router@7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6):
+    dependencies:
+      keepalive-for-react: 5.0.11(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
+      react-router: 7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+
+  keepalive-for-react@5.0.11(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
+    dependencies:
+      mitt: 3.0.1
+      react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
+
   lenis@1.3.23(react@19.2.6):
     optionalDependencies:
       react: 19.2.6
@@ -2174,6 +2218,8 @@ snapshots:
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  mitt@3.0.1: {}
 
   ms@2.1.3: {}
 

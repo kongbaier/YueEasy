@@ -91,3 +91,28 @@
 [data-slot="sidebar-inner"] {
   border-right: 1px solid var(--sidebar-border);
 }
+
+@theme inline {
+  --animate-shimmer: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@utility bg-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(128, 128, 128, 0.06) 35%,
+    rgba(128, 128, 128, 0.12) 50%,
+    rgba(128, 128, 128, 0.06) 65%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}

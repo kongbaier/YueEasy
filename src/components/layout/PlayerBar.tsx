@@ -6,6 +6,7 @@ import {
   Pause,
   Play,
 } from "lucide-react";
+import { useMemo } from "react";
 import { useShallow } from "zustand/shallow";
 import { usePlayerAction } from "@/hooks/usePlayerAction";
 import { useProgress } from "@/hooks/useProgress";
@@ -25,7 +26,7 @@ const PlayerProgress = () => {
 
   return (
     <SeekBar
-      barClassName="w-full h-1 origin-center transition-transform group-hover:scale-y-200 bg-surface-active relative select-none"
+      barClassName="w-full h-1 origin-center transition-transform group-hover:scale-y-150 bg-surface-active relative select-none"
       className="absolute w-full -top-1.5 left-0 h-3 cursor-pointer flex items-center group"
       duration={duration}
       onSeek={seek}
@@ -42,8 +43,20 @@ const PlayerProgress = () => {
 };
 
 const PlayerControls = () => {
-  const { handlePlay, handleNext, handlePrev, isPlaying, isLoading } =
-    usePlayerAction();
+  const { handlePlay, handleNext, handlePrev } = usePlayerAction();
+  const state = usePlayerStore((s) => s.core.state);
+  const PlayIcon = useMemo(() => {
+    switch (state) {
+      case "loading":
+        return () => (
+          <Loader2 className="size-4 animate-spin text-primary-foreground" />
+        );
+      case "playing":
+        return () => <Pause className="size-4 text-primary-foreground" />;
+      default:
+        return () => <Play className="size-4 text-primary-foreground" />;
+    }
+  }, [state]);
   return (
     <article className="flex items-center gap-x-6">
       <section className="flex items-center">
@@ -51,32 +64,28 @@ const PlayerControls = () => {
       </section>
       <section className="flex text-4xl gap-x-3 justify-center items-center-safe">
         <Button
-          className="border-none"
-          onPointerUp={handlePrev}
-          variant="destructive"
+          className="text-foreground hover:bg-transparent hover:text-primary"
+          onClick={handlePrev}
+          size="icon"
+          variant="ghost"
         >
           <ChevronFirst className="size-5" />
         </Button>
 
-        <Button
+        <button
           className="relative w-12 h-8 bg-primary rounded-2xl flex justify-center items-center cursor-pointer focus:outline-none"
-          disabled={isLoading}
+          disabled={state === "loading"}
           onClick={handlePlay}
           type="button"
         >
-          {isLoading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : isPlaying ? (
-            <Pause className="size-4" />
-          ) : (
-            <Play className="size-4" />
-          )}
-        </Button>
+          <PlayIcon />
+        </button>
 
         <Button
-          className="border-none"
-          onPointerUp={handleNext}
-          variant="destructive"
+          className="text-foreground hover:bg-transparent hover:text-primary"
+          onClick={handleNext}
+          size="icon"
+          variant="ghost"
         >
           <ChevronLast className="size-5" />
         </Button>
@@ -122,10 +131,23 @@ const PlayerInfo = () => {
 
 const PlayerMenu = () => {
   const { open } = useQueuePanelStore(useShallow((s) => ({ open: s.open })));
+  const queue = usePlayerStore((s) => s.queue);
   return (
     <div className="flex-1 flex items-center justify-end">
-      <Button onClick={open} type="button" variant="destructive">
-        <ListMusic />
+      <Button
+        className="text-foreground hover:bg-transparent hover:text-primary"
+        onClick={open}
+        size="icon"
+        variant="ghost"
+      >
+        <span className="relative">
+          <ListMusic className="size-4" />
+          {queue.length > 0 && (
+            <span className="absolute -top-1 -right-1.5 text-[9px] font-medium tabular-nums">
+              {queue.length}
+            </span>
+          )}
+        </span>
       </Button>
     </div>
   );

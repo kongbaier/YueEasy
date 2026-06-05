@@ -1,18 +1,22 @@
+import { lazy } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { LoginDialog } from "./components/LoginDialog";
 import { MainLayout } from "./components/layout/MainLayout";
 import { useAuthRestore } from "./hooks/useAuthRestore";
 import { useMediaSession } from "./hooks/useMediaSession";
 import { usePlayerKeyboard } from "./hooks/usePlayerKeyboard";
 import { usePlayerRestore } from "./hooks/usePlayerRestore";
 import { useQueuePersistence } from "./hooks/useQueuePersistence";
-import { DailyRecommend } from "./pages/DailyRecommend";
-import { Home } from "./pages/Home";
-import { PlayerPage } from "./pages/PlayerPage";
-import { Playlist } from "./pages/Playlist";
-import { Search } from "./pages/Search";
-import { Settings } from "./pages/Settings";
 import "./styles/index.css";
+
+const Home = lazy(() => import("./pages/Home"));
+const Search = lazy(() => import("./pages/Search"));
+const Playlist = lazy(() => import("./pages/Playlist"));
+const DailyRecommend = lazy(() => import("./pages/DailyRecommend"));
+const LikedSongs = lazy(() => import("./pages/LikedSongs"));
+const RecentPlays = lazy(() => import("./pages/RecentPlays"));
+const Settings = lazy(() => import("./pages/Settings"));
+const PlayerPage = lazy(() => import("./pages/PlayerPage"));
+const LoginDialog = lazy(() => import("./components/LoginDialog"));
 
 function App() {
   useAuthRestore();
@@ -29,6 +33,8 @@ function App() {
           <Route element={<Search />} path="search" />
           <Route element={<Playlist />} path="playlist/:id" />
           <Route element={<DailyRecommend />} path="daily" />
+          <Route element={<LikedSongs />} path="my/liked" />
+          <Route element={<RecentPlays />} path="my/recent" />
           <Route element={<Settings />} path="settings" />
         </Route>
       </Routes>

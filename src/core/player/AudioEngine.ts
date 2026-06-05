@@ -1,4 +1,5 @@
 import { Howl } from "howler";
+import { EventEmitter } from "@/lib/EventEmitter";
 
 export type AudioEvents = {
   timeupdate: (currentTime: number, duration: number) => void;
@@ -11,32 +12,61 @@ export type AudioEvents = {
 
 export class AudioEngine {
   #howl: Howl | null = null;
-  #listeners: { [K in keyof AudioEvents]: Set<AudioEvents[K]> };
-  #rafId: number | null = null;
+  #eventEmitter: EventEmitter<AudioEvents> = new EventEmitter();
   #src = "";
-  #playing = false;
   #duration = 0;
+  #rate = 1;
   #muted = false;
   #volume = 1;
+  #rafId = 0;
 
-  constructor() {
-    this.#listeners = {
-      timeupdate: new Set(),
-      ended: new Set(),
-      play: new Set(),
-      pause: new Set(),
-      loadedmetadata: new Set(),
-      canPlay: new Set(),
+  #startTimeUpdate() {
+    if (this.#rafId) return;
+    const tick = () => {
+      if (!this.#howl) {
+        this.#stopTimeUpdate();
+        return;
+      }
+      this.#eventEmitter.emit(
+        "timeupdate",
+        this.#howl.seek() as number,
+        this.#duration,
+      );
+      this.#rafId = requestAnimationFrame(tick);
     };
+    this.#rafId = requestAnimationFrame(tick);
+  }
+
+  #stopTimeUpdate() {
+    if (this.#rafId) {
+      cancelAnimationFrame(this.#rafId);
+      this.#rafId = 0;
+    }
+  }
+
+  on<K extends keyof AudioEvents>(event: K, handler: AudioEvents[K]) {
+    return this.#eventEmitter.on(event, handler);
+  }
+
+  off<K extends keyof AudioEvents>(event: K, handler: AudioEvents[K]) {
+    this.#eventEmitter.off(event, handler);
+  }
+
+  get playing() {
+    return this.#howl?.playing() ?? false;
   }
 
   async play() {
+    if (!this.#howl) {
+      throw new Error("No audio source loaded");
+    }
+    const howl = this.#howl;
     return new Promise<void>((resolve, reject) => {
-      this.#howl?.once("play", () => resolve());
-      this.#howl?.once("playerror", (_soundId, err) => {
+      howl.once("play", () => resolve());
+      howl.once("playerror", (_soundId, err) => {
         reject(err || new Error("Play failed"));
       });
-      this.#howl?.play();
+      howl.play();
     });
   }
 
@@ -46,6 +76,9 @@ export class AudioEngine {
 
   load(src: string) {
     this.#cleanup();
+    if (this.#src === src) {
+      return;
+    }
     this.#src = src;
     this.#howl = new Howl({
       src: [src],
@@ -54,62 +87,60 @@ export class AudioEngine {
       volume: this.#volume,
       mute: this.#muted,
     });
+    this.#howl.load();
+
     this.#bindHowlEvents();
-  }
-
-  on<K extends keyof AudioEvents>(event: K, handler: AudioEvents[K]) {
-    this.#listeners[event].add(handler);
-    return () => {
-      this.#listeners[event].delete(handler);
-    };
-  }
-
-  get loaded() {
-    return this.#src !== "";
   }
 
   get currentSrc() {
     return this.#src;
   }
 
-  get playing() {
-    return this.#playing;
-  }
-
-  get buffered() {
-    return null;
-  }
-
   get muted() {
     return this.#muted;
   }
+
   set muted(value: boolean) {
     this.#muted = value;
     this.#howl?.mute(value);
   }
 
-  get readyState() {
-    if (!this.#howl) return 0;
-    return this.#howl.state() === "loaded" ? 4 : 2;
-  }
-
   get volume() {
     return this.#volume;
   }
+
   set volume(value: number) {
+    if (value < 0 || value > 1) {
+      throw new RangeError("Volume must be between 0 and 1");
+    }
     this.#volume = value;
     this.#howl?.volume(value);
   }
 
   get currentTime() {
-    return (this.#howl?.seek() as number) ?? 0;
+    const howl = this.#howl;
+    if (!howl) throw new Error("No audio source loaded");
+    return howl.seek();
   }
   set currentTime(time: number) {
-    this.#howl?.seek(time);
+    if (!this.#howl) throw new Error("No audio source loaded");
+    this.#howl.seek(time);
   }
 
   get duration() {
     return this.#duration;
+  }
+
+  get rate() {
+    return this.#rate;
+  }
+
+  set rate(value: number) {
+    if (value <= 0) {
+      throw new RangeError("Playback rate must be greater than 0");
+    }
+    this.#rate = value;
+    this.#howl?.rate(value);
   }
 
   #bindHowlEvents() {
@@ -118,63 +149,35 @@ export class AudioEngine {
 
     h.on("load", () => {
       this.#duration = h.duration();
-      for (const fn of this.#listeners.loadedmetadata) {
-        fn(this.#duration);
-      }
-      for (const fn of this.#listeners.canPlay) {
-        fn();
-      }
+      this.#eventEmitter.emit("loadedmetadata", this.#duration);
+      this.#eventEmitter.emit("canPlay");
     });
 
     h.on("play", () => {
-      this.#playing = true;
-      this.#startLoop();
-      for (const fn of this.#listeners.play) fn();
+      this.#startTimeUpdate();
+      this.#eventEmitter.emit("play");
     });
 
     h.on("pause", () => {
-      this.#playing = false;
-      this.#stopLoop();
-      for (const fn of this.#listeners.pause) fn();
+      this.#stopTimeUpdate();
+      this.#eventEmitter.emit("pause");
     });
 
     h.on("end", () => {
-      this.#playing = false;
-      this.#stopLoop();
-      for (const fn of this.#listeners.ended) fn();
+      this.#stopTimeUpdate();
+      this.#eventEmitter.emit("ended");
     });
 
-    h.on("stop", () => {
-      this.#playing = false;
-      this.#stopLoop();
-    });
+    // h.on("stop", () => {
+    //   this.#eventEmitter.emit("stop");
+    // });
   }
 
   #cleanup() {
-    this.#stopLoop();
+    this.#stopTimeUpdate();
     if (this.#howl) {
       this.#howl.unload();
       this.#howl = null;
-    }
-  }
-
-  #startLoop() {
-    if (this.#rafId !== null) return;
-    const tick = () => {
-      if (!this.#playing || !this.#howl) return;
-      const ct = this.#howl.seek() as number;
-      for (const fn of this.#listeners.timeupdate) {
-        fn(ct, this.#duration);
-      }
-      this.#rafId = requestAnimationFrame(tick);
-    };
-    this.#rafId = requestAnimationFrame(tick);
-  }
-
-  #stopLoop() {
-    if (this.#rafId !== null) {
-      cancelAnimationFrame(this.#rafId);
-      this.#rafId = null;
     }
   }
 }

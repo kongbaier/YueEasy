@@ -20,7 +20,7 @@ const tabs: { key: LoginTab; label: string }[] = [
   { key: "qr", label: "扫码登录" },
 ];
 
-export function LoginDialog() {
+export default function LoginDialog() {
   const [tab, setTab] = useState<LoginTab>("password");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");

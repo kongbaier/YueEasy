@@ -1,5 +1,5 @@
-export type { AudioEvents } from "./AudioEngine";
 export { AudioEngine } from "./AudioEngine";
+export type { PlayerEvents } from "./EventBus";
 export { PlayerCore } from "./PlayerCore";
 export { PlayQueue } from "./PlayQueue";
 export { StateMachine } from "./StateMachine";

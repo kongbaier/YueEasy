@@ -45,3 +45,28 @@ export interface LyricResponse {
     lyric: string;
   };
 }
+
+// NCM API Response: /likelist
+export interface LikeListResponse {
+  ids: number[];
+  checkPoint: number;
+  code: number;
+}
+
+// NCM API Response: /record/recent/song
+export interface RecentSongItem {
+  data: {
+    id: number;
+    name: string;
+    ar: Array<{ id: number; name: string }>;
+    al: { id: number; name: string; picUrl: string };
+    dt: number;
+  };
+  playTime: number;
+}
+
+export interface RecentSongResponse {
+  data: {
+    list: RecentSongItem[];
+  };
+}

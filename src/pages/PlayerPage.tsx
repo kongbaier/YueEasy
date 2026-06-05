@@ -1,9 +1,9 @@
-import { useMediaQuery } from "@base-ui/react/unstable-use-media-query";
 import { ChevronDown, Download, Ellipsis, Heart, Share2 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { Activity, useEffect, useState } from "react";
 import { Lyrics } from "@/components/lyrics/Lyrics";
 import { PlayerPageControls } from "@/components/player-page/PlayerPageControls";
 import { PlayerPageProgress } from "@/components/player-page/PlayerPageProgress";
+import { PlayerPageQueue } from "@/components/player-page/PlayerPageQueue";
 import { PlayerPageVolume } from "@/components/player-page/PlayerPageVolume";
 import { RatioContainer } from "@/components/RatioContainer";
 import WindowControls from "@/components/system/WindowControls";
@@ -11,12 +11,12 @@ import type { Track } from "@/core/player/types";
 import { cn } from "@/lib/utils";
 import { usePlayerPageStore, usePlayerStore } from "@/stores";
 
-export function PlayerPage() {
+export default function PlayerPage() {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const isOpen = usePlayerPageStore((s) => s.isOpen);
   const close = usePlayerPageStore((s) => s.close);
-  const isWide = useMediaQuery("(min-width: 1280px)", {});
   const [visible, setVisible] = useState(false);
+  const [showQueue, setShowQueue] = useState(false);
   const handleBack = () => {
     setVisible(false);
     setTimeout(() => close(), 300);
@@ -40,32 +40,36 @@ export function PlayerPage() {
     >
       <PlayerHeader handleBack={handleBack} />
 
-      <RatioContainer
-        className="flex-1 min-h-0"
-        ratio={isWide ? 16 / 9 : 4 / 3}
-      >
-        <div className="grid grid-cols-[1fr_1fr] overflow-hidden">
-          <div className="w-4/5 justify-self-center min-w-0 h-full min-h-0 flex flex-col items-center pb-4 gap-2 px-4">
-            {currentTrack && (
-              <React.Fragment>
-                <PlayerTitle currentTrack={currentTrack} />
+      <div className="grid grid-cols-[1fr_1fr] overflow-hidden">
+        <div className="w-4/5 max-w-100 justify-self-center min-w-0 h-full min-h-0 flex flex-col items-center pb-4 gap-2 px-4">
+          {currentTrack && (
+            <React.Fragment>
+              <PlayerTitle currentTrack={currentTrack} />
 
-                <PlayerCover currentTrack={currentTrack} />
+              <PlayerCover currentTrack={currentTrack} />
 
-                <PlayerPageProgress className="shrink-0 w-full" />
+              <PlayerPageProgress className="shrink-0 w-full" />
 
-                <PlayerPageControls className="w-full" />
+              <PlayerPageControls
+                className="w-full"
+                onToggleQueue={() => setShowQueue((v) => !v)}
+                showQueue={showQueue}
+              />
 
-                <PlayerPageVolume className="shrink-0 w-full" />
+              <PlayerPageVolume className="shrink-0 w-full" />
 
-                <PlayerMenu currentTrack={currentTrack} />
-              </React.Fragment>
-            )}
-          </div>
-
-          <Lyrics className="border-l border-border overflow-hidden" />
+              <PlayerMenu currentTrack={currentTrack} />
+            </React.Fragment>
+          )}
         </div>
-      </RatioContainer>
+
+        <Activity mode={showQueue ? "visible" : "hidden"}>
+          <PlayerPageQueue key="queue" />
+        </Activity>
+        <Activity mode={showQueue ? "hidden" : "visible"}>
+          <Lyrics className="overflow-hidden" />
+        </Activity>
+      </div>
     </div>
   );
 }
@@ -98,11 +102,11 @@ const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
 
 const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
   return (
-    <RatioContainer>
+    <RatioContainer className="my-1 lg:my-2 xl:my-3">
       {currentTrack.album?.picUrl ? (
         <img
           alt={currentTrack.album.name}
-          className={cn("w-full h-full object-cover", "rounded-lg shadow-lg")}
+          className={cn("w-full h-full object-cover", "rounded-lg shadow")}
           src={currentTrack.album.picUrl}
         />
       ) : (
@@ -117,19 +121,13 @@ const PlayerMenu = ({
 }: {
   currentTrack: Track;
 }) => {
-  // const toggleFavorite = usePlayerStore((s) => s.toggleFavorite);
   return (
     <div className="w-full shrink-0 h-1/10 flex justify-between items-center gap-1">
       <button
         className="flex items-center justify-center size-9 rounded hover:bg-surface-hover"
-        // onClick={() => toggleFavorite()}
         type="button"
       >
-        <Heart
-          className="size-5"
-          // fill={currentTrack.isFavorite ? "currentColor" : "none"}
-          strokeWidth={1.5}
-        />
+        <Heart className="size-5" strokeWidth={1.5} />
       </button>
       <button
         className="flex items-center justify-center size-9 rounded hover:bg-surface-hover opacity-40"

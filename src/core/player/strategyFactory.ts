@@ -6,7 +6,7 @@ import type { PlayMode } from "./types";
 
 export function createPlayModeStrategy(
   mode: PlayMode,
-): PlayModeStrategy<{ id: number; url: string }> {
+): PlayModeStrategy<{ id: number }> {
   switch (mode) {
     case "sequential":
       return new SequenceStrategy();

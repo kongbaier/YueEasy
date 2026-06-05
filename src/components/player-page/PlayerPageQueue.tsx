@@ -15,13 +15,15 @@ function QueueItem({
   onRemove: () => void;
 }) {
   return (
-    <button
+    <div
       className={cn(
         "group flex items-center gap-3 px-2 py-2 w-full text-left cursor-pointer transition-colors hover:bg-accent rounded-md",
         isCurrent && "bg-primary/10",
       )}
       onClick={onPlay}
-      type="button"
+      onKeyDown={() => onPlay}
+      role="option"
+      tabIndex={0}
     >
       <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
         {track.album?.picUrl ? (
@@ -54,7 +56,7 @@ function QueueItem({
       >
         <Trash2 className="size-3.5" />
       </button>
-    </button>
+    </div>
   );
 }
 
@@ -62,7 +64,7 @@ export function PlayerPageQueue() {
   const queue = usePlayerStore((s) => s.queue);
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
-  const play = usePlayerStore((s) => s.play);
+  const playFromIndex = usePlayerStore((s) => s.playFromIndex);
   const listRef = useRef<HTMLDivElement>(null);
 
   const currentIndex = currentTrack
@@ -98,12 +100,12 @@ export function PlayerPageQueue() {
           <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto" ref={listRef}>
+        <div className="flex-1 space-y-1 overflow-y-auto" ref={listRef}>
           {queue.map((track, index) => (
             <QueueItem
               isCurrent={currentTrack?.id === track.id}
               key={track.id}
-              onPlay={() => play(track)}
+              onPlay={() => playFromIndex(index)}
               onRemove={() => removeFromQueue(index)}
               track={track}
             />

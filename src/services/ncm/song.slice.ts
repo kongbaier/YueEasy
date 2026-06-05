@@ -1,13 +1,17 @@
 import { ncmApi } from "./api";
 import type {
+  LikeListResponse,
   LyricResponse,
+  RecentSongResponse,
   SearchResponse,
   SongDetailResponse,
   SongUrlResponse,
 } from "./types";
 
 export type {
+  LikeListResponse,
   LyricResponse,
+  RecentSongResponse,
   SearchResponse,
   SongDetailResponse,
   SongUrlResponse,
@@ -32,4 +36,13 @@ export const songSlice = {
     ncmApi<SongDetailResponse>("song_detail", { ids: ids.join(",") }),
 
   lyric: (id: number) => ncmApi<LyricResponse>("lyric", { id: String(id) }),
+
+  like: (id: number, like = true) =>
+    ncmApi<unknown>("like", { id: String(id), like: like ? "true" : "false" }),
+
+  likeList: (uid: number) =>
+    ncmApi<LikeListResponse>("likelist", { uid: String(uid) }),
+
+  recentSong: (uid: number) =>
+    ncmApi<RecentSongResponse>("record/recent/song", { uid: String(uid) }),
 };

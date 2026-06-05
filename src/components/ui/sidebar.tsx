@@ -32,6 +32,24 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
+function getSavedSidebarWidth(): string {
+  try {
+    const saved = localStorage.getItem("sidebar_width");
+    if (saved) return `${saved}px`;
+  } catch {
+    // localStorage unavailable
+  }
+  return SIDEBAR_WIDTH;
+}
+
+function saveSidebarWidth(width: number) {
+  try {
+    localStorage.setItem("sidebar_width", String(Math.round(width)));
+  } catch {
+    // localStorage unavailable
+  }
+}
+
 type SidebarContextProps = {
   state: "expanded" | "collapsed";
   open: boolean;
@@ -137,7 +155,7 @@ function SidebarProvider({
         data-slot="sidebar-wrapper"
         style={
           {
-            "--sidebar-width": SIDEBAR_WIDTH,
+            "--sidebar-width": getSavedSidebarWidth(),
             "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
             ...style,
           } as React.CSSProperties
@@ -326,7 +344,10 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
     document.body.style.userSelect = "";
     // restore transitions
     if (gapEl.current) gapEl.current.style.transition = "";
-    if (containerEl.current) containerEl.current.style.transition = "";
+    if (containerEl.current) {
+      containerEl.current.style.transition = "";
+      saveSidebarWidth(containerEl.current.getBoundingClientRect().width);
+    }
   }, [onMouseMove]);
 
   const handleMouseDown = React.useCallback(

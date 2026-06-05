@@ -1,132 +1,136 @@
 import { useMediaQuery } from "@base-ui/react/unstable-use-media-query";
-import { useQuery } from "@tanstack/react-query";
-import React from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import React, { Suspense } from "react";
 import { HorizontalScrollSection } from "@/components/HorizontalScrollSection";
 import { ParallaxCarousel } from "@/components/ParallaxCarousel";
 import { PlaylistCard, toPlaylistDisplay } from "@/components/PlaylistCard";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { ncm } from "@/services/ncm";
 
-export function Home() {
-  const bannerQuery = useQuery({
+function BannerSection() {
+  const { data: banners } = useSuspenseQuery({
     queryKey: ["banner"],
-    queryFn: () => ncm.banner().then((r) => r.banners),
-  });
-
-  const personalizedQuery = useQuery({
-    queryKey: ["personalizedPlaylist"],
-    queryFn: () =>
-      ncm.personalizedPlaylist(20).then((r) => r.result.map(toPlaylistDisplay)),
-  });
-
-  const topPlaylistQuery = useQuery({
-    queryKey: ["topPlaylist", "全部"],
     queryFn: () =>
       ncm
-        .topPlaylist("全部", 20)
-        .then((r) => r.playlists.map(toPlaylistDisplay)),
+        .banner()
+        .then((r) => r.banners)
+        .catch(() => []),
   });
 
   const isWide = useMediaQuery("(min-width: 1024px)", {});
 
-  const isLoading =
-    bannerQuery.isPending ||
-    personalizedQuery.isPending ||
-    topPlaylistQuery.isPending;
-
-  if (isLoading) {
-    return <div className="p-6 text-sm text-muted-foreground">加载中...</div>;
-  }
-
-  if (
-    bannerQuery.isError &&
-    personalizedQuery.isError &&
-    topPlaylistQuery.isError
-  ) {
-    return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold">发现音乐</h1>
-        <p className="mt-4 text-sm text-red-500">加载失败</p>
+  return (
+    <div className="grid grid-rows-2 grid-cols-5 w-full aspect-9/5 lg:aspect-3/1 gap-2 md:gap-3 lg:gap-4">
+      <div className="row-span-2 col-span-5 lg:col-span-3">
+        <ParallaxCarousel
+          className="rounded-xl shadow-lg"
+          items={banners}
+          parallaxSpeed={0.25}
+        >
+          {(banner, _index, parallaxOffset) => (
+            <button className="w-full h-full overflow-hidden" type="button">
+              <img
+                alt={banner.typeTitle}
+                className={cn(
+                  "block inset-0",
+                  "transition-transform duration-700 ease-out",
+                )}
+                src={banner.bigImageUrl}
+                style={{
+                  transform: `translateX(calc( ${parallaxOffset * 90}%))`,
+                }}
+              />
+              <span className="absolute right-2 top-2 rounded px-2 py-1 text-xs leading-3 bg-background/50 backdrop-blur-xl text-foreground">
+                {banner.typeTitle}
+              </span>
+            </button>
+          )}
+        </ParallaxCarousel>
       </div>
-    );
-  }
 
-  const banners = bannerQuery.data ?? [];
-  const playlists = personalizedQuery.data ?? [];
-  const topPlaylists = topPlaylistQuery.data ?? [];
+      {isWide && (
+        <React.Fragment>
+          <div className="row-span-1 col-span-2 bg-amber-300 rounded-xl shadow-lg block" />
+          <div className="row-span-1 col-span-1 bg-emerald-400 rounded-xl shadow-lg block" />
+          <div className="row-span-1 col-span-1 bg-pink-400 rounded-xl shadow-lg block" />
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+
+function BannerFallback() {
+  return (
+    <div className="grid grid-rows-2 grid-cols-5 w-full aspect-9/5 lg:aspect-3/1 gap-2 md:gap-3 lg:gap-4">
+      <div className="row-span-2 col-span-5 lg:col-span-3">
+        <ParallaxCarousel className="rounded-xl" items={[]} loading />
+      </div>
+      <div className="hidden lg:contents">
+        <Skeleton className="row-span-1 col-span-2 rounded-xl" shimmer />
+        <Skeleton className="row-span-1 col-span-1 rounded-xl" shimmer />
+        <Skeleton className="row-span-1 col-span-1 rounded-xl" shimmer />
+      </div>
+    </div>
+  );
+}
+
+function PersonalizedSection() {
+  const { data: playlists } = useSuspenseQuery({
+    queryKey: ["personalizedPlaylist"],
+    queryFn: () =>
+      ncm
+        .personalizedPlaylist(20)
+        .then((r) => r.result.map(toPlaylistDisplay))
+        .catch(() => []),
+  });
 
   return (
+    <HorizontalScrollSection title="推荐歌单" titleLink="/discover/personalized">
+      {playlists.map((pl) => (
+        <PlaylistCard key={pl.id} playlist={pl} showPlayCount />
+      ))}
+    </HorizontalScrollSection>
+  );
+}
+
+function TopPlaylistSection() {
+  const { data: topPlaylists } = useSuspenseQuery({
+    queryKey: ["topPlaylist", "全部"],
+    queryFn: () =>
+      ncm
+        .topPlaylist("全部", 20)
+        .then((r) => r.playlists.map(toPlaylistDisplay))
+        .catch(() => []),
+  });
+
+  return (
+    <HorizontalScrollSection title="热门歌单" titleLink="/discover/toplist">
+      {topPlaylists.map((pl) => (
+        <PlaylistCard key={pl.id} playlist={pl} />
+      ))}
+    </HorizontalScrollSection>
+  );
+}
+
+export default function Home() {
+  return (
     <div className="space-y-8 px-6 pb-3">
-      <div className="grid grid-rows-2 grid-cols-5 w-full aspect-9/5 lg:aspect-3/1  gap-2 md:gap-3 lg:gap-4">
-        <div className="row-span-2 col-span-5 lg:col-span-3">
-          <ParallaxCarousel
-            className="rounded-xl shadow-lg"
-            items={banners}
-            parallaxSpeed={0.25}
-          >
-            {(banner, _index, parallaxOffset) => (
-              <button className="w-full h-full overflow-hidden" type="button">
-                <img
-                  alt={banner.typeTitle}
-                  className={cn(
-                    "block inset-0",
-                    "transition-transform duration-700 ease-out",
-                  )}
-                  src={banner.bigImageUrl}
-                  style={{
-                    transform: `translateX(calc( ${parallaxOffset * 90}%))`,
-                  }}
-                />
-                <span className="absolute right-2 top-2 rounded px-2 py-1 text-xs leading-3 bg-background/50 backdrop-blur-xl text-foreground">
-                  {banner.typeTitle}
-                </span>
-              </button>
-            )}
-          </ParallaxCarousel>
-        </div>
+      <Suspense fallback={<BannerFallback />}>
+        <BannerSection />
+      </Suspense>
 
-        {isWide && (
-          <React.Fragment>
-            <div className="row-span-1 col-span-2 bg-amber-300 rounded-xl shadow-lg block" />
-            <div className="row-span-1 col-span-1 bg-emerald-400 rounded-xl shadow-lg block" />
-            <div className="row-span-1 col-span-1 bg-pink-400 rounded-xl shadow-lg block" />
-          </React.Fragment>
-        )}
-
-        {/*<div className="hidden lg:flex lg:w-2/5 lg:flex-col lg:gap-3">
-          <QuickEntry
-            className="flex-1"
-            icon={Sparkles}
-            subtitle="每日歌曲推荐"
-            title="每日推荐"
-            to="/daily"
-          />
-          <div className="flex flex-1 gap-3">
-            <QuickEntry className="flex-1" icon={Antenna} title="私人雷达" />
-            <QuickEntry
-              className="flex-1"
-              icon={Radio}
-              onClick={handlePersonalFm}
-              title="私人漫游"
-            />
-          </div>
-        </div>*/}
-      </div>
-
-      <HorizontalScrollSection
-        title="推荐歌单"
-        titleLink="/discover/personalized"
+      <Suspense
+        fallback={<HorizontalScrollSection loading title="推荐歌单" />}
       >
-        {playlists.map((pl) => (
-          <PlaylistCard key={pl.id} playlist={pl} showPlayCount />
-        ))}
-      </HorizontalScrollSection>
+        <PersonalizedSection />
+      </Suspense>
 
-      <HorizontalScrollSection title="热门歌单" titleLink="/discover/toplist">
-        {topPlaylists.map((pl) => (
-          <PlaylistCard key={pl.id} playlist={pl} />
-        ))}
-      </HorizontalScrollSection>
+      <Suspense
+        fallback={<HorizontalScrollSection loading title="热门歌单" />}
+      >
+        <TopPlaylistSection />
+      </Suspense>
     </div>
   );
 }

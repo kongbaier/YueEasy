@@ -2,18 +2,36 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+
+const SKELETON_COUNT = 8;
+
+function CardSkeleton({ index }: { index: number }) {
+  return (
+    <div className="w-30 lg:w-36 xl:w-40 2xl:w-44 shrink-0 snap-start">
+      <Skeleton className="aspect-square w-full rounded-lg" shimmer />
+      <Skeleton
+        className="mt-2 h-4 w-3/4"
+        shimmer
+        style={{ animationDelay: `${index * 100}ms` }}
+      />
+    </div>
+  );
+}
 
 interface HorizontalScrollSectionProps {
   title: string;
   titleLink?: string;
-  children: ReactNode;
+  children?: ReactNode;
+  loading?: boolean;
 }
 
 export function HorizontalScrollSection({
   title,
   titleLink,
   children,
+  loading,
 }: HorizontalScrollSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canLeft, setCanLeft] = useState(false);
@@ -95,7 +113,11 @@ export function HorizontalScrollSection({
         className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden"
         ref={scrollRef}
       >
-        {children}
+        {loading
+          ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+              <CardSkeleton index={i} key={i} />
+            ))
+          : children}
       </div>
     </section>
   );

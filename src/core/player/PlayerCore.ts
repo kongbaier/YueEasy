@@ -1,20 +1,24 @@
-import type { AudioEvents } from "./AudioEngine";
+import { EventEmitter } from "@/lib/EventEmitter";
 import { AudioEngine } from "./AudioEngine";
+import type { PlayerEvents } from "./EventBus";
 import { PlayQueue } from "./PlayQueue";
 import { StateMachine } from "./StateMachine";
 import type { PlayModeStrategy } from "./strategy/Strategy";
 import type { PlayerState } from "./types";
 
-export class PlayerCore<T extends { id: number; url: string }> {
+export class PlayerCore<T extends { id: number }> {
   #queue: PlayQueue<T>;
   #engine: AudioEngine;
   #strategy: PlayModeStrategy<T>;
   #stateMachine: StateMachine;
+  #eventBus: EventEmitter<PlayerEvents<T>>;
+
   constructor(mode: PlayModeStrategy<T>) {
     this.#queue = new PlayQueue();
     this.#engine = new AudioEngine();
     this.#stateMachine = new StateMachine();
     this.#strategy = mode;
+    this.#eventBus = new EventEmitter();
 
     this.#bindEvents();
   }
@@ -24,15 +28,25 @@ export class PlayerCore<T extends { id: number; url: string }> {
   }
 
   set index(v: number) {
+    if (this.#queue.activeIndex === v) return;
     this.#queue.activeIndex = v;
+    this.#emitTrackChange();
   }
 
   get state(): PlayerState {
     return this.#stateMachine.state;
   }
 
+  get stateMachine() {
+    return this.#stateMachine;
+  }
+
   #transition(to: PlayerState): boolean {
     return this.#stateMachine.transition(to);
+  }
+
+  #emitTrackChange() {
+    this.#eventBus.emit("trackChange", this.#queue.current);
   }
 
   initialize(prefs: {
@@ -45,39 +59,43 @@ export class PlayerCore<T extends { id: number; url: string }> {
     this.mode = prefs.mode;
   }
 
-  load() {
-    const track = this.currentTrack;
-    if (!track) return;
-    if (!this.#transition("loading")) return;
+  #bindEvents() {
+    this.#engine.on("ended", () => {
+      if (!this.#transition("ended")) return;
+      this.#queue.activeIndex = this.#strategy.ended(this.#queue.context);
+      this.#emitTrackChange();
+    });
 
-    this.#engine.load(track.url);
+    this.#engine.on("timeupdate", (currentTime, _duration) => {
+      this.#eventBus.emit("timeUpdate", currentTime);
+    });
+
+    this.#engine.on("loadedmetadata", (duration) => {
+      this.#eventBus.emit("durationChange", duration);
+    });
+
+    this.#stateMachine.onTransition = (state) => {
+      this.#eventBus.emit("stateChange", state);
+    };
   }
 
-  #bindEvents() {
-    this.#engine.on("canPlay", () => {
-      this.#transition("ready");
+  async load(url: string) {
+    this.#transition("loading");
+    this.#engine.load(url);
+
+    await new Promise<void>((resolve) => {
+      const off = this.#engine.on("canPlay", () => {
+        off();
+        resolve();
+      });
     });
-    this.#engine.on("ended", () => {
-      this.#transition("ended");
-      this.ended();
-    });
+    this.#transition("ready");
   }
 
   async play() {
     const track = this.currentTrack;
     if (!track) return;
-
-    if (this.#engine.currentSrc !== track.url) {
-      this.load();
-      if (this.state === "loading") {
-        await new Promise<void>((resolve) => {
-          const off = this.#engine.on("canPlay", () => {
-            off();
-            resolve();
-          });
-        });
-      }
-    }
+    if (this.state === "playing") return;
 
     try {
       await this.#engine.play();
@@ -92,22 +110,21 @@ export class PlayerCore<T extends { id: number; url: string }> {
     this.#transition("paused");
   }
 
+  stop() {
+    this.#engine.pause();
+    this.#transition("idle");
+  }
+
   next() {
+    if (this.#queue.isEmpty) return;
     this.#queue.activeIndex = this.#strategy.next(this.#queue.context);
-    this.load();
-    this.play();
+    this.#emitTrackChange();
   }
 
   prev() {
+    if (this.#queue.isEmpty) return;
     this.#queue.activeIndex = this.#strategy.prev(this.#queue.context);
-    this.load();
-    this.play();
-  }
-
-  ended() {
-    this.#queue.activeIndex = this.#strategy.ended(this.#queue.context);
-    this.load();
-    this.play();
+    this.#emitTrackChange();
   }
 
   seek(time: number) {
@@ -133,8 +150,12 @@ export class PlayerCore<T extends { id: number; url: string }> {
   }
 
   replace(tracks: T[]) {
+    const prev = this.#queue.current;
     this.#queue.replace(tracks);
     this.#strategy.init?.(this.#queue.context);
+    if (prev !== this.#queue.current) {
+      this.#emitTrackChange();
+    }
   }
 
   add(track: T) {
@@ -148,17 +169,22 @@ export class PlayerCore<T extends { id: number; url: string }> {
   }
 
   remove(id: string | number) {
+    const prev = this.#queue.current;
     if (!this.#queue.remove(id)) return;
     this.#strategy.init?.(this.#queue.context);
+    if (prev !== this.#queue.current) {
+      this.#emitTrackChange();
+    }
   }
 
   setQueue(tracks: T[], startIndex = 0) {
     this.#queue.set(tracks, startIndex);
     this.#strategy.init?.(this.#queue.context);
+    this.#emitTrackChange();
   }
 
-  on<K extends keyof AudioEvents>(event: K, handler: AudioEvents[K]) {
-    return this.#engine.on(event, handler);
+  on<K extends keyof PlayerEvents<T>>(event: K, handler: PlayerEvents<T>[K]) {
+    return this.#eventBus.on(event, handler);
   }
 
   get muted() {

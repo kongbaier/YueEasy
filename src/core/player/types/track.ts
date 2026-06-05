@@ -5,7 +5,6 @@ export interface Track {
   artists: TrackArtist[];
   album: TrackAlbum;
   duration: number;
-  url: string;
 }
 
 export interface TrackArtist {

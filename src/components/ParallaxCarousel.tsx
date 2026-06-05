@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /** Compute shortest circular path direction from `from` to `to`. */
 function shortestDir(from: number, to: number, len: number): 1 | -1 {
@@ -48,6 +49,8 @@ interface ParallaxCarouselProps<T> {
   parallaxSpeed?: number;
   /** Key extractor for stable dots. Defaults to index. */
   getKey?: (item: T, index: number) => string;
+  /** Show shimmer skeleton placeholder while data loads. */
+  loading?: boolean;
 }
 
 const DURATION_MS = 700;
@@ -58,7 +61,17 @@ export function ParallaxCarousel<T>({
   className,
   parallaxSpeed = 0,
   getKey,
+  loading,
 }: ParallaxCarouselProps<T>) {
+  if (loading) {
+    return (
+      <Skeleton
+        className={cn("h-full w-full rounded-xl", className)}
+        shimmer
+      />
+    );
+  }
+
   const len = items.length;
 
   const [current, setCurrent] = useState(0);

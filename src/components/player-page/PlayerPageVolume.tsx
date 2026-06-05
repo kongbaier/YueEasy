@@ -1,5 +1,6 @@
 import { Volume2, VolumeX } from "lucide-react";
 import { useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { usePlayerStore } from "@/stores";
 
 export function PlayerPageVolume({ className }: { className?: string }) {
@@ -46,13 +47,14 @@ export function PlayerPageVolume({ className }: { className?: string }) {
 
   return (
     <div className={`flex items-center gap-1 ${className ?? ""}`}>
-      <button
-        className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+      <Button
+        className="text-foreground hover:bg-transparent hover:text-primary"
         onClick={toggleMute}
-        type="button"
+        size="icon"
+        variant="ghost"
       >
         <VolumeX className="size-4" />
-      </button>
+      </Button>
       <div
         className="flex-1 h-5 cursor-pointer flex items-center"
         onPointerDown={handlePointerDown}
@@ -68,13 +70,14 @@ export function PlayerPageVolume({ className }: { className?: string }) {
           />
         </div>
       </div>
-      <button
-        className="rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+      <Button
+        className="text-foreground hover:bg-transparent hover:text-primary"
         onClick={toggleMute}
-        type="button"
+        size="icon"
+        variant="ghost"
       >
         <Volume2 className="size-4" />
-      </button>
+      </Button>
     </div>
   );
 }

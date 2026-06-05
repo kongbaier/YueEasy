@@ -67,10 +67,9 @@ export function VolumeControl() {
         onPointerLeave={handleControlLeave}
       >
         <Button
-          className="border-none"
+          className="text-foreground hover:bg-transparent hover:text-primary"
           onClick={toggleMute}
-          size="icon-sm"
-          type="button"
+          size="icon"
           variant="ghost"
         >
           {displayVolume === 0 ? (

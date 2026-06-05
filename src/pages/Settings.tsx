@@ -1,6 +1,6 @@
 import { useUiStore } from "@/stores";
 
-export function Settings() {
+export default function Settings() {
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
 

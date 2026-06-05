@@ -1,68 +1,12 @@
-import { Crown, Play } from "lucide-react";
+import { Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { TrackRow } from "@/components/track/TrackRow";
 import type { Playlist as PlaylistType, SongRef } from "@/core/playlist/types";
 import { getPlaylistDetail } from "@/services/playlist";
-import { resolveTrack } from "@/services/track";
 import { usePlayerStore } from "@/stores";
 
-function TrackRow({
-  track,
-  index,
-  onPlay,
-}: {
-  track: SongRef;
-  index: number;
-  onPlay: (t: SongRef) => void;
-}) {
-  return (
-    // biome-ignore lint/a11y/useSemanticElements: compound widget with nested button
-    <div
-      className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
-      onDoubleClick={() => onPlay(track)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") onPlay(track);
-      }}
-      role="button"
-      tabIndex={0}
-    >
-      <span className="w-8 text-center text-xs text-muted-foreground">
-        {String(index + 1).padStart(2, "0")}
-      </span>
-      {track.album.picUrl && (
-        <img
-          alt={track.album.name}
-          className="h-9 w-9 shrink-0 rounded object-cover"
-          src={track.album.picUrl}
-        />
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="flex items-center gap-1 min-w-0 font-medium">
-          <span className="truncate">{track.name}</span>
-          {track.fee === 1 && (
-            <Crown className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-          )}
-        </p>
-        <p className="truncate text-xs text-muted-foreground">
-          {track.artists.map((a) => a.name).join("/")}
-        </p>
-      </div>
-      <button
-        className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-        onClick={(e) => {
-          e.stopPropagation();
-          onPlay(track);
-        }}
-        title="播放"
-        type="button"
-      >
-        <Play className="h-4 w-4" />
-      </button>
-    </div>
-  );
-}
-
-export function Playlist() {
+export default function Playlist() {
   const { id } = useParams<{ id: string }>();
   const [playlist, setPlaylist] = useState<PlaylistType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,8 +43,7 @@ export function Playlist() {
   const handlePlay = async (track: SongRef) => {
     setPlayError("");
     try {
-      const resolved = await resolveTrack(track);
-      play(resolved);
+      await play(track);
     } catch (e) {
       setPlayError(e instanceof Error ? e.message : "播放失败");
     }
@@ -112,8 +55,7 @@ export function Playlist() {
     setPlayError("");
     for (const track of tracks) {
       try {
-        const resolved = await resolveTrack(track);
-        play(resolved);
+        await play(track);
         return;
       } catch {
         /* try next */
