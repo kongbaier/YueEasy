@@ -6,8 +6,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 /** Compute shortest circular path direction from `from` to `to`. */
 function shortestDir(from: number, to: number, len: number): 1 | -1 {
@@ -65,10 +65,7 @@ export function ParallaxCarousel<T>({
 }: ParallaxCarouselProps<T>) {
   if (loading) {
     return (
-      <Skeleton
-        className={cn("h-full w-full rounded-xl", className)}
-        shimmer
-      />
+      <Skeleton className={cn("h-full w-full rounded-xl", className)} shimmer />
     );
   }
 

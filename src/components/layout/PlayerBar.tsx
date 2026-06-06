@@ -12,6 +12,7 @@ import { useShallow } from "zustand/shallow";
 import { ImageWithFade } from "@/components/ui/image";
 import { usePlayerAction } from "@/hooks/usePlayerAction";
 import { useProgress } from "@/hooks/useProgress";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { ncm } from "@/services/ncm";
 import {
@@ -153,14 +154,25 @@ const PlayerMenu = () => {
   const handleLike = useCallback(() => {
     if (!currentTrack) return;
     if (!isLoggedIn) {
+      toast.error("请先登录");
       setLoginDialogOpen(true);
       return;
     }
     const next = !isLiked;
     toggleLike(currentTrack.id);
-    ncm.like(currentTrack.id, next).catch(() => {
-      toggleLike(currentTrack.id);
-    });
+    ncm
+      .like(currentTrack.id, next)
+      .then(() => {
+        toast.success(
+          next
+            ? `已收藏 ${currentTrack.name}`
+            : `已取消收藏 ${currentTrack.name}`,
+        );
+      })
+      .catch(() => {
+        toggleLike(currentTrack.id);
+        toast.error("操作失败，请重试");
+      });
   }, [isLoggedIn, isLiked, currentTrack, toggleLike, setLoginDialogOpen]);
 
   return (
@@ -172,10 +184,7 @@ const PlayerMenu = () => {
           size="icon"
           variant="ghost"
         >
-          <Heart
-            className="size-4"
-            fill={isLiked ? "#ef4444" : "none"}
-          />
+          <Heart className="size-4" fill={isLiked ? "#ef4444" : "none"} />
         </Button>
       )}
       <Button

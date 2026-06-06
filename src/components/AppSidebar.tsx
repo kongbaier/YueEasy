@@ -190,8 +190,7 @@ export function AppSidebar() {
               <SidebarGroupContent className="max-h-48 overflow-y-auto">
                 <SidebarMenu className="space-y-0.5">
                   {createdPlaylists.map((p) => {
-                    const isActive =
-                      location.pathname === `/playlist/${p.id}`;
+                    const isActive = location.pathname === `/playlist/${p.id}`;
                     return (
                       <SidebarMenuItem key={p.id}>
                         <SidebarMenuButton
@@ -229,8 +228,7 @@ export function AppSidebar() {
               <SidebarGroupContent className="max-h-48 overflow-y-auto">
                 <SidebarMenu className="space-y-0.5">
                   {favoritedPlaylists.map((p) => {
-                    const isActive =
-                      location.pathname === `/playlist/${p.id}`;
+                    const isActive = location.pathname === `/playlist/${p.id}`;
                     return (
                       <SidebarMenuItem key={p.id}>
                         <SidebarMenuButton

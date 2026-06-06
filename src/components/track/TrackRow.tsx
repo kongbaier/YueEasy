@@ -1,5 +1,5 @@
-import { useCallback } from "react";
 import { Crown, Heart, Play, SkipForward } from "lucide-react";
+import { useCallback } from "react";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -9,8 +9,14 @@ import {
 } from "@/components/ui/context-menu";
 import { ImageWithFade } from "@/components/ui/image";
 import type { SongRef } from "@/core/playlist/types";
+import { toast } from "@/lib/toast";
 import { ncm } from "@/services/ncm";
-import { useLikeStore, usePlayerStore } from "@/stores";
+import {
+  useAuthStore,
+  useLikeStore,
+  usePlayerStore,
+  useUiStore,
+} from "@/stores";
 
 interface TrackRowProps {
   track: SongRef;
@@ -28,18 +34,40 @@ export function TrackRow({
   const playNext = usePlayerStore((s) => s.playNext);
   const isLiked = useLikeStore((s) => s.isLiked(track.id));
   const toggleLike = useLikeStore((s) => s.toggle);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
 
   const handlePlayNext = () => {
     playNext(track);
   };
 
   const handleFavorite = useCallback(() => {
+    if (!isLoggedIn) {
+      toast.error("请先登录");
+      setLoginDialogOpen(true);
+      return;
+    }
     const next = !isLiked;
     toggleLike(track.id);
-    ncm.like(track.id, next).catch(() => {
-      toggleLike(track.id);
-    });
-  }, [track.id, isLiked, toggleLike]);
+    ncm
+      .like(track.id, next)
+      .then(() => {
+        toast.success(
+          next ? `已收藏 ${track.name}` : `已取消收藏 ${track.name}`,
+        );
+      })
+      .catch(() => {
+        toggleLike(track.id);
+        toast.error("操作失败，请重试");
+      });
+  }, [
+    track.id,
+    track.name,
+    isLiked,
+    isLoggedIn,
+    toggleLike,
+    setLoginDialogOpen,
+  ]);
 
   return (
     <ContextMenu>
@@ -97,10 +125,7 @@ export function TrackRow({
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={handleFavorite}>
-          <Heart
-            className="h-4 w-4"
-            fill={isLiked ? "#ef4444" : "none"}
-          />
+          <Heart className="h-4 w-4" fill={isLiked ? "#ef4444" : "none"} />
           {isLiked ? "取消收藏" : "收藏"}
         </ContextMenuItem>
       </ContextMenuContent>

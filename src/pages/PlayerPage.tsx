@@ -9,6 +9,7 @@ import { RatioContainer } from "@/components/RatioContainer";
 import WindowControls from "@/components/system/WindowControls";
 import { ImageWithFade } from "@/components/ui/image";
 import type { Track } from "@/core/player/types";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { ncm } from "@/services/ncm";
 import {
@@ -154,15 +155,33 @@ const PlayerMenu = ({ currentTrack }: { currentTrack: Track }) => {
 
   const handleLike = useCallback(() => {
     if (!isLoggedIn) {
+      toast.error("请先登录");
       setLoginDialogOpen(true);
       return;
     }
     const next = !isLiked;
     toggleLike(currentTrack.id);
-    ncm.like(currentTrack.id, next).catch(() => {
-      toggleLike(currentTrack.id); // rollback on failure
-    });
-  }, [isLoggedIn, isLiked, currentTrack.id, toggleLike, setLoginDialogOpen]);
+    ncm
+      .like(currentTrack.id, next)
+      .then(() => {
+        toast.success(
+          next
+            ? `已收藏 ${currentTrack.name}`
+            : `已取消收藏 ${currentTrack.name}`,
+        );
+      })
+      .catch(() => {
+        toggleLike(currentTrack.id);
+        toast.error("操作失败，请重试");
+      });
+  }, [
+    isLoggedIn,
+    isLiked,
+    currentTrack.id,
+    currentTrack.name,
+    toggleLike,
+    setLoginDialogOpen,
+  ]);
 
   return (
     <div className="w-full shrink-0 h-1/10 flex justify-between items-center gap-1">

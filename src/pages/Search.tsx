@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { TrackRow } from "@/components/track/TrackRow";
 import type { SongRef } from "@/core/playlist/types";
 import { useDebounce } from "@/hooks/useDebounce";
+import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
 import { usePlayerStore } from "@/stores";
 
@@ -12,7 +13,6 @@ export default function Search() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [playError, setPlayError] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
   const play = usePlayerStore((s) => s.play);
 
@@ -52,16 +52,14 @@ export default function Search() {
   }, [debouncedKeyword]);
 
   const handlePlay = async (track: SongRef) => {
-    setPlayError("");
     try {
       await play(track);
     } catch (e) {
-      setPlayError(e instanceof Error ? e.message : "播放失败");
+      toast.error(e instanceof Error ? e.message : "播放失败");
     }
   };
 
   const handlePlayAll = async () => {
-    setPlayError("");
     for (const track of results) {
       try {
         await play(track);
@@ -70,7 +68,7 @@ export default function Search() {
         /* try next */
       }
     }
-    setPlayError("没有可播放的歌曲");
+    toast.error("没有可播放的歌曲");
   };
 
   return (
@@ -107,10 +105,6 @@ export default function Search() {
                 播放全部
               </button>
             </div>
-
-            {playError && (
-              <p className="mb-3 text-sm text-red-500">{playError}</p>
-            )}
 
             <div className="space-y-0.5">
               {results.map((track, index) => (

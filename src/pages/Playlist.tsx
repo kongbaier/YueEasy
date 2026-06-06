@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { TrackRow } from "@/components/track/TrackRow";
 import { ImageWithFade } from "@/components/ui/image";
 import type { Playlist as PlaylistType, SongRef } from "@/core/playlist/types";
+import { toast } from "@/lib/toast";
 import { getPlaylistDetail } from "@/services/playlist";
 import { usePlayerStore } from "@/stores";
 
@@ -12,7 +13,6 @@ export default function Playlist() {
   const [playlist, setPlaylist] = useState<PlaylistType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [playError, setPlayError] = useState("");
   const play = usePlayerStore((s) => s.play);
 
   useEffect(() => {
@@ -42,18 +42,16 @@ export default function Playlist() {
   }, [id]);
 
   const handlePlay = async (track: SongRef) => {
-    setPlayError("");
     try {
       await play(track);
     } catch (e) {
-      setPlayError(e instanceof Error ? e.message : "播放失败");
+      toast.error(e instanceof Error ? e.message : "播放失败");
     }
   };
 
   const handlePlayAll = async () => {
     const tracks = playlist?.tracks;
     if (!tracks?.length) return;
-    setPlayError("");
     for (const track of tracks) {
       try {
         await play(track);
@@ -62,7 +60,7 @@ export default function Playlist() {
         /* try next */
       }
     }
-    setPlayError("没有可播放的歌曲");
+    toast.error("没有可播放的歌曲");
   };
 
   if (loading) {
@@ -110,9 +108,6 @@ export default function Playlist() {
               {playlist.trackCount} 首
             </span>
           </div>
-          {playError && (
-            <p className="mt-2 text-xs text-red-500">{playError}</p>
-          )}
         </div>
       </div>
 

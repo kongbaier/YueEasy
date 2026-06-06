@@ -1,14 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Play } from "lucide-react";
-import { useState } from "react";
 import { TrackRow } from "@/components/track/TrackRow";
 import type { SongRef } from "@/core/playlist/types";
+import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
 import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
 
 export default function DailyRecommend() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const [playError, setPlayError] = useState("");
   const play = usePlayerStore((s) => s.play);
 
   const {
@@ -27,16 +26,14 @@ export default function DailyRecommend() {
   });
 
   const handlePlay = async (track: SongRef) => {
-    setPlayError("");
     try {
       await play(track);
     } catch (e) {
-      setPlayError(e instanceof Error ? e.message : "播放失败");
+      toast.error(e instanceof Error ? e.message : "播放失败");
     }
   };
 
   const handlePlayAll = async () => {
-    setPlayError("");
     for (const song of songs) {
       try {
         await play(song);
@@ -45,7 +42,7 @@ export default function DailyRecommend() {
         /* try next */
       }
     }
-    setPlayError("没有可播放的歌曲");
+    toast.error("没有可播放的歌曲");
   };
 
   const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
@@ -97,10 +94,6 @@ export default function DailyRecommend() {
               播放全部
             </button>
           </div>
-
-          {playError && (
-            <p className="mt-2 text-sm text-red-500">{playError}</p>
-          )}
 
           <div className="mt-3 space-y-0.5">
             {songs.map((track, index) => (

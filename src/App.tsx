@@ -1,5 +1,6 @@
 import { lazy } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
 import { MainLayout } from "./components/layout/MainLayout";
 import { useAuthRestore } from "./hooks/useAuthRestore";
 import { useLikeInit } from "./hooks/useLikeInit";
@@ -42,6 +43,13 @@ function App() {
       </Routes>
       <PlayerPage />
       <LoginDialog />
+      <Toaster
+        position="top-right"
+        richColors
+        style={{
+          top: "2.5rem",
+        }}
+      />
     </BrowserRouter>
   );
 }

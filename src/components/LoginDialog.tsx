@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { ImageWithFade } from "@/components/ui/image";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { ncm, setNcmCookie } from "@/services/ncm";
 import { useAuthStore, useUiStore } from "@/stores";
@@ -63,6 +64,7 @@ export default function LoginDialog() {
         avatarUrl: profile?.avatarUrl ?? "",
       });
       setOpen(false);
+      toast.success(`登录成功，欢迎 ${profile?.nickname || "回来"}`);
       navigate("/");
     },
     [setAuth, setOpen, navigate],

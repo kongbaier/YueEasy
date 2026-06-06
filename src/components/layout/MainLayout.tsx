@@ -1,6 +1,6 @@
+import KeepAliveRouteOutlet from "keepalive-for-react-router";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import KeepAliveRouteOutlet from "keepalive-for-react-router";
 import { AppSidebar } from "@/components/AppSidebar";
 import { LenisScroll } from "@/components/lenis-scroll";
 import WindowControls from "@/components/system/WindowControls";

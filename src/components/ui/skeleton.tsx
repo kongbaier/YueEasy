@@ -20,5 +20,5 @@ function Skeleton({ className, shimmer, ...props }: SkeletonProps) {
   );
 }
 
-export { Skeleton };
 export type { SkeletonProps };
+export { Skeleton };

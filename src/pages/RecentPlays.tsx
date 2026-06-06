@@ -2,6 +2,7 @@ import { Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TrackRow } from "@/components/track/TrackRow";
 import type { SongRef } from "@/core/playlist/types";
+import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
 import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
 
@@ -14,7 +15,6 @@ export default function RecentPlays() {
   const [tracks, setTracks] = useState<SongRef[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [playError, setPlayError] = useState("");
 
   useEffect(() => {
     if (!isLoggedIn || !userId) return;
@@ -44,11 +44,10 @@ export default function RecentPlays() {
   }, [userId, isLoggedIn]);
 
   const handlePlay = async (track: SongRef) => {
-    setPlayError("");
     try {
       await play(track);
     } catch (e) {
-      setPlayError(e instanceof Error ? e.message : "播放失败");
+      toast.error(e instanceof Error ? e.message : "播放失败");
     }
   };
 
@@ -79,9 +78,6 @@ export default function RecentPlays() {
   return (
     <div className="p-6">
       <h1 className="mb-4 text-2xl font-bold">最近播放</h1>
-      {playError && (
-        <p className="mb-2 text-xs text-red-500">{playError}</p>
-      )}
       {tracks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-2">
           <Clock className="h-8 w-8 text-muted-foreground" />
