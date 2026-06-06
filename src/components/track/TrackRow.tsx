@@ -8,8 +8,10 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { ImageWithFade } from "@/components/ui/image";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
 import { toast } from "@/lib/toast";
+import { cn, getNcmImageUrl } from "@/lib/utils";
 import { ncm } from "@/services/ncm";
 import {
   useAuthStore,
@@ -72,12 +74,13 @@ export function TrackRow({
   return (
     <ContextMenu>
       <ContextMenuTrigger
-        className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent w-full text-left"
+        className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent w-full text-left content-visibility-auto"
         onDoubleClick={() => onPlay(track)}
         onKeyDown={(e) => {
           if (e.key === "Enter") onPlay(track);
         }}
         role="button"
+        style={{ containIntrinsicSize: "auto 52px" }}
         tabIndex={0}
       >
         <span className="w-8 text-center text-xs text-muted-foreground">
@@ -87,7 +90,7 @@ export function TrackRow({
           <ImageWithFade
             alt={track.album.name}
             className="h-9 w-9 shrink-0 rounded object-cover"
-            src={track.album.picUrl}
+            src={getNcmImageUrl(track.album.picUrl, 50)}
           />
         )}
         <div className="flex-1 min-w-0">
@@ -130,5 +133,30 @@ export function TrackRow({
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
+  );
+}
+
+export function TrackRowSkeleton({
+  index,
+  showAlbum = false,
+}: {
+  index: number;
+  showAlbum?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+      <span className="w-8 text-center text-xs text-muted-foreground">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <Skeleton className="h-9 w-9 shrink-0 rounded" shimmer />
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <Skeleton className="h-4 w-full max-w-48 rounded" shimmer />
+        <Skeleton
+          className={cn("h-3 w-24 rounded", showAlbum && "w-36")}
+          shimmer
+        />
+      </div>
+      <Skeleton className="h-6 w-6 shrink-0 rounded" shimmer />
+    </div>
   );
 }

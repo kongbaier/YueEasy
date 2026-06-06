@@ -4,64 +4,84 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --color-primary-hue: 20;
-  --color-primary-chroma: 0.18;
-
   --background: #ffffff;
-  --foreground: #0f0f0f;
-  --primary: oklch(0.55 var(--color-primary-chroma) var(--color-primary-hue));
+  --foreground: #0a0a0a;
+  --primary: #e74c3c;
   --primary-foreground: #ffffff;
-  --secondary: #f3f4f6;
+  --primary-dark: #c0392b;
+  --primary-darker: #a93226;
+  --primary-darkest: #7b241c;
+  --primary-light: #f1948a;
+  --primary-lighter: #f5b7b1;
+  --primary-lightest: #fdedec;
+  --ring: var(--primary);
+  --secondary: #e5e7eb;
   --secondary-foreground: #1f2937;
-  --muted: #f3f4f6;
+  --muted: #f9fafb;
   --muted-foreground: #6b7280;
-  --accent: #f3f4f6;
-  --accent-foreground: #1f2937;
+  --accent: #e5e7eb;
+  --accent-foreground: #111827;
   --card: #ffffff;
   --card-foreground: #0f0f0f;
   --border: #e5e7eb;
   --radius: 0.5rem;
   --sidebar: transparent;
   --sidebar-foreground: #0f0f0f;
-  --sidebar-primary: #1db954;
+  --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: hsl(0deg 0% 100% / 0.8);
-  --sidebar-accent-foreground: #1f2937;
+  --sidebar-accent: color-mix(in oklch, black 6%, transparent);
+  --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: #e5e7eb;
-  --sidebar-ring: #1db954;
+  --sidebar-ring: var(--primary);
+  --surface-hover: color-mix(in oklch, black 4%, transparent);
+  --surface-active: color-mix(in oklch, var(--primary) 12%, transparent);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #121212;
-    --foreground: #f6f6f6;
-    --primary: #1db954;
-    --primary-foreground: #ffffff;
-    --secondary: #1e1e1e;
-    --secondary-foreground: #e5e7eb;
-    --muted: #1e1e1e;
-    --muted-foreground: #9ca3af;
-    --accent: #1e1e1e;
-    --accent-foreground: #e5e7eb;
-    --card: #181818;
-    --card-foreground: #f6f6f6;
-    --border: #2a2a2a;
-    --sidebar: #181818;
-    --sidebar-foreground: #f6f6f6;
-    --sidebar-primary: #1db954;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #1e1e1e;
-    --sidebar-accent-foreground: #e5e7eb;
-    --sidebar-border: #2a2a2a;
-    --sidebar-ring: #1db954;
-  }
+:root.dark {
+  --background: #121212;
+  --foreground: #f6f6f6;
+  --primary: #e74c3c;
+  --primary-foreground: #ffffff;
+  --primary-dark: #c0392b;
+  --primary-darker: #a93226;
+  --primary-darkest: #7b241c;
+  --primary-light: #f1948a;
+  --primary-lighter: #f5b7b1;
+  --primary-lightest: #fdedec;
+  --ring: var(--primary);
+  --secondary: #1e1e1e;
+  --secondary-foreground: #e5e7eb;
+  --muted: #1e1e1e;
+  --muted-foreground: #9ca3af;
+  --accent: #1e1e1e;
+  --accent-foreground: #e5e7eb;
+  --card: #181818;
+  --card-foreground: #f6f6f6;
+  --border: #2a2a2a;
+  --sidebar: #181818;
+  --sidebar-foreground: #f6f6f6;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: color-mix(in oklch, white 6%, transparent);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: #2a2a2a;
+  --sidebar-ring: var(--primary);
+  --surface-hover: color-mix(in oklch, white 4%, transparent);
+  --surface-active: color-mix(in oklch, var(--primary) 20%, transparent);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-ring: var(--ring);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-darker: var(--primary-darker);
+  --color-primary-darkest: var(--primary-darkest);
+  --color-primary-light: var(--primary-light);
+  --color-primary-lighter: var(--primary-lighter);
+  --color-primary-lightest: var(--primary-lightest);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -79,6 +99,8 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

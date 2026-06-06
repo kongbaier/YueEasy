@@ -13,11 +13,11 @@ export default function WindowControls({ className }: { className?: string }) {
 
   return (
     <div
-      className={`flex space-x-1 z-50 text-white ${className}`}
+      className={`flex space-x-1 z-50 text-foreground ${className}`}
       data-drag-region
     >
       <button
-        className="w-8 h-8 text-black dark:text-white flex items-center justify-center rounded hover:bg-gray-500/20"
+        className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-gray-500/20"
         onPointerUp={handleMinimize}
         type="button"
       >
@@ -25,7 +25,7 @@ export default function WindowControls({ className }: { className?: string }) {
       </button>
 
       <button
-        className="w-8 h-8 text-black dark:text-white flex items-center justify-center rounded hover:bg-gray-500/20"
+        className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-gray-500/20"
         onPointerUp={toggleMaximize}
         type="button"
       >
@@ -33,7 +33,7 @@ export default function WindowControls({ className }: { className?: string }) {
       </button>
 
       <button
-        className="w-8 h-8 text-black dark:text-white flex items-center justify-center rounded hover:bg-red-500 hover:text-white"
+        className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-red-500 hover:text-white"
         onPointerUp={handleClose}
         title="关闭"
         type="button"

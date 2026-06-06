@@ -1,27 +1,40 @@
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Play } from "lucide-react";
-import { TrackRow } from "@/components/track/TrackRow";
+import { Suspense } from "react";
+import { TrackRow, TrackRowSkeleton } from "@/components/track/TrackRow";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
 import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
 import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
 
-export default function DailyRecommend() {
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+function DailyRecommendSkeleton() {
+  return (
+    <div className="p-6">
+      <Skeleton className="h-7 w-32 rounded" shimmer />
+      <div className="mt-4 flex items-center gap-3">
+        <Skeleton className="h-4 w-32 rounded" shimmer />
+        <Skeleton className="h-7 w-24 rounded" shimmer />
+      </div>
+      <div className="mt-3 space-y-0.5">
+        {Array.from({ length: 8 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
+          <TrackRowSkeleton index={i} key={i} showAlbum />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DailyRecommendContent() {
   const play = usePlayerStore((s) => s.play);
 
-  const {
-    data: songs = [],
-    isPending,
-    isError,
-    error,
-  } = useQuery({
+  const { data: songs } = useSuspenseQuery({
     queryKey: ["dailyRecommend"],
     queryFn: () =>
       ncm
         .recommendSongs()
         .then((res) => (res.data.dailySongs ?? []).map(toSongRef)),
-    enabled: isLoggedIn,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -45,41 +58,11 @@ export default function DailyRecommend() {
     toast.error("没有可播放的歌曲");
   };
 
-  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
-
-  if (!isLoggedIn) {
-    return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold">每日推荐</h1>
-        <p className="mt-4 text-sm text-muted-foreground">
-          请先
-          <button
-            className="mx-1 cursor-pointer text-primary underline"
-            onClick={() => setLoginDialogOpen(true)}
-            type="button"
-          >
-            登录
-          </button>
-          后查看每日推荐歌曲
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold">每日推荐</h1>
 
-      {isPending && (
-        <p className="mt-4 text-sm text-muted-foreground">加载中...</p>
-      )}
-      {isError && (
-        <p className="mt-4 text-sm text-red-500">
-          {error instanceof Error ? error.message : "加载失败"}
-        </p>
-      )}
-
-      {!isPending && !isError && songs.length > 0 && (
+      {songs.length > 0 ? (
         <>
           <div className="mt-4 flex items-center gap-3">
             <p className="text-sm text-muted-foreground">
@@ -107,11 +90,39 @@ export default function DailyRecommend() {
             ))}
           </div>
         </>
-      )}
-
-      {!isPending && !isError && songs.length === 0 && (
+      ) : (
         <p className="mt-4 text-sm text-muted-foreground">暂无推荐歌曲</p>
       )}
     </div>
+  );
+}
+
+export default function DailyRecommend() {
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
+
+  if (!isLoggedIn) {
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold">每日推荐</h1>
+        <p className="mt-4 text-sm text-muted-foreground">
+          请先
+          <button
+            className="mx-1 cursor-pointer text-primary underline"
+            onClick={() => setLoginDialogOpen(true)}
+            type="button"
+          >
+            登录
+          </button>
+          后查看每日推荐歌曲
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <Suspense fallback={<DailyRecommendSkeleton />}>
+      <DailyRecommendContent />
+    </Suspense>
   );
 }

@@ -1,4 +1,13 @@
+import { Check } from "lucide-react";
+import type { Theme } from "@/stores/uiStore";
 import { useUiStore } from "@/stores";
+import { Select } from "@/components/ui/select";
+
+const labels: Record<Theme, string> = {
+  system: "系统",
+  light: "浅色",
+  dark: "深色",
+};
 
 export default function Settings() {
   const theme = useUiStore((s) => s.theme);
@@ -11,14 +20,27 @@ export default function Settings() {
       <div className="mt-6 space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-sm">主题</span>
-          <select
-            className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm outline-none"
-            onChange={(e) => setTheme(e.target.value as "light" | "dark")}
-            value={theme}
-          >
-            <option value="dark">深色</option>
-            <option value="light">浅色</option>
-          </select>
+          <Select.Root value={theme} onValueChange={(v) => setTheme(v as Theme)}>
+            <Select.Trigger className="w-28">
+              <Select.Value>{labels[theme]}</Select.Value>
+            </Select.Trigger>
+            <Select.Portal>
+              <Select.Positioner>
+                <Select.Popup>
+                  <Select.List>
+                    {(Object.entries(labels) as [Theme, string][]).map(([value, label]) => (
+                      <Select.Item key={value} value={value}>
+                        <Select.ItemText>{label}</Select.ItemText>
+                        <Select.ItemIndicator>
+                          <Check className="size-4" />
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                    ))}
+                  </Select.List>
+                </Select.Popup>
+              </Select.Positioner>
+            </Select.Portal>
+          </Select.Root>
         </div>
       </div>
     </div>

@@ -14,7 +14,7 @@ const Header = () => {
   const canGoBack = useCanGoBack();
   return (
     <header
-      className="absolute top-0 left-0 right-0 h-10 z-10 flex items-center bg-white/50 backdrop-blur-lg backdrop-brightness-150"
+      className="absolute top-0 left-0 right-0 h-10 z-10 flex items-center bg-white/50 backdrop-blur-lg backdrop-brightness-150 dark:bg-black/50"
       data-tauri-drag-region
     >
       {canGoBack && (

@@ -1,65 +1,43 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Heart } from "lucide-react";
-import { useEffect, useState } from "react";
-import { TrackRow } from "@/components/track/TrackRow";
+import { Suspense } from "react";
+import { TrackRow, TrackRowSkeleton } from "@/components/track/TrackRow";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
 import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
 import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
 
-export default function LikedSongs() {
+function LikedSongsSkeleton() {
+  return (
+    <div className="p-6">
+      <Skeleton className="h-7 w-24 rounded" shimmer />
+      <div className="mt-4 space-y-0.5">
+        {Array.from({ length: 8 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
+          <TrackRowSkeleton index={i} key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LikedSongsContent() {
   const userId = useAuthStore((s) => s.userId);
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
   const play = usePlayerStore((s) => s.play);
 
-  const [tracks, setTracks] = useState<SongRef[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  if (!userId) throw new Error("未登录");
 
-  useEffect(() => {
-    if (!isLoggedIn || !userId) return;
-
-    let cancelled = false;
-    setLoading(true);
-    setError("");
-
-    ncm
-      .likeList(userId)
-      .then((res) => {
-        if (cancelled || !res.ids.length) {
-          if (!cancelled) {
-            setTracks([]);
-            setLoading(false);
-          }
-          return;
-        }
-
-        ncm
+  const { data: tracks } = useSuspenseQuery({
+    queryKey: ["likedSongs", userId],
+    queryFn: () =>
+      ncm.likeList(userId).then((res) => {
+        if (!res.ids.length) return [] as SongRef[];
+        return ncm
           .songDetail(res.ids)
-          .then((detail) => {
-            if (!cancelled) {
-              setTracks(detail.songs.map(toSongRef));
-              setLoading(false);
-            }
-          })
-          .catch((e) => {
-            if (!cancelled) {
-              setError(e instanceof Error ? e.message : "加载歌曲详情失败");
-              setLoading(false);
-            }
-          });
-      })
-      .catch((e) => {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "加载失败");
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [userId, isLoggedIn]);
+          .then((detail) => detail.songs.map(toSongRef));
+      }),
+  });
 
   const handlePlay = async (track: SongRef) => {
     try {
@@ -68,30 +46,6 @@ export default function LikedSongs() {
       toast.error(e instanceof Error ? e.message : "播放失败");
     }
   };
-
-  if (!isLoggedIn) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
-        <Heart className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground">登录后查看我喜欢</p>
-        <button
-          className="rounded bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          onClick={() => setLoginDialogOpen(true)}
-          type="button"
-        >
-          立即登录
-        </button>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return <div className="p-6 text-sm text-muted-foreground">加载中...</div>;
-  }
-
-  if (error) {
-    return <div className="p-6 text-sm text-red-500">{error}</div>;
-  }
 
   return (
     <div className="p-6">
@@ -114,5 +68,32 @@ export default function LikedSongs() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function LikedSongs() {
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
+
+  if (!isLoggedIn) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <Heart className="h-12 w-12 text-muted-foreground" />
+        <p className="text-muted-foreground">登录后查看我喜欢</p>
+        <button
+          className="rounded bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          onClick={() => setLoginDialogOpen(true)}
+          type="button"
+        >
+          立即登录
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <Suspense fallback={<LikedSongsSkeleton />}>
+      <LikedSongsContent />
+    </Suspense>
   );
 }

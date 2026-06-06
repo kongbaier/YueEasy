@@ -1,6 +1,13 @@
 import { create } from "zustand";
 
-type Theme = "light" | "dark";
+export type Theme = "light" | "dark" | "system";
+
+function getStoredTheme(): Theme {
+  if (typeof window === "undefined") return "system";
+  const stored = localStorage.getItem("theme");
+  if (stored === "light" || stored === "dark" || stored === "system") return stored;
+  return "system";
+}
 
 interface UiStore {
   theme: Theme;
@@ -10,9 +17,12 @@ interface UiStore {
 }
 
 export const useUiStore = create<UiStore>((set) => ({
-  theme: "dark",
+  theme: getStoredTheme(),
   loginDialogOpen: false,
 
-  setTheme: (theme) => set({ theme }),
+  setTheme: (theme) => {
+    localStorage.setItem("theme", theme);
+    set({ theme });
+  },
   setLoginDialogOpen: (open) => set({ loginDialogOpen: open }),
 }));

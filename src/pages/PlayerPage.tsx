@@ -122,7 +122,7 @@ const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
 const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
   return (
     <div className="w-full h-14 overflow-hidden shrink-0">
-      <h1 className="text-xl font-semibold truncate">{currentTrack.name}</h1>
+      <h1 className="text-xl font-semibold text-foreground truncate">{currentTrack.name}</h1>
       <p className="text-sm text-muted-foreground mt-1 truncate">
         {currentTrack.artists?.map((a) => a.name).join(" / ")}
       </p>
@@ -184,7 +184,7 @@ const PlayerMenu = ({ currentTrack }: { currentTrack: Track }) => {
   ]);
 
   return (
-    <div className="w-full shrink-0 h-1/10 flex justify-between items-center gap-1">
+    <div className="w-full shrink-0 h-1/10 flex justify-between items-center gap-1 text-foreground">
       <button
         className="flex items-center justify-center size-9 rounded hover:bg-surface-hover"
         onClick={handleLike}

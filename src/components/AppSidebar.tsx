@@ -82,7 +82,8 @@ export function AppSidebar() {
     ncm
       .userPlaylist(userId)
       .then((res) => {
-        if (!cancelled) setUserPlaylists(res.playlist);
+        if (!cancelled)
+          setUserPlaylists(res.playlist.filter((p) => p.specialType !== 5));
       })
       .catch(() => {
         // silently ignore
@@ -137,7 +138,7 @@ export function AppSidebar() {
                       isActive={isActive}
                       onClick={() => navigate(item.to)}
                     >
-                      <item.icon fill={isActive ? "black" : "none"} />
+                      <item.icon fill={isActive ? "currentColor" : "none"} />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -271,7 +272,7 @@ export function AppSidebar() {
                   isActive={isActive}
                   onClick={() => navigate(item.to)}
                 >
-                  <item.icon fill={isActive ? "black" : "none"} />
+                  <item.icon fill={isActive ? "currentColor" : "none"} />
                   <span>{item.label}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>

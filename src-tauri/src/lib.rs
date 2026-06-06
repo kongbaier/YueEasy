@@ -131,6 +131,9 @@ pub fn run() {
                 let _ = handle.emit("smtc-event", payload);
             });
 
+            // 监听 Windows 系统主题色变化
+            commands::accent_color::watch_accent_color(app.handle().clone());
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -138,6 +141,7 @@ pub fn run() {
             ncm::commands::ncm_set_cookie,
             ncm::commands::ncm_get_cookie,
             ncm::commands::ncm_clear_cookie,
+            commands::accent_color::get_accent_color,
             commands::cache::cache_get,
             commands::cache::cache_set,
             commands::cache::cache_delete,

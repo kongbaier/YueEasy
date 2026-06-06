@@ -38,6 +38,7 @@ export interface TopPlaylist {
   subscribed?: boolean;
   subscribedCount?: number;
   tags?: string[];
+  specialType?: number;
   updateTime?: number;
   trackUpdateTime?: number;
 }

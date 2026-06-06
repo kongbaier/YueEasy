@@ -1,45 +1,53 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Play } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense } from "react";
 import { useParams } from "react-router-dom";
-import { TrackRow } from "@/components/track/TrackRow";
+import { TrackRow, TrackRowSkeleton } from "@/components/track/TrackRow";
 import { ImageWithFade } from "@/components/ui/image";
-import type { Playlist as PlaylistType, SongRef } from "@/core/playlist/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { SongRef } from "@/core/playlist/types";
 import { toast } from "@/lib/toast";
+import { getNcmImageUrl } from "@/lib/utils";
 import { getPlaylistDetail } from "@/services/playlist";
 import { usePlayerStore } from "@/stores";
 
-export default function Playlist() {
+function PlaylistSkeleton() {
+  return (
+    <div className="p-6">
+      <div className="flex gap-6">
+        <Skeleton className="h-40 w-40 shrink-0 rounded-lg" shimmer />
+        <div className="flex-1 min-w-0 space-y-3">
+          <Skeleton className="h-7 w-48 rounded" shimmer />
+          <Skeleton className="h-4 w-24 rounded" shimmer />
+          <Skeleton className="h-3 w-72 rounded" shimmer />
+          <div className="flex items-center gap-3 pt-0.5">
+            <Skeleton className="h-8 w-24 rounded" shimmer />
+            <Skeleton className="h-4 w-16 rounded" shimmer />
+          </div>
+        </div>
+      </div>
+      <div className="mt-6 space-y-0.5">
+        {Array.from({ length: 8 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
+          <TrackRowSkeleton index={i} key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PlaylistContent() {
   const { id } = useParams<{ id: string }>();
-  const [playlist, setPlaylist] = useState<PlaylistType | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const play = usePlayerStore((s) => s.play);
 
-  useEffect(() => {
-    if (!id) return;
+  if (!id) throw new Error("无效的歌单 ID");
 
-    let cancelled = false;
-    setLoading(true);
-    setError("");
+  const { data } = useSuspenseQuery({
+    queryKey: ["playlist", id],
+    queryFn: () => getPlaylistDetail(Number(id)),
+  });
 
-    getPlaylistDetail(Number(id))
-      .then(({ playlist: p }) => {
-        if (!cancelled) {
-          setPlaylist(p);
-          setLoading(false);
-        }
-      })
-      .catch((e) => {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "加载失败");
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
+  const playlist = data.playlist;
 
   const handlePlay = async (track: SongRef) => {
     try {
@@ -50,7 +58,7 @@ export default function Playlist() {
   };
 
   const handlePlayAll = async () => {
-    const tracks = playlist?.tracks;
+    const tracks = playlist.tracks;
     if (!tracks?.length) return;
     for (const track of tracks) {
       try {
@@ -63,16 +71,6 @@ export default function Playlist() {
     toast.error("没有可播放的歌曲");
   };
 
-  if (loading) {
-    return <div className="p-6 text-sm text-muted-foreground">加载中...</div>;
-  }
-
-  if (error) {
-    return <div className="p-6 text-sm text-red-500">{error}</div>;
-  }
-
-  if (!playlist) return null;
-
   return (
     <div className="p-6">
       <div className="flex gap-6">
@@ -80,7 +78,7 @@ export default function Playlist() {
           <ImageWithFade
             alt={playlist.name}
             className="h-40 w-40 shrink-0 rounded-lg object-cover"
-            src={playlist.coverUrl}
+            src={getNcmImageUrl(playlist.coverUrl, 200)}
           />
         )}
         <div className="flex-1 min-w-0">
@@ -124,5 +122,13 @@ export default function Playlist() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function Playlist() {
+  return (
+    <Suspense fallback={<PlaylistSkeleton />}>
+      <PlaylistContent />
+    </Suspense>
   );
 }
