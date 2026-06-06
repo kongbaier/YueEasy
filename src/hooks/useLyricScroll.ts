@@ -18,6 +18,7 @@ export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
   const hasPositionedRef = useRef(false);
   const [translateY, setTranslateY] = useState(0);
   const [hasPositioned, setHasPositioned] = useState(false);
+  const [isUserOperating, setIsUserOperating] = useState(false);
 
   const clearIdleTimer = useCallback(() => {
     if (idleTimerRef.current) {
@@ -29,10 +30,13 @@ export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
   const setIsUserOperate = useCallback(
     (v: boolean) => {
       isUserOperateRef.current = v;
+      setIsUserOperating(v);
       clearIdleTimer();
       if (v) {
         idleTimerRef.current = setTimeout(() => {
           isUserOperateRef.current = false;
+          setIsUserOperating(false);
+          recenterRef.current?.();
         }, USER_IDLE_MS);
       }
     },
@@ -43,12 +47,16 @@ export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
     prevIndexRef.current = activeLineIndex;
   }, [activeLineIndex]);
 
+  // 切换歌曲时重置状态
   useEffect(() => {
     if (!enabled) {
       hasPositionedRef.current = false;
       setHasPositioned(false);
     }
-  }, [enabled]);
+    clearIdleTimer();
+    isUserOperateRef.current = false;
+    setIsUserOperating(false);
+  }, [enabled, clearIdleTimer]);
 
   const clampTranslate = useCallback((value: number) => {
     const container = containerRef.current;
@@ -109,17 +117,16 @@ export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
   recenterRef.current = recenter;
 
   useLayoutEffect(() => {
-    if (prevIndexRef.current !== activeLineIndex) {
-      setIsUserOperate(false);
-    }
-
     if (activeLineIndex < 0 || !enabled) return;
     if (isUserOperateRef.current) return;
 
     if (!hasPositionedRef.current) {
       recenter();
       hasPositionedRef.current = true;
-      setHasPositioned(true);
+      // 延迟启用动画，避免首次定位产生过渡效果
+      requestAnimationFrame(() => {
+        setHasPositioned(true);
+      });
       return;
     }
 
@@ -128,7 +135,7 @@ export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
     });
 
     return () => cancelAnimationFrame(raf);
-  }, [activeLineIndex, enabled, setIsUserOperate, recenter]);
+  }, [activeLineIndex, enabled, recenter]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -150,7 +157,7 @@ export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
     contentStyle: {
       transform: `translateY(${translateY}px)`,
       transition:
-        !hasPositioned || isUserOperateRef.current
+        !hasPositioned || isUserOperating
           ? "none"
           : "transform 0.3s ease-in-out",
     },

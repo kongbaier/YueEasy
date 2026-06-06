@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { LenisScrollbar } from "@/components/lenis-scrollbar";
-import { useLenis } from "@/hooks/useLenis";
+import { LenisContext, useLenis } from "@/hooks/useLenis";
 import { cn } from "@/lib/utils";
 
 interface LenisScrollProps {
@@ -33,7 +33,9 @@ export function LenisScroll({
     <div className={cn("relative", className)}>
       <div className="absolute inset-0 overflow-hidden" ref={wrapperRef}>
         <div ref={contentRef} style={{ paddingTop: overflowTop }}>
-          {children}
+          <LenisContext.Provider value={lenisRef.current}>
+            {children}
+          </LenisContext.Provider>
         </div>
       </div>
       <LenisScrollbar

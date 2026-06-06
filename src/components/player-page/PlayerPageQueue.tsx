@@ -1,19 +1,24 @@
 import { Music, Trash2 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
+import type { VirtuosoHandle } from "react-virtuoso";
+import { Virtuoso } from "react-virtuoso";
 import { ImageWithFade } from "@/components/ui/image";
+import { VirtuosoScroller } from "@/components/virtuoso/VirtuosoScroller";
 import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
 
 function QueueItem({
   track,
+  index,
   isCurrent,
   onPlay,
   onRemove,
 }: {
   track: ReturnType<typeof usePlayerStore.getState>["queue"][number];
+  index: number;
   isCurrent: boolean;
-  onPlay: () => void;
-  onRemove: () => void;
+  onPlay: (index: number) => void;
+  onRemove: (index: number) => void;
 }) {
   return (
     <div
@@ -21,8 +26,8 @@ function QueueItem({
         "group flex items-center gap-3 px-2 py-2 w-full text-left cursor-pointer transition-colors hover:bg-accent rounded-md",
         isCurrent && "bg-primary/10",
       )}
-      onClick={onPlay}
-      onKeyDown={() => onPlay}
+      onDoubleClick={() => onPlay(index)}
+      onKeyDown={() => onPlay(index)}
       role="option"
       tabIndex={0}
     >
@@ -52,7 +57,7 @@ function QueueItem({
         className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 rounded p-1 text-muted-foreground hover:text-foreground"
         onClick={(e) => {
           e.stopPropagation();
-          onRemove();
+          onRemove(index);
         }}
         type="button"
       >
@@ -67,18 +72,20 @@ export function PlayerPageQueue() {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
   const playFromIndex = usePlayerStore((s) => s.playFromIndex);
-  const listRef = useRef<HTMLDivElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
 
   const currentIndex = currentTrack
     ? queue.findIndex((item) => item.id === currentTrack.id)
     : -1;
 
-  useEffect(() => {
-    if (currentIndex >= 0 && listRef.current) {
-      const item = listRef.current.children[currentIndex] as
-        | HTMLElement
-        | undefined;
-      item?.scrollIntoView({ block: "center", behavior: "smooth" });
+  const scrollToCurrent = useCallback(() => {
+    if (currentIndex >= 0) {
+      setTimeout(() => {
+        virtuosoRef.current?.scrollToIndex({
+          index: currentIndex,
+          align: "center",
+        });
+      }, 50);
     }
   }, [currentIndex]);
 
@@ -102,16 +109,28 @@ export function PlayerPageQueue() {
           <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
         </div>
       ) : (
-        <div className="flex-1 space-y-1 overflow-y-auto px-4" ref={listRef}>
-          {queue.map((track, index) => (
-            <QueueItem
-              isCurrent={currentTrack?.id === track.id}
-              key={track.id}
-              onPlay={() => playFromIndex(index)}
-              onRemove={() => removeFromQueue(index)}
-              track={track}
-            />
-          ))}
+        <div className="flex-1">
+          <Virtuoso
+            components={{ Scroller: VirtuosoScroller }}
+            computeItemKey={(index) => queue[index]?.id ?? index}
+            fixedItemHeight={48}
+            itemContent={(index) => (
+              <QueueItem
+                index={index}
+                isCurrent={currentTrack?.id === queue[index]?.id}
+                onPlay={playFromIndex}
+                onRemove={removeFromQueue}
+                track={queue[index]}
+              />
+            )}
+            overscan={50}
+            ref={(ref) => {
+              virtuosoRef.current = ref;
+              if (ref && currentIndex >= 0) scrollToCurrent();
+            }}
+            style={{ height: "100%" }}
+            totalCount={queue.length}
+          />
         </div>
       )}
     </div>

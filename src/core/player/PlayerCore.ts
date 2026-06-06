@@ -61,8 +61,8 @@ export class PlayerCore<T extends { id: number }> {
 
   #bindEvents() {
     this.#engine.on("ended", () => {
-      if (!this.#transition("ended")) return;
       this.#queue.activeIndex = this.#strategy.ended(this.#queue.context);
+      if (!this.#transition("ended")) return;
       this.#emitTrackChange();
     });
 

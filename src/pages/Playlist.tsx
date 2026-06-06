@@ -6,6 +6,7 @@ import { TrackRow, TrackRowSkeleton } from "@/components/track/TrackRow";
 import { ImageWithFade } from "@/components/ui/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
+import { useLoadMore } from "@/hooks/useLoadMore";
 import { toast } from "@/lib/toast";
 import { getNcmImageUrl } from "@/lib/utils";
 import { getPlaylistDetail } from "@/services/playlist";
@@ -48,6 +49,7 @@ function PlaylistContent() {
   });
 
   const playlist = data.playlist;
+  const visibleCount = useLoadMore(playlist.tracks?.length ?? 0);
 
   const handlePlay = async (track: SongRef) => {
     try {
@@ -111,7 +113,7 @@ function PlaylistContent() {
 
       {playlist.tracks && playlist.tracks.length > 0 && (
         <div className="mt-6 space-y-0.5">
-          {playlist.tracks.map((track, index) => (
+          {playlist.tracks.slice(0, visibleCount).map((track, index) => (
             <TrackRow
               index={index}
               key={track.id}

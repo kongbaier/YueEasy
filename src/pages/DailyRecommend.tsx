@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { TrackRow, TrackRowSkeleton } from "@/components/track/TrackRow";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
+import { useLoadMore } from "@/hooks/useLoadMore";
 import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
 import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
@@ -37,6 +38,8 @@ function DailyRecommendContent() {
         .then((res) => (res.data.dailySongs ?? []).map(toSongRef)),
     staleTime: 5 * 60 * 1000,
   });
+
+  const visibleCount = useLoadMore(songs.length);
 
   const handlePlay = async (track: SongRef) => {
     try {
@@ -79,7 +82,7 @@ function DailyRecommendContent() {
           </div>
 
           <div className="mt-3 space-y-0.5">
-            {songs.map((track, index) => (
+            {songs.slice(0, visibleCount).map((track, index) => (
               <TrackRow
                 index={index}
                 key={track.id}

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { TrackRow, TrackRowSkeleton } from "@/components/track/TrackRow";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
+import { useLoadMore } from "@/hooks/useLoadMore";
 import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
 import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
@@ -36,6 +37,8 @@ function RecentPlaysContent() {
         .then((res) => res.data.list.map((item) => toSongRef(item.data))),
   });
 
+  const visibleCount = useLoadMore(tracks.length);
+
   const handlePlay = async (track: SongRef) => {
     try {
       await play(track);
@@ -54,7 +57,7 @@ function RecentPlaysContent() {
         </div>
       ) : (
         <div className="space-y-0.5">
-          {tracks.map((track, index) => (
+          {tracks.slice(0, visibleCount).map((track, index) => (
             <TrackRow
               index={index}
               key={track.id}

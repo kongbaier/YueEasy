@@ -1,6 +1,8 @@
 import Lenis from "lenis";
 import type { RefObject } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useEffect, useRef, useState } from "react";
+
+export const LenisContext = createContext<Lenis | null>(null);
 
 export function useLenis(
   wrapperRef: RefObject<HTMLDivElement | null>,

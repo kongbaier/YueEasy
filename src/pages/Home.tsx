@@ -2,6 +2,7 @@ import { useMediaQuery } from "@base-ui/react/unstable-use-media-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import React, { Suspense, useEffect, useState } from "react";
 import { HorizontalScrollSection } from "@/components/HorizontalScrollSection";
+
 import { ParallaxCarousel } from "@/components/ParallaxCarousel";
 import { PlaylistCard, toPlaylistDisplay } from "@/components/PlaylistCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -148,7 +149,7 @@ function TopPlaylistSection() {
 
 export default function Home() {
   return (
-    <div className="space-y-8 px-6 pb-3">
+    <div className="space-y-8 px-6 py-3">
       <Suspense fallback={<BannerFallback />}>
         <BannerSection />
       </Suspense>

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { TrackRow } from "@/components/track/TrackRow";
 import type { SongRef } from "@/core/playlist/types";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useLoadMore } from "@/hooks/useLoadMore";
 import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
 import { usePlayerStore } from "@/stores";
@@ -15,6 +16,7 @@ export default function Search() {
   const [error, setError] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
   const play = usePlayerStore((s) => s.play);
+  const visibleCount = useLoadMore(results.length);
 
   useEffect(() => {
     if (!debouncedKeyword.trim()) {
@@ -107,7 +109,7 @@ export default function Search() {
             </div>
 
             <div className="space-y-0.5">
-              {results.map((track, index) => (
+              {results.slice(0, visibleCount).map((track, index) => (
                 <TrackRow
                   index={index}
                   key={track.id}

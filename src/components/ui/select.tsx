@@ -3,9 +3,7 @@ import { ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function Root<T>({
-  ...props
-}: SelectPrimitive.Root.Props<T, false>) {
+function Root<T>({ ...props }: SelectPrimitive.Root.Props<T, false>) {
   return <SelectPrimitive.Root {...props} />;
 }
 
@@ -34,46 +32,31 @@ function Trigger({
   );
 }
 
-function Value({
-  className,
-  ...props
-}: SelectPrimitive.Value.Props) {
+function Value({ className, ...props }: SelectPrimitive.Value.Props) {
   return (
-    <SelectPrimitive.Value
-      className={cn("truncate", className)}
-      {...props}
-    />
+    <SelectPrimitive.Value className={cn("truncate", className)} {...props} />
   );
 }
 
-function Portal({
-  ...props
-}: SelectPrimitive.Portal.Props) {
+function Portal({ ...props }: SelectPrimitive.Portal.Props) {
   return <SelectPrimitive.Portal {...props} />;
 }
 
-function Positioner({
-  className,
-  ...props
-}: SelectPrimitive.Positioner.Props) {
+function Positioner({ className, ...props }: SelectPrimitive.Positioner.Props) {
   return (
     <SelectPrimitive.Positioner
-      sideOffset={4}
       className={cn(className)}
+      sideOffset={4}
       {...props}
     />
   );
 }
 
-function Popup({
-  className,
-  children,
-  ...props
-}: SelectPrimitive.Popup.Props) {
+function Popup({ className, children, ...props }: SelectPrimitive.Popup.Props) {
   return (
     <SelectPrimitive.Popup
       className={cn(
-        "z-50 min-w-[var(--anchor-width)] origin-[var(--transform-origin)] overflow-hidden rounded-lg border border-border bg-card p-1 shadow-lg transition-all data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0",
+        "z-50 min-w-(--anchor-width) origin-(--transform-origin) overflow-hidden rounded-lg border border-border bg-card p-1 shadow-lg transition-all data-ending-style:scale-95 data-starting-style:scale-95 data-ending-style:opacity-0 data-starting-style:opacity-0",
         className,
       )}
       {...props}
@@ -83,22 +66,13 @@ function Popup({
   );
 }
 
-function Arrow({
-  className,
-  ...props
-}: SelectPrimitive.Arrow.Props) {
+function Arrow({ className, ...props }: SelectPrimitive.Arrow.Props) {
   return (
-    <SelectPrimitive.Arrow
-      className={cn("fill-card", className)}
-      {...props}
-    />
+    <SelectPrimitive.Arrow className={cn("fill-card", className)} {...props} />
   );
 }
 
-function List({
-  className,
-  ...props
-}: SelectPrimitive.List.Props) {
+function List({ className, ...props }: SelectPrimitive.List.Props) {
   return (
     <SelectPrimitive.List
       className={cn("max-h-60 overflow-auto outline-none", className)}
@@ -107,17 +81,13 @@ function List({
   );
 }
 
-function Item({
-  className,
-  children,
-  ...props
-}: SelectPrimitive.Item.Props) {
+function Item({ className, children, ...props }: SelectPrimitive.Item.Props) {
   return (
     <SelectPrimitive.Item
       className={cn(
         "relative flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground outline-none transition-colors select-none",
-        "data-[highlighted]:bg-primary-lightest data-[highlighted]:text-foreground",
-        "data-[selected]:font-medium",
+        "data-highlighted:bg-primary-lightest data-highlighted:text-foreground",
+        "data-selected:font-medium",
         className,
       )}
       {...props}
@@ -127,15 +97,9 @@ function Item({
   );
 }
 
-function ItemText({
-  className,
-  ...props
-}: SelectPrimitive.ItemText.Props) {
+function ItemText({ className, ...props }: SelectPrimitive.ItemText.Props) {
   return (
-    <SelectPrimitive.ItemText
-      className={cn("flex-1", className)}
-      {...props}
-    />
+    <SelectPrimitive.ItemText className={cn("flex-1", className)} {...props} />
   );
 }
 
