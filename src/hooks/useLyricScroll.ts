@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const USER_IDLE_MS = 3000;
 
@@ -102,7 +102,7 @@ export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
 
   recenterRef.current = recenter;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (prevIndexRef.current !== activeLineIndex) {
       setIsUserOperate(false);
     }
@@ -110,14 +110,15 @@ export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
     if (activeLineIndex < 0 || !enabled) return;
     if (isUserOperateRef.current) return;
 
+    if (!hasPositionedRef.current) {
+      recenter();
+      hasPositionedRef.current = true;
+      setHasPositioned(true);
+      return;
+    }
+
     const raf = requestAnimationFrame(() => {
       recenter();
-      if (!hasPositionedRef.current) {
-        requestAnimationFrame(() => {
-          hasPositionedRef.current = true;
-          setHasPositioned(true);
-        });
-      }
     });
 
     return () => cancelAnimationFrame(raf);

@@ -24,7 +24,7 @@ export class AudioEngine {
     if (this.#rafId) return;
     const tick = () => {
       if (!this.#howl) {
-        this.#stopTimeUpdate();
+        this.stopTimeUpdate();
         return;
       }
       this.#eventEmitter.emit(
@@ -37,7 +37,7 @@ export class AudioEngine {
     this.#rafId = requestAnimationFrame(tick);
   }
 
-  #stopTimeUpdate() {
+  stopTimeUpdate() {
     if (this.#rafId) {
       cancelAnimationFrame(this.#rafId);
       this.#rafId = 0;
@@ -159,12 +159,12 @@ export class AudioEngine {
     });
 
     h.on("pause", () => {
-      this.#stopTimeUpdate();
+      this.stopTimeUpdate();
       this.#eventEmitter.emit("pause");
     });
 
     h.on("end", () => {
-      this.#stopTimeUpdate();
+      this.stopTimeUpdate();
       this.#eventEmitter.emit("ended");
     });
 
@@ -174,7 +174,7 @@ export class AudioEngine {
   }
 
   #cleanup() {
-    this.#stopTimeUpdate();
+    this.stopTimeUpdate();
     if (this.#howl) {
       this.#howl.unload();
       this.#howl = null;

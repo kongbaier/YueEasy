@@ -1,7 +1,9 @@
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume1, Volume2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { usePlayerStore } from "@/stores";
+
+const STEP = 0.1;
 
 export function PlayerPageVolume({ className }: { className?: string }) {
   const volume = usePlayerStore((s) => s.volume);
@@ -43,17 +45,21 @@ export function PlayerPageVolume({ className }: { className?: string }) {
     bar.addEventListener("pointerup", handlePointerUp);
   };
 
-  const toggleMute = () => setMuted(!muted);
+  const adjustVolume = (delta: number) => {
+    const { muted, volume } = usePlayerStore.getState();
+    if (muted) setMuted(false);
+    setVolume(Math.max(0, Math.min(1, volume + delta)));
+  };
 
   return (
     <div className={`flex items-center gap-1 ${className ?? ""}`}>
       <Button
         className="text-foreground hover:bg-transparent hover:text-primary"
-        onClick={toggleMute}
+        onClick={() => adjustVolume(-STEP)}
         size="icon"
         variant="ghost"
       >
-        <VolumeX className="size-4" />
+        <Volume1 className="size-4" />
       </Button>
       <div
         className="flex-1 h-5 cursor-pointer flex items-center"
@@ -72,7 +78,7 @@ export function PlayerPageVolume({ className }: { className?: string }) {
       </div>
       <Button
         className="text-foreground hover:bg-transparent hover:text-primary"
-        onClick={toggleMute}
+        onClick={() => adjustVolume(STEP)}
         size="icon"
         variant="ghost"
       >

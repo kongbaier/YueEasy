@@ -25,6 +25,19 @@ export default function PlayerPage() {
   const close = usePlayerPageStore((s) => s.close);
   const [visible, setVisible] = useState(false);
   const [showQueue, setShowQueue] = useState(false);
+
+  // Pre-decode next track cover for instant display on track change
+  useEffect(() => {
+    if (!currentTrack) return;
+    const { queue } = usePlayerStore.getState();
+    const idx = queue.findIndex((t) => t.id === currentTrack.id);
+    const next = queue[idx + 1];
+    if (next?.album?.picUrl) {
+      const img = new Image();
+      img.src = next.album.picUrl;
+      img.decode().catch(() => {});
+    }
+  }, [currentTrack]);
   const handleBack = () => {
     setVisible(false);
     setTimeout(() => close(), 300);

@@ -1,12 +1,10 @@
 import { useMediaQuery } from "@base-ui/react/unstable-use-media-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { HorizontalScrollSection } from "@/components/HorizontalScrollSection";
 import { ParallaxCarousel } from "@/components/ParallaxCarousel";
 import { PlaylistCard, toPlaylistDisplay } from "@/components/PlaylistCard";
-import { ImageWithFade } from "@/components/ui/image";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 import { ncm } from "@/services/ncm";
 
 function BannerSection() {
@@ -20,6 +18,36 @@ function BannerSection() {
   });
 
   const isWide = useMediaQuery("(min-width: 1024px)", {});
+  const [imagesReady, setImagesReady] = useState(false);
+
+  useEffect(() => {
+    setImagesReady(false);
+    if (banners.length === 0) {
+      setImagesReady(true);
+      return;
+    }
+    let cancelled = false;
+    Promise.allSettled(
+      banners.map(
+        (b) =>
+          new Promise<void>((resolve) => {
+            const img = new Image();
+            img.src = b.bigImageUrl;
+            img.decode().then(
+              () => resolve(),
+              () => resolve(),
+            );
+          }),
+      ),
+    ).then(() => {
+      if (!cancelled) setImagesReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [banners]);
+
+  if (!imagesReady) return <BannerFallback />;
 
   return (
     <div className="grid grid-rows-2 grid-cols-5 w-full aspect-9/5 lg:aspect-3/1 gap-2 md:gap-3 lg:gap-4">
@@ -31,18 +59,18 @@ function BannerSection() {
         >
           {(banner, _index, parallaxOffset) => (
             <button className="w-full h-full overflow-hidden" type="button">
-              <ImageWithFade
-                alt={banner.typeTitle}
-                className={cn(
-                  "block inset-0",
-                  "transition-transform duration-700 ease-out",
-                )}
-                fill
-                src={banner.bigImageUrl}
+              <div
+                className="w-full h-full transition-transform duration-700 ease-out"
                 style={{
                   transform: `translateX(calc( ${parallaxOffset * 90}%))`,
                 }}
-              />
+              >
+                <img
+                  alt={banner.typeTitle}
+                  className="inset-0 object-cover"
+                  src={banner.bigImageUrl}
+                />
+              </div>
               <span className="absolute right-2 top-2 rounded px-2 py-1 text-xs leading-3 bg-background/50 backdrop-blur-xl text-foreground">
                 {banner.typeTitle}
               </span>

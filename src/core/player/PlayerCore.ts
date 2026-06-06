@@ -117,12 +117,14 @@ export class PlayerCore<T extends { id: number }> {
 
   next() {
     if (this.#queue.isEmpty) return;
+    this.#engine.stopTimeUpdate();
     this.#queue.activeIndex = this.#strategy.next(this.#queue.context);
     this.#emitTrackChange();
   }
 
   prev() {
     if (this.#queue.isEmpty) return;
+    this.#engine.stopTimeUpdate();
     this.#queue.activeIndex = this.#strategy.prev(this.#queue.context);
     this.#emitTrackChange();
   }

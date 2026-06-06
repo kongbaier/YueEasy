@@ -58,7 +58,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
   });
 
   player.on("trackChange", (track) => {
-    set({ currentTrack: track ?? null });
+    set({ currentTrack: track ?? null, currentTime: 0, duration: 0 });
   });
 
   player.on("timeUpdate", (currentTime) => {
