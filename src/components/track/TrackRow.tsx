@@ -6,6 +6,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { ImageWithFade } from "@/components/ui/image";
 import type { SongRef } from "@/core/playlist/types";
 import { ncm } from "@/services/ncm";
 import { usePlayerStore } from "@/stores";
@@ -52,7 +53,7 @@ export function TrackRow({
           {String(index + 1).padStart(2, "0")}
         </span>
         {track.album.picUrl && (
-          <img
+          <ImageWithFade
             alt={track.album.name}
             className="h-9 w-9 shrink-0 rounded object-cover"
             src={track.album.picUrl}

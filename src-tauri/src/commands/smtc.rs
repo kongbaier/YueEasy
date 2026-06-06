@@ -30,8 +30,16 @@ pub(crate) async fn update_smtc_metadata<R: Runtime>(
 ) -> Result<(), String> {
     let metadata = MediaMetadata {
         title: meta.title,
-        artist: if meta.artist.is_empty() { None } else { Some(meta.artist) },
-        album: if meta.album.is_empty() { None } else { Some(meta.album) },
+        artist: if meta.artist.is_empty() {
+            None
+        } else {
+            Some(meta.artist)
+        },
+        album: if meta.album.is_empty() {
+            None
+        } else {
+            Some(meta.album)
+        },
         album_artist: None,
         duration: Some(meta.duration_secs),
         artwork_url: meta.artwork_url,

@@ -1,44 +1,33 @@
-import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import type { LyricLine } from "@/core/lyrics/parser";
-import type { LyricsResult } from "@/services/lyrics";
 import { fetchLyrics } from "@/services/lyrics";
 import { usePlayerStore } from "@/stores";
 
 interface LyricsState {
   lines: LyricLine[];
-  tlines: LyricLine[];
-  activeLineIndex: number;
+  index: number;
   hasLyrics: boolean;
 }
 
 export function useLyrics(): LyricsState {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const currentTime = usePlayerStore((s) => s.currentTime);
-  const [cache, setCache] = useState<Record<number, LyricsResult>>({});
-
   const trackId = currentTrack?.id;
 
-  useEffect(() => {
-    if (!trackId) return;
-    if (cache[trackId]) return;
+  const { data } = useQuery({
+    queryKey: ["lyrics", trackId],
+    queryFn: () => {
+      if (!trackId) return { lyric: [], tlyric: [] };
+      return fetchLyrics(trackId);
+    },
+    enabled: !!trackId,
+    staleTime: Infinity,
+  });
 
-    let cancelled = false;
-    fetchLyrics(trackId).then((result) => {
-      if (!cancelled) {
-        setCache((prev) => ({ ...prev, [trackId]: result }));
-      }
-    });
+  const lines = data?.lyric ?? [];
 
-    return () => {
-      cancelled = true;
-    };
-  }, [trackId, cache]);
-
-  const result = trackId ? cache[trackId] : null;
-  const lines = result?.lyric ?? [];
-  const tlines = result?.tlyric ?? [];
-
-  const activeLineIndex = useMemo(() => {
+  const index = useMemo(() => {
     if (lines.length === 0) return -1;
     const ms = currentTime * 1000;
 
@@ -52,8 +41,7 @@ export function useLyrics(): LyricsState {
 
   return {
     lines,
-    tlines,
-    activeLineIndex,
+    index,
     hasLyrics: lines.length > 0,
   };
 }

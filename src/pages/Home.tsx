@@ -4,6 +4,7 @@ import React, { Suspense } from "react";
 import { HorizontalScrollSection } from "@/components/HorizontalScrollSection";
 import { ParallaxCarousel } from "@/components/ParallaxCarousel";
 import { PlaylistCard, toPlaylistDisplay } from "@/components/PlaylistCard";
+import { ImageWithFade } from "@/components/ui/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { ncm } from "@/services/ncm";
@@ -30,12 +31,13 @@ function BannerSection() {
         >
           {(banner, _index, parallaxOffset) => (
             <button className="w-full h-full overflow-hidden" type="button">
-              <img
+              <ImageWithFade
                 alt={banner.typeTitle}
                 className={cn(
                   "block inset-0",
                   "transition-transform duration-700 ease-out",
                 )}
+                fill
                 src={banner.bigImageUrl}
                 style={{
                   transform: `translateX(calc( ${parallaxOffset * 90}%))`,
@@ -86,7 +88,10 @@ function PersonalizedSection() {
   });
 
   return (
-    <HorizontalScrollSection title="推荐歌单" titleLink="/discover/personalized">
+    <HorizontalScrollSection
+      title="推荐歌单"
+      titleLink="/discover/personalized"
+    >
       {playlists.map((pl) => (
         <PlaylistCard key={pl.id} playlist={pl} showPlayCount />
       ))}
@@ -120,15 +125,11 @@ export default function Home() {
         <BannerSection />
       </Suspense>
 
-      <Suspense
-        fallback={<HorizontalScrollSection loading title="推荐歌单" />}
-      >
+      <Suspense fallback={<HorizontalScrollSection loading title="推荐歌单" />}>
         <PersonalizedSection />
       </Suspense>
 
-      <Suspense
-        fallback={<HorizontalScrollSection loading title="热门歌单" />}
-      >
+      <Suspense fallback={<HorizontalScrollSection loading title="热门歌单" />}>
         <TopPlaylistSection />
       </Suspense>
     </div>

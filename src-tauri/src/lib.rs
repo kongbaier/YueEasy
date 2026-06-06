@@ -4,8 +4,11 @@ mod ncm;
 mod utils;
 
 use serde::Serialize;
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::window::{Effect, EffectState};
+use tauri::utils::config::WindowEffectsConfig;
 use tauri_plugin_media::{MediaControlEventType, MediaExt};
+use tauri_plugin_window_state::{StateFlags, WindowExt};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "event", rename_all = "camelCase")]
@@ -19,19 +22,50 @@ enum SmtcEvent {
     FastForward,
     Rewind,
     #[serde(rename = "setPosition")]
-    SetPosition { position: f64 },
+    SetPosition {
+        position: f64,
+    },
     #[serde(rename = "seekTo")]
-    SeekTo { position: f64 },
+    SeekTo {
+        position: f64,
+    },
     #[serde(rename = "setPlaybackRate")]
-    SetPlaybackRate { rate: f64 },
+    SetPlaybackRate {
+        rate: f64,
+    },
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_media::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
+                .title("乐易")
+                .inner_size(1280.0, 768.0)
+                .min_inner_size(800.0, 600.0)
+                .resizable(true)
+                .transparent(true)
+                .decorations(false)
+                .visible(false)
+                .additional_browser_args("--disable-features=MediaSessionService,msWebOOUI,msPdfOOUI,msSmartScreenProtection")
+                .effects(WindowEffectsConfig {
+                    effects: vec![Effect::Mica],
+                    color: None,
+                    radius: None,
+                    state: Some(EffectState::FollowsWindowActiveState),
+                })
+                .build()
+                .expect("failed to build window");
+
+            window
+                .restore_state(StateFlags::all())
+                .expect("failed to restore window state");
+
+            window.show().expect("failed to show window");
+
             let app_data = app
                 .path()
                 .app_data_dir()

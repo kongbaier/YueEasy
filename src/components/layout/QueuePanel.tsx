@@ -4,6 +4,7 @@ import type { VirtuosoHandle } from "react-virtuoso";
 import { Virtuoso } from "react-virtuoso";
 import { useShallow } from "zustand/shallow";
 import { Button } from "@/components/ui/button";
+import { ImageWithFade } from "@/components/ui/image";
 import { VirtuosoScroller } from "@/components/virtuoso/VirtuosoScroller";
 import type { Track } from "@/core/player/types";
 import { cn } from "@/lib/utils";
@@ -37,9 +38,10 @@ const QueueItem = ({
     >
       <div className="w-8 h-8 rounded shadow flex items-center justify-center shrink-0 overflow-hidden">
         {track.album.picUrl ? (
-          <img
+          <ImageWithFade
             alt={track.album.name}
             className="inset-0 object-cover"
+            fill
             src={track.album.picUrl}
           />
         ) : (

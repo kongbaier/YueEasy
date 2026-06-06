@@ -2,6 +2,7 @@ import { Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { TrackRow } from "@/components/track/TrackRow";
+import { ImageWithFade } from "@/components/ui/image";
 import type { Playlist as PlaylistType, SongRef } from "@/core/playlist/types";
 import { getPlaylistDetail } from "@/services/playlist";
 import { usePlayerStore } from "@/stores";
@@ -78,7 +79,7 @@ export default function Playlist() {
     <div className="p-6">
       <div className="flex gap-6">
         {playlist.coverUrl && (
-          <img
+          <ImageWithFade
             alt={playlist.name}
             className="h-40 w-40 shrink-0 rounded-lg object-cover"
             src={playlist.coverUrl}

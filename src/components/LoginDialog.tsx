@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ImageWithFade } from "@/components/ui/image";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ncm, setNcmCookie } from "@/services/ncm";
@@ -328,7 +329,7 @@ export default function LoginDialog() {
               {qrLoading ? (
                 <div className="h-full w-full animate-pulse rounded-lg bg-muted-foreground/10" />
               ) : qrImg ? (
-                <img
+                <ImageWithFade
                   alt="QR code"
                   className="h-48 w-48 rounded-lg"
                   src={qrImg}

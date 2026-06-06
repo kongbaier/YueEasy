@@ -1,4 +1,5 @@
 import type { PropsWithChildren } from "react";
+import { cn } from "@/lib/utils";
 
 export const RatioContainer = ({
   children,
@@ -9,15 +10,11 @@ export const RatioContainer = ({
 
   return (
     <div
-      className={className}
-      style={{
-        width: "100%",
-        height: "100%",
-        containerType: "size",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+      className={cn(
+        "h-full w-full flex justify-center items-center",
+        className,
+      )}
+      style={{ containerType: "size" }}
     >
       <div
         style={{

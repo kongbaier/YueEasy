@@ -7,6 +7,7 @@ import { PlayerPageQueue } from "@/components/player-page/PlayerPageQueue";
 import { PlayerPageVolume } from "@/components/player-page/PlayerPageVolume";
 import { RatioContainer } from "@/components/RatioContainer";
 import WindowControls from "@/components/system/WindowControls";
+import { ImageWithFade } from "@/components/ui/image";
 import type { Track } from "@/core/player/types";
 import { cn } from "@/lib/utils";
 import { usePlayerPageStore, usePlayerStore } from "@/stores";
@@ -40,8 +41,14 @@ export default function PlayerPage() {
     >
       <PlayerHeader handleBack={handleBack} />
 
-      <div className="grid grid-cols-[1fr_1fr] overflow-hidden">
-        <div className="w-4/5 max-w-100 justify-self-center min-w-0 h-full min-h-0 flex flex-col items-center pb-4 gap-2 px-4">
+      <div className="flex-1 grid grid-cols-[1fr_1fr] overflow-hidden">
+        <div
+          className={cn(
+            "relative justify-self-center pb-4 gap-2 px-4",
+            "flex flex-col items-center",
+            "w-4/5 max-w-md",
+          )}
+        >
           {currentTrack && (
             <React.Fragment>
               <PlayerTitle currentTrack={currentTrack} />
@@ -63,12 +70,14 @@ export default function PlayerPage() {
           )}
         </div>
 
-        <Activity mode={showQueue ? "visible" : "hidden"}>
-          <PlayerPageQueue key="queue" />
-        </Activity>
-        <Activity mode={showQueue ? "hidden" : "visible"}>
-          <Lyrics className="overflow-hidden" />
-        </Activity>
+        <div className="h-full min-h-0">
+          <Activity mode={showQueue ? "visible" : "hidden"}>
+            <PlayerPageQueue key="queue" />
+          </Activity>
+          <Activity mode={showQueue ? "hidden" : "visible"}>
+            <Lyrics />
+          </Activity>
+        </div>
       </div>
     </div>
   );
@@ -102,11 +111,12 @@ const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
 
 const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
   return (
-    <RatioContainer className="my-1 lg:my-2 xl:my-3">
+    <RatioContainer>
       {currentTrack.album?.picUrl ? (
-        <img
+        <ImageWithFade
           alt={currentTrack.album.name}
-          className={cn("w-full h-full object-cover", "rounded-lg shadow")}
+          className={cn("object-cover", "rounded-lg shadow")}
+          fill
           src={currentTrack.album.picUrl}
         />
       ) : (

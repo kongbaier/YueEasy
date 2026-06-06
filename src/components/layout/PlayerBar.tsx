@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { useShallow } from "zustand/shallow";
+import { ImageWithFade } from "@/components/ui/image";
 import { usePlayerAction } from "@/hooks/usePlayerAction";
 import { useProgress } from "@/hooks/useProgress";
 import { cn } from "@/lib/utils";
@@ -108,9 +109,10 @@ const PlayerInfo = () => {
         type="button"
       >
         {currentTrack?.album.picUrl ? (
-          <img
+          <ImageWithFade
             alt={currentTrack.album.name}
             className="object-cover"
+            fill
             src={currentTrack.album.picUrl}
           />
         ) : (

@@ -1,5 +1,6 @@
 import { Music, Trash2 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { ImageWithFade } from "@/components/ui/image";
 import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
 
@@ -27,9 +28,10 @@ function QueueItem({
     >
       <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
         {track.album?.picUrl ? (
-          <img
+          <ImageWithFade
             alt={track.album.name}
-            className="w-full h-full object-cover"
+            className="object-cover"
+            fill
             src={track.album.picUrl}
           />
         ) : (
@@ -81,7 +83,7 @@ export function PlayerPageQueue() {
   }, [currentIndex]);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full w-full flex flex-col">
       <header className="flex items-center justify-between px-2 py-3 shrink-0">
         <h2 className="text-sm font-medium">
           播放列表

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { ImageWithFade } from "@/components/ui/image";
 import { cn } from "@/lib/utils";
 import type { PlaylistDisplay } from "./PlaylistDisplay";
 
@@ -22,9 +23,10 @@ export function PlaylistCard({ playlist, showPlayCount }: PlaylistCardProps) {
       type="button"
     >
       <div className="relative aspect-square overflow-hidden">
-        <img
+        <ImageWithFade
           alt={playlist.name}
-          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+          className="object-cover transition-transform group-hover:scale-105"
+          fill
           src={playlist.coverUrl}
         />
         {showPlayCount && (
