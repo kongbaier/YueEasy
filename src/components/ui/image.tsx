@@ -61,12 +61,12 @@ function ImageWithFade({
   return (
     <span
       className={cn(
-        "relative overflow-hidden leading-[0]",
+        "relative leading-0",
         fill ? "block h-full w-full" : "inline-block",
       )}
     >
       {showShimmer && (
-        <span className="absolute inset-0 z-10 bg-shimmer animate-shimmer bg-[length:200%_100%]" />
+        <span className="absolute inset-0 z-10 bg-shimmer animate-shimmer bg-size-[200%_100%]" />
       )}
       {status === "error" &&
         (fallback ?? <span className="absolute inset-0 bg-muted" />)}

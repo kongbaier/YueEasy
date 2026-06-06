@@ -1,18 +1,26 @@
 import {
   ChevronFirst,
   ChevronLast,
+  Heart,
   ListMusic,
   Loader2,
   Pause,
   Play,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useShallow } from "zustand/shallow";
 import { ImageWithFade } from "@/components/ui/image";
 import { usePlayerAction } from "@/hooks/usePlayerAction";
 import { useProgress } from "@/hooks/useProgress";
 import { cn } from "@/lib/utils";
-import { usePlayerPageStore, usePlayerStore } from "@/stores";
+import { ncm } from "@/services/ncm";
+import {
+  useAuthStore,
+  useLikeStore,
+  usePlayerPageStore,
+  usePlayerStore,
+  useUiStore,
+} from "@/stores";
 import { useQueuePanelStore } from "@/stores/queuePanelStore";
 import { PlayModeControl } from "../player/PlayModeControl";
 import { SeekBar } from "../player/SeekBar";
@@ -134,8 +142,42 @@ const PlayerInfo = () => {
 const PlayerMenu = () => {
   const { open } = useQueuePanelStore(useShallow((s) => ({ open: s.open })));
   const queue = usePlayerStore((s) => s.queue);
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
+  const isLiked = useLikeStore((s) =>
+    currentTrack ? s.isLiked(currentTrack.id) : false,
+  );
+  const toggleLike = useLikeStore((s) => s.toggle);
+
+  const handleLike = useCallback(() => {
+    if (!currentTrack) return;
+    if (!isLoggedIn) {
+      setLoginDialogOpen(true);
+      return;
+    }
+    const next = !isLiked;
+    toggleLike(currentTrack.id);
+    ncm.like(currentTrack.id, next).catch(() => {
+      toggleLike(currentTrack.id);
+    });
+  }, [isLoggedIn, isLiked, currentTrack, toggleLike, setLoginDialogOpen]);
+
   return (
     <div className="flex-1 flex items-center justify-end">
+      {currentTrack && (
+        <Button
+          className="text-foreground hover:bg-transparent hover:text-primary"
+          onClick={handleLike}
+          size="icon"
+          variant="ghost"
+        >
+          <Heart
+            className="size-4"
+            fill={isLiked ? "#ef4444" : "none"}
+          />
+        </Button>
+      )}
       <Button
         className="text-foreground hover:bg-transparent hover:text-primary"
         onClick={open}

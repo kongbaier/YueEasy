@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Crown, Heart, Play, SkipForward } from "lucide-react";
 import {
   ContextMenu,
@@ -9,7 +10,7 @@ import {
 import { ImageWithFade } from "@/components/ui/image";
 import type { SongRef } from "@/core/playlist/types";
 import { ncm } from "@/services/ncm";
-import { usePlayerStore } from "@/stores";
+import { useLikeStore, usePlayerStore } from "@/stores";
 
 interface TrackRowProps {
   track: SongRef;
@@ -25,18 +26,20 @@ export function TrackRow({
   showAlbum = false,
 }: TrackRowProps) {
   const playNext = usePlayerStore((s) => s.playNext);
+  const isLiked = useLikeStore((s) => s.isLiked(track.id));
+  const toggleLike = useLikeStore((s) => s.toggle);
 
   const handlePlayNext = () => {
     playNext(track);
   };
 
-  const handleFavorite = async () => {
-    try {
-      await ncm.like(track.id, true);
-    } catch {
-      // silently ignore
-    }
-  };
+  const handleFavorite = useCallback(() => {
+    const next = !isLiked;
+    toggleLike(track.id);
+    ncm.like(track.id, next).catch(() => {
+      toggleLike(track.id);
+    });
+  }, [track.id, isLiked, toggleLike]);
 
   return (
     <ContextMenu>
@@ -94,8 +97,11 @@ export function TrackRow({
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={handleFavorite}>
-          <Heart className="h-4 w-4" />
-          收藏
+          <Heart
+            className="h-4 w-4"
+            fill={isLiked ? "#ef4444" : "none"}
+          />
+          {isLiked ? "取消收藏" : "收藏"}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

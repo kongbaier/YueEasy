@@ -1,5 +1,5 @@
 import { ChevronDown, Download, Ellipsis, Heart, Share2 } from "lucide-react";
-import React, { Activity, useEffect, useState } from "react";
+import React, { Activity, useCallback, useEffect, useState } from "react";
 import { Lyrics } from "@/components/lyrics/Lyrics";
 import { PlayerPageControls } from "@/components/player-page/PlayerPageControls";
 import { PlayerPageProgress } from "@/components/player-page/PlayerPageProgress";
@@ -10,7 +10,14 @@ import WindowControls from "@/components/system/WindowControls";
 import { ImageWithFade } from "@/components/ui/image";
 import type { Track } from "@/core/player/types";
 import { cn } from "@/lib/utils";
-import { usePlayerPageStore, usePlayerStore } from "@/stores";
+import { ncm } from "@/services/ncm";
+import {
+  useAuthStore,
+  useLikeStore,
+  usePlayerPageStore,
+  usePlayerStore,
+  useUiStore,
+} from "@/stores";
 
 export default function PlayerPage() {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
@@ -111,7 +118,7 @@ const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
 
 const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
   return (
-    <RatioContainer>
+    <RatioContainer className="">
       {currentTrack.album?.picUrl ? (
         <ImageWithFade
           alt={currentTrack.album.name}
@@ -126,18 +133,38 @@ const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
   );
 };
 
-const PlayerMenu = ({
-  currentTrack: _currentTrack,
-}: {
-  currentTrack: Track;
-}) => {
+const PlayerMenu = ({ currentTrack }: { currentTrack: Track }) => {
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
+  const isLiked = useLikeStore((s) => s.isLiked(currentTrack.id));
+  const toggleLike = useLikeStore((s) => s.toggle);
+
+  const handleLike = useCallback(() => {
+    if (!isLoggedIn) {
+      setLoginDialogOpen(true);
+      return;
+    }
+    const next = !isLiked;
+    toggleLike(currentTrack.id);
+    ncm.like(currentTrack.id, next).catch(() => {
+      toggleLike(currentTrack.id); // rollback on failure
+    });
+  }, [isLoggedIn, isLiked, currentTrack.id, toggleLike, setLoginDialogOpen]);
+
   return (
     <div className="w-full shrink-0 h-1/10 flex justify-between items-center gap-1">
       <button
         className="flex items-center justify-center size-9 rounded hover:bg-surface-hover"
+        onClick={handleLike}
         type="button"
       >
-        <Heart className="size-5" strokeWidth={1.5} />
+        <Heart
+          className={cn(
+            "size-5",
+            isLiked ? "text-red-500 fill-red-500" : "hover:text-primary",
+          )}
+          strokeWidth={1.5}
+        />
       </button>
       <button
         className="flex items-center justify-center size-9 rounded hover:bg-surface-hover opacity-40"

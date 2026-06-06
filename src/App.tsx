@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { MainLayout } from "./components/layout/MainLayout";
 import { useAuthRestore } from "./hooks/useAuthRestore";
+import { useLikeInit } from "./hooks/useLikeInit";
 import { useMediaSession } from "./hooks/useMediaSession";
 import { usePlayerKeyboard } from "./hooks/usePlayerKeyboard";
 import { usePlayerRestore } from "./hooks/usePlayerRestore";
@@ -24,6 +25,7 @@ function App() {
   useQueuePersistence();
   usePlayerKeyboard();
   useMediaSession();
+  useLikeInit();
 
   return (
     <BrowserRouter>

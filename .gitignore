@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# agent
+.claude/*
+CLAUDE.md
+AGENTS.md

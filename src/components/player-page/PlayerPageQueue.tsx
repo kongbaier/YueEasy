@@ -102,7 +102,7 @@ export function PlayerPageQueue() {
           <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
         </div>
       ) : (
-        <div className="flex-1 space-y-1 overflow-y-auto" ref={listRef}>
+        <div className="flex-1 space-y-1 overflow-y-auto px-4" ref={listRef}>
           {queue.map((track, index) => (
             <QueueItem
               isCurrent={currentTrack?.id === track.id}
