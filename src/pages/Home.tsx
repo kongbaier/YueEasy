@@ -1,9 +1,8 @@
 import { useMediaQuery } from "@base-ui/react/unstable-use-media-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import React, { Suspense, useEffect, useState } from "react";
+import { ParallaxCarousel } from "@/components/common/carousel/ParallaxCarousel";
 import { HorizontalScrollSection } from "@/components/HorizontalScrollSection";
-
-import { ParallaxCarousel } from "@/components/ParallaxCarousel";
 import { PlaylistCard, toPlaylistDisplay } from "@/components/PlaylistCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ncm } from "@/services/ncm";
@@ -34,10 +33,7 @@ function BannerSection() {
           new Promise<void>((resolve) => {
             const img = new Image();
             img.src = b.bigImageUrl;
-            img.decode().then(
-              () => resolve(),
-              () => resolve(),
-            );
+            img.decode().then(() => resolve());
           }),
       ),
     ).then(() => {
@@ -52,39 +48,52 @@ function BannerSection() {
 
   return (
     <div className="grid grid-rows-2 grid-cols-5 w-full aspect-9/5 lg:aspect-3/1 gap-2 md:gap-3 lg:gap-4">
-      <div className="row-span-2 col-span-5 lg:col-span-3">
-        <ParallaxCarousel
-          className="rounded-xl shadow-lg"
-          items={banners}
-          parallaxSpeed={0.25}
-        >
-          {(banner, _index, parallaxOffset) => (
-            <button className="w-full h-full overflow-hidden" type="button">
-              <div
-                className="w-full h-full transition-transform duration-700 ease-out"
-                style={{
-                  transform: `translateX(calc( ${parallaxOffset * 90}%))`,
-                }}
-              >
-                <img
-                  alt={banner.typeTitle}
-                  className="inset-0 object-cover"
-                  src={banner.bigImageUrl}
-                />
-              </div>
-              <span className="absolute right-2 top-2 rounded px-2 py-1 text-xs leading-3 bg-background/50 backdrop-blur-xl text-foreground">
-                {banner.typeTitle}
-              </span>
-            </button>
-          )}
-        </ParallaxCarousel>
-      </div>
+      <ParallaxCarousel
+        className="row-span-2 col-span-5 lg:col-span-3 rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 overflow-hidden"
+        getKey={(item) => item.bigImageUrl}
+        items={banners}
+      >
+        {(banner) => {
+          return (
+            <img
+              alt={banner.typeTitle}
+              className="absolute inset-0 w-full h-full object-cover"
+              src={banner.bigImageUrl}
+            />
+          );
+        }}
+      </ParallaxCarousel>
+      {/*<ParallaxCarousel
+        className="row-span-2 col-span-5 lg:col-span-3 rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 overflow-hidden"
+        items={banners}
+        parallaxSpeed={0.25}
+      >
+        {(banner, _index, parallaxOffset) => (
+          <div className="relative w-full h-full">
+            <div
+              className="w-full h-full transition-transform duration-700 ease-out"
+              style={{
+                transform: `translateX(calc(${parallaxOffset * 90}%))`,
+              }}
+            >
+              <img
+                alt={banner.typeTitle}
+                className="absolute inset-0 w-full h-full object-cover"
+                src={banner.bigImageUrl}
+              />
+            </div>
+            <span className="absolute right-2 top-2 rounded px-2 py-1 text-xs leading-3 bg-background/50 backdrop-blur-xl text-foreground">
+              {banner.typeTitle}
+            </span>
+          </div>
+        )}
+      </ParallaxCarousel>*/}
 
       {isWide && (
         <React.Fragment>
-          <div className="row-span-1 col-span-2 bg-amber-300 rounded-xl shadow-lg block" />
-          <div className="row-span-1 col-span-1 bg-emerald-400 rounded-xl shadow-lg block" />
-          <div className="row-span-1 col-span-1 bg-pink-400 rounded-xl shadow-lg block" />
+          <div className="row-span-1 col-span-2 bg-amber-300 rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 block" />
+          <div className="row-span-1 col-span-1 bg-emerald-400 rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 block" />
+          <div className="row-span-1 col-span-1 bg-pink-400 rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 block" />
         </React.Fragment>
       )}
     </div>
@@ -95,7 +104,7 @@ function BannerFallback() {
   return (
     <div className="grid grid-rows-2 grid-cols-5 w-full aspect-9/5 lg:aspect-3/1 gap-2 md:gap-3 lg:gap-4">
       <div className="row-span-2 col-span-5 lg:col-span-3">
-        <ParallaxCarousel className="rounded-xl" items={[]} loading />
+        <Skeleton className="h-full w-full rounded-xl" shimmer />
       </div>
       <div className="hidden lg:contents">
         <Skeleton className="row-span-1 col-span-2 rounded-xl" shimmer />

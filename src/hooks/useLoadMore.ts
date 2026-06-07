@@ -1,12 +1,12 @@
 import { use, useEffect, useRef, useState } from "react";
-import { LenisContext } from "@/hooks/useLenis";
+import { ScrollContainerContext } from "@/hooks/useScrollContainer";
 
 const BATCH = 30;
 const THRESHOLD = 600;
 
 export function useLoadMore(total: number) {
   const [count, setCount] = useState(() => Math.min(BATCH, total));
-  const lenis = use(LenisContext);
+  const container = use(ScrollContainerContext);
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
@@ -14,26 +14,25 @@ export function useLoadMore(total: number) {
   }, [total]);
 
   useEffect(() => {
-    if (!lenis || count >= total) return;
+    if (!container || count >= total) return;
 
     const onScroll = () => {
       if (rafRef.current) return;
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = 0;
-        const maxScroll =
-          lenis.dimensions.scrollHeight - lenis.dimensions.height;
-        if (maxScroll - lenis.animatedScroll < THRESHOLD) {
+        const maxScroll = container.scrollHeight - container.clientHeight;
+        if (maxScroll - container.scrollTop < THRESHOLD) {
           setCount((prev) => Math.min(prev + BATCH, total));
         }
       });
     };
 
-    const unsub = lenis.on("scroll", onScroll);
+    container.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      unsub();
+      container.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(rafRef.current);
     };
-  }, [lenis, count, total]);
+  }, [container, count, total]);
 
   return count;
 }

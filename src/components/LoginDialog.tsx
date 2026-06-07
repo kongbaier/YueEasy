@@ -248,7 +248,7 @@ export default function LoginDialog() {
               className={cn(
                 "flex-1 cursor-pointer rounded-md py-1.5 text-sm font-medium transition-colors",
                 tab === t.key
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "bg-background text-foreground shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10"
                   : "text-muted-foreground hover:text-foreground",
               )}
               key={t.key}

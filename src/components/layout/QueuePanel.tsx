@@ -36,7 +36,7 @@ const QueueItem = ({
       tabIndex={0}
       type="button"
     >
-      <div className="w-8 h-8 rounded shadow flex items-center justify-center shrink-0 overflow-hidden">
+      <div className="w-8 h-8 rounded shadow dark:shadow-none dark:ring-1 dark:ring-white/10 flex items-center justify-center shrink-0 overflow-hidden">
         {track.album.picUrl ? (
           <ImageWithFade
             alt={track.album.name}
@@ -144,7 +144,7 @@ export function QueuePanel() {
 
       <aside
         className={cn(
-          "relative w-80 h-full bg-white dark:bg-black shadow-xl flex flex-col z-10 transition-transform duration-300 ease-out",
+          "relative w-80 h-full bg-white dark:bg-black shadow-xl dark:shadow-black/30 flex flex-col z-10 transition-transform duration-300 ease-out",
           visible ? "translate-x-0" : "translate-x-full",
         )}
         onTransitionEnd={handleTransitionEnd}

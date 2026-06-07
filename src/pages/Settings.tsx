@@ -1,8 +1,9 @@
+import { Effect } from "@tauri-apps/api/window";
 import { Check } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Effect } from "@tauri-apps/api/window";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   getSetting,
@@ -12,7 +13,6 @@ import {
 } from "@/services/tauri";
 import { useUiStore } from "@/stores";
 import type { Theme } from "@/stores/uiStore";
-import { toast } from "@/lib/toast";
 
 const labels: Record<Theme, string> = {
   system: "系统",
@@ -76,7 +76,7 @@ export default function Settings() {
             className={cn(
               "flex-1 py-1.5 text-sm font-medium rounded-md transition-colors",
               activeTab === tab.key
-                ? "bg-background text-foreground shadow-sm"
+                ? "bg-background text-foreground shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10"
                 : "text-muted-foreground hover:text-foreground",
             )}
             key={tab.key}

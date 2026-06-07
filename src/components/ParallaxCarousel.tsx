@@ -63,12 +63,6 @@ export function ParallaxCarousel<T>({
   getKey,
   loading,
 }: ParallaxCarouselProps<T>) {
-  if (loading) {
-    return (
-      <Skeleton className={cn("h-full w-full rounded-xl", className)} shimmer />
-    );
-  }
-
   const len = items.length;
 
   const [current, setCurrent] = useState(0);
@@ -130,6 +124,12 @@ export function ParallaxCarousel<T>({
   const targetOffset = started ? 0 : -dir * parallaxSpeed;
 
   const displayIndex = animation?.target ?? current;
+
+  if (loading) {
+    return (
+      <Skeleton className={cn("h-full w-full rounded-xl", className)} shimmer />
+    );
+  }
 
   return (
     <div

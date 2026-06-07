@@ -56,7 +56,7 @@ function Popup({ className, children, ...props }: SelectPrimitive.Popup.Props) {
   return (
     <SelectPrimitive.Popup
       className={cn(
-        "z-50 min-w-(--anchor-width) origin-(--transform-origin) overflow-hidden rounded-lg border border-border bg-card p-1 shadow-lg transition-all data-ending-style:scale-95 data-starting-style:scale-95 data-ending-style:opacity-0 data-starting-style:opacity-0",
+        "z-50 min-w-(--anchor-width) origin-(--transform-origin) overflow-hidden rounded-lg border border-border bg-card p-1 shadow-lg dark:shadow-black/30 transition-all data-ending-style:scale-95 data-starting-style:scale-95 data-ending-style:opacity-0 data-starting-style:opacity-0",
         className,
       )}
       {...props}

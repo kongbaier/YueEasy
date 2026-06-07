@@ -1,11 +1,12 @@
 import KeepAliveRouteOutlet from "keepalive-for-react-router";
 import { ChevronLeft } from "lucide-react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
-import { LenisScroll } from "@/components/lenis-scroll";
 import WindowControls from "@/components/system/WindowControls";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useCanGoBack } from "@/hooks/use-can-go-back";
+import { ScrollContainerContext } from "@/hooks/useScrollContainer";
 import { PlayerBar } from "./PlayerBar";
 import { QueuePanel } from "./QueuePanel";
 
@@ -13,10 +14,7 @@ const Header = () => {
   const navigate = useNavigate();
   const canGoBack = useCanGoBack();
   return (
-    <header
-      className="absolute top-0 left-0 right-0 h-10 z-10 flex items-center bg-white/50 backdrop-blur-lg backdrop-brightness-150 dark:bg-black/50"
-      data-tauri-drag-region
-    >
+    <header className="h-10 flex items-center shrink-0" data-tauri-drag-region>
       {canGoBack && (
         <button
           aria-label="返回"
@@ -33,17 +31,29 @@ const Header = () => {
 };
 
 export function MainLayout() {
+  const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(
+    null,
+  );
+  const scrollRef = useCallback((el: HTMLDivElement | null) => {
+    setScrollContainer(el);
+  }, []);
+
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex h-screen w-screen flex-col text-foreground">
         <div className="relative flex flex-1 overflow-hidden">
           <AppSidebar />
 
-          <main className="relative flex flex-1 flex-col bg-background">
+          <main className="relative flex flex-1 flex-col bg-background min-w-0">
             <Header />
-            <LenisScroll className="flex-1 min-h-0" overflowTop={40}>
-              <KeepAliveRouteOutlet max={5} />
-            </LenisScroll>
+            <ScrollContainerContext.Provider value={scrollContainer}>
+              <div
+                className="flex-1 min-h-0 min-w-0 overflow-y-auto"
+                ref={scrollRef}
+              >
+                <KeepAliveRouteOutlet max={5} />
+              </div>
+            </ScrollContainerContext.Provider>
           </main>
         </div>
 

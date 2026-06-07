@@ -113,7 +113,7 @@ const PlayerInfo = () => {
   return (
     <div className="flex-1 min-w-0 flex items-center gap-3">
       <button
-        className="rounded overflow-hidden shadow h-10 w-10 shrink-0 hover:scale-110 transition-transform origin-bottom-left"
+        className="rounded overflow-hidden shadow dark:shadow-none dark:ring-1 dark:ring-white/10 h-10 w-10 shrink-0 hover:scale-110 transition-transform origin-bottom-left"
         onClick={openPlayerPage}
         type="button"
       >

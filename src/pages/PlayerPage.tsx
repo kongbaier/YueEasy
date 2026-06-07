@@ -5,8 +5,9 @@ import { PlayerPageControls } from "@/components/player-page/PlayerPageControls"
 import { PlayerPageProgress } from "@/components/player-page/PlayerPageProgress";
 import { PlayerPageQueue } from "@/components/player-page/PlayerPageQueue";
 import { PlayerPageVolume } from "@/components/player-page/PlayerPageVolume";
-import { RatioContainer } from "@/components/RatioContainer";
+
 import WindowControls from "@/components/system/WindowControls";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ImageWithFade } from "@/components/ui/image";
 import type { Track } from "@/core/player/types";
 import { toast } from "@/lib/toast";
@@ -134,18 +135,18 @@ const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
 
 const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
   return (
-    <RatioContainer className="">
+    <AspectRatio className="rounded-lg overflow-hidden" ratio={1}>
       {currentTrack.album?.picUrl ? (
         <ImageWithFade
           alt={currentTrack.album.name}
-          className={cn("object-cover", "rounded-lg shadow")}
+          className="object-cover"
           fill
           src={currentTrack.album.picUrl}
         />
       ) : (
         <div className="w-full h-full bg-secondary" />
       )}
-    </RatioContainer>
+    </AspectRatio>
   );
 };
 

@@ -52,7 +52,7 @@ html.theme-transition *::after {
 }
 
 :root.dark {
-  --background: color-mix(in oklch, #121212 50%, transparent);
+  --background: color-mix(in oklch, #ffffff 6%, transparent);
   --foreground: #f6f6f6;
   --primary: #e74c3c;
   --primary-foreground: #ffffff;
