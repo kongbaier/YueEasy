@@ -5,7 +5,7 @@ import { ParallaxCarousel } from "@/components/common/carousel/ParallaxCarousel"
 import { HorizontalScrollSection } from "@/components/HorizontalScrollSection";
 import { PlaylistCard, toPlaylistDisplay } from "@/components/PlaylistCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ncm } from "@/services/ncm";
+import { BannerType, ncm } from "@/services/ncm";
 
 function BannerSection() {
   const { data: banners } = useSuspenseQuery({
@@ -13,7 +13,9 @@ function BannerSection() {
     queryFn: () =>
       ncm
         .banner()
-        .then((r) => r.banners)
+        .then((r) =>
+          r.banners.filter((banner) => banner.targetType !== BannerType.AD),
+        )
         .catch(() => []),
   });
 
@@ -55,39 +57,19 @@ function BannerSection() {
       >
         {(banner) => {
           return (
-            <img
-              alt={banner.typeTitle}
-              className="absolute inset-0 w-full h-full object-cover"
-              src={banner.bigImageUrl}
-            />
-          );
-        }}
-      </ParallaxCarousel>
-      {/*<ParallaxCarousel
-        className="row-span-2 col-span-5 lg:col-span-3 rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 overflow-hidden"
-        items={banners}
-        parallaxSpeed={0.25}
-      >
-        {(banner, _index, parallaxOffset) => (
-          <div className="relative w-full h-full">
-            <div
-              className="w-full h-full transition-transform duration-700 ease-out"
-              style={{
-                transform: `translateX(calc(${parallaxOffset * 90}%))`,
-              }}
-            >
+            <React.Fragment>
               <img
                 alt={banner.typeTitle}
                 className="absolute inset-0 w-full h-full object-cover"
                 src={banner.bigImageUrl}
               />
-            </div>
-            <span className="absolute right-2 top-2 rounded px-2 py-1 text-xs leading-3 bg-background/50 backdrop-blur-xl text-foreground">
-              {banner.typeTitle}
-            </span>
-          </div>
-        )}
-      </ParallaxCarousel>*/}
+              <div className="absolute right-3 top-3 drop-shadow-2xl text-xs bg-background rounded-sm px-1 py-0.5">
+                {banner.typeTitle}
+              </div>
+            </React.Fragment>
+          );
+        }}
+      </ParallaxCarousel>
 
       {isWide && (
         <React.Fragment>
