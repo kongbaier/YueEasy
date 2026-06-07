@@ -3,6 +3,15 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition:
+    background-color 0.75s ease,
+    color 0.75s ease,
+    border-color 0.75s ease;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #0a0a0a;
@@ -58,7 +67,7 @@
   --card: #181818;
   --card-foreground: #f6f6f6;
   --border: #2a2a2a;
-  --sidebar: #181818;
+  --sidebar: transparent;
   --sidebar-foreground: #f6f6f6;
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #ffffff;
