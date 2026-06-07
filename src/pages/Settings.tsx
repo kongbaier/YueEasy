@@ -1,10 +1,18 @@
 import { Check } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Effect } from "@tauri-apps/api/window";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import {
+  getSetting,
+  setSetting,
+  setWindowEffect,
+  windowEffectLabels,
+} from "@/services/tauri";
 import { useUiStore } from "@/stores";
 import type { Theme } from "@/stores/uiStore";
+import { toast } from "@/lib/toast";
 
 const labels: Record<Theme, string> = {
   system: "系统",
@@ -25,6 +33,25 @@ export default function Settings() {
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
   const [activeTab, setActiveTab] = useState<SectionKey>("appearance");
+  const [windowEffect, setWindowEffectState] = useState<Effect>(Effect.Mica);
+
+  useEffect(() => {
+    getSetting("window_effect")
+      .then((v) => {
+        if (v) setWindowEffectState(v as Effect);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleEffectChange = (effect: Effect) => {
+    setWindowEffectState(effect);
+    setSetting("window_effect", effect);
+    setWindowEffect(effect).catch(() => {
+      setWindowEffectState(Effect.Mica);
+      setSetting("window_effect", Effect.Mica);
+      toast.error("该效果不可用，已恢复为 Mica");
+    });
+  };
 
   const sectionRefs = useRef<Record<SectionKey, HTMLElement | null>>({
     appearance: null,
@@ -91,6 +118,39 @@ export default function Settings() {
                             </Select.Item>
                           ),
                         )}
+                      </Select.List>
+                    </Select.Popup>
+                  </Select.Positioner>
+                </Select.Portal>
+              </Select.Root>
+            </Row>
+            <Row description="Windows 窗口材质效果" label="窗口效果">
+              <Select.Root
+                onValueChange={(v) => handleEffectChange(v as Effect)}
+                value={windowEffect}
+              >
+                <Select.Trigger className="w-30">
+                  <Select.Value>
+                    {windowEffectLabels[windowEffect]}
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Portal>
+                  <Select.Positioner>
+                    <Select.Popup>
+                      <Select.List>
+                        {(
+                          Object.entries(windowEffectLabels) as [
+                            string,
+                            string,
+                          ][]
+                        ).map(([value, label]) => (
+                          <Select.Item key={value} value={value}>
+                            <Select.ItemText>{label}</Select.ItemText>
+                            <Select.ItemIndicator>
+                              <Check className="size-4" />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
                       </Select.List>
                     </Select.Popup>
                   </Select.Positioner>

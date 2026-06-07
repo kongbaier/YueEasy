@@ -100,6 +100,40 @@ pub fn run() {
 
             app.manage(db);
 
+            // 恢复保存的窗口效果
+            {
+                let db = app.state::<db::connection::Database>();
+                let saved_effect = db
+                    .conn
+                    .lock()
+                    .ok()
+                    .and_then(|conn| {
+                        conn.query_row::<String, _, _>(
+                            "SELECT value FROM settings WHERE key = 'window_effect'",
+                            [],
+                            |row| row.get(0),
+                        )
+                        .ok()
+                    })
+                    .unwrap_or_else(|| "mica".to_string());
+
+                let effect = match saved_effect.as_str() {
+                    "tabbed" => Effect::Tabbed,
+                    "acrylic" => Effect::Acrylic,
+                    "blur" => Effect::Blur,
+                    _ => Effect::Mica,
+                };
+
+                if let Err(e) = window.set_effects(WindowEffectsConfig {
+                    effects: vec![effect],
+                    color: None,
+                    radius: None,
+                    state: Some(EffectState::FollowsWindowActiveState),
+                }) {
+                    log::error!("[setup] failed to apply saved window effect: {e}");
+                }
+            }
+
             let ncm_state = ncm::NcmState::new();
             if !saved_cookie.is_empty() {
                 if let Ok(mut inner) = ncm_state.inner.lock() {

@@ -13,6 +13,7 @@ import { usePlayerKeyboard } from "./hooks/usePlayerKeyboard";
 import { usePlayerRestore } from "./hooks/usePlayerRestore";
 import { useQueuePersistence } from "./hooks/useQueuePersistence";
 import { useThemeSync } from "./hooks/useThemeSync";
+import { useWindowEffect } from "./hooks/useWindowEffect";
 import "./styles/index.css";
 
 const Home = lazy(() => import("./pages/Home"));
@@ -44,6 +45,7 @@ function App() {
   useMediaSession();
   useLikeInit();
   useThemeSync();
+  useWindowEffect();
 
   return (
     <BrowserRouter>

@@ -13,7 +13,7 @@ html.theme-transition *::after {
 }
 
 :root {
-  --background: #ffffff;
+  --background: color-mix(in oklch, #ffffff 55%, transparent);
   --foreground: #0a0a0a;
   --primary: #e74c3c;
   --primary-foreground: #ffffff;
@@ -24,15 +24,20 @@ html.theme-transition *::after {
   --primary-lighter: #f5b7b1;
   --primary-lightest: #fdedec;
   --ring: var(--primary);
-  --secondary: #e5e7eb;
+  --secondary: color-mix(in oklch, #e5e7eb 50%, transparent);
   --secondary-foreground: #1f2937;
-  --muted: #f9fafb;
+  --muted: color-mix(in oklch, #f9fafb 40%, transparent);
   --muted-foreground: #6b7280;
-  --accent: #e5e7eb;
+  --accent: color-mix(in oklch, #e5e7eb 65%, transparent);
   --accent-foreground: #111827;
-  --card: #ffffff;
+  --card: color-mix(in oklch, #ffffff 75%, transparent);
   --card-foreground: #0f0f0f;
-  --border: #e5e7eb;
+  --popover: color-mix(in oklch, #ffffff 90%, transparent);
+  --popover-foreground: #0f0f0f;
+  --border: color-mix(in oklch, #e5e7eb 12%, transparent);
+  --input: color-mix(in oklch, #e5e7eb 18%, transparent);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
   --radius: 0.5rem;
   --sidebar: transparent;
   --sidebar-foreground: #0f0f0f;
@@ -40,14 +45,14 @@ html.theme-transition *::after {
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: color-mix(in oklch, black 6%, transparent);
   --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: #e5e7eb;
+  --sidebar-border: color-mix(in oklch, #e5e7eb 12%, transparent);
   --sidebar-ring: var(--primary);
   --surface-hover: color-mix(in oklch, black 4%, transparent);
   --surface-active: color-mix(in oklch, var(--primary) 12%, transparent);
 }
 
 :root.dark {
-  --background: #121212;
+  --background: color-mix(in oklch, #121212 50%, transparent);
   --foreground: #f6f6f6;
   --primary: #e74c3c;
   --primary-foreground: #ffffff;
@@ -58,22 +63,27 @@ html.theme-transition *::after {
   --primary-lighter: #f5b7b1;
   --primary-lightest: #fdedec;
   --ring: var(--primary);
-  --secondary: #1e1e1e;
+  --secondary: color-mix(in oklch, #1e1e1e 45%, transparent);
   --secondary-foreground: #e5e7eb;
-  --muted: #1e1e1e;
+  --muted: color-mix(in oklch, #1e1e1e 35%, transparent);
   --muted-foreground: #9ca3af;
-  --accent: #1e1e1e;
+  --accent: color-mix(in oklch, #1e1e1e 60%, transparent);
   --accent-foreground: #e5e7eb;
-  --card: #181818;
+  --card: color-mix(in oklch, #181818 72%, transparent);
   --card-foreground: #f6f6f6;
-  --border: #2a2a2a;
+  --popover: color-mix(in oklch, #181818 88%, transparent);
+  --popover-foreground: #f6f6f6;
+  --border: color-mix(in oklch, #2a2a2a 10%, transparent);
+  --input: color-mix(in oklch, #2a2a2a 16%, transparent);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
   --sidebar: transparent;
   --sidebar-foreground: #f6f6f6;
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: color-mix(in oklch, white 6%, transparent);
   --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: #2a2a2a;
+  --sidebar-border: color-mix(in oklch, #2a2a2a 10%, transparent);
   --sidebar-ring: var(--primary);
   --surface-hover: color-mix(in oklch, white 4%, transparent);
   --surface-active: color-mix(in oklch, var(--primary) 20%, transparent);
@@ -99,7 +109,12 @@ html.theme-transition *::after {
   --color-accent-foreground: var(--accent-foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-border: var(--border);
+  --color-input: var(--input);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

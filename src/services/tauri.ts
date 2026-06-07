@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { Effect, EffectState, getCurrentWindow } from "@tauri-apps/api/window";
 
 export async function getSetting(key: string): Promise<string> {
   return invoke("get_setting", { key });
@@ -6,6 +7,24 @@ export async function getSetting(key: string): Promise<string> {
 
 export async function setSetting(key: string, value: string): Promise<void> {
   return invoke("set_setting", { key, value });
+}
+
+export const windowEffectLabels: Record<string, string> = {
+  [Effect.Mica]: "Mica",
+  [Effect.Tabbed]: "Mica Alt",
+  [Effect.Acrylic]: "Acrylic",
+  // [Effect.Blur]: "Acrylic Thin",
+};
+
+export async function setWindowEffect(effect: Effect): Promise<void> {
+  const window = getCurrentWindow();
+
+  window.clearEffects();
+
+  await window.setEffects({
+    effects: [effect],
+    state: EffectState.Active,
+  });
 }
 
 export async function downloadSong(

@@ -56,7 +56,7 @@ export default function PlayerPage() {
   return (
     <div
       className={cn(
-        "fixed top-0 left-0 w-screen h-screen z-50 bg-background flex flex-col transition-transform duration-300 ease-out",
+        "fixed top-0 left-0 w-screen h-screen z-50 bg-[#ffffff] dark:bg-[#121212] flex flex-col transition-transform duration-300 ease-out",
         visible ? "translate-y-0" : "translate-y-full",
       )}
     >
@@ -122,7 +122,9 @@ const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
 const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
   return (
     <div className="w-full h-14 overflow-hidden shrink-0">
-      <h1 className="text-xl font-semibold text-foreground truncate">{currentTrack.name}</h1>
+      <h1 className="text-xl font-semibold text-foreground truncate">
+        {currentTrack.name}
+      </h1>
       <p className="text-sm text-muted-foreground mt-1 truncate">
         {currentTrack.artists?.map((a) => a.name).join(" / ")}
       </p>

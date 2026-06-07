@@ -5,7 +5,8 @@ export type Theme = "light" | "dark" | "system";
 function getStoredTheme(): Theme {
   if (typeof window === "undefined") return "system";
   const stored = localStorage.getItem("theme");
-  if (stored === "light" || stored === "dark" || stored === "system") return stored;
+  if (stored === "light" || stored === "dark" || stored === "system")
+    return stored;
   return "system";
 }
 
