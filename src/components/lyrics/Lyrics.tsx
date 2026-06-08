@@ -4,15 +4,18 @@ import { createContext, use, useEffect, useState } from "react";
 import { useLyricScroll } from "@/hooks/useLyricScroll";
 import { useLyrics } from "@/hooks/useLyrics";
 import { cn } from "@/lib/utils";
+import { usePlayerStore } from "@/stores";
 import { LyricLine } from "./LyricLine";
 
 export function Lyrics({ className }: { className?: string }) {
   const { lines, index, hasLyrics, isLoading } = useLyrics();
+  const trackId = usePlayerStore((s) => s.currentTrack?.id);
   const [contentWidth, setContentWidth] = useState(0);
 
   const { containerRef, contentRef, contentStyle } = useLyricScroll(
     index,
     hasLyrics,
+    trackId,
   );
 
   useEffect(() => {

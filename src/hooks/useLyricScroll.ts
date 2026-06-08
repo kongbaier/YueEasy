@@ -5,6 +5,7 @@ const USER_IDLE_MS = 3000;
 export function useLyricScroll(
   activeLineIndex: number,
   enabled: boolean,
+  resetKey?: string | number,
 ): {
   containerRef: React.RefObject<HTMLDivElement | null>;
   contentRef: React.RefObject<HTMLUListElement | null>;
@@ -13,8 +14,10 @@ export function useLyricScroll(
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLUListElement>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resumeRafRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
   const isUserOperateRef = useRef(false);
   const prevIndexRef = useRef(-1);
+  const prevResetKeyRef = useRef(resetKey);
   const recenterRef = useRef<() => void>(null);
   const hasPositionedRef = useRef(false);
   const [translateY, setTranslateY] = useState(0);
@@ -31,9 +34,17 @@ export function useLyricScroll(
     (v: boolean) => {
       isUserOperateRef.current = v;
       clearIdleTimer();
+      if (resumeRafRef.current) {
+        cancelAnimationFrame(resumeRafRef.current);
+        resumeRafRef.current = null;
+      }
       if (v) {
         idleTimerRef.current = setTimeout(() => {
-          isUserOperateRef.current = false;
+          recenterRef.current?.();
+          resumeRafRef.current = requestAnimationFrame(() => {
+            resumeRafRef.current = null;
+            isUserOperateRef.current = false;
+          });
         }, USER_IDLE_MS);
       }
     },
@@ -79,6 +90,10 @@ export function useLyricScroll(
     return () => {
       container.removeEventListener("wheel", handleWheel);
       clearIdleTimer();
+      if (resumeRafRef.current) {
+        cancelAnimationFrame(resumeRafRef.current);
+        resumeRafRef.current = null;
+      }
     };
   }, [enabled, setIsUserOperate, clampTranslate, clearIdleTimer]);
 
@@ -112,6 +127,17 @@ export function useLyricScroll(
 
   // 在 paint 之前完成定位，避免第一帧看到错误位置
   useLayoutEffect(() => {
+    const resetKeyChanged =
+      resetKey !== undefined && prevResetKeyRef.current !== resetKey;
+    prevResetKeyRef.current = resetKey;
+
+    if (resetKeyChanged) {
+      setIsUserOperate(false);
+      setTranslateY(0);
+      hasPositionedRef.current = false;
+      setHasPositioned(false);
+    }
+
     if (prevIndexRef.current !== activeLineIndex) {
       setIsUserOperate(false);
     }
@@ -130,7 +156,7 @@ export function useLyricScroll(
         });
       }
     }
-  }, [activeLineIndex, enabled, setIsUserOperate, recenter]);
+  }, [activeLineIndex, enabled, resetKey, setIsUserOperate, recenter]);
 
   useEffect(() => {
     if (!enabled) return;

@@ -109,7 +109,7 @@ export function PlayerPageQueue() {
           <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
         </div>
       ) : (
-        <div className="flex-1">
+        <div className="flex-1 px-2 py-1">
           <Virtuoso
             components={{ Scroller: VirtuosoScroller }}
             computeItemKey={(index) => queue[index]?.id ?? index}

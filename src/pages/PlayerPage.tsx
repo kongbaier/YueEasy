@@ -40,16 +40,18 @@ export default function PlayerPage() {
       img.decode().catch(() => {});
     }
   }, [currentTrack]);
+
   const handleBack = () => {
     setVisible(false);
     setTimeout(() => close(), 300);
   };
+
   useEffect(() => {
     if (isOpen) {
-      const raf = requestAnimationFrame(() => setVisible(true));
-      return () => cancelAnimationFrame(raf);
+      setVisible(true);
+    } else {
+      setVisible(false);
     }
-    setVisible(false);
   }, [isOpen]);
 
   if (!isOpen) return null;
