@@ -250,7 +250,12 @@ export function AppSidebar() {
                       isActive={isActive}
                       onClick={() => navigate(item.to)}
                     >
-                      <item.icon fill={isActive ? "currentColor" : "none"} />
+                      <item.icon
+                        className={cn(
+                          isActive &&
+                            "fill-primary text-primary-darkest dark:text-primary-lightest",
+                        )}
+                      />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -274,7 +279,12 @@ export function AppSidebar() {
                         isActive={isActive}
                         onClick={() => navigate(item.to)}
                       >
-                        <item.icon />
+                        <item.icon
+                          className={cn(
+                            isActive &&
+                              "fill-primary text-primary-darkest dark:text-primary-lightest",
+                          )}
+                        />
                         <span>{item.label}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -311,7 +321,15 @@ export function AppSidebar() {
                           isActive={isActive}
                           onClick={() => navigate(`/playlist/${p.id}`)}
                         >
-                          <Music className="h-4 w-4 shrink-0" />
+                          {p.coverImgUrl ? (
+                            <img
+                              alt=""
+                              className="h-5 w-5 shrink-0 rounded-sm object-cover"
+                              src={p.coverImgUrl}
+                            />
+                          ) : (
+                            <Music className="h-4 w-4 shrink-0" />
+                          )}
                           <span className="truncate">{p.name}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -349,7 +367,15 @@ export function AppSidebar() {
                           isActive={isActive}
                           onClick={() => navigate(`/playlist/${p.id}`)}
                         >
-                          <Library className="h-4 w-4 shrink-0" />
+                          {p.coverImgUrl ? (
+                            <img
+                              alt=""
+                              className="h-5 w-5 shrink-0 rounded-sm object-cover"
+                              src={p.coverImgUrl}
+                            />
+                          ) : (
+                            <Library className="h-4 w-4 shrink-0" />
+                          )}
                           <span className="truncate">{p.name}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

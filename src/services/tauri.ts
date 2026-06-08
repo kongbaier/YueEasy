@@ -19,11 +19,9 @@ export const windowEffectLabels: Record<string, string> = {
 export async function setWindowEffect(effect: Effect): Promise<void> {
   const window = getCurrentWindow();
 
-  window.clearEffects();
-
   await window.setEffects({
     effects: [effect],
-    state: EffectState.Active,
+    state: EffectState.FollowsWindowActiveState,
   });
 }
 

@@ -7,11 +7,11 @@ export function useWindowEffect() {
     getSetting("window_effect")
       .then((effect) => {
         if (effect) {
-          setWindowEffect(effect);
+          return setWindowEffect(effect);
         }
       })
       .catch(() => {
-        toast.error("Failed to get window effect");
+        toast.error("Failed to apply window effect");
       });
   }, []);
 }
