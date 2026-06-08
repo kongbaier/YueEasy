@@ -67,7 +67,7 @@ export default function PlayerPage() {
         <div
           className={cn(
             "relative justify-self-center pb-4 gap-2 px-4",
-            "flex flex-col items-center",
+            "flex flex-col items-center justify-between",
             "w-4/5 max-w-md",
           )}
         >
