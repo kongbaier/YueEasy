@@ -1,13 +1,13 @@
-import { Music } from "lucide-react";
+import { Loader2, Music } from "lucide-react";
 import type { ReactNode } from "react";
-import { createContext, Suspense, use, useEffect, useState } from "react";
+import { createContext, use, useEffect, useState } from "react";
 import { useLyricScroll } from "@/hooks/useLyricScroll";
 import { useLyrics } from "@/hooks/useLyrics";
 import { cn } from "@/lib/utils";
 import { LyricLine } from "./LyricLine";
 
 export function Lyrics({ className }: { className?: string }) {
-  const { lines, index, hasLyrics } = useLyrics();
+  const { lines, index, hasLyrics, isLoading } = useLyrics();
   const [contentWidth, setContentWidth] = useState(0);
 
   const { containerRef, contentRef, contentStyle } = useLyricScroll(
@@ -16,37 +16,49 @@ export function Lyrics({ className }: { className?: string }) {
   );
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
+    if (!hasLyrics) return;
+    if (!contentRef.current) return;
     const observer = new ResizeObserver((entries) => {
       const newWidth = entries[0].contentRect.width;
       setContentWidth(newWidth);
     });
-    observer.observe(el);
-
+    observer.observe(contentRef.current);
     return () => observer.disconnect();
-  }, [containerRef]);
+  }, [contentRef, hasLyrics]);
 
+  // 加载中
+  if (isLoading) {
+    return (
+      <div className={cn("h-full flex flex-col", className)}>
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+          <Loader2 className="size-8 animate-spin opacity-30" />
+          <p className="text-xs">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 无歌词
+  if (!hasLyrics) {
+    return (
+      <div className={cn("h-full flex flex-col", className)}>
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+          <Music className="size-10 opacity-30" />
+          <p className="text-xs">暂无歌词</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 有歌词
   return (
-    <div
-      className={cn("h-full w-full relative overflow-hidden", className)}
-      ref={containerRef}
-    >
-      <Suspense
-        fallback={
-          <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-            <Music className="size-10 opacity-30" />
-            <p className="text-xs">暂无歌词</p>
-          </div>
-        }
+    <div className={cn("h-full flex flex-col", className)}>
+      <div
+        className="relative overflow-hidden flex-1 mb-4"
+        ref={containerRef}
       >
-        <LyricsProvider value={{ index, contentWidth }}>
-          <ul
-            className="space-y-2 mx-4 pb-4"
-            ref={contentRef}
-            style={contentStyle}
-          >
+        <ul className="space-y-2 mx-4" ref={contentRef} style={contentStyle}>
+          <LyricsProvider value={{ index, contentWidth }}>
             {lines.map((line, i) => (
               <LyricLine
                 key={`${line.startMs}-${line.text.slice(0, 8)}`}
@@ -54,9 +66,9 @@ export function Lyrics({ className }: { className?: string }) {
                 lineIndex={i}
               />
             ))}
-          </ul>
-        </LyricsProvider>
-      </Suspense>
+          </LyricsProvider>
+        </ul>
+      </div>
     </div>
   );
 }

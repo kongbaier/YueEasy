@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 type ImgStatus = "loading" | "loaded" | "error";
@@ -17,15 +17,7 @@ function ImageWithFade({
   ...rest
 }: ImageWithFadeProps) {
   const [status, setStatus] = useState<ImgStatus>("loading");
-  const mountedRef = useRef(true);
   const prevSrcRef = useRef(src);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
 
   useEffect(() => {
     if (!src) {
@@ -37,23 +29,17 @@ function ImageWithFade({
       setStatus("loading");
       prevSrcRef.current = src;
     }
-
-    let cancelled = false;
-    const img = new Image();
-    img.src = src;
-    img
-      .decode()
-      .then(() => {
-        if (!cancelled && mountedRef.current) setStatus("loaded");
-      })
-      .catch(() => {
-        if (!cancelled && mountedRef.current) setStatus("error");
-      });
-
-    return () => {
-      cancelled = true;
-    };
   }, [src]);
+
+  // 始终让 <img> 持有 src，浏览器在挂载时就开始加载；
+  // onLoad 确保图片已在该元素上完成解码后才开始 fade-in
+  const handleLoad = useCallback(() => {
+    setStatus("loaded");
+  }, []);
+
+  const handleError = useCallback(() => {
+    setStatus("error");
+  }, []);
 
   const showShimmer = status === "loading";
   const showImg = status === "loaded";
@@ -78,8 +64,10 @@ function ImageWithFade({
           "transition-opacity duration-300",
           showImg ? "opacity-100" : "opacity-0",
         )}
-        src={showImg ? src : undefined}
         {...rest}
+        src={src}
+        onLoad={handleLoad}
+        onError={handleError}
       />
     </span>
   );

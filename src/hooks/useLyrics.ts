@@ -8,6 +8,7 @@ interface LyricsState {
   lines: LyricLine[];
   index: number;
   hasLyrics: boolean;
+  isLoading: boolean;
 }
 
 export function useLyrics(): LyricsState {
@@ -15,7 +16,7 @@ export function useLyrics(): LyricsState {
   const currentTime = usePlayerStore((s) => s.currentTime);
   const trackId = currentTrack?.id;
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["lyrics", trackId],
     queryFn: () => {
       if (!trackId) return { lyric: [], tlyric: [] };
@@ -43,5 +44,6 @@ export function useLyrics(): LyricsState {
     lines,
     index,
     hasLyrics: lines.length > 0,
+    isLoading,
   };
 }

@@ -135,7 +135,10 @@ const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
 
 const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
   return (
-    <AspectRatio className="rounded-lg overflow-hidden" ratio={1}>
+    <AspectRatio
+      className="rounded-lg shadow overflow-hidden dark:shadow-none"
+      ratio={1}
+    >
       {currentTrack.album?.picUrl ? (
         <ImageWithFade
           alt={currentTrack.album.name}

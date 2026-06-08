@@ -1,24 +1,24 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const USER_IDLE_MS = 3000;
 
-export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
+export function useLyricScroll(
+  activeLineIndex: number,
+  enabled: boolean,
+): {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  contentRef: React.RefObject<HTMLUListElement | null>;
+  contentStyle: React.CSSProperties;
+} {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLUListElement>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isUserOperateRef = useRef(false);
   const prevIndexRef = useRef(-1);
-  const recenterRef = useRef<(() => void) | null>(null);
+  const recenterRef = useRef<() => void>(null);
   const hasPositionedRef = useRef(false);
   const [translateY, setTranslateY] = useState(0);
   const [hasPositioned, setHasPositioned] = useState(false);
-  const [isUserOperating, setIsUserOperating] = useState(false);
 
   const clearIdleTimer = useCallback(() => {
     if (idleTimerRef.current) {
@@ -30,13 +30,10 @@ export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
   const setIsUserOperate = useCallback(
     (v: boolean) => {
       isUserOperateRef.current = v;
-      setIsUserOperating(v);
       clearIdleTimer();
       if (v) {
         idleTimerRef.current = setTimeout(() => {
           isUserOperateRef.current = false;
-          setIsUserOperating(false);
-          recenterRef.current?.();
         }, USER_IDLE_MS);
       }
     },
@@ -47,16 +44,12 @@ export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
     prevIndexRef.current = activeLineIndex;
   }, [activeLineIndex]);
 
-  // 切换歌曲时重置状态
   useEffect(() => {
     if (!enabled) {
       hasPositionedRef.current = false;
       setHasPositioned(false);
     }
-    clearIdleTimer();
-    isUserOperateRef.current = false;
-    setIsUserOperating(false);
-  }, [enabled, clearIdleTimer]);
+  }, [enabled]);
 
   const clampTranslate = useCallback((value: number) => {
     const container = containerRef.current;
@@ -109,45 +102,62 @@ export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
 
     const ideal = containerHeight / 2 - lineCenter;
     const overflow = contentHeight - containerHeight;
+    const minTranslate = 0;
     const maxTranslate = overflow > 0 ? -overflow : 0;
 
-    setTranslateY(Math.max(maxTranslate, Math.min(0, ideal)));
+    setTranslateY(Math.max(maxTranslate, Math.min(minTranslate, ideal)));
   }, [activeLineIndex]);
 
   recenterRef.current = recenter;
 
+  // 在 paint 之前完成定位，避免第一帧看到错误位置
   useLayoutEffect(() => {
+    if (prevIndexRef.current !== activeLineIndex) {
+      setIsUserOperate(false);
+    }
+
     if (activeLineIndex < 0 || !enabled) return;
     if (isUserOperateRef.current) return;
 
+    recenter();
+
     if (!hasPositionedRef.current) {
-      recenter();
-      hasPositionedRef.current = true;
-      // 延迟启用动画，避免首次定位产生过渡效果
-      requestAnimationFrame(() => {
-        setHasPositioned(true);
-      });
-      return;
+      const content = contentRef.current;
+      if (content && content.getBoundingClientRect().height > 0) {
+        hasPositionedRef.current = true;
+        requestAnimationFrame(() => {
+          setHasPositioned(true);
+        });
+      }
     }
-
-    const raf = requestAnimationFrame(() => {
-      recenter();
-    });
-
-    return () => cancelAnimationFrame(raf);
-  }, [activeLineIndex, enabled, recenter]);
+  }, [activeLineIndex, enabled, setIsUserOperate, recenter]);
 
   useEffect(() => {
     if (!enabled) return;
-    const container = containerRef.current;
-    if (!container) return;
+    const content = contentRef.current;
+    if (!content) return;
 
     const observer = new ResizeObserver(() => {
       if (isUserOperateRef.current) return;
+
+      if (!hasPositionedRef.current) {
+        recenterRef.current?.();
+        const el = contentRef.current;
+        if (el && el.getBoundingClientRect().height > 0) {
+          // 强制重绘确保新位置已提交到屏幕，再启用 transition
+          el.getBoundingClientRect();
+          hasPositionedRef.current = true;
+          requestAnimationFrame(() => {
+            setHasPositioned(true);
+          });
+        }
+        return;
+      }
+
       recenterRef.current?.();
     });
 
-    observer.observe(container);
+    observer.observe(content);
     return () => observer.disconnect();
   }, [enabled]);
 
@@ -157,7 +167,7 @@ export function useLyricScroll(activeLineIndex: number, enabled: boolean) {
     contentStyle: {
       transform: `translateY(${translateY}px)`,
       transition:
-        !hasPositioned || isUserOperating
+        !hasPositioned || isUserOperateRef.current
           ? "none"
           : "transform 0.3s ease-in-out",
     },
