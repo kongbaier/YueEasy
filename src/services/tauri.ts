@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { Effect, EffectState, getCurrentWindow } from "@tauri-apps/api/window";
 
-export async function getSetting(key: string): Promise<string> {
+export async function getSetting(key: string): Promise<Effect> {
   return invoke("get_setting", { key });
 }
 

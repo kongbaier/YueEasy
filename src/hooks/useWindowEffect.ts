@@ -1,5 +1,5 @@
-import type { Effect } from "@tauri-apps/api/window";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { getSetting, setWindowEffect } from "@/services/tauri";
 
 export function useWindowEffect() {
@@ -7,11 +7,11 @@ export function useWindowEffect() {
     getSetting("window_effect")
       .then((effect) => {
         if (effect) {
-          setWindowEffect(effect as Effect);
+          setWindowEffect(effect);
         }
       })
       .catch(() => {
-        // setting not saved yet, use default (Mica in Rust)
+        toast.error("Failed to get window effect");
       });
   }, []);
 }

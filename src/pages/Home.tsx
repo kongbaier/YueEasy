@@ -1,8 +1,7 @@
 import { useMediaQuery } from "@base-ui/react/unstable-use-media-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import React, { Suspense, useEffect, useState } from "react";
-import { ParallaxCarousel } from "@/components/common/carousel/ParallaxCarousel";
-import { HorizontalScrollSection } from "@/components/HorizontalScrollSection";
+import { HorizontalCarousel, ParallaxCarousel } from "@/components/common/carousel";
 import { PlaylistCard, toPlaylistDisplay } from "@/components/PlaylistCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BannerType, ncm } from "@/services/ncm";
@@ -108,14 +107,14 @@ function PersonalizedSection() {
   });
 
   return (
-    <HorizontalScrollSection
+    <HorizontalCarousel
       title="推荐歌单"
       titleLink="/discover/personalized"
     >
       {playlists.map((pl) => (
         <PlaylistCard key={pl.id} playlist={pl} showPlayCount />
       ))}
-    </HorizontalScrollSection>
+    </HorizontalCarousel>
   );
 }
 
@@ -130,11 +129,11 @@ function TopPlaylistSection() {
   });
 
   return (
-    <HorizontalScrollSection title="热门歌单" titleLink="/discover/toplist">
+    <HorizontalCarousel title="热门歌单" titleLink="/discover/toplist">
       {topPlaylists.map((pl) => (
         <PlaylistCard key={pl.id} playlist={pl} />
       ))}
-    </HorizontalScrollSection>
+    </HorizontalCarousel>
   );
 }
 
@@ -145,11 +144,11 @@ export default function Home() {
         <BannerSection />
       </Suspense>
 
-      <Suspense fallback={<HorizontalScrollSection loading title="推荐歌单" />}>
+      <Suspense fallback={<HorizontalCarousel loading title="推荐歌单" />}>
         <PersonalizedSection />
       </Suspense>
 
-      <Suspense fallback={<HorizontalScrollSection loading title="热门歌单" />}>
+      <Suspense fallback={<HorizontalCarousel loading title="热门歌单" />}>
         <TopPlaylistSection />
       </Suspense>
     </div>
