@@ -95,11 +95,11 @@ export class PlayerCore<T extends { id: number }> {
   async play() {
     const track = this.currentTrack;
     if (!track) return;
-    if (this.state === "playing") return;
+    if (this.state === "playing" || this.state === "loading") return;
 
+    this.#transition("playing");
     try {
       await this.#engine.play();
-      this.#transition("playing");
     } catch (_err) {
       this.#transition("error");
     }

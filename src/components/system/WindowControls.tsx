@@ -1,15 +1,25 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Minus, Square, X } from "lucide-react";
+import { Copy, Minus, Square, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function WindowControls({ className }: { className?: string }) {
   const appWindow = getCurrentWindow();
+
+  const [isMaximized, setIsMaximized] = useState(false);
+
+  useEffect(() => {
+    appWindow.onResized(async () => {
+      const isMaximized = await appWindow.isMaximized();
+      setIsMaximized(isMaximized);
+    });
+  }, [appWindow]);
+
   /** 最小化菜单 */
   const handleMinimize = () => appWindow.minimize();
-
   /** 关闭菜单 */
   const handleClose = () => appWindow.close();
 
-  const toggleMaximize = () => appWindow.toggleMaximize();
+  const toggleMaximize = async () => await appWindow.toggleMaximize();
 
   return (
     <div
@@ -29,7 +39,7 @@ export default function WindowControls({ className }: { className?: string }) {
         onPointerUp={toggleMaximize}
         type="button"
       >
-        <Square className="w-3" />
+        {isMaximized ? <Copy className="w-3" /> : <Square className="w-3" />}
       </button>
 
       <button
