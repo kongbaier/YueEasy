@@ -3,11 +3,11 @@ import { useCallback, useRef } from "react";
 import type { VirtuosoHandle } from "react-virtuoso";
 import { Virtuoso } from "react-virtuoso";
 import { ImageWithFade } from "@/components/ui/image";
-import { VirtuosoScroller } from "@/components/virtuoso/VirtuosoScroller";
+import { VirtuosoScroller } from "@/components/virtuoso";
 import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
 
-function QueueItem({
+const QueueItem = ({
   track,
   index,
   isCurrent,
@@ -19,7 +19,7 @@ function QueueItem({
   isCurrent: boolean;
   onPlay: (index: number) => void;
   onRemove: (index: number) => void;
-}) {
+}) => {
   return (
     <div
       className={cn(
@@ -65,9 +65,9 @@ function QueueItem({
       </button>
     </div>
   );
-}
+};
 
-export function PlayerPageQueue() {
+export const PlayerPageQueue = () => {
   const queue = usePlayerStore((s) => s.queue);
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
@@ -135,4 +135,4 @@ export function PlayerPageQueue() {
       )}
     </div>
   );
-}
+};

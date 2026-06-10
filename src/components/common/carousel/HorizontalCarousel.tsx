@@ -2,18 +2,18 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import React from "react";
 import { Link } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   useCarousel,
 } from "@/components/ui/carousel";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 const SKELETON_COUNT = 8;
 
-function CardSkeleton({ index }: { index: number }) {
+const CardSkeleton = ({ index }: { index: number }) => {
   return (
     <div className="w-30 lg:w-36 xl:w-40 2xl:w-44 shrink-0">
       <Skeleton className="aspect-square w-full rounded-lg" shimmer />
@@ -24,9 +24,9 @@ function CardSkeleton({ index }: { index: number }) {
       />
     </div>
   );
-}
+};
 
-function ScrollButtons() {
+const ScrollButtons = () => {
   const { api, canScrollPrev, canScrollNext } = useCarousel();
 
   const scroll = (direction: "left" | "right") => {
@@ -77,7 +77,7 @@ function ScrollButtons() {
       </button>
     </div>
   );
-}
+};
 
 interface HorizontalCarouselProps {
   title: string;
@@ -86,15 +86,17 @@ interface HorizontalCarouselProps {
   loading?: boolean;
 }
 
-export function HorizontalCarousel({
+export const HorizontalCarousel = ({
   title,
   titleLink,
   children,
   loading,
-}: HorizontalCarouselProps) {
+}: HorizontalCarouselProps) => {
   return (
     <section>
-      <Carousel opts={{ loop: false, align: "start", containScroll: "trimSnaps" }}>
+      <Carousel
+        opts={{ loop: false, align: "start", containScroll: "trimSnaps" }}
+      >
         <div className="mb-4 flex items-center justify-between">
           {titleLink ? (
             <Link
@@ -111,7 +113,8 @@ export function HorizontalCarousel({
         <CarouselContent>
           {loading
             ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-                <CarouselItem key={i} className="basis-auto">
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, order never changes
+                <CarouselItem className="basis-auto" key={i}>
                   <CardSkeleton index={i} />
                 </CarouselItem>
               ))
@@ -122,4 +125,4 @@ export function HorizontalCarousel({
       </Carousel>
     </section>
   );
-}
+};

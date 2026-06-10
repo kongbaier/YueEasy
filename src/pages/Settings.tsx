@@ -224,7 +224,7 @@ export default function Settings() {
   );
 }
 
-function Row({
+const Row = ({
   label,
   description,
   children,
@@ -232,7 +232,7 @@ function Row({
   label: string;
   description?: string;
   children: React.ReactNode;
-}) {
+}) => {
   return (
     <div className="flex items-center justify-between py-1">
       <div>
@@ -244,4 +244,4 @@ function Row({
       {children}
     </div>
   );
-}
+};

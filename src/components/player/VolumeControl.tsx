@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
 
-export function VolumeControl() {
+export const VolumeControl = () => {
   const volume = usePlayerStore((s) => s.volume);
   const muted = usePlayerStore((s) => s.muted);
   const setVolume = usePlayerStore((s) => s.setVolume);
@@ -115,4 +115,4 @@ export function VolumeControl() {
       )}
     </div>
   );
-}
+};

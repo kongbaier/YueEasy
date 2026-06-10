@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import type { CarouselApi } from "@/components/ui/carousel";
 import {
   Carousel,

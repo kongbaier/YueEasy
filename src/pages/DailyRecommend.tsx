@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Play } from "lucide-react";
 import { Suspense } from "react";
-import { TrackRow, TrackRowSkeleton } from "@/components/track/TrackRow";
+import { TrackRow, TrackRowSkeleton } from "@/components/track";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
 import { useLoadMore } from "@/hooks/useLoadMore";
@@ -9,7 +9,7 @@ import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
 import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
 
-function DailyRecommendSkeleton() {
+const DailyRecommendSkeleton = () => {
   return (
     <div className="p-6">
       <Skeleton className="h-7 w-32 rounded" shimmer />
@@ -25,9 +25,9 @@ function DailyRecommendSkeleton() {
       </div>
     </div>
   );
-}
+};
 
-function DailyRecommendContent() {
+const DailyRecommendContent = () => {
   const play = usePlayerStore((s) => s.play);
 
   const { data: songs } = useSuspenseQuery({
@@ -98,7 +98,7 @@ function DailyRecommendContent() {
       )}
     </div>
   );
-}
+};
 
 export default function DailyRecommend() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);

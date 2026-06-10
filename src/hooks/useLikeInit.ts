@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { ncm } from "@/services/ncm";
 import { useAuthStore, useLikeStore } from "@/stores";
 
-export function useLikeInit() {
+export const useLikeInit = () => {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const userId = useAuthStore((s) => s.userId);
 
@@ -20,4 +20,4 @@ export function useLikeInit() {
       useLikeStore.getState().clear();
     }
   }, [isLoggedIn, userId]);
-}
+};

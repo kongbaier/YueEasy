@@ -1,8 +1,8 @@
-import { SeekBar } from "@/components/player/SeekBar";
+import { SeekBar } from "@/components/player";
 import { useProgress } from "@/hooks/useProgress";
 import { usePlayerStore } from "@/stores";
 
-export function PlayerPageProgress({ className }: { className?: string }) {
+export const PlayerPageProgress = ({ className }: { className?: string }) => {
   const { percentage, formatted } = useProgress();
   const seek = usePlayerStore((s) => s.seek);
   const duration = usePlayerStore((s) => s.duration);
@@ -44,4 +44,4 @@ export function PlayerPageProgress({ className }: { className?: string }) {
       </div>
     </div>
   );
-}
+};

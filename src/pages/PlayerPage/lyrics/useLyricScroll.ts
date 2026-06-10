@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 const USER_IDLE_MS = 3000;
 
@@ -14,7 +20,9 @@ export function useLyricScroll(
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLUListElement>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const resumeRafRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
+  const resumeRafRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(
+    null,
+  );
   const isUserOperateRef = useRef(false);
   const prevIndexRef = useRef(-1);
   const prevResetKeyRef = useRef(resetKey);

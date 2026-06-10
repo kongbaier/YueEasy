@@ -21,7 +21,7 @@ interface PersistedState {
   muted: boolean;
 }
 
-export function usePlayerRestore() {
+export const usePlayerRestore = () => {
   const ran = useRef(false);
 
   useEffect(() => {
@@ -71,4 +71,4 @@ export function usePlayerRestore() {
       });
     })();
   }, []);
-}
+};

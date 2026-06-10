@@ -9,8 +9,12 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useShallow } from "zustand/shallow";
+import { Button } from "@/components/ui/button";
 import { ImageWithFade } from "@/components/ui/image";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useMediaSession } from "@/hooks/useMediaSession";
 import { usePlayerAction } from "@/hooks/usePlayerAction";
+import { usePlayerKeyboard } from "@/hooks/usePlayerKeyboard";
 import { useProgress } from "@/hooks/useProgress";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -23,11 +27,9 @@ import {
   useUiStore,
 } from "@/stores";
 import { useQueuePanelStore } from "@/stores/queuePanelStore";
-import { PlayModeControl } from "../player/PlayModeControl";
-import { SeekBar } from "../player/SeekBar";
-import { VolumeControl } from "../player/VolumeControl";
-import { Button } from "../ui/button";
-import { Skeleton } from "../ui/skeleton";
+import { PlayModeControl } from "./PlayModeControl";
+import { SeekBar } from "./SeekBar";
+import { VolumeControl } from "./VolumeControl";
 
 const PlayerProgress = () => {
   const { percentage } = useProgress();
@@ -207,6 +209,8 @@ const PlayerMenu = () => {
 };
 
 export const PlayerBar = ({ className }: { className?: string }) => {
+  usePlayerKeyboard();
+  useMediaSession();
   return (
     <div
       className={cn(

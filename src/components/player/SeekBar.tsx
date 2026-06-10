@@ -16,14 +16,14 @@ interface SeekBarProps {
   children: (ctx: SeekBarContext) => ReactNode;
 }
 
-export function SeekBar({
+export const SeekBar = ({
   percentage,
   duration,
   onSeek,
   className,
   barClassName,
   children,
-}: SeekBarProps) {
+}: SeekBarProps) => {
   const barRef = useRef<HTMLDivElement>(null);
   const [barWidth, setBarWidth] = useState(0);
   const [scrubPercentage, setScrubPercentage] = useState<number | null>(null);
@@ -81,4 +81,4 @@ export function SeekBar({
       </div>
     </div>
   );
-}
+};

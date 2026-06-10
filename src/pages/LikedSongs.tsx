@@ -1,15 +1,16 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Heart } from "lucide-react";
 import { Suspense } from "react";
-import { TrackRow, TrackRowSkeleton } from "@/components/track/TrackRow";
+import { TrackRow, TrackRowSkeleton } from "@/components/track";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
+import { useLikeInit } from "@/hooks/useLikeInit";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
 import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
 
-function LikedSongsSkeleton() {
+const LikedSongsSkeleton = () => {
   return (
     <div className="p-6">
       <Skeleton className="h-7 w-24 rounded" shimmer />
@@ -21,11 +22,12 @@ function LikedSongsSkeleton() {
       </div>
     </div>
   );
-}
+};
 
-function LikedSongsContent() {
+const LikedSongsContent = () => {
   const userId = useAuthStore((s) => s.userId);
   const play = usePlayerStore((s) => s.play);
+  useLikeInit();
 
   if (!userId) throw new Error("未登录");
 
@@ -72,7 +74,7 @@ function LikedSongsContent() {
       )}
     </div>
   );
-}
+};
 
 export default function LikedSongs() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);

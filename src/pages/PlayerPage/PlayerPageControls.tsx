@@ -6,11 +6,11 @@ import {
   Pause,
   Play,
 } from "lucide-react";
-import { PlayModeControl } from "@/components/player/PlayModeControl";
+import { PlayModeControl } from "@/components/player";
+import { Button } from "@/components/ui/button";
 import { usePlayerAction } from "@/hooks/usePlayerAction";
 import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
-import { Button } from "../ui/button";
 
 interface PlayerPageControlsProps {
   className?: string;
@@ -18,11 +18,11 @@ interface PlayerPageControlsProps {
   onToggleQueue?: () => void;
 }
 
-export function PlayerPageControls({
+export const PlayerPageControls = ({
   className,
   showQueue = false,
   onToggleQueue,
-}: PlayerPageControlsProps) {
+}: PlayerPageControlsProps) => {
   const { handlePlay, handleNext, handlePrev, isPlaying, isLoading } =
     usePlayerAction();
   const queue = usePlayerStore((s) => s.queue);
@@ -88,4 +88,4 @@ export function PlayerPageControls({
       </Button>
     </div>
   );
-}
+};

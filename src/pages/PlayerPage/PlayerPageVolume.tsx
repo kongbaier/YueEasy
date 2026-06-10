@@ -5,7 +5,7 @@ import { usePlayerStore } from "@/stores";
 
 const STEP = 0.1;
 
-export function PlayerPageVolume({ className }: { className?: string }) {
+export const PlayerPageVolume = ({ className }: { className?: string }) => {
   const volume = usePlayerStore((s) => s.volume);
   const muted = usePlayerStore((s) => s.muted);
   const setVolume = usePlayerStore((s) => s.setVolume);
@@ -86,4 +86,4 @@ export function PlayerPageVolume({ className }: { className?: string }) {
       </Button>
     </div>
   );
-}
+};

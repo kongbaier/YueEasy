@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { clearNcmCookie, getNcmCookie, ncm } from "@/services/ncm";
 import { useAuthStore } from "@/stores";
 
-export function useAuthRestore() {
+export const useAuthRestore = () => {
   const setAuth = useAuthStore((s) => s.setAuth);
   const ran = useRef(false);
 
@@ -42,4 +42,4 @@ export function useAuthRestore() {
       }
     })();
   }, [setAuth]);
-}
+};

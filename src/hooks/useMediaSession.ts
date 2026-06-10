@@ -21,7 +21,7 @@ type SmtcEvent =
   | { event: "seekTo"; position: number }
   | { event: "setPlaybackRate"; rate: number };
 
-export function useMediaSession() {
+export const useMediaSession = () => {
   const positionTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -141,4 +141,4 @@ export function useMediaSession() {
       }
     };
   }, []);
-}
+};

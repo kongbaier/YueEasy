@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { usePlayerStore } from "@/stores";
 
-export function usePlayerKeyboard() {
+export const usePlayerKeyboard = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -53,4 +53,4 @@ export function usePlayerKeyboard() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-}
+};

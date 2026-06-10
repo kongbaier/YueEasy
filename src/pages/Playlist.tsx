@@ -2,7 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Play } from "lucide-react";
 import { Suspense } from "react";
 import { useParams } from "react-router-dom";
-import { TrackRow, TrackRowSkeleton } from "@/components/track/TrackRow";
+import { TrackRow, TrackRowSkeleton } from "@/components/track";
 import { ImageWithFade } from "@/components/ui/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
@@ -12,7 +12,7 @@ import { getNcmImageUrl } from "@/lib/utils";
 import { getPlaylistDetail } from "@/services/playlist";
 import { usePlayerStore } from "@/stores";
 
-function PlaylistSkeleton() {
+const PlaylistSkeleton = () => {
   return (
     <div className="p-6">
       <div className="flex gap-6">
@@ -35,9 +35,9 @@ function PlaylistSkeleton() {
       </div>
     </div>
   );
-}
+};
 
-function PlaylistContent() {
+const PlaylistContent = () => {
   const { id } = useParams<{ id: string }>();
   const play = usePlayerStore((s) => s.play);
 
@@ -125,7 +125,7 @@ function PlaylistContent() {
       )}
     </div>
   );
-}
+};
 
 export default function Playlist() {
   return (

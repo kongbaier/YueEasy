@@ -32,7 +32,6 @@ import { cn } from "@/lib/utils";
 import type { TopPlaylist } from "@/services/ncm";
 import { ncm } from "@/services/ncm";
 import { useAuthStore, useUiStore } from "@/stores";
-import { Brand } from "./Brand";
 
 const items = [
   { to: "/", icon: Home, label: "发现" },
@@ -47,7 +46,7 @@ const myItems = [
 
 const footerItems = [{ to: "/settings", icon: Settings, label: "设置" }];
 
-function useNavIndicator() {
+const useNavIndicator = () => {
   const location = useLocation();
   const { state } = useSidebar();
   const elRef = useRef<HTMLDivElement>(null);
@@ -146,9 +145,9 @@ function useNavIndicator() {
   }, [location.pathname, state]);
 
   return elRef;
-}
+};
 
-function NavIndicator() {
+const NavIndicator = () => {
   const ref = useNavIndicator();
   return (
     <div
@@ -157,9 +156,9 @@ function NavIndicator() {
       style={{ willChange: "transform" }}
     />
   );
-}
+};
 
-export function AppSidebar() {
+export const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { state } = useSidebar();
@@ -230,7 +229,9 @@ export function AppSidebar() {
         {state === "expanded" && (
           <div className={cn("flex items-center gap-2")}>
             <Icon width={14} />
-            <Brand className="text-sm" />
+            <span className="text-sm">
+              <span className="text-red-400">乐</span>·易
+            </span>
           </div>
         )}
 
@@ -423,4 +424,4 @@ export function AppSidebar() {
       <NavIndicator />
     </Sidebar>
   );
-}
+};

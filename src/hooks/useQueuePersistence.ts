@@ -42,7 +42,7 @@ function serializeState(): string | null {
   return JSON.stringify(data);
 }
 
-export function useQueuePersistence() {
+export const useQueuePersistence = () => {
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
@@ -82,4 +82,4 @@ export function useQueuePersistence() {
       window.removeEventListener("beforeunload", flush);
     };
   }, []);
-}
+};

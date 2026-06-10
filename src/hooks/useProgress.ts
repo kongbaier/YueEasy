@@ -3,7 +3,7 @@ import { useShallow } from "zustand/shallow";
 import { formatDuration } from "@/lib/format";
 import { usePlayerStore } from "@/stores";
 
-export function useProgress() {
+export const useProgress = () => {
   const { currentTime, duration } = usePlayerStore(
     useShallow((state) => ({
       currentTime: state.currentTime,
@@ -24,4 +24,4 @@ export function useProgress() {
     },
     percentage: duration > 0 ? (currentTime / duration) * 100 : 0,
   };
-}
+};

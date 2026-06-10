@@ -4,7 +4,7 @@ import { ScrollContainerContext } from "@/hooks/useScrollContainer";
 const BATCH = 30;
 const THRESHOLD = 600;
 
-export function useLoadMore(total: number) {
+export const useLoadMore = (total: number) => {
   const [count, setCount] = useState(() => Math.min(BATCH, total));
   const container = use(ScrollContainerContext);
   const rafRef = useRef<number>(0);
@@ -35,4 +35,4 @@ export function useLoadMore(total: number) {
   }, [container, count, total]);
 
   return count;
-}
+};

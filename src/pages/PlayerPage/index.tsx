@@ -1,12 +1,6 @@
 import { ChevronDown, Download, Ellipsis, Heart, Share2 } from "lucide-react";
 import React, { Activity, useCallback, useEffect, useState } from "react";
-import { Lyrics } from "@/components/lyrics/Lyrics";
-import { PlayerPageControls } from "@/components/player-page/PlayerPageControls";
-import { PlayerPageProgress } from "@/components/player-page/PlayerPageProgress";
-import { PlayerPageQueue } from "@/components/player-page/PlayerPageQueue";
-import { PlayerPageVolume } from "@/components/player-page/PlayerPageVolume";
-
-import WindowControls from "@/components/system/WindowControls";
+import { WindowControls } from "@/components/system";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ImageWithFade } from "@/components/ui/image";
 import type { Track } from "@/core/player/types";
@@ -20,6 +14,11 @@ import {
   usePlayerStore,
   useUiStore,
 } from "@/stores";
+import { Lyrics } from "./lyrics/Lyrics";
+import { PlayerPageControls } from "./PlayerPageControls";
+import { PlayerPageProgress } from "./PlayerPageProgress";
+import { PlayerPageQueue } from "./PlayerPageQueue";
+import { PlayerPageVolume } from "./PlayerPageVolume";
 
 export default function PlayerPage() {
   const currentTrack = usePlayerStore((s) => s.currentTrack);

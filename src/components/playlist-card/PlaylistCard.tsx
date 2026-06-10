@@ -8,7 +8,10 @@ interface PlaylistCardProps {
   showPlayCount?: boolean;
 }
 
-export function PlaylistCard({ playlist, showPlayCount }: PlaylistCardProps) {
+export const PlaylistCard = ({
+  playlist,
+  showPlayCount,
+}: PlaylistCardProps) => {
   const navigate = useNavigate();
 
   return (
@@ -42,7 +45,4 @@ export function PlaylistCard({ playlist, showPlayCount }: PlaylistCardProps) {
       </div>
     </button>
   );
-}
-
-export type { PlaylistDisplay } from "./PlaylistDisplay";
-export { toPlaylistDisplay } from "./PlaylistDisplay";
+};

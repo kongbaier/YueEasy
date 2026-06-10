@@ -1,7 +1,7 @@
 import { useShallow } from "zustand/shallow";
 import { usePlayerStore } from "@/stores";
 
-export function usePlayerAction() {
+export const usePlayerAction = () => {
   const { next, pause, resume, prev, playing, isLoading } = usePlayerStore(
     useShallow((state) => ({
       pause: state.pause,
@@ -29,4 +29,4 @@ export function usePlayerAction() {
     handleNext: next,
     handlePrev: prev,
   };
-}
+};

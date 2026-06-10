@@ -1,13 +1,13 @@
 import { Loader2, Music } from "lucide-react";
 import type { ReactNode } from "react";
 import { createContext, use, useEffect, useState } from "react";
-import { useLyricScroll } from "@/hooks/useLyricScroll";
-import { useLyrics } from "@/hooks/useLyrics";
 import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
 import { LyricLine } from "./LyricLine";
+import { useLyricScroll } from "./useLyricScroll";
+import { useLyrics } from "./useLyrics";
 
-export function Lyrics({ className }: { className?: string }) {
+export const Lyrics = ({ className }: { className?: string }) => {
   const { lines, index, hasLyrics, isLoading } = useLyrics();
   const trackId = usePlayerStore((s) => s.currentTrack?.id);
   const [contentWidth, setContentWidth] = useState(0);
@@ -56,10 +56,7 @@ export function Lyrics({ className }: { className?: string }) {
   // 有歌词
   return (
     <div className={cn("h-full flex flex-col", className)}>
-      <div
-        className="relative overflow-hidden flex-1 mb-4"
-        ref={containerRef}
-      >
+      <div className="relative overflow-hidden flex-1 mb-4" ref={containerRef}>
         <ul className="space-y-2 mx-4" ref={contentRef} style={contentStyle}>
           <LyricsProvider value={{ index, contentWidth }}>
             {lines.map((line, i) => (
@@ -74,7 +71,7 @@ export function Lyrics({ className }: { className?: string }) {
       </div>
     </div>
   );
-}
+};
 
 interface LyricsContextValue {
   index: number;
@@ -83,22 +80,22 @@ interface LyricsContextValue {
 
 const LyricsContext = createContext<LyricsContextValue | null>(null);
 
-export function LyricsProvider({
+export const LyricsProvider = ({
   children,
   value,
 }: {
   children: ReactNode;
   value: LyricsContextValue;
-}) {
+}) => {
   return (
     <LyricsContext.Provider value={value}>{children}</LyricsContext.Provider>
   );
-}
+};
 
-export function useLyricsContext(): LyricsContextValue {
+export const useLyricsContext = (): LyricsContextValue => {
   const ctx = use(LyricsContext);
   if (!ctx) {
     throw new Error("useLyricsContext must be used within <LyricsProvider>");
   }
   return ctx;
-}
+};

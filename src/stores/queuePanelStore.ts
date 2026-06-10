@@ -9,16 +9,7 @@ interface QueuePanelStore {
 
 export const useQueuePanelStore = create<QueuePanelStore>((set) => ({
   opened: false,
-  open: () => {
-    set({ opened: true });
-  },
+  open: () => set({ opened: true }),
   close: () => set({ opened: false }),
-  toggle: () => {
-    set((state) => {
-      if (state.opened) {
-        return { opened: false };
-      }
-      return { opened: true };
-    });
-  },
+  toggle: () => set((state) => ({ opened: !state.opened })),
 }));

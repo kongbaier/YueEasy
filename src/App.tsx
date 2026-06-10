@@ -2,18 +2,15 @@ import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
+import { useAccentColor } from "@/hooks/useAccentColor";
+import { useAuthRestore } from "@/hooks/useAuthRestore";
+import { usePlayerRestore } from "@/hooks/usePlayerRestore";
+import { useQueuePersistence } from "@/hooks/useQueuePersistence";
+import { useThemeSync } from "@/hooks/useThemeSync";
+import { useWindowEffect } from "@/hooks/useWindowEffect";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { MainLayout } from "./components/layout/MainLayout";
+import { MainLayout } from "./components/layout";
 import { Skeleton } from "./components/ui/skeleton";
-import { useAccentColor } from "./hooks/useAccentColor";
-import { useAuthRestore } from "./hooks/useAuthRestore";
-import { useLikeInit } from "./hooks/useLikeInit";
-import { useMediaSession } from "./hooks/useMediaSession";
-import { usePlayerKeyboard } from "./hooks/usePlayerKeyboard";
-import { usePlayerRestore } from "./hooks/usePlayerRestore";
-import { useQueuePersistence } from "./hooks/useQueuePersistence";
-import { useThemeSync } from "./hooks/useThemeSync";
-import { useWindowEffect } from "./hooks/useWindowEffect";
 import "./styles/index.css";
 
 const Home = lazy(() => import("./pages/Home"));
@@ -24,9 +21,11 @@ const LikedSongs = lazy(() => import("./pages/LikedSongs"));
 const RecentPlays = lazy(() => import("./pages/RecentPlays"));
 const Settings = lazy(() => import("./pages/Settings"));
 const PlayerPage = lazy(() => import("./pages/PlayerPage"));
-const LoginDialog = lazy(() => import("./components/LoginDialog"));
+const LoginDialog = lazy(() =>
+  import("./components/LoginDialog").then((m) => ({ default: m.LoginDialog })),
+);
 
-function PageFallback() {
+const PageFallback = () => {
   return (
     <div className="p-6 space-y-4">
       <Skeleton className="h-7 w-48 rounded" shimmer />
@@ -34,16 +33,13 @@ function PageFallback() {
       <Skeleton className="h-4 w-3/4 rounded" shimmer />
     </div>
   );
-}
+};
 
 function App() {
   useAccentColor();
   useAuthRestore();
   usePlayerRestore();
   useQueuePersistence();
-  usePlayerKeyboard();
-  useMediaSession();
-  useLikeInit();
   useThemeSync();
   useWindowEffect();
 

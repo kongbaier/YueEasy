@@ -1,6 +1,6 @@
 import { Play, Search as SearchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { TrackRow } from "@/components/track/TrackRow";
+import { TrackRow } from "@/components/track";
 import type { SongRef } from "@/core/playlist/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLoadMore } from "@/hooks/useLoadMore";

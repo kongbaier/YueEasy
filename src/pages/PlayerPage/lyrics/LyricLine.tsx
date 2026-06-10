@@ -1,10 +1,10 @@
 import type { KeyboardEvent } from "react";
 import { useCallback } from "react";
 import type { LyricLine as LyricLineType } from "@/core/lyrics/parser";
-import { useLineLayout } from "@/hooks/useLineLayout";
 import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
 import { useLyricsContext } from "./Lyrics";
+import { useLineLayout } from "./useLineLayout";
 
 interface LyricLineProps {
   line: LyricLineType;

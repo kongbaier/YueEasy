@@ -8,7 +8,7 @@ function getSystemTheme(): "light" | "dark" {
     : "light";
 }
 
-export function useThemeSync() {
+export const useThemeSync = () => {
   const theme = useUiStore((s) => s.theme);
   const transitionTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -46,4 +46,4 @@ export function useThemeSync() {
       unlisten?.();
     };
   }, [theme, syncThemeClass]);
-}
+};

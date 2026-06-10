@@ -2,7 +2,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Copy, Minus, Square, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-export default function WindowControls({ className }: { className?: string }) {
+export const WindowControls = ({ className }: { className?: string }) => {
   const appWindow = getCurrentWindow();
 
   const [isMaximized, setIsMaximized] = useState(false);
@@ -52,4 +52,4 @@ export default function WindowControls({ className }: { className?: string }) {
       </button>
     </div>
   );
-}
+};

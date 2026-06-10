@@ -10,7 +10,11 @@ interface ErrorFallbackProps {
   className?: string;
 }
 
-function DefaultErrorFallback({ error, reset, className }: ErrorFallbackProps) {
+const DefaultErrorFallback = ({
+  error,
+  reset,
+  className,
+}: ErrorFallbackProps) => {
   return (
     <div
       className={cn(
@@ -32,7 +36,7 @@ function DefaultErrorFallback({ error, reset, className }: ErrorFallbackProps) {
       </button>
     </div>
   );
-}
+};
 
 type FallbackRender = (error: Error, reset: () => void) => ReactNode;
 
@@ -72,7 +76,7 @@ class ErrorBoundaryInner extends Component<
   }
 }
 
-export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
+export const ErrorBoundary = ({ children, fallback }: ErrorBoundaryProps) => {
   const { reset } = useQueryErrorResetBoundary();
 
   return (
@@ -80,4 +84,4 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
       {children}
     </ErrorBoundaryInner>
   );
-}
+};

@@ -5,7 +5,7 @@ import { Virtuoso } from "react-virtuoso";
 import { useShallow } from "zustand/shallow";
 import { Button } from "@/components/ui/button";
 import { ImageWithFade } from "@/components/ui/image";
-import { VirtuosoScroller } from "@/components/virtuoso/VirtuosoScroller";
+import { VirtuosoScroller } from "@/components/virtuoso";
 import type { Track } from "@/core/player/types";
 import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
@@ -73,7 +73,7 @@ const QueueItem = ({
   </div>
 );
 
-export function QueuePanel() {
+export const QueuePanel = () => {
   const { queue, currentTrack, playFromIndex, removeFromQueue } =
     usePlayerStore(
       useShallow((s) => ({
@@ -202,4 +202,4 @@ export function QueuePanel() {
       </aside>
     </div>
   );
-}
+};

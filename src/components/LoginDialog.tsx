@@ -22,7 +22,7 @@ const tabs: { key: LoginTab; label: string }[] = [
   { key: "qr", label: "扫码登录" },
 ];
 
-export default function LoginDialog() {
+export const LoginDialog = () => {
   const [tab, setTab] = useState<LoginTab>("password");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -353,4 +353,4 @@ export default function LoginDialog() {
       </DialogContent>
     </Dialog>
   );
-}
+};

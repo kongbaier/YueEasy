@@ -65,9 +65,9 @@ function ImageWithFade({
           showImg ? "opacity-100" : "opacity-0",
         )}
         {...rest}
-        src={src}
-        onLoad={handleLoad}
         onError={handleError}
+        onLoad={handleLoad}
+        src={src}
       />
     </span>
   );

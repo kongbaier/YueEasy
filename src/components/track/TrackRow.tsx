@@ -27,12 +27,12 @@ interface TrackRowProps {
   showAlbum?: boolean;
 }
 
-export function TrackRow({
+export const TrackRow = ({
   track,
   index,
   onPlay,
   showAlbum = false,
-}: TrackRowProps) {
+}: TrackRowProps) => {
   const playNext = usePlayerStore((s) => s.playNext);
   const isLiked = useLikeStore((s) => s.isLiked(track.id));
   const toggleLike = useLikeStore((s) => s.toggle);
@@ -134,15 +134,15 @@ export function TrackRow({
       </ContextMenuContent>
     </ContextMenu>
   );
-}
+};
 
-export function TrackRowSkeleton({
+export const TrackRowSkeleton = ({
   index,
   showAlbum = false,
 }: {
   index: number;
   showAlbum?: boolean;
-}) {
+}) => {
   return (
     <div className="flex items-center gap-3 rounded-lg px-3 py-2">
       <span className="w-8 text-center text-xs text-muted-foreground">
@@ -159,4 +159,4 @@ export function TrackRowSkeleton({
       <Skeleton className="h-6 w-6 shrink-0 rounded" shimmer />
     </div>
   );
-}
+};

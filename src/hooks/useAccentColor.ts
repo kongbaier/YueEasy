@@ -29,7 +29,7 @@ function apply(colors: SystemAccentColors) {
   }
 }
 
-export function useAccentColor() {
+export const useAccentColor = () => {
   useEffect(() => {
     let unlisten: (() => void) | undefined;
 
@@ -54,4 +54,4 @@ export function useAccentColor() {
       unlisten?.();
     };
   }, []);
-}
+};

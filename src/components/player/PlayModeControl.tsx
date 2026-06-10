@@ -10,7 +10,7 @@ const modeIcon: Record<PlayMode, typeof Repeat> = {
   repeatOne: Repeat1,
 };
 
-export function PlayModeControl({ className }: { className?: string }) {
+export const PlayModeControl = ({ className }: { className?: string }) => {
   const playMode = usePlayerStore((s) => s.playMode);
   const cyclePlayMode = usePlayerStore((s) => s.cycleMode);
 
@@ -29,4 +29,4 @@ export function PlayModeControl({ className }: { className?: string }) {
       <Icon className="size-4" />
     </Button>
   );
-}
+};

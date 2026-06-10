@@ -3,12 +3,11 @@ import { ChevronLeft } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
-import WindowControls from "@/components/system/WindowControls";
+import { PlayerBar, QueuePanel } from "@/components/player";
+import { WindowControls } from "@/components/system";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { useCanGoBack } from "@/hooks/use-can-go-back";
 import { ScrollContainerContext } from "@/hooks/useScrollContainer";
-import { PlayerBar } from "./PlayerBar";
-import { QueuePanel } from "./QueuePanel";
+import { useCanGoBack } from "./useCanGoBack";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -30,7 +29,7 @@ const Header = () => {
   );
 };
 
-export function MainLayout() {
+export const MainLayout = () => {
   const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(
     null,
   );
@@ -63,4 +62,4 @@ export function MainLayout() {
       </div>
     </SidebarProvider>
   );
-}
+};
