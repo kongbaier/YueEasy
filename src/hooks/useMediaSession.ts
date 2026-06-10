@@ -5,7 +5,7 @@ import {
   updateSmtcMetadata,
   updateSmtcPosition,
   updateSmtcStatus,
-} from "@/api/smtc-api";
+} from "@/services/smtc";
 import { usePlayerStore } from "@/stores";
 
 type SmtcEvent =

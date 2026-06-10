@@ -411,7 +411,12 @@ export const AppSidebar = () => {
                   isActive={isActive}
                   onClick={() => navigate(item.to)}
                 >
-                  <item.icon fill={isActive ? "currentColor" : "none"} />
+                  <item.icon
+                    className={cn(
+                      isActive &&
+                        "fill-primary text-primary-darkest dark:text-primary-lightest",
+                    )}
+                  />
                   <span>{item.label}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>

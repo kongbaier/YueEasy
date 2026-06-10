@@ -37,7 +37,7 @@ const ScrollButtons = () => {
     if (!viewport) return;
     const cardWidth = firstSlide.offsetWidth;
     const visibleCards = Math.floor(viewport.clientWidth / cardWidth);
-    const steps = Math.max(1, Math.floor(visibleCards / 2));
+    const steps = Math.max(1, Math.ceil(visibleCards / 2));
     const snaps = api.scrollSnapList();
     const current = api.selectedScrollSnap();
     const targetIndex =
