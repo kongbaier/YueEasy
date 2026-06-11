@@ -13,7 +13,7 @@ const Header = () => {
   const navigate = useNavigate();
   const canGoBack = useCanGoBack();
   return (
-    <header className="h-10 flex items-center shrink-0" data-tauri-drag-region>
+    <header className="h-10 flex items-center shrink-0" data-drag-region>
       {canGoBack && (
         <button
           aria-label="返回"

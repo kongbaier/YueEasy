@@ -108,7 +108,7 @@ export default function PlayerPage() {
 
 const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
   return (
-    <header className="flex items-center h-10 shrink-0" data-tauri-drag-region>
+    <header className="flex items-center h-10 shrink-0" data-drag-region>
       <button
         className="flex items-center justify-center size-8 rounded ml-1 hover:bg-accent"
         onClick={handleBack}

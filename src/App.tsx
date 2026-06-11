@@ -12,6 +12,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { MainLayout } from "./components/layout";
 import { Skeleton } from "./components/ui/skeleton";
 import "./styles/index.css";
+import { useWindowDrag } from "./hooks/useWindowDrag";
 
 const Home = lazy(() => import("./pages/Home"));
 const Search = lazy(() => import("./pages/Search"));
@@ -42,6 +43,7 @@ function App() {
   useQueuePersistence();
   useThemeSync();
   useWindowEffect();
+  useWindowDrag("drag-region");
 
   return (
     <BrowserRouter>

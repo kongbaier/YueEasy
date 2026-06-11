@@ -265,7 +265,7 @@ export const AppSidebar = () => {
           "h-10 flex-row items-center shrink-0 justify-between overflow-hidden",
           delayedCollapse && "justify-center",
         )}
-        data-tauri-drag-region
+        data-drag-region
       >
         <SidebarBrand expanded={state === "expanded"} />
 
