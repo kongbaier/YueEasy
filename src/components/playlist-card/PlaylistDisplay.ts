@@ -10,6 +10,9 @@ export interface PlaylistDisplay {
   name: string;
   coverUrl: string;
   playCount: number;
+  trackCount: number;
+  creator: string;
+  description?: string;
 }
 
 export function toPlaylistDisplay(p: PersonalizedPlaylist): PlaylistDisplay;
@@ -19,14 +22,20 @@ export function toPlaylistDisplay(item: {
   id: number;
   name: string;
   playCount: number;
+  trackCount?: number;
   coverUrl?: string;
   picUrl?: string;
   coverImgUrl?: string;
+  creator?: { nickname: string };
+  description?: string;
 }): PlaylistDisplay {
   return {
     id: item.id,
     name: item.name,
     coverUrl: item.coverUrl ?? item.coverImgUrl ?? item.picUrl ?? "",
     playCount: item.playCount,
+    trackCount: (item as { trackCount?: number }).trackCount ?? 0,
+    creator: (item as { creator?: { nickname: string } }).creator?.nickname ?? "",
+    description: (item as { description?: string }).description ?? "",
   };
 }

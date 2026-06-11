@@ -14,15 +14,14 @@ import { cn } from "@/lib/utils";
 
 const SKELETON_COUNT = 8;
 
-const CardSkeleton = ({ index }: { index: number }) => {
+const CardSkeleton = () => {
   return (
-    <div className="w-30 lg:w-36 xl:w-40 2xl:w-44 shrink-0">
-      <Skeleton className="aspect-square w-full rounded-lg" shimmer />
-      <Skeleton
-        className="mt-2 h-4 w-3/4"
-        shimmer
-        style={{ animationDelay: `${index * 100}ms` }}
-      />
+    <div className="w-40 lg:w-44 xl:w-48 shrink-0">
+      <Skeleton className="aspect-square w-full rounded-t-lg" shimmer />
+      <div className="p-2.5 space-y-1.5">
+        <Skeleton className="h-4 w-3/4 rounded" shimmer />
+        <Skeleton className="h-3 w-1/2 rounded" shimmer />
+      </div>
     </div>
   );
 };
@@ -120,7 +119,7 @@ export const HorizontalCarousel = ({
             ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, order never changes
                 <CarouselItem className="basis-auto" key={i}>
-                  <CardSkeleton index={i} />
+                  <CardSkeleton />
                 </CarouselItem>
               ))
             : React.Children.map(children, (child) => (
