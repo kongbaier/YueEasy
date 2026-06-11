@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import React from "react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import {
   Carousel,
   CarouselContent,
@@ -48,10 +49,11 @@ const ScrollButtons = () => {
   };
 
   return (
-    <div className="flex gap-1">
-      <button
+    <div className="flex gap-0.5">
+      <Button
         className={cn(
-          "rounded-full p-1 transition-colors",
+          "w-8 h-8 rounded-full p-1 transition-colors",
+          "flex items-center justify-start",
           canScrollPrev
             ? "text-foreground hover:bg-accent"
             : "text-muted-foreground/30",
@@ -59,12 +61,14 @@ const ScrollButtons = () => {
         disabled={!canScrollPrev}
         onClick={() => scroll("left")}
         type="button"
+        variant="ghost"
       >
-        <ChevronLeft className="h-5 w-5" />
-      </button>
-      <button
+        <ChevronLeft className="size-5" />
+      </Button>
+      <Button
         className={cn(
-          "rounded-full p-1 transition-colors",
+          "w-8 h-8 rounded-full p-1 transition-colors",
+          "flex items-center justify-end",
           canScrollNext
             ? "text-foreground hover:bg-accent"
             : "text-muted-foreground/30",
@@ -72,9 +76,10 @@ const ScrollButtons = () => {
         disabled={!canScrollNext}
         onClick={() => scroll("right")}
         type="button"
+        variant="ghost"
       >
-        <ChevronRight className="h-5 w-5" />
-      </button>
+        <ChevronRight className="size-5" />
+      </Button>
     </div>
   );
 };

@@ -84,14 +84,14 @@ const PlayerControls = () => {
           <ChevronFirst className="size-5" />
         </Button>
 
-        <button
+        <Button
           className="relative w-12 h-8 bg-primary rounded-2xl flex justify-center items-center cursor-pointer focus:outline-none"
           disabled={state === "loading"}
           onClick={handlePlay}
           type="button"
         >
           <PlayIcon />
-        </button>
+        </Button>
 
         <Button
           className="text-foreground hover:bg-transparent hover:text-primary"

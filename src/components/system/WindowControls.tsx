@@ -1,6 +1,7 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Copy, Minus, Square, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "../ui/button";
 
 export const WindowControls = ({ className }: { className?: string }) => {
   const appWindow = getCurrentWindow();
@@ -26,30 +27,36 @@ export const WindowControls = ({ className }: { className?: string }) => {
       className={`flex space-x-1 z-50 text-foreground ${className}`}
       data-drag-region
     >
-      <button
+      <Button
         className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-gray-500/20"
         onPointerUp={handleMinimize}
         type="button"
+        variant="ghost"
       >
-        <Minus className="w-4" />
-      </button>
+        <Minus className="size-4" />
+      </Button>
 
-      <button
+      <Button
         className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-gray-500/20"
         onPointerUp={toggleMaximize}
         type="button"
+        variant="ghost"
       >
-        {isMaximized ? <Copy className="w-3" /> : <Square className="w-3" />}
-      </button>
+        {isMaximized ? (
+          <Copy className="size-3" />
+        ) : (
+          <Square className="size-3" />
+        )}
+      </Button>
 
-      <button
+      <Button
         className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-red-500 hover:text-white"
         onPointerUp={handleClose}
-        title="关闭"
         type="button"
+        variant="ghost"
       >
-        <X className="w-4" strokeWidth={1.5} />
-      </button>
+        <X className="size-4" strokeWidth={1.5} />
+      </Button>
     </div>
   );
 };

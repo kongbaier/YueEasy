@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import type { CarouselApi } from "@/components/ui/carousel";
 import {
   Carousel,
@@ -78,36 +79,41 @@ export const ParallaxCarousel = <T,>({
 
       {len > 1 && (
         <>
-          <button
-            className={cn(
-              "absolute left-2 top-1/2 z-10 -translate-y-1/2 transition-all duration-150 ease-out",
-              "rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90",
-              "opacity-0 group-hover:opacity-100",
-            )}
-            onClick={() => api?.scrollPrev()}
-            type="button"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            className={cn(
-              "absolute right-2 top-1/2 z-10 -translate-y-1/2 transition-all duration-150 ease-out",
-              "rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90",
-              "opacity-0 group-hover:opacity-100",
-            )}
-            onClick={() => api?.scrollNext()}
-            type="button"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+          <div className="absolute left-2 top-1/2 z-10 -translate-y-1/2">
+            <Button
+              className={cn(
+                "transition-all duration-150 ease-out",
+                "rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90",
+                "opacity-0 group-hover:opacity-100",
+              )}
+              onClick={() => api?.scrollPrev()}
+              type="button"
+            >
+              <ChevronLeft className="size-5 -translate-x-px" />
+            </Button>
+          </div>
+          <div className="absolute right-2 top-1/2 z-10 -translate-y-1/2">
+            <Button
+              className={cn(
+                "transition-all duration-150 ease-out",
+                "rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90",
+                "opacity-0 group-hover:opacity-100",
+              )}
+              onClick={() => api?.scrollNext()}
+              type="button"
+            >
+              <ChevronRight className="size-5 translate-x-px" />
+            </Button>
+          </div>
 
           <div className="absolute h-4 right-4 bottom-4 z-10 flex gap-1.5 items-center">
             {items.map((item, i) => (
-              <button
-                className="group/btn cursor-pointer h-full"
+              <Button
+                className="group/btn cursor-pointer h-full p-0 hover:bg-transparent"
                 key={getKey ? getKey(item, i) : i}
                 onClick={() => api?.scrollTo(i)}
                 type="button"
+                variant="ghost"
               >
                 <div
                   className={cn(
@@ -117,7 +123,7 @@ export const ParallaxCarousel = <T,>({
                       : "bg-white/50 group-hover/btn:bg-white/70 group-hover/btn:scale-110",
                   )}
                 />
-              </button>
+              </Button>
             ))}
           </div>
         </>
