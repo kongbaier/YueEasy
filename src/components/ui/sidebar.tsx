@@ -356,6 +356,9 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
       if (e.button !== 0) return;
       e.preventDefault();
 
+      // Register mouseup immediately so a quick release cancels the timer
+      document.addEventListener("mouseup", onMouseUp);
+
       pressTimer.current = setTimeout(() => {
         dragStartX.current = e.clientX;
 
@@ -381,7 +384,6 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
         document.body.style.cursor = "col-resize";
         document.body.style.userSelect = "none";
         document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
       }, 200);
     },
     [onMouseMove, onMouseUp],
@@ -391,7 +393,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
     <button
       aria-label="Resize Sidebar"
       className={cn(
-        "absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear group-data-[side=left]:right-0 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:right-0 after:w-1 hover:after:bg-sidebar-border sm:flex",
+        "absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear group-data-[side=left]:right-0 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:right-0 after:w-1 hover:after:bg-sidebar-border sm:flex outline-hidden",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
         "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
         className,
@@ -399,6 +401,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
       data-sidebar="rail"
       data-slot="sidebar-rail"
       onMouseDown={handleMouseDown}
+      tabIndex={-1}
       title="Resize Sidebar"
       {...props}
     />

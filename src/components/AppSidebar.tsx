@@ -158,6 +158,41 @@ const NavIndicator = () => {
   );
 };
 
+const SidebarBrand = ({ expanded }: { expanded: boolean }) => {
+  const [visible, setVisible] = useState(expanded);
+  const [entered, setEntered] = useState(expanded);
+
+  useEffect(() => {
+    if (expanded) {
+      setVisible(true);
+      const raf = requestAnimationFrame(() => {
+        setEntered(true);
+      });
+      return () => cancelAnimationFrame(raf);
+    } else {
+      setEntered(false);
+      const timer = setTimeout(() => setVisible(false), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [expanded]);
+
+  if (!visible) return null;
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 shrink-0 overflow-hidden whitespace-nowrap transition-all duration-200",
+        entered ? "max-w-40 opacity-100" : "max-w-0 opacity-0",
+      )}
+    >
+      <Icon width={14} />
+      <span className="text-sm">
+        <span className="text-red-400">乐</span>·易
+      </span>
+    </div>
+  );
+};
+
 export const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -165,6 +200,17 @@ export const AppSidebar = () => {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const userId = useAuthStore((s) => s.userId);
   const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
+
+  const [delayedCollapse, setDelayedCollapse] = useState(state === "collapsed");
+
+  useEffect(() => {
+    if (state !== "collapsed") {
+      setDelayedCollapse(false);
+      return;
+    }
+    const timer = setTimeout(() => setDelayedCollapse(true), 200);
+    return () => clearTimeout(timer);
+  }, [state]);
 
   const [userPlaylists, setUserPlaylists] = useState<TopPlaylist[]>([]);
   const [createdCollapsed, setCreatedCollapsed] = useState(() => {
@@ -213,27 +259,15 @@ export const AppSidebar = () => {
   );
 
   return (
-    <Sidebar
-      collapsible="icon"
-      data-tauri-drag-region
-      side="left"
-      variant="sidebar"
-    >
+    <Sidebar collapsible="icon" side="left" variant="sidebar">
       <SidebarHeader
         className={cn(
-          "h-10 flex-row items-center shrink-0 justify-between",
-          state === "collapsed" && "justify-center",
+          "h-10 flex-row items-center shrink-0 justify-between overflow-hidden",
+          delayedCollapse && "justify-center",
         )}
         data-tauri-drag-region
       >
-        {state === "expanded" && (
-          <div className={cn("flex items-center gap-2")}>
-            <Icon width={14} />
-            <span className="text-sm">
-              <span className="text-red-400">乐</span>·易
-            </span>
-          </div>
-        )}
+        <SidebarBrand expanded={state === "expanded"} />
 
         <SidebarTrigger />
       </SidebarHeader>
