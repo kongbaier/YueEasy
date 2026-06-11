@@ -1,6 +1,7 @@
 import { Effect } from "@tauri-apps/api/window";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { toast } from "@/lib/toast";
 import {
@@ -128,12 +129,9 @@ export default function Settings() {
               <span className="text-sm text-muted-foreground">-- MB</span>
             </Row>
             <Row label="清除缓存">
-              <button
-                className="rounded-[4px] px-2 py-0.5 text-sm text-primary transition-all duration-150 hover:bg-surface-active hover:text-primary-dark"
-                type="button"
-              >
+              <Button size="xs" variant="outline">
                 清除
-              </button>
+              </Button>
             </Row>
           </div>
         </SectionCard>
@@ -156,7 +154,7 @@ export default function Settings() {
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border/40 bg-card/40 px-5 py-4 backdrop-blur-sm transition-all duration-200 hover:border-border/60 hover:bg-card/60">
+    <div className="rounded-lg border border-border/40 bg-card px-5 py-4">
       {children}
     </div>
   );

@@ -74,7 +74,7 @@ export const TrackRow = ({
   return (
     <ContextMenu>
       <ContextMenuTrigger
-        className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent w-full text-left content-visibility-auto"
+        className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent w-full text-left content-visibility-auto"
         onDoubleClick={() => onPlay(track)}
         onKeyDown={(e) => {
           if (e.key === "Enter") onPlay(track);

@@ -3,6 +3,7 @@ import { Play } from "lucide-react";
 import { Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { TrackRow, TrackRowSkeleton } from "@/components/track";
+import { Button } from "@/components/ui/button";
 import { ImageWithFade } from "@/components/ui/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
@@ -96,14 +97,10 @@ const PlaylistContent = () => {
             </p>
           )}
           <div className="mt-3 flex items-center gap-3">
-            <button
-              className="inline-flex items-center gap-1 rounded bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              onClick={handlePlayAll}
-              type="button"
-            >
+            <Button onClick={handlePlayAll} size="default">
               <Play className="h-4 w-4" />
               播放全部
-            </button>
+            </Button>
             <span className="text-xs text-muted-foreground">
               {playlist.trackCount} 首
             </span>

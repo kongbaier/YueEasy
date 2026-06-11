@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Clock } from "lucide-react";
 import { Suspense } from "react";
 import { TrackRow, TrackRowSkeleton } from "@/components/track";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
 import { useLoadMore } from "@/hooks/useLoadMore";
@@ -80,13 +81,7 @@ export default function RecentPlays() {
       <div className="flex flex-col items-center justify-center h-full gap-4">
         <Clock className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">登录后查看最近播放</p>
-        <button
-          className="rounded bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          onClick={() => setLoginDialogOpen(true)}
-          type="button"
-        >
-          立即登录
-        </button>
+        <Button onClick={() => setLoginDialogOpen(true)}>立即登录</Button>
       </div>
     );
   }

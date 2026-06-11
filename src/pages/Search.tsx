@@ -1,6 +1,8 @@
 import { Play, Search as SearchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TrackRow } from "@/components/track";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { SongRef } from "@/core/playlist/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLoadMore } from "@/hooks/useLoadMore";
@@ -76,9 +78,9 @@ export default function Search() {
   return (
     <div className="p-6">
       <div className="relative max-w-md">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input
-          className="w-full rounded-lg border border-border bg-card pl-10 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+        <Input
+          className="pl-10"
           onChange={(e) => setKeyword(e.target.value)}
           placeholder="搜索歌曲、歌手、专辑..."
           value={keyword}
@@ -98,14 +100,10 @@ export default function Search() {
               <p className="text-sm text-muted-foreground">
                 找到 {total} 首歌曲
               </p>
-              <button
-                className="inline-flex items-center gap-1 rounded bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-                onClick={handlePlayAll}
-                type="button"
-              >
+              <Button onClick={handlePlayAll} size="xs">
                 <Play className="h-3 w-3" />
                 播放全部
-              </button>
+              </Button>
             </div>
 
             <div className="space-y-0.5">

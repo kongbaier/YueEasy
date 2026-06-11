@@ -7,14 +7,16 @@ html.theme-transition *,
 html.theme-transition *::before,
 html.theme-transition *::after {
   transition:
-    background-color 0.75s ease,
-    color 0.75s ease,
-    border-color 0.75s ease;
+    background-color 0.5s ease,
+    color 0.5s ease,
+    border-color 0.5s ease;
 }
 
 :root {
-  --background: color-mix(in oklch, #ffffff 50%, transparent);
-  --foreground: #0a0a0a;
+  --font-family:
+    "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --background: transparent;
+  --foreground: #171717;
   --primary: #e74c3c;
   --primary-foreground: #ffffff;
   --primary-dark: #c0392b;
@@ -24,23 +26,24 @@ html.theme-transition *::after {
   --primary-lighter: #f5b7b1;
   --primary-lightest: #fdedec;
   --ring: var(--primary);
-  --secondary: color-mix(in oklch, #e5e7eb 50%, transparent);
+  --secondary: color-mix(in oklch, #e5e7eb 70%, transparent);
   --secondary-foreground: #1f2937;
-  --muted: color-mix(in oklch, #f9fafb 40%, transparent);
-  --muted-foreground: #6b7280;
+  --muted: color-mix(in oklch, #f3f3f3 60%, transparent);
+  --muted-foreground: #5d5d5d;
   --accent: color-mix(in oklch, black 5%, transparent);
   --accent-foreground: var(--foreground);
-  --card: color-mix(in oklch, #ffffff 75%, transparent);
-  --card-foreground: #0f0f0f;
-  --popover: color-mix(in oklch, #ffffff 90%, transparent);
-  --popover-foreground: #0f0f0f;
+  --card: color-mix(in oklch, #fdfdfd 88%, transparent);
+  --card-foreground: #171717;
+  --popover: color-mix(in oklch, #fdfdfd 96%, transparent);
+  --popover-foreground: #171717;
   --border: #d4d4d8;
   --input: color-mix(in oklch, #e5e7eb 18%, transparent);
-  --destructive: #ef4444;
+  --destructive: #c42b1c;
   --destructive-foreground: #ffffff;
-  --radius: 0.5rem;
+  --radius: 0.25rem;
+  --radius-overlay: 0.5rem;
   --sidebar: transparent;
-  --sidebar-foreground: #0f0f0f;
+  --sidebar-foreground: #171717;
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: color-mix(in oklch, black 6%, transparent);
@@ -52,7 +55,9 @@ html.theme-transition *::after {
 }
 
 :root.dark {
-  --background: color-mix(in oklch, #ffffff 6%, transparent);
+  --font-family:
+    "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --background: transparent;
   --foreground: #f6f6f6;
   --primary: #e74c3c;
   --primary-foreground: #ffffff;
@@ -63,19 +68,19 @@ html.theme-transition *::after {
   --primary-lighter: #f5b7b1;
   --primary-lightest: #fdedec;
   --ring: var(--primary);
-  --secondary: color-mix(in oklch, #1e1e1e 45%, transparent);
+  --secondary: color-mix(in oklch, #1e1e1e 65%, transparent);
   --secondary-foreground: #e5e7eb;
-  --muted: color-mix(in oklch, #1e1e1e 35%, transparent);
-  --muted-foreground: #9ca3af;
+  --muted: color-mix(in oklch, #1e1e1e 50%, transparent);
+  --muted-foreground: #a0a0a0;
   --accent: color-mix(in oklch, white 8%, transparent);
   --accent-foreground: var(--foreground);
-  --card: color-mix(in oklch, #181818 72%, transparent);
+  --card: color-mix(in oklch, #1c1c1c 85%, transparent);
   --card-foreground: #f6f6f6;
-  --popover: color-mix(in oklch, #181818 88%, transparent);
+  --popover: color-mix(in oklch, #1c1c1c 95%, transparent);
   --popover-foreground: #f6f6f6;
   --border: #3f3f46;
   --input: color-mix(in oklch, #2a2a2a 16%, transparent);
-  --destructive: #ef4444;
+  --destructive: #d13438;
   --destructive-foreground: #ffffff;
   --sidebar: transparent;
   --sidebar-foreground: #f6f6f6;
@@ -125,9 +130,10 @@ html.theme-transition *::after {
   --color-sidebar-ring: var(--sidebar-ring);
   --color-surface-hover: var(--surface-hover);
   --color-surface-active: var(--surface-active);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --radius-sm: 0.125rem;
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius-overlay);
+  --font-sans: var(--font-family);
 }
 
 [data-slot="sidebar-container"][data-side="left"] {
@@ -140,7 +146,7 @@ html.theme-transition *::after {
 
 @theme inline {
   --animate-shimmer: shimmer 2s ease-in-out infinite;
-  --animate-content-enter: content-enter 500ms ease-out;
+  --animate-content-enter: content-enter 250ms ease-out;
 }
 
 @keyframes shimmer {
@@ -155,7 +161,7 @@ html.theme-transition *::after {
 @keyframes content-enter {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;

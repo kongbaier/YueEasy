@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Play } from "lucide-react";
 import { Suspense } from "react";
 import { TrackRow, TrackRowSkeleton } from "@/components/track";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
 import { useLoadMore } from "@/hooks/useLoadMore";
@@ -71,14 +72,10 @@ const DailyRecommendContent = () => {
             <p className="text-sm text-muted-foreground">
               共 {songs.length} 首推荐歌曲
             </p>
-            <button
-              className="inline-flex items-center gap-1 rounded bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-              onClick={handlePlayAll}
-              type="button"
-            >
+            <Button onClick={handlePlayAll} size="xs">
               <Play className="h-3 w-3" />
               播放全部
-            </button>
+            </Button>
           </div>
 
           <div className="mt-3 space-y-0.5">

@@ -17,7 +17,7 @@ export const PlaylistCard = ({
   return (
     <button
       className={cn(
-        "group w-30 shrink-0 cursor-pointer snap-start overflow-hidden rounded-lg bg-card text-left transition-colors hover:bg-accent",
+        "group w-30 shrink-0 cursor-pointer snap-start overflow-hidden rounded-lg bg-card text-left transition-colors duration-150 hover:bg-accent",
         "lg:w-36",
         "xl:w-40",
         "2xl:w-44",
@@ -28,7 +28,7 @@ export const PlaylistCard = ({
       <div className="relative aspect-square overflow-hidden">
         <ImageWithFade
           alt={playlist.name}
-          className="object-cover transition-transform group-hover:scale-105"
+          className="object-cover"
           fill
           src={playlist.coverUrl}
         />

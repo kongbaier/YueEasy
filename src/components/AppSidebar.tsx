@@ -50,18 +50,11 @@ const useNavIndicator = () => {
   const location = useLocation();
   const { state } = useSidebar();
   const elRef = useRef<HTMLDivElement>(null);
-  const prevTopRef = useRef<number | null>(null);
-  const isFirst = useRef(true);
-  const animRef = useRef<Animation | null>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is a trigger, not a value read
   useEffect(() => {
     const el = elRef.current;
     if (!el) return;
-
-    // Cancel any running animation from a previous effect
-    animRef.current?.cancel();
-    animRef.current = null;
 
     if (state === "collapsed") {
       el.style.opacity = "0";
@@ -76,7 +69,6 @@ const useNavIndicator = () => {
     const activeBtn = sidebar.querySelector("[data-active]") as HTMLElement;
     if (!activeBtn) {
       el.style.opacity = "0";
-      prevTopRef.current = null;
       return;
     }
 
@@ -89,59 +81,8 @@ const useNavIndicator = () => {
 
     el.style.left = `${left}px`;
     el.style.height = `${height}px`;
+    el.style.transform = `translateY(${top}px)`;
     el.style.opacity = "1";
-
-    if (isFirst.current) {
-      el.style.transform = `translateY(${top}px)`;
-      isFirst.current = false;
-      prevTopRef.current = top;
-      return;
-    }
-
-    const prevTop = prevTopRef.current;
-    prevTopRef.current = top;
-
-    if (prevTop == null || Math.abs(prevTop - top) < 1) return;
-
-    const goingDown = top > prevTop;
-    const distance = Math.abs(top - prevTop);
-    const maxScale = Math.min(1.5, 1 + distance / height);
-    const duration = Math.min(700, Math.max(350, distance * 2.0));
-    const phase1Duration = duration * 0.45;
-
-    // Phase 1 — leave start: stretch toward destination
-    el.style.transformOrigin = goingDown ? "top" : "bottom";
-
-    const phase1 = el.animate(
-      [
-        { transform: `translateY(${prevTop}px) scaleY(1)` },
-        { transform: `translateY(${prevTop}px) scaleY(${maxScale})` },
-      ],
-      {
-        duration: phase1Duration,
-        fill: "forwards",
-        easing: "cubic-bezier(0.55, 0, 0.35, 1)",
-      },
-    );
-    animRef.current = phase1;
-
-    phase1.onfinish = () => {
-      // Phase 2 — enter end: arrive from start direction, stretched → contract
-      el.style.transformOrigin = goingDown ? "bottom" : "top";
-
-      const phase2 = el.animate(
-        [
-          { transform: `translateY(${top}px) scaleY(${maxScale})` },
-          { transform: `translateY(${top}px) scaleY(1)` },
-        ],
-        {
-          duration: duration - phase1Duration,
-          fill: "forwards",
-          easing: "cubic-bezier(0.1, 0.7, 0.2, 1)",
-        },
-      );
-      animRef.current = phase2;
-    };
   }, [location.pathname, state]);
 
   return elRef;
@@ -151,9 +92,8 @@ const NavIndicator = () => {
   const ref = useNavIndicator();
   return (
     <div
-      className="pointer-events-none absolute top-0 z-10 w-0.5 rounded-r-full bg-primary opacity-0"
+      className="pointer-events-none absolute top-0 z-10 w-0.5 rounded-r-full bg-primary opacity-0 transition-[transform,opacity] duration-[250ms] ease-out"
       ref={ref}
-      style={{ willChange: "transform" }}
     />
   );
 };
