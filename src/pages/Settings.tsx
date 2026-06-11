@@ -1,10 +1,8 @@
 import { Effect } from "@tauri-apps/api/window";
 import { Check } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Select } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "@/lib/toast";
-import { cn } from "@/lib/utils";
 import {
   getSetting,
   setSetting,
@@ -20,27 +18,15 @@ const labels: Record<Theme, string> = {
   dark: "深色",
 };
 
-type SectionKey = "appearance" | "playback" | "cache" | "about";
-
-const tabs: { key: SectionKey; label: string }[] = [
-  { key: "appearance", label: "外观" },
-  { key: "playback", label: "播放" },
-  { key: "cache", label: "缓存" },
-  { key: "about", label: "关于" },
-];
-
 export default function Settings() {
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
-  const [activeTab, setActiveTab] = useState<SectionKey>("appearance");
   const [windowEffect, setWindowEffectState] = useState<Effect>(Effect.Mica);
 
   useEffect(() => {
-    getSetting("window_effect")
-      .then((v) => {
-        if (v) setWindowEffectState(v as Effect);
-      })
-      .catch(() => {});
+    getSetting("window_effect").then((effect) => {
+      if (effect) setWindowEffectState(effect);
+    });
   }, []);
 
   const handleEffectChange = (effect: Effect) => {
@@ -53,49 +39,14 @@ export default function Settings() {
     });
   };
 
-  const sectionRefs = useRef<Record<SectionKey, HTMLElement | null>>({
-    appearance: null,
-    playback: null,
-    cache: null,
-    about: null,
-  });
-
-  const scrollToSection = useCallback((key: SectionKey) => {
-    setActiveTab(key);
-    sectionRefs.current[key]?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }, []);
-
   return (
-    <div className="w-full px-8 py-4">
-      <nav className="sticky top-10 z-10 flex gap-1 p-1 mb-8 rounded-lg bg-muted">
-        {tabs.map((tab) => (
-          <button
-            className={cn(
-              "flex-1 py-1.5 text-sm font-medium rounded-md transition-colors",
-              activeTab === tab.key
-                ? "bg-background text-foreground shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-            key={tab.key}
-            onClick={() => scrollToSection(tab.key)}
-            type="button"
-          >
-            {tab.label}
-          </button>
-        ))}
-      </nav>
+    <div className="mx-auto w-full max-w-2xl px-8 py-8 animate-content-enter">
+      <h1 className="mb-10 text-2xl font-semibold tracking-tight">设置</h1>
 
-      <div className="space-y-12">
-        <section
-          ref={(el) => {
-            sectionRefs.current.appearance = el;
-          }}
-        >
-          <h2 className="text-lg font-semibold mb-4">外观</h2>
-          <div className="space-y-3">
+      <div className="space-y-6">
+        <SectionCard>
+          <SectionTitle>外观</SectionTitle>
+          <div className="space-y-0.5">
             <Row label="主题">
               <Select.Root
                 onValueChange={(v) => setTheme(v as Theme)}
@@ -108,16 +59,14 @@ export default function Settings() {
                   <Select.Positioner>
                     <Select.Popup>
                       <Select.List>
-                        {(Object.entries(labels) as [Theme, string][]).map(
-                          ([value, label]) => (
-                            <Select.Item key={value} value={value}>
-                              <Select.ItemText>{label}</Select.ItemText>
-                              <Select.ItemIndicator>
-                                <Check className="size-4" />
-                              </Select.ItemIndicator>
-                            </Select.Item>
-                          ),
-                        )}
+                        {Object.entries(labels).map(([value, label]) => (
+                          <Select.Item key={value} value={value}>
+                            <Select.ItemText>{label}</Select.ItemText>
+                            <Select.ItemIndicator>
+                              <Check className="size-4" />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
                       </Select.List>
                     </Select.Popup>
                   </Select.Positioner>
@@ -137,20 +86,17 @@ export default function Settings() {
                 <Select.Portal>
                   <Select.Positioner>
                     <Select.Popup>
-                      <Select.List>
-                        {(
-                          Object.entries(windowEffectLabels) as [
-                            string,
-                            string,
-                          ][]
-                        ).map(([value, label]) => (
-                          <Select.Item key={value} value={value}>
-                            <Select.ItemText>{label}</Select.ItemText>
-                            <Select.ItemIndicator>
-                              <Check className="size-4" />
-                            </Select.ItemIndicator>
-                          </Select.Item>
-                        ))}
+                      <Select.List className="space-y-0.5">
+                        {Object.entries(windowEffectLabels).map(
+                          ([value, label]) => (
+                            <Select.Item key={value} value={value}>
+                              <Select.ItemText>{label}</Select.ItemText>
+                              <Select.ItemIndicator>
+                                <Check className="size-4" />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ),
+                        )}
                       </Select.List>
                     </Select.Popup>
                   </Select.Positioner>
@@ -161,16 +107,11 @@ export default function Settings() {
               <span className="text-sm text-muted-foreground">简体中文</span>
             </Row>
           </div>
-          <Separator className="mt-6" />
-        </section>
+        </SectionCard>
 
-        <section
-          ref={(el) => {
-            sectionRefs.current.playback = el;
-          }}
-        >
-          <h2 className="text-lg font-semibold mb-4">播放</h2>
-          <div className="space-y-3">
+        <SectionCard>
+          <SectionTitle>播放</SectionTitle>
+          <div className="space-y-0.5">
             <Row description="新播放队列的默认模式" label="默认播放模式">
               <span className="text-sm text-muted-foreground">顺序播放</span>
             </Row>
@@ -178,38 +119,28 @@ export default function Settings() {
               <span className="text-sm text-muted-foreground">极高</span>
             </Row>
           </div>
-          <Separator className="mt-6" />
-        </section>
+        </SectionCard>
 
-        <section
-          ref={(el) => {
-            sectionRefs.current.cache = el;
-          }}
-        >
-          <h2 className="text-lg font-semibold mb-4">缓存</h2>
-          <div className="space-y-3">
+        <SectionCard>
+          <SectionTitle>缓存</SectionTitle>
+          <div className="space-y-0.5">
             <Row description="本地缓存占用空间" label="缓存大小">
               <span className="text-sm text-muted-foreground">-- MB</span>
             </Row>
             <Row label="清除缓存">
               <button
-                className="text-sm text-primary hover:text-primary-dark transition-colors"
+                className="rounded-[4px] px-2 py-0.5 text-sm text-primary transition-all duration-150 hover:bg-surface-active hover:text-primary-dark"
                 type="button"
               >
                 清除
               </button>
             </Row>
           </div>
-          <Separator className="mt-6" />
-        </section>
+        </SectionCard>
 
-        <section
-          ref={(el) => {
-            sectionRefs.current.about = el;
-          }}
-        >
-          <h2 className="text-lg font-semibold mb-4">关于</h2>
-          <div className="space-y-3">
+        <SectionCard>
+          <SectionTitle>关于</SectionTitle>
+          <div className="space-y-0.5">
             <Row label="版本号">
               <span className="text-sm text-muted-foreground">0.1.0</span>
             </Row>
@@ -217,9 +148,25 @@ export default function Settings() {
               <span className="text-sm text-muted-foreground">已是最新</span>
             </Row>
           </div>
-          <Separator className="mt-6" />
-        </section>
+        </SectionCard>
       </div>
+    </div>
+  );
+}
+
+function SectionCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border/40 bg-card/40 px-5 py-4 backdrop-blur-sm transition-all duration-200 hover:border-border/60 hover:bg-card/60">
+      {children}
+    </div>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-4 flex items-center gap-2">
+      <span className="h-5 w-0.5 rounded-full bg-primary/70" />
+      <h2 className="text-base font-semibold">{children}</h2>
     </div>
   );
 }
@@ -234,7 +181,7 @@ const Row = ({
   children: React.ReactNode;
 }) => {
   return (
-    <div className="flex items-center justify-between py-1">
+    <div className="flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-150 hover:bg-surface-hover">
       <div>
         <span className="text-sm">{label}</span>
         {description && (
