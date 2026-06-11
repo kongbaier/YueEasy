@@ -35,7 +35,8 @@ export function toPlaylistDisplay(item: {
     coverUrl: item.coverUrl ?? item.coverImgUrl ?? item.picUrl ?? "",
     playCount: item.playCount,
     trackCount: (item as { trackCount?: number }).trackCount ?? 0,
-    creator: (item as { creator?: { nickname: string } }).creator?.nickname ?? "",
+    creator:
+      (item as { creator?: { nickname: string } }).creator?.nickname ?? "",
     description: (item as { description?: string }).description ?? "",
   };
 }

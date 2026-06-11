@@ -26,6 +26,13 @@ export const songSlice = {
       offset: String(offset),
     }),
 
+  searchHot: () =>
+    ncmApi<{
+      result: {
+        hots: { first: string; iconType: number; second: number }[];
+      };
+    }>("search/hot"),
+
   songUrl: (id: number) =>
     ncmApi<SongUrlResponse>("song_url_v1", {
       id: String(id),
