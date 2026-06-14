@@ -40,8 +40,8 @@ const PlayerProgress = () => {
 
   return (
     <SeekBar
-      barClassName="w-full h-1 origin-center transition-transform group-hover:scale-y-150 bg-surface-active relative select-none"
-      className="absolute w-full -top-1.5 left-0 h-3 cursor-pointer flex items-center group"
+      barClassName="w-full h-1 group-hover:h-1.5 bg-surface-hover relative select-none"
+      className="absolute w-full -top-1.5 left-0 h-3  cursor-pointer flex items-center group"
       duration={duration}
       onSeek={seek}
       percentage={percentage}
@@ -281,7 +281,7 @@ export const PlayerBar = ({ className }: { className?: string }) => {
   return (
     <div
       className={cn(
-        "relative border-t border-border bg-card px-4 flex items-center justify-between",
+        "relative bg-card px-4 flex items-center justify-between",
         className,
       )}
     >
