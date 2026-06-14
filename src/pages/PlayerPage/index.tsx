@@ -132,42 +132,23 @@ const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
   const picUrl = currentTrack?.album?.picUrl;
 
   return (
-    <div className="flex-1 min-h-0 my-2 lg:my-4">
-      <ImageWithFade
-        alt={currentTrack.album.name}
-        className="object-contain"
-        fill
-        src={picUrl}
-      />
-      {/*{picUrl && (
-        <div
-          aria-hidden="true"
-          className={cn(
-            "absolute w-full h-full rounded-lg",
-            "bg-cover bg-center blur-lg opacity-60",
-            "-z-1",
-            "scale-[92,96] top-3",
-          )}
-          style={{
-            backgroundImage: `url(${picUrl})`,
-          }}
-        />
-      )}*/}
-      {/*<AspectRatio
-        className="rounded-lg overflow-hidden relative z-1 border-[0.5px]"
-        ratio={1}
-      >
-        {picUrl ? (
-          <ImageWithFade
-            alt={currentTrack.album.name}
-            className="object-cover"
-            fill
+    <div className="flex-1 min-h-0 my-2 lg:my-4 flex items-center justify-center">
+      <div className="relative aspect-square max-h-full max-w-full">
+        {picUrl && (
+          <img
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 top-3 object-cover blur-lg opacity-60 scale-(92,96) -z-1"
             src={picUrl}
           />
-        ) : (
-          <div className="w-full h-full bg-secondary" />
         )}
-      </AspectRatio>*/}
+        <ImageWithFade
+          alt={currentTrack.album.name}
+          className="object-cover relative rounded-lg border-[0.5px] overflow-hidden"
+          fill
+          src={picUrl}
+        />
+      </div>
     </div>
   );
 };
