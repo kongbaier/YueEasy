@@ -5,6 +5,9 @@ interface SeekBarContext {
   displayPercentage: number;
   barRef: React.RefObject<HTMLDivElement | null>;
   barWidth: number;
+  isHovering: boolean;
+  hoverBarX: number;
+  hoverPercentage: number | null;
 }
 
 interface SeekBarProps {
@@ -29,6 +32,22 @@ export const SeekBar = ({
   const [scrubPercentage, setScrubPercentage] = useState<number | null>(null);
   const scrubRatioRef = useRef(0);
   const displayPercentage = scrubPercentage ?? percentage;
+
+  const [hoverPercentage, setHoverPercentage] = useState<number | null>(null);
+  const [hoverBarX, setHoverBarX] = useState(0);
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    const bar = barRef.current;
+    if (!bar) return;
+    const rect = bar.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    setHoverBarX(x);
+    setHoverPercentage((x / rect.width) * 100);
+  };
+
+  const handlePointerLeave = () => {
+    setHoverPercentage(null);
+  };
 
   useEffect(() => {
     const bar = barRef.current;
@@ -71,13 +90,25 @@ export const SeekBar = ({
   };
 
   return (
-    <div className={className} onPointerDown={handlePointerDown}>
+    <div
+      className={className}
+      onPointerDown={handlePointerDown}
+      onPointerLeave={handlePointerLeave}
+      onPointerMove={handlePointerMove}
+    >
       <div
         className={barClassName}
         ref={barRef}
         style={{ touchAction: "none" }}
       >
-        {children({ displayPercentage, barRef, barWidth })}
+        {children({
+          displayPercentage,
+          barRef,
+          barWidth,
+          isHovering: hoverPercentage !== null,
+          hoverBarX,
+          hoverPercentage,
+        })}
       </div>
     </div>
   );

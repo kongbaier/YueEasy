@@ -77,11 +77,7 @@ const QueueItem = ({
   );
 };
 
-export const PlayerPageQueue = ({
-  onBack,
-}: {
-  onBack: () => void;
-}) => {
+export const PlayerPageQueue = ({ onBack }: { onBack: () => void }) => {
   const queue = usePlayerStore((s) => s.queue);
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
@@ -150,7 +146,7 @@ export const PlayerPageQueue = ({
         </div>
         <div
           className={cn(
-            "h-full transition-all duration-300 px-2 py-1",
+            "h-full transition-all duration-300 px-2 py-1 mr-4",
             queue.length > 0
               ? "opacity-100 translate-y-0"
               : "opacity-0 translate-y-2 pointer-events-none",

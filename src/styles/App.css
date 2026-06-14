@@ -189,3 +189,7 @@ html.theme-transition *::after {
       rgba(0, 0, 0, 0.4) 100% /* 70%-100%渐变显示倒影 */
     );
 }
+
+.test {
+  height: calc(100vh - 40px);
+}

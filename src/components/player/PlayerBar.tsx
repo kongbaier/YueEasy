@@ -11,11 +11,13 @@ import {
 import { useCallback, useMemo } from "react";
 import { useShallow } from "zustand/shallow";
 import { Button } from "@/components/ui/button";
+import { FollowTooltip } from "@/components/ui/follow-tooltip";
 import { ImageWithFade } from "@/components/ui/image";
 import { useMediaSession } from "@/hooks/useMediaSession";
 import { usePlayerAction } from "@/hooks/usePlayerAction";
 import { usePlayerKeyboard } from "@/hooks/usePlayerKeyboard";
 import { useProgress } from "@/hooks/useProgress";
+import { formatDuration } from "@/lib/format";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { ncm } from "@/services/ncm";
@@ -32,7 +34,7 @@ import { SeekBar } from "./SeekBar";
 import { VolumeControl } from "./VolumeControl";
 
 const PlayerProgress = () => {
-  const { percentage } = useProgress();
+  const { percentage, formatted } = useProgress();
   const seek = usePlayerStore((s) => s.seek);
   const duration = usePlayerStore((s) => s.duration);
 
@@ -44,12 +46,34 @@ const PlayerProgress = () => {
       onSeek={seek}
       percentage={percentage}
     >
-      {({ displayPercentage }) => (
-        <div
-          className="h-full bg-primary rounded-r-full"
-          style={{ width: `${displayPercentage}%` }}
-        />
-      )}
+      {({
+        displayPercentage,
+        barRef,
+        isHovering,
+        hoverBarX,
+        hoverPercentage,
+      }) => {
+        const hoverTime =
+          hoverPercentage !== null && duration > 0
+            ? (hoverPercentage / 100) * duration
+            : 0;
+        return (
+          <>
+            <div
+              className="h-full bg-primary rounded-r-full"
+              style={{ width: `${displayPercentage}%` }}
+            />
+            <FollowTooltip anchorRef={barRef} open={isHovering} x={hoverBarX}>
+              <span className="inline-block min-w-[11ch] text-center">
+                <span className="text-primary">
+                  {formatDuration(hoverTime)}
+                </span>
+                /{formatted.duration}
+              </span>
+            </FollowTooltip>
+          </>
+        );
+      }}
     </SeekBar>
   );
 };

@@ -1,10 +1,4 @@
-import {
-  ChevronDown,
-  Download,
-  Ellipsis,
-  Heart,
-  Share2,
-} from "lucide-react";
+import { ChevronDown, Download, Ellipsis, Heart, Share2 } from "lucide-react";
 import React, { Activity, useCallback, useEffect, useState } from "react";
 import { WindowControls } from "@/components/system";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -33,7 +27,6 @@ export default function PlayerPage() {
   const [visible, setVisible] = useState(false);
   const [showQueue, setShowQueue] = useState(false);
 
-  // Pre-decode next track cover for instant display on track change
   useEffect(() => {
     if (!currentTrack) return;
     const { queue } = usePlayerStore.getState();
@@ -64,50 +57,37 @@ export default function PlayerPage() {
   return (
     <div
       className={cn(
-        "fixed top-0 left-0 w-screen h-screen z-50 bg-[#ffffff] dark:bg-[#121212] flex flex-col transition-transform duration-300 ease-out",
+        "fixed inset-0 z-50 bg-[#ffffff] dark:bg-[#121212] transition-transform duration-300 ease-out",
         visible ? "translate-y-0" : "translate-y-full",
       )}
     >
       <PlayerHeader handleBack={handleBack} />
 
-      <div className="flex-1 grid grid-cols-[1fr_1fr] overflow-hidden">
+      <div className="relative h-[calc(100vh-40px)] grid grid-cols-[1fr_1fr] overflow-auto">
         <div
           className={cn(
-            "relative justify-self-center pb-4 gap-2 px-4",
-            "flex flex-col items-center justify-around",
+            "col-span-1 justify-self-center min-h-0",
+            "pb-4 gap-2 px-4",
+            "flex flex-col justify-around",
             "w-4/5 max-w-md",
           )}
         >
-          {/*<div
-            className={cn(
-              "absolute inset-0 flex flex-col items-center justify-center gap-4 transition-all duration-300",
-              !currentTrack
-                ? "opacity-100 scale-100"
-                : "opacity-0 scale-95 pointer-events-none",
-            )}
-          >
-            <div className="size-20 rounded-full bg-accent/30 ring-1 ring-border/30 flex items-center justify-center">
-              <Music className="size-8 text-muted-foreground/40" />
-            </div>
-            <p className="text-sm text-muted-foreground/60">播放列表已清空</p>
-          </div>*/}
           {currentTrack && (
             <React.Fragment>
               <PlayerTitle currentTrack={currentTrack} />
               <PlayerCover currentTrack={currentTrack} />
-              <PlayerPageProgress className="shrink-0 w-full" />
+              <PlayerPageProgress />
               <PlayerPageControls
-                className="w-full"
                 onToggleQueue={() => setShowQueue((v) => !v)}
                 showQueue={showQueue}
               />
-              <PlayerPageVolume className="shrink-0 w-full" />
+              <PlayerPageVolume />
               <PlayerMenu currentTrack={currentTrack} />
             </React.Fragment>
           )}
         </div>
 
-        <div className="h-full min-h-0">
+        <div className="col-span-1 min-h-0">
           <Activity mode={showQueue ? "visible" : "hidden"}>
             <PlayerPageQueue key="queue" onBack={handleBack} />
           </Activity>
@@ -137,7 +117,7 @@ const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
 
 const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
   return (
-    <div className="w-full h-14 overflow-hidden shrink-0">
+    <div className="h-14">
       <h1 className="text-xl font-semibold text-foreground truncate">
         {currentTrack.name}
       </h1>
@@ -152,8 +132,14 @@ const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
   const picUrl = currentTrack?.album?.picUrl;
 
   return (
-    <div className="relative w-full my-2 lg:my-4">
-      {picUrl && (
+    <div className="flex-1 min-h-0 my-2 lg:my-4">
+      <ImageWithFade
+        alt={currentTrack.album.name}
+        className="object-contain"
+        fill
+        src={picUrl}
+      />
+      {/*{picUrl && (
         <div
           aria-hidden="true"
           className={cn(
@@ -166,8 +152,8 @@ const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
             backgroundImage: `url(${picUrl})`,
           }}
         />
-      )}
-      <AspectRatio
+      )}*/}
+      {/*<AspectRatio
         className="rounded-lg overflow-hidden relative z-1 border-[0.5px]"
         ratio={1}
       >
@@ -181,7 +167,7 @@ const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
         ) : (
           <div className="w-full h-full bg-secondary" />
         )}
-      </AspectRatio>
+      </AspectRatio>*/}
     </div>
   );
 };
