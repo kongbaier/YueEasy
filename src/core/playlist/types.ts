@@ -26,4 +26,10 @@ export interface Playlist {
   creator?: PlaylistUser;
   tags?: string[];
   tracks?: SongRef[];
+  /** 详情页独有字段 */
+  subscribedCount?: number;
+  commentCount?: number;
+  shareCount?: number;
+  createTime?: number;
+  updateTime?: number;
 }

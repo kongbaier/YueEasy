@@ -23,7 +23,7 @@ const LoadingState = () => (
   <div className="mt-4 space-y-0.5">
     {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
       // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, order never changes
-      <TrackRowSkeleton index={i} key={i} showAlbum />
+      <TrackRowSkeleton index={i} key={i} />
     ))}
   </div>
 );
@@ -102,6 +102,7 @@ export default function Search() {
   const [showDropdown, setShowDropdown] = useState(false);
   const debouncedKeyword = useDebounce(keyword, 400);
   const play = usePlayerStore((s) => s.play);
+  const replaceAndPlay = usePlayerStore((s) => s.replaceAndPlay);
   const visibleCount = useLoadMore(results.length);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasSearched = debouncedKeyword.trim().length > 0;
@@ -163,16 +164,13 @@ export default function Search() {
   );
 
   const handlePlayAll = useCallback(async () => {
-    for (const track of results) {
-      try {
-        await play(track);
-        return;
-      } catch {
-        /* try next */
-      }
+    if (!results.length) return;
+    try {
+      await replaceAndPlay(results);
+    } catch {
+      toast.error("没有可播放的歌曲");
     }
-    toast.error("没有可播放的歌曲");
-  }, [results, play]);
+  }, [results, replaceAndPlay]);
 
   const handleHotPick = useCallback((word: string) => {
     setKeyword(word);
@@ -266,7 +264,6 @@ export default function Search() {
                   index={index}
                   key={track.id}
                   onPlay={handlePlay}
-                  showAlbum
                   track={track}
                 />
               ))}

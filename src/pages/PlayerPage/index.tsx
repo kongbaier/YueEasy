@@ -1,4 +1,10 @@
-import { ChevronDown, Download, Ellipsis, Heart, Share2 } from "lucide-react";
+import {
+  ChevronDown,
+  Download,
+  Ellipsis,
+  Heart,
+  Share2,
+} from "lucide-react";
 import React, { Activity, useCallback, useEffect, useState } from "react";
 import { WindowControls } from "@/components/system";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -68,26 +74,34 @@ export default function PlayerPage() {
         <div
           className={cn(
             "relative justify-self-center pb-4 gap-2 px-4",
-            "flex flex-col items-center justify-between",
+            "flex flex-col items-center justify-around",
             "w-4/5 max-w-md",
           )}
         >
+          {/*<div
+            className={cn(
+              "absolute inset-0 flex flex-col items-center justify-center gap-4 transition-all duration-300",
+              !currentTrack
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-95 pointer-events-none",
+            )}
+          >
+            <div className="size-20 rounded-full bg-accent/30 ring-1 ring-border/30 flex items-center justify-center">
+              <Music className="size-8 text-muted-foreground/40" />
+            </div>
+            <p className="text-sm text-muted-foreground/60">播放列表已清空</p>
+          </div>*/}
           {currentTrack && (
             <React.Fragment>
               <PlayerTitle currentTrack={currentTrack} />
-
               <PlayerCover currentTrack={currentTrack} />
-
               <PlayerPageProgress className="shrink-0 w-full" />
-
               <PlayerPageControls
                 className="w-full"
                 onToggleQueue={() => setShowQueue((v) => !v)}
                 showQueue={showQueue}
               />
-
               <PlayerPageVolume className="shrink-0 w-full" />
-
               <PlayerMenu currentTrack={currentTrack} />
             </React.Fragment>
           )}
@@ -95,7 +109,7 @@ export default function PlayerPage() {
 
         <div className="h-full min-h-0">
           <Activity mode={showQueue ? "visible" : "hidden"}>
-            <PlayerPageQueue key="queue" />
+            <PlayerPageQueue key="queue" onBack={handleBack} />
           </Activity>
           <Activity mode={showQueue ? "hidden" : "visible"}>
             <Lyrics />
@@ -135,22 +149,40 @@ const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
 };
 
 const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
+  const picUrl = currentTrack?.album?.picUrl;
+
   return (
-    <AspectRatio
-      className="rounded-lg shadow overflow-hidden dark:shadow-none"
-      ratio={1}
-    >
-      {currentTrack.album?.picUrl ? (
-        <ImageWithFade
-          alt={currentTrack.album.name}
-          className="object-cover"
-          fill
-          src={currentTrack.album.picUrl}
+    <div className="relative w-full my-2 lg:my-4">
+      {picUrl && (
+        <div
+          aria-hidden="true"
+          className={cn(
+            "absolute w-full h-full rounded-lg",
+            "bg-cover bg-center blur-lg opacity-60",
+            "-z-1",
+            "scale-[92,96] top-3",
+          )}
+          style={{
+            backgroundImage: `url(${picUrl})`,
+          }}
         />
-      ) : (
-        <div className="w-full h-full bg-secondary" />
       )}
-    </AspectRatio>
+      <AspectRatio
+        className="rounded-lg overflow-hidden relative z-1 border-[0.5px]"
+        ratio={1}
+      >
+        {picUrl ? (
+          <ImageWithFade
+            alt={currentTrack.album.name}
+            className="object-cover"
+            fill
+            src={picUrl}
+          />
+        ) : (
+          <div className="w-full h-full bg-secondary" />
+        )}
+      </AspectRatio>
+    </div>
   );
 };
 

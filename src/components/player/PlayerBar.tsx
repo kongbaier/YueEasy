@@ -4,6 +4,7 @@ import {
   Heart,
   ListMusic,
   Loader2,
+  Music,
   Pause,
   Play,
 } from "lucide-react";
@@ -11,7 +12,6 @@ import { useCallback, useMemo } from "react";
 import { useShallow } from "zustand/shallow";
 import { Button } from "@/components/ui/button";
 import { ImageWithFade } from "@/components/ui/image";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useMediaSession } from "@/hooks/useMediaSession";
 import { usePlayerAction } from "@/hooks/usePlayerAction";
 import { usePlayerKeyboard } from "@/hooks/usePlayerKeyboard";
@@ -57,6 +57,8 @@ const PlayerProgress = () => {
 const PlayerControls = () => {
   const { handlePlay, handleNext, handlePrev } = usePlayerAction();
   const state = usePlayerStore((s) => s.core.state);
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const hasTrack = !!currentTrack;
   const PlayIcon = useMemo(() => {
     switch (state) {
       case "loading":
@@ -74,7 +76,12 @@ const PlayerControls = () => {
       <section className="flex items-center">
         <PlayModeControl />
       </section>
-      <section className="flex text-4xl gap-x-3 justify-center items-center-safe">
+      <section
+        className={cn(
+          "flex text-4xl gap-x-3 justify-center items-center-safe transition-opacity duration-300",
+          !hasTrack && "opacity-30 pointer-events-none",
+        )}
+      >
         <Button
           className="text-foreground hover:bg-transparent hover:text-primary"
           onClick={handlePrev}
@@ -110,33 +117,69 @@ const PlayerControls = () => {
 };
 
 const PlayerInfo = () => {
-  const { currentTrack } = usePlayerStore();
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
   const openPlayerPage = usePlayerPageStore((s) => s.open);
+
   return (
-    <div className="flex-1 min-w-0 flex items-center gap-3">
-      <button
-        className="rounded-md overflow-hidden shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 h-10 w-10 shrink-0 transition-colors origin-bottom-left"
-        onClick={openPlayerPage}
-        type="button"
-      >
-        {currentTrack?.album.picUrl ? (
-          <ImageWithFade
-            alt={currentTrack.album.name}
-            className="object-cover"
-            fill
-            src={currentTrack.album.picUrl}
-          />
-        ) : (
-          <Skeleton className="" />
+    <div className="flex-1 min-w-0 relative flex items-center">
+      <div
+        className={cn(
+          "flex items-center gap-3 transition-all duration-300",
+          !currentTrack
+            ? "opacity-100"
+            : "opacity-0 pointer-events-none absolute inset-0",
         )}
-      </button>
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium">
-          {currentTrack?.name ?? "未在播放"}
-        </p>
-        <p className="truncate text-xs text-muted-foreground">
-          {currentTrack?.artists?.map((a) => a.name).join("/") ?? " "}
-        </p>
+      >
+        <div className="flex items-center justify-center size-10 shrink-0 rounded-md bg-accent/40 ring-1 ring-border/40">
+          <Music className="size-4 text-muted-foreground/60" />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-muted-foreground/70">
+            暂无歌曲
+          </p>
+          <p className="truncate text-xs text-muted-foreground/50">
+            听听音乐吧
+          </p>
+        </div>
+      </div>
+
+      <div
+        className={cn(
+          "flex items-center gap-3 min-w-0 transition-all duration-300",
+          currentTrack
+            ? "opacity-100"
+            : "opacity-0 pointer-events-none absolute inset-0",
+        )}
+      >
+        <button
+          className={cn(
+            "rounded-md overflow-hidden shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 h-10 w-10 shrink-0 transition-colors",
+            "transition-transform duration-100 origin-bottom-left hover:brightness-95 hover:scale-110",
+          )}
+          onClick={openPlayerPage}
+          type="button"
+        >
+          {currentTrack?.album.picUrl ? (
+            <ImageWithFade
+              alt={currentTrack.album.name}
+              className="object-cover"
+              fill
+              src={currentTrack.album.picUrl}
+            />
+          ) : (
+            <div className="flex items-center justify-center size-full bg-accent">
+              <Music className="size-4 text-muted-foreground/60" />
+            </div>
+          )}
+        </button>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">
+            {currentTrack?.name ?? ""}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {currentTrack?.artists?.map((a) => a.name).join("/") || " "}
+          </p>
+        </div>
       </div>
     </div>
   );

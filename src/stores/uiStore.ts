@@ -13,17 +13,21 @@ function getStoredTheme(): Theme {
 interface UiStore {
   theme: Theme;
   loginDialogOpen: boolean;
+  isMaximized: boolean;
   setTheme: (theme: Theme) => void;
   setLoginDialogOpen: (open: boolean) => void;
+  setMaximized: (maximized: boolean) => void;
 }
 
 export const useUiStore = create<UiStore>((set) => ({
   theme: getStoredTheme(),
   loginDialogOpen: false,
+  isMaximized: false,
 
   setTheme: (theme) => {
     localStorage.setItem("theme", theme);
     set({ theme });
   },
   setLoginDialogOpen: (open) => set({ loginDialogOpen: open }),
+  setMaximized: (maximized) => set({ isMaximized: maximized }),
 }));

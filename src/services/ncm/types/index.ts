@@ -4,6 +4,8 @@
 export * from "./auth.response";
 // Banner responses
 export * from "./banner.response";
+// Comment responses
+export * from "./comment.response";
 // Discover responses
 export * from "./discover.response";
 // Playlist responses

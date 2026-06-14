@@ -50,8 +50,7 @@ export const useQueuePersistence = () => {
       clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         const json = serializeState();
-        if (!json) return;
-        setSetting("player_state", json).catch(() => {});
+        setSetting("player_state", json ?? "").catch(() => {});
       }, 2000);
     };
 
@@ -70,9 +69,7 @@ export const useQueuePersistence = () => {
     const flush = () => {
       clearTimeout(timerRef.current);
       const json = serializeState();
-      if (json) {
-        setSetting("player_state", json).catch(() => {});
-      }
+      setSetting("player_state", json ?? "").catch(() => {});
     };
     window.addEventListener("beforeunload", flush);
 

@@ -180,3 +180,12 @@ html.theme-transition *::after {
   );
   background-size: 200% 100%;
 }
+
+@utility shadow-reflect {
+  -webkit-box-reflect: below 10px
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 70% /* 0%-70%完全透明，不显示倒影 */,
+      rgba(0, 0, 0, 0.4) 100% /* 70%-100%渐变显示倒影 */
+    );
+}

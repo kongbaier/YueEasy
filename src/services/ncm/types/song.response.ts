@@ -55,14 +55,10 @@ export interface LikeListResponse {
 
 // NCM API Response: /record/recent/song
 export interface RecentSongItem {
-  data: {
-    id: number;
-    name: string;
-    ar: Array<{ id: number; name: string }>;
-    al: { id: number; name: string; picUrl: string };
-    dt: number;
-  };
+  data: NcmSong;
   playTime: number;
+  resourceId: string;
+  resourceType: string;
 }
 
 export interface RecentSongResponse {

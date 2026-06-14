@@ -50,7 +50,7 @@ export const LyricLine = ({ line, lineIndex }: LyricLineProps) => {
             "text-base leading-7 transition-[scale] origin-left ease-in-out duration-300",
             isActive && "font-medium scale-110",
           )}
-          key={`${l.start}-${l.end}`}
+          key={`${l.start.segmentIndex}-${l.start.graphemeIndex}-${l.end.segmentIndex}-${l.end.graphemeIndex}`}
         >
           {l.text}
         </p>

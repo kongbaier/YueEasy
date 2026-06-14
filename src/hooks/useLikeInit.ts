@@ -8,14 +8,9 @@ export const useLikeInit = () => {
 
   useEffect(() => {
     if (isLoggedIn && userId) {
-      ncm
-        .likeList(userId)
-        .then((res) => {
-          useLikeStore.getState().init(res.ids);
-        })
-        .catch(() => {
-          // silently fail, user can retry by revisiting LikedSongs page
-        });
+      ncm.likeList(userId).then((res) => {
+        useLikeStore.getState().init(res.ids);
+      });
     } else {
       useLikeStore.getState().clear();
     }

@@ -1,19 +1,21 @@
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import KeepAliveRouteOutlet from "keepalive-for-react-router";
 import { ChevronLeft } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { PlayerBar, QueuePanel } from "@/components/player";
 import { WindowControls } from "@/components/system";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ScrollContainerContext } from "@/hooks/useScrollContainer";
+import { useUiStore } from "@/stores";
 import { useCanGoBack } from "./useCanGoBack";
 
 const Header = () => {
   const navigate = useNavigate();
   const canGoBack = useCanGoBack();
   return (
-    <header className="h-10 flex items-center shrink-0" data-drag-region>
+    <header className="h-10 flex items-center shrink-0" data-tauri-drag-region>
       {canGoBack && (
         <button
           aria-label="返回"
@@ -29,13 +31,29 @@ const Header = () => {
   );
 };
 
-export const MainLayout = () => {
+export function MainLayout() {
   const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(
     null,
   );
   const scrollRef = useCallback((el: HTMLDivElement | null) => {
     setScrollContainer(el);
   }, []);
+
+  // Single listener for window maximize state — shared by all WindowControls instances
+  const setMaximized = useUiStore((s) => s.setMaximized);
+  useEffect(() => {
+    const appWindow = getCurrentWindow();
+    const check = () => {
+      appWindow.isMaximized().then(setMaximized);
+    };
+    check();
+    const unlisten = appWindow.onResized(() => {
+      check();
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [setMaximized]);
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -47,7 +65,7 @@ export const MainLayout = () => {
             <Header />
             <ScrollContainerContext.Provider value={scrollContainer}>
               <div
-                className="flex-1 min-h-0 min-w-0 overflow-y-auto [scrollbar-gutter:stable]"
+                className="flex-1 min-h-0 min-w-0 overflow-y-auto"
                 ref={scrollRef}
               >
                 <KeepAliveRouteOutlet max={5} />
@@ -62,4 +80,4 @@ export const MainLayout = () => {
       </div>
     </SidebarProvider>
   );
-};
+}

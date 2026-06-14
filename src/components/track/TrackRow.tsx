@@ -10,8 +10,9 @@ import {
 import { ImageWithFade } from "@/components/ui/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
+import { formatDuration } from "@/lib/format";
 import { toast } from "@/lib/toast";
-import { cn, getNcmImageUrl } from "@/lib/utils";
+import { getNcmImageUrl } from "@/lib/utils";
 import { ncm } from "@/services/ncm";
 import {
   useAuthStore,
@@ -24,14 +25,12 @@ interface TrackRowProps {
   track: SongRef;
   index: number;
   onPlay: (track: SongRef) => void;
-  showAlbum?: boolean;
 }
 
 export const TrackRow = ({
   track,
   index,
   onPlay,
-  showAlbum = false,
 }: TrackRowProps) => {
   const playNext = usePlayerStore((s) => s.playNext);
   const isLiked = useLikeStore((s) => s.isLiked(track.id));
@@ -102,20 +101,28 @@ export const TrackRow = ({
           </p>
           <p className="truncate text-xs text-muted-foreground">
             {track.artists.map((a) => a.name).join("/") || "未知歌手"}
-            {showAlbum && track.album.name && ` · ${track.album.name}`}
           </p>
         </div>
+        <span className="flex-1 min-w-0 truncate text-xs text-muted-foreground">
+          {track.album.name || "-"}
+        </span>
         <button
-          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+          className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-red-500"
           onClick={(e) => {
             e.stopPropagation();
-            onPlay(track);
+            handleFavorite();
           }}
-          title="播放"
+          title={isLiked ? "取消收藏" : "收藏"}
           type="button"
         >
-          <Play className="h-4 w-4" />
+          <Heart
+            className="h-4 w-4"
+            fill={isLiked ? "#ef4444" : "none"}
+          />
         </button>
+        <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+          {formatDuration(track.duration / 1000)}
+        </span>
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem onClick={() => onPlay(track)}>
@@ -138,10 +145,8 @@ export const TrackRow = ({
 
 export const TrackRowSkeleton = ({
   index,
-  showAlbum = false,
 }: {
   index: number;
-  showAlbum?: boolean;
 }) => {
   return (
     <div className="flex items-center gap-3 rounded-lg px-3 py-2">
@@ -151,12 +156,11 @@ export const TrackRowSkeleton = ({
       <Skeleton className="h-9 w-9 shrink-0 rounded" shimmer />
       <div className="flex-1 min-w-0 space-y-1.5">
         <Skeleton className="h-4 w-full max-w-48 rounded" shimmer />
-        <Skeleton
-          className={cn("h-3 w-24 rounded", showAlbum && "w-36")}
-          shimmer
-        />
+        <Skeleton className="h-3 w-24 rounded" shimmer />
       </div>
-      <Skeleton className="h-6 w-6 shrink-0 rounded" shimmer />
+      <Skeleton className="h-3 w-24 rounded flex-1 min-w-0" shimmer />
+      <Skeleton className="h-4 w-4 shrink-0 rounded" shimmer />
+      <Skeleton className="h-3 w-10 shrink-0 rounded" shimmer />
     </div>
   );
 };

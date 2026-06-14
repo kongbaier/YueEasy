@@ -21,7 +21,7 @@ const DailyRecommendSkeleton = () => {
       <div className="mt-3 space-y-0.5">
         {Array.from({ length: 8 }).map((_, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
-          <TrackRowSkeleton index={i} key={i} showAlbum />
+          <TrackRowSkeleton index={i} key={i} />
         ))}
       </div>
     </div>
@@ -30,6 +30,7 @@ const DailyRecommendSkeleton = () => {
 
 const DailyRecommendContent = () => {
   const play = usePlayerStore((s) => s.play);
+  const replaceAndPlay = usePlayerStore((s) => s.replaceAndPlay);
 
   const { data: songs } = useSuspenseQuery({
     queryKey: ["dailyRecommend"],
@@ -51,15 +52,12 @@ const DailyRecommendContent = () => {
   };
 
   const handlePlayAll = async () => {
-    for (const song of songs) {
-      try {
-        await play(song);
-        return;
-      } catch {
-        /* try next */
-      }
+    if (!songs.length) return;
+    try {
+      await replaceAndPlay(songs);
+    } catch {
+      toast.error("没有可播放的歌曲");
     }
-    toast.error("没有可播放的歌曲");
   };
 
   return (
@@ -84,7 +82,6 @@ const DailyRecommendContent = () => {
                 index={index}
                 key={track.id}
                 onPlay={handlePlay}
-                showAlbum
                 track={track}
               />
             ))}

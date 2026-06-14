@@ -32,6 +32,7 @@ interface PlayerStore {
   volume: number;
 
   play: (track: Track) => Promise<void>;
+  replaceAndPlay: (tracks: Track[], startIndex?: number) => Promise<void>;
   pause: () => void;
   resume: () => Promise<void>;
   next: () => Promise<void>;
@@ -42,7 +43,7 @@ interface PlayerStore {
   setMuted: (muted: boolean) => void;
   setVolume: (volume: number) => void;
   addToQueue: (track: Track) => Promise<void>;
-  playNext: (track: Track) => void;
+  playNext: (track: Track) => Promise<void>;
   playFromIndex: (index: number) => Promise<void>;
   removeFromQueue: (index: number) => Promise<void>;
   clearQueue: () => void;
@@ -81,8 +82,28 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     volume: player.volume,
 
     play: async (track) => {
-      player.setQueue([track], 0);
-      set({ queue: player.queue });
+      const { currentTrack, queue } = get();
+      if (!currentTrack || queue.length === 0) {
+        player.setQueue([track], 0);
+      } else if (queue.some((item) => item.id === track.id)) {
+        player.index = queue.findIndex((t) => t.id === track.id);
+      } else {
+        player.insert(track, player.index + 1);
+        player.index = player.index + 1;
+      }
+      set({
+        queue: player.queue,
+        currentTrack: player.currentTrack ?? null,
+      });
+      await playCurrent();
+    },
+
+    replaceAndPlay: async (tracks, startIndex = 0) => {
+      player.setQueue(tracks, startIndex);
+      set({
+        queue: player.queue,
+        currentTrack: player.currentTrack ?? null,
+      });
       await playCurrent();
     },
 
@@ -150,7 +171,10 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       if (queue.some((item) => item.id === track.id)) return;
       if (!currentTrack) {
         player.setQueue([track], 0);
-        set({ queue: player.queue });
+        set({
+          queue: player.queue,
+          currentTrack: player.currentTrack ?? null,
+        });
         await playCurrent();
       } else {
         player.add(track);
@@ -158,9 +182,20 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       }
     },
 
-    playNext: (track) => {
-      const { queue } = get();
+    playNext: async (track) => {
+      const { queue, currentTrack } = get();
       if (queue.some((item) => item.id === track.id)) return;
+
+      if (!currentTrack) {
+        player.setQueue([track], 0);
+        set({
+          queue: player.queue,
+          currentTrack: player.currentTrack ?? null,
+        });
+        await playCurrent();
+        return;
+      }
+
       const idx = player.index + 1;
       player.insert(track, idx);
       set({ queue: player.queue });
@@ -188,7 +223,10 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
           set({ queue: [], currentTrack: null });
           return;
         }
-        set({ queue: player.queue });
+        set({
+          queue: player.queue,
+          currentTrack: player.currentTrack ?? null,
+        });
         await playCurrent();
         return;
       }

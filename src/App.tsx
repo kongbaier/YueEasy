@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useAuthRestore } from "@/hooks/useAuthRestore";
+import { useLikeInit } from "@/hooks/useLikeInit";
 import { usePlayerRestore } from "@/hooks/usePlayerRestore";
 import { useQueuePersistence } from "@/hooks/useQueuePersistence";
 import { useThemeSync } from "@/hooks/useThemeSync";
@@ -39,6 +40,7 @@ const PageFallback = () => {
 function App() {
   useAccentColor();
   useAuthRestore();
+  useLikeInit();
   usePlayerRestore();
   useQueuePersistence();
   useThemeSync();
@@ -49,16 +51,16 @@ function App() {
     <BrowserRouter>
       <QueryErrorResetBoundary>
         <ErrorBoundary>
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback=<PageFallback />>
             <Routes>
-              <Route element={<MainLayout />}>
-                <Route element={<Home />} index />
-                <Route element={<Search />} path="search" />
-                <Route element={<Playlist />} path="playlist/:id" />
-                <Route element={<DailyRecommend />} path="daily" />
-                <Route element={<LikedSongs />} path="my/liked" />
-                <Route element={<RecentPlays />} path="my/recent" />
-                <Route element={<Settings />} path="settings" />
+              <Route element=<MainLayout />>
+                <Route element=<Home /> index />
+                <Route element=<Search /> path="search" />
+                <Route element=<Playlist /> path="playlist/:id" />
+                <Route element=<DailyRecommend /> path="daily" />
+                <Route element=<LikedSongs /> path="my/liked" />
+                <Route element=<RecentPlays /> path="my/recent" />
+                <Route element=<Settings /> path="settings" />
               </Route>
             </Routes>
           </Suspense>

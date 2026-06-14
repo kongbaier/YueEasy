@@ -5,7 +5,6 @@ import { TrackRow, TrackRowSkeleton } from "@/components/track";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
-import { useLikeInit } from "@/hooks/useLikeInit";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
@@ -28,7 +27,6 @@ const LikedSongsSkeleton = () => {
 const LikedSongsContent = () => {
   const userId = useAuthStore((s) => s.userId);
   const play = usePlayerStore((s) => s.play);
-  useLikeInit();
 
   if (!userId) throw new Error("未登录");
 
