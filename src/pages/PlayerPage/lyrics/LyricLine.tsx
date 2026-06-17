@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores";
 import { useLyricsContext } from "./Lyrics";
 import { useLineLayout } from "./useLineLayout";
+import { Word } from "./Word";
 
 interface LyricLineProps {
   line: LyricLineType;
@@ -12,7 +13,8 @@ interface LyricLineProps {
 }
 
 export const LyricLine = ({ line, lineIndex }: LyricLineProps) => {
-  const { index, contentWidth } = useLyricsContext();
+  const { index, contentWidth, currentWordIndex, wordProgress, hasWordLyrics } =
+    useLyricsContext();
   const isActive = lineIndex === index;
   const isPast = lineIndex < index;
   const layoutResult = useLineLayout(line.text, contentWidth);
@@ -32,29 +34,51 @@ export const LyricLine = ({ line, lineIndex }: LyricLineProps) => {
     [seek, line.startMs],
   );
 
+  const showWords = hasWordLyrics && line.words?.length;
+
   return (
     <li
       className={cn(
         "transition-colors cursor-pointer",
-        isPast && "",
-        isActive && "text-primary",
+        isActive && !hasWordLyrics && "text-primary",
         !isActive && !isPast && "text-muted-foreground",
       )}
       data-line={lineIndex}
       onClick={handleSeek}
       onKeyDown={handleKeyDown}
     >
-      {layoutResult?.lines.map((l) => (
+      {showWords ? (
         <p
           className={cn(
             "text-base leading-7 transition-[scale] origin-left ease-in-out duration-300",
             isActive && "font-medium scale-110",
           )}
-          key={`${l.start.segmentIndex}-${l.start.graphemeIndex}-${l.end.segmentIndex}-${l.end.graphemeIndex}`}
         >
-          {l.text}
+          {line.words!.map((w, wi) => (
+            <Word
+              activeLineIndex={index}
+              currentWordIndex={currentWordIndex}
+              key={wi}
+              lineIndex={lineIndex}
+              text={w.text}
+              wordIndex={wi}
+              wordProgress={wordProgress}
+            />
+          ))}
         </p>
-      ))}
+      ) : (
+        layoutResult?.lines.map((l) => (
+          <p
+            className={cn(
+              "text-base leading-7 transition-[scale] origin-left ease-in-out duration-300",
+              isActive && "font-medium scale-110",
+            )}
+            key={`${l.start.segmentIndex}-${l.start.graphemeIndex}-${l.end.segmentIndex}-${l.end.graphemeIndex}`}
+          >
+            {l.text}
+          </p>
+        ))
+      )}
     </li>
   );
 };

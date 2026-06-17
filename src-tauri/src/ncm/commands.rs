@@ -31,7 +31,7 @@ fn merge_cookies(existing: &str, new_cookies: &[String]) -> String {
         }
     }
     map.into_iter()
-        .map(|(k, v)| format!("{}={}", k, v))
+        .map(|(k, v)| format!("{k}={v}"))
         .collect::<Vec<_>>()
         .join("; ")
 }
@@ -66,6 +66,7 @@ pub async fn ncm_request(
         "song_url_v1" => client.song_url_v1(&query).await,
         "song_detail" => client.song_detail(&query).await,
         "lyric" => client.lyric(&query).await,
+        "lyric_new" => client.lyric_new(&query).await,
         "playlist_detail" => client.playlist_detail(&query).await,
         "user_playlist" => client.user_playlist(&query).await,
         "login_cellphone" => client.login_cellphone(&query).await,

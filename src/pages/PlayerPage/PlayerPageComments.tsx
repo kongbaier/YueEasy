@@ -1,12 +1,12 @@
 import { Heart, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
-import type { NcmComment } from "@/services/ncm/types/comment.response";
-import { VirtuosoScroller } from "@/components/virtuoso";
-import { cn } from "@/lib/utils";
-import { formatCount } from "@/lib/format";
-import { ncm } from "@/services/ncm";
 import { ImageWithFade } from "@/components/ui/image";
+import { VirtuosoScroller } from "@/components/virtuoso";
+import { formatCount } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { ncm } from "@/services/ncm";
+import type { NcmComment } from "@/services/ncm/types/comment.response";
 
 function relativeTime(timestamp: number): string {
   const now = Date.now();
@@ -47,7 +47,7 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+          <span className="text-xs text-muted-foreground truncate max-w-30">
             {comment.user.nickname}
           </span>
           {isHot && (
@@ -57,7 +57,7 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
           )}
         </div>
 
-        <p className="text-sm mt-1 leading-relaxed break-words">
+        <p className="text-sm mt-1 leading-relaxed wrap-break-word">
           {comment.content}
         </p>
 

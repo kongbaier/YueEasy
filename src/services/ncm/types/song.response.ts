@@ -46,6 +46,28 @@ export interface LyricResponse {
   };
 }
 
+/** 歌词行数据（/lyric/new 返回的单个歌词版本） */
+export interface LyricVersionData {
+  /** 歌词文本 */
+  lyric: string;
+  /** 版本号 */
+  version: number;
+}
+
+/** NCM API Response: /lyric/new */
+export interface LyricNewResponse {
+  /** 标准 LRC 歌词 */
+  lrc?: LyricVersionData;
+  /** 逐字歌词（雅乐歌词 YRC 格式） */
+  yrc?: LyricVersionData;
+  /** 音译歌词 */
+  klyric?: LyricVersionData;
+  /** 中文翻译歌词 */
+  tlyric?: LyricVersionData;
+  /** 罗马音歌词 */
+  romalrc?: LyricVersionData;
+}
+
 // NCM API Response: /likelist
 export interface LikeListResponse {
   ids: number[];

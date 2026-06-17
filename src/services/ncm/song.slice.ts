@@ -1,6 +1,7 @@
 import { ncmApi } from "./api";
 import type {
   LikeListResponse,
+  LyricNewResponse,
   LyricResponse,
   RecentSongResponse,
   SearchResponse,
@@ -10,6 +11,7 @@ import type {
 
 export type {
   LikeListResponse,
+  LyricNewResponse,
   LyricResponse,
   RecentSongResponse,
   SearchResponse,
@@ -43,6 +45,9 @@ export const songSlice = {
     ncmApi<SongDetailResponse>("song_detail", { ids: ids.join(",") }),
 
   lyric: (id: number) => ncmApi<LyricResponse>("lyric", { id: String(id) }),
+
+  lyricNew: (id: number) =>
+    ncmApi<LyricNewResponse>("lyric_new", { id: String(id) }),
 
   like: (id: number, like = true) =>
     ncmApi<unknown>("like", { id: String(id), like: like ? "true" : "false" }),

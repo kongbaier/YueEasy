@@ -8,7 +8,15 @@ import { useLyricScroll } from "./useLyricScroll";
 import { useLyrics } from "./useLyrics";
 
 export const Lyrics = ({ className }: { className?: string }) => {
-  const { lines, index, hasLyrics, isLoading } = useLyrics();
+  const {
+    lines,
+    index,
+    hasLyrics,
+    isLoading,
+    currentWordIndex,
+    wordProgress,
+    hasWordLyrics,
+  } = useLyrics();
   const trackId = usePlayerStore((s) => s.currentTrack?.id);
   const [contentWidth, setContentWidth] = useState(0);
 
@@ -58,7 +66,15 @@ export const Lyrics = ({ className }: { className?: string }) => {
     <div className={cn("h-full flex flex-col", className)}>
       <div className="relative overflow-hidden flex-1 mb-4" ref={containerRef}>
         <ul className="space-y-2 mx-4" ref={contentRef} style={contentStyle}>
-          <LyricsProvider value={{ index, contentWidth }}>
+          <LyricsProvider
+            value={{
+              index,
+              contentWidth,
+              currentWordIndex,
+              wordProgress,
+              hasWordLyrics,
+            }}
+          >
             {lines.map((line, i) => (
               <LyricLine
                 key={`${line.startMs}-${line.text.slice(0, 8)}`}
@@ -76,6 +92,9 @@ export const Lyrics = ({ className }: { className?: string }) => {
 interface LyricsContextValue {
   index: number;
   contentWidth: number;
+  currentWordIndex: number;
+  wordProgress: number;
+  hasWordLyrics: boolean;
 }
 
 const LyricsContext = createContext<LyricsContextValue | null>(null);
