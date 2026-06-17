@@ -1,7 +1,6 @@
 import { ChevronDown, Download, Ellipsis, Heart, Share2 } from "lucide-react";
 import React, { Activity, useCallback, useEffect, useState } from "react";
 import { WindowControls } from "@/components/system";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ImageWithFade } from "@/components/ui/image";
 import type { Track } from "@/core/player/types";
 import { toast } from "@/lib/toast";
