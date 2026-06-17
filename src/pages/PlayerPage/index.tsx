@@ -1,7 +1,7 @@
 import { ChevronDown, Download, Ellipsis, Heart, Share2 } from "lucide-react";
 import React, { Activity, useCallback, useEffect, useState } from "react";
 import { WindowControls } from "@/components/system";
-import { ImageWithFade } from "@/components/ui/image";
+import { Cover } from "@/components/ui/cover";
 import type { Track } from "@/core/player/types";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -132,22 +132,12 @@ const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
 
   return (
     <div className="flex-1 min-h-0 my-2 lg:my-4 flex items-center justify-center">
-      <div className="relative aspect-square max-h-full max-w-full">
-        {picUrl && (
-          <img
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 top-3 object-cover blur-lg opacity-60 scale-(92,96) -z-1"
-            src={picUrl}
-          />
-        )}
-        <ImageWithFade
-          alt={currentTrack.album.name}
-          className="object-cover relative rounded-lg border-[0.5px] overflow-hidden"
-          fill
-          src={picUrl}
-        />
-      </div>
+      <Cover
+        alt={currentTrack.album.name}
+        className="aspect-square max-h-full max-w-full"
+        foregroundClassName="rounded-lg border-[0.5px]"
+        src={picUrl}
+      />
     </div>
   );
 };

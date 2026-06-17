@@ -1,4 +1,4 @@
-import { Crown, Heart, Play, SkipForward } from "lucide-react";
+import { Crown, Heart, ListPlus, Play, SkipForward } from "lucide-react";
 import { useCallback } from "react";
 import {
   ContextMenu,
@@ -33,6 +33,7 @@ export const TrackRow = ({
   onPlay,
 }: TrackRowProps) => {
   const playNext = usePlayerStore((s) => s.playNext);
+  const addToQueue = usePlayerStore((s) => s.addToQueue);
   const isLiked = useLikeStore((s) => s.isLiked(track.id));
   const toggleLike = useLikeStore((s) => s.toggle);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
@@ -40,6 +41,11 @@ export const TrackRow = ({
 
   const handlePlayNext = () => {
     playNext(track);
+  };
+
+  const handleAddToQueue = () => {
+    addToQueue(track);
+    toast.success(`已添加到播放列表`);
   };
 
   const handleFavorite = useCallback(() => {
@@ -132,6 +138,10 @@ export const TrackRow = ({
         <ContextMenuItem onClick={handlePlayNext}>
           <SkipForward className="h-4 w-4" />
           下一首播放
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleAddToQueue}>
+          <ListPlus className="h-4 w-4" />
+          添加到播放列表
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={handleFavorite}>

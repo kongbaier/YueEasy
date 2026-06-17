@@ -331,7 +331,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
     const deltaX = e.clientX - dragStartX.current;
     const newWidth = Math.max(
       200,
-      Math.min(500, dragStartWidth.current + deltaX),
+      Math.min(350, dragStartWidth.current + deltaX),
     );
     wrapper.style.setProperty("--sidebar-width", `${newWidth}px`);
   }, []);

@@ -1,18 +1,11 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import {
-  ChevronDown,
-  ChevronUp,
-  ListMusic,
-  MessageCircle,
-  Play,
-  Users,
-} from "lucide-react";
+import { ListMusic, MessageCircle, Play, Users } from "lucide-react";
 import { Suspense, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CommentPanel, CommentSkeleton } from "@/components/comment";
 import { TrackRow, TrackRowSkeleton } from "@/components/track";
 import { Button } from "@/components/ui/button";
-import { ImageWithFade } from "@/components/ui/image";
+import { Cover } from "@/components/ui/cover";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
 import { useLoadMore } from "@/hooks/useLoadMore";
@@ -32,7 +25,7 @@ const formatDate = (ts: number) => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Tab 切换                                                           */
+/*  Tab 切换                                                            */
 /* ------------------------------------------------------------------ */
 
 type TabKey = "songs" | "comments";
@@ -48,20 +41,23 @@ interface TabBarProps {
 }
 
 const TabBar = ({ active, onChange }: TabBarProps) => (
-  <div className="flex rounded-lg bg-muted p-0.5 w-fit">
+  <div className="flex border-b border-border/40">
     {TABS.map((tab) => (
       <button
         className={cn(
-          "px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150",
+          "relative px-5 py-3 text-sm font-medium transition-colors",
           active === tab.key
-            ? "bg-card text-foreground shadow-sm ring-1 ring-border/20"
-            : "text-muted-foreground hover:text-foreground",
+            ? "text-foreground"
+            : "text-muted-foreground hover:text-foreground/80",
         )}
         key={tab.key}
         onClick={() => onChange(tab.key)}
         type="button"
       >
         {tab.label}
+        {active === tab.key && (
+          <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-primary rounded-full" />
+        )}
       </button>
     ))}
   </div>
@@ -73,13 +69,13 @@ const TabBar = ({ active, onChange }: TabBarProps) => (
 
 const PlaylistSkeleton = () => {
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-8 space-y-8">
       {/* Header */}
-      <div className="flex gap-6">
-        <Skeleton className="h-52 w-52 shrink-0 rounded-xl" shimmer />
-        <div className="flex-1 min-w-0 space-y-3 pt-1">
-          <Skeleton className="h-8 w-56 rounded" shimmer />
-          <Skeleton className="h-4 w-36 rounded" shimmer />
+      <div className="flex gap-8">
+        <Skeleton className="h-56 w-56 shrink-0 rounded-2xl" shimmer />
+        <div className="flex-1 min-w-0 space-y-4">
+          <Skeleton className="h-9 w-64 rounded" shimmer />
+          <Skeleton className="h-4 w-44 rounded" shimmer />
           <div className="flex gap-1.5">
             <Skeleton className="h-5 w-12 rounded-md" shimmer />
             <Skeleton className="h-5 w-14 rounded-md" shimmer />
@@ -91,25 +87,25 @@ const PlaylistSkeleton = () => {
             <Skeleton className="h-4 w-20 rounded" shimmer />
             <Skeleton className="h-4 w-16 rounded" shimmer />
           </div>
-          <div className="flex items-center gap-3 pt-0.5">
+          <div className="pt-1">
             <Skeleton className="h-9 w-28 rounded-md" shimmer />
           </div>
         </div>
       </div>
 
-      {/* Description skeleton */}
-      <div className="rounded-xl bg-card ring-1 ring-border/20 px-5 py-4 space-y-2">
+      {/* Description */}
+      <div className="border-l-2 border-primary/20 pl-5 space-y-2">
         <Skeleton className="h-3 w-8 rounded" shimmer />
         <Skeleton className="h-4 w-full rounded" shimmer />
         <Skeleton className="h-4 w-3/4 rounded" shimmer />
       </div>
 
       {/* Tab bar */}
-      <Skeleton className="h-9 w-32 rounded-lg" shimmer />
+      <Skeleton className="h-11 w-36 rounded" shimmer />
 
       {/* Track list */}
       <div className="space-y-0.5">
-        <Skeleton className="h-4 w-16 rounded ml-3" shimmer />
+        <Skeleton className="h-4 w-20 rounded ml-3" shimmer />
         {Array.from({ length: 8 }).map((_, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
           <TrackRowSkeleton index={i} key={i} />
@@ -120,25 +116,7 @@ const PlaylistSkeleton = () => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  统计项                                                             */
-/* ------------------------------------------------------------------ */
-
-interface StatItemProps {
-  icon: typeof Play;
-  value: string;
-  label: string;
-}
-
-const StatItem = ({ icon: Icon, value, label }: StatItemProps) => (
-  <div className="flex items-baseline gap-1">
-    <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0 translate-y-0.5" />
-    <span className="text-sm font-medium tabular-nums">{value}</span>
-    <span className="text-xs text-muted-foreground">{label}</span>
-  </div>
-);
-
-/* ------------------------------------------------------------------ */
-/*  描述区域                                                           */
+/*  描述区域                                                            */
 /* ------------------------------------------------------------------ */
 
 const DESCRIPTION_PREVIEW = 120;
@@ -148,7 +126,7 @@ const DescriptionBlock = ({ text }: { text: string }) => {
   const needsToggle = text.length > DESCRIPTION_PREVIEW;
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <p className="text-sm text-muted-foreground leading-relaxed">
         {expanded || !needsToggle
           ? text
@@ -156,16 +134,11 @@ const DescriptionBlock = ({ text }: { text: string }) => {
       </p>
       {needsToggle && (
         <button
-          className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary-dark transition-colors"
+          className="inline-flex items-center gap-1 text-xs text-primary/80 hover:text-primary transition-colors"
           onClick={() => setExpanded((v) => !v)}
           type="button"
         >
-          {expanded ? "收起" : "展开"}
-          {expanded ? (
-            <ChevronUp className="h-3 w-3" />
-          ) : (
-            <ChevronDown className="h-3 w-3" />
-          )}
+          {expanded ? "收起" : "展开全文"}
         </button>
       )}
     </div>
@@ -173,7 +146,7 @@ const DescriptionBlock = ({ text }: { text: string }) => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  页面主体                                                           */
+/*  页面主体                                                            */
 /* ------------------------------------------------------------------ */
 
 const PlaylistContent = () => {
@@ -211,7 +184,7 @@ const PlaylistContent = () => {
   };
 
   /* 构建统计数据 */
-  const stats: StatItemProps[] = [];
+  const stats: { icon: typeof Play; value: string; label: string }[] = [];
   stats.push({
     icon: Play,
     value: formatCount(playlist.playCount),
@@ -247,50 +220,30 @@ const PlaylistContent = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="py-8 pl-8 pr-4 space-y-8">
       {/* ═══ Header ═══ */}
-      <div className="flex gap-6">
+      <div className="flex gap-8 items-center">
         {/* 封面 */}
         {playlist.coverUrl && (
-          <div className="relative h-52 w-52 shrink-0">
-            <div
-              aria-hidden="true"
-              className="absolute rounded-xl"
-              style={{
-                backgroundImage: `url(${getNcmImageUrl(playlist.coverUrl, 400)})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                filter: "blur(16px) opacity(0.5)",
-                height: "100%",
-                width: "100%",
-                transform: "scale(0.94) translateY(2%)",
-                zIndex: -1,
-              }}
-            />
-            <div className="relative h-52 w-52 rounded-xl overflow-hidden z-[1]">
-              <ImageWithFade
-                alt={playlist.name}
-                className={cn(
-                  "h-52 w-52 shrink-0 rounded-xl object-cover",
-                  "ring-1 ring-border/20",
-                )}
-                src={getNcmImageUrl(playlist.coverUrl, 400)}
-              />
-            </div>
-          </div>
+          <Cover
+            alt={playlist.name}
+            className="h-56 w-56 shrink-0"
+            foregroundClassName="rounded-2xl shadow-lg shadow-black/10 dark:shadow-black/30"
+            src={getNcmImageUrl(playlist.coverUrl, 400)}
+          />
         )}
 
         {/* 元数据 */}
-        <div className="flex-1 min-w-0 space-y-3 pt-1">
+        <div className="flex-1 min-w-0 space-y-4">
           {/* 标题 */}
-          <h1 className="text-3xl font-bold leading-tight line-clamp-2">
+          <h1 className="text-3xl font-bold tracking-tight leading-tight line-clamp-2">
             {playlist.name}
           </h1>
 
           {/* 创建者 + 时间 */}
           {metaParts.length > 0 && (
-            <p className="text-sm text-muted-foreground">
-              {metaParts.join(" · ")}
+            <p className="text-sm text-muted-foreground/80">
+              {metaParts.join("  ·  ")}
             </p>
           )}
 
@@ -299,11 +252,7 @@ const PlaylistContent = () => {
             <div className="flex flex-wrap gap-1.5">
               {playlist.tags.map((tag) => (
                 <span
-                  className={cn(
-                    "px-2 py-0.5 rounded-md text-xs",
-                    "bg-accent text-accent-foreground",
-                    "ring-1 ring-border/20",
-                  )}
+                  className="px-2.5 py-0.5 rounded-md text-xs font-medium border border-primary/20 text-primary/80"
                   key={tag}
                 >
                   {tag}
@@ -314,21 +263,25 @@ const PlaylistContent = () => {
 
           {/* 统计数据 */}
           {stats.length > 0 && (
-            <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(7rem,auto))] gap-x-5 gap-y-1 text-sm">
               {stats.map((stat) => (
-                <StatItem key={stat.label} {...stat} />
+                <span className="flex items-center gap-1.5" key={stat.label}>
+                  <stat.icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span className="font-medium tabular-nums">{stat.value}</span>
+                  <span className="text-muted-foreground">{stat.label}</span>
+                </span>
               ))}
             </div>
           )}
 
           {/* 操作按钮 */}
-          <div className="flex items-center gap-3 pt-0.5">
+          <div className="flex items-center gap-3 pt-1">
             <Button onClick={handlePlayAll} size="default">
               <Play className="h-4 w-4" />
               播放全部
             </Button>
             {data.fromCache && (
-              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+              <span className="text-xs text-muted-foreground/70 bg-muted px-2 py-0.5 rounded">
                 缓存数据
               </span>
             )}
@@ -338,12 +291,8 @@ const PlaylistContent = () => {
 
       {/* ═══ 简介 ═══ */}
       {playlist.description && (
-        <div
-          className={cn(
-            "rounded-xl bg-card ring-1 ring-border/20 px-5 py-4 space-y-2",
-          )}
-        >
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="border-l-2 border-primary/20 pl-5 py-0.5 space-y-2">
+          <p className="text-xs font-medium text-muted-foreground/60 uppercase tracking-widest">
             简介
           </p>
           <DescriptionBlock text={playlist.description} />
@@ -359,11 +308,12 @@ const PlaylistContent = () => {
         playlist.tracks &&
         playlist.tracks.length > 0 && (
           <div className="space-y-0.5">
-            <div className="flex items-center gap-2 px-3 pb-2">
-              <ListMusic className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">歌曲</span>
-              <span className="text-sm font-medium tabular-nums">
-                {playlist.tracks.length}
+            <div className="flex items-center gap-3 px-3 pb-3 border-b border-border/30 mb-2">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                歌曲列表
+              </span>
+              <span className="text-xs tabular-nums text-muted-foreground/60">
+                {playlist.tracks.length} 首
               </span>
             </div>
 
