@@ -1,4 +1,3 @@
-import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
@@ -8,12 +7,11 @@ import { useLikeInit } from "@/hooks/useLikeInit";
 import { usePlayerRestore } from "@/hooks/usePlayerRestore";
 import { useQueuePersistence } from "@/hooks/useQueuePersistence";
 import { useThemeSync } from "@/hooks/useThemeSync";
+import { useWindowDrag } from "@/hooks/useWindowDrag";
 import { useWindowEffect } from "@/hooks/useWindowEffect";
-import { ErrorBoundary } from "./components/ErrorBoundary";
 import { MainLayout } from "./components/layout";
 import { Skeleton } from "./components/ui/skeleton";
 import "./styles/index.css";
-import { useWindowDrag } from "./hooks/useWindowDrag";
 
 const Home = lazy(() => import("./pages/Home"));
 const Search = lazy(() => import("./pages/Search"));
@@ -27,15 +25,17 @@ const LoginDialog = lazy(() =>
   import("./components/LoginDialog").then((m) => ({ default: m.LoginDialog })),
 );
 
-const PageFallback = () => {
-  return (
-    <div className="p-6 space-y-4">
-      <Skeleton className="h-7 w-48 rounded" shimmer />
-      <Skeleton className="h-40 w-full rounded-xl" shimmer />
-      <Skeleton className="h-4 w-3/4 rounded" shimmer />
-    </div>
-  );
-};
+const PageFallback = (
+  <div className="p-6 space-y-4">
+    <Skeleton className="h-7 w-48 rounded" shimmer />
+    <Skeleton className="h-40 w-full rounded-xl" shimmer />
+    <Skeleton className="h-4 w-3/4 rounded" shimmer />
+  </div>
+);
+
+const Page = ({ element }: { element: React.ReactNode }) => (
+  <Suspense fallback={PageFallback}>{element}</Suspense>
+);
 
 function App() {
   useAccentColor();
@@ -49,23 +49,17 @@ function App() {
 
   return (
     <BrowserRouter>
-      <QueryErrorResetBoundary>
-        <ErrorBoundary>
-          <Suspense fallback=<PageFallback />>
-            <Routes>
-              <Route element=<MainLayout />>
-                <Route element=<Home /> index />
-                <Route element=<Search /> path="search" />
-                <Route element=<Playlist /> path="playlist/:id" />
-                <Route element=<DailyRecommend /> path="daily" />
-                <Route element=<LikedSongs /> path="my/liked" />
-                <Route element=<RecentPlays /> path="my/recent" />
-                <Route element=<Settings /> path="settings" />
-              </Route>
-            </Routes>
-          </Suspense>
-        </ErrorBoundary>
-      </QueryErrorResetBoundary>
+      <Routes>
+        <Route element=<MainLayout />>
+          <Route element=<Page element=<Home /> /> index />
+          <Route element=<Page element=<Search /> /> path="search" />
+          <Route element=<Page element=<Playlist /> /> path="playlist/:id" />
+          <Route element=<Page element=<DailyRecommend /> /> path="daily" />
+          <Route element=<Page element=<LikedSongs /> /> path="my/liked" />
+          <Route element=<Page element=<RecentPlays /> /> path="my/recent" />
+          <Route element=<Page element=<Settings /> /> path="settings" />
+        </Route>
+      </Routes>
       <PlayerPage />
       <LoginDialog />
       <Toaster
