@@ -16,6 +16,7 @@ interface ParallaxCarouselProps<T> {
   children?: ((item: T) => React.ReactNode) | React.ReactNode;
   /** 视差强度，0 = 无效果，默认 0.15 */
   parallaxSpeed?: number;
+  onActiveIndexChange?: (index: number) => void;
 }
 
 export const ParallaxCarousel = <T,>({
@@ -24,9 +25,11 @@ export const ParallaxCarousel = <T,>({
   items,
   getKey,
   parallaxSpeed = 0.15,
+  onActiveIndexChange,
 }: ParallaxCarouselProps<T>) => {
   const [api, setApi] = useState<CarouselApi>();
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [displayIndex, setDisplayIndex] = useState(0);
 
   const handleScroll = useCallback(() => {
     if (!api) return;
@@ -44,7 +47,14 @@ export const ParallaxCarousel = <T,>({
 
   const len = items.length;
   const progressInSlides = scrollProgress * len;
-  const displayIndex = ((Math.round(progressInSlides) % len) + len) % len;
+  const newDisplayIndex = ((Math.round(progressInSlides) % len) + len) % len;
+
+  useEffect(() => {
+    if (newDisplayIndex !== displayIndex) {
+      setDisplayIndex(newDisplayIndex);
+      onActiveIndexChange?.(newDisplayIndex);
+    }
+  }, [newDisplayIndex, displayIndex, onActiveIndexChange]);
 
   return (
     <Carousel
@@ -84,7 +94,6 @@ export const ParallaxCarousel = <T,>({
               className={cn(
                 "transition-all duration-150 ease-out",
                 "rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90",
-                "opacity-0 group-hover:opacity-100",
               )}
               onClick={() => api?.scrollPrev()}
               type="button"
@@ -97,7 +106,6 @@ export const ParallaxCarousel = <T,>({
               className={cn(
                 "transition-all duration-150 ease-out",
                 "rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90",
-                "opacity-0 group-hover:opacity-100",
               )}
               onClick={() => api?.scrollNext()}
               type="button"

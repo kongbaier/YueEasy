@@ -67,53 +67,55 @@ const TabBar = ({ active, onChange }: TabBarProps) => (
 /*  骨架屏                                                             */
 /* ------------------------------------------------------------------ */
 
-const PlaylistSkeleton = () => {
-  return (
-    <div className="p-8 space-y-8">
-      {/* Header */}
-      <div className="flex gap-8">
-        <Skeleton className="h-56 w-56 shrink-0 rounded-2xl" shimmer />
-        <div className="flex-1 min-w-0 space-y-4">
-          <Skeleton className="h-9 w-64 rounded" shimmer />
-          <Skeleton className="h-4 w-44 rounded" shimmer />
-          <div className="flex gap-1.5">
-            <Skeleton className="h-5 w-12 rounded-md" shimmer />
-            <Skeleton className="h-5 w-14 rounded-md" shimmer />
-            <Skeleton className="h-5 w-10 rounded-md" shimmer />
-          </div>
-          <div className="flex gap-5">
-            <Skeleton className="h-4 w-20 rounded" shimmer />
-            <Skeleton className="h-4 w-14 rounded" shimmer />
-            <Skeleton className="h-4 w-20 rounded" shimmer />
-            <Skeleton className="h-4 w-16 rounded" shimmer />
-          </div>
-          <div className="pt-1">
-            <Skeleton className="h-9 w-28 rounded-md" shimmer />
-          </div>
+const PlaylistSkeleton = () => (
+  <div className="py-8 px-4 space-y-8">
+    {/* Header */}
+    <div className="flex gap-8 items-center">
+      <Skeleton className="h-56 w-56 shrink-0 rounded-2xl" shimmer />
+      <div className="flex-1 min-w-0 space-y-4">
+        <Skeleton className="h-9 w-64 rounded" shimmer />
+        <Skeleton className="h-4 w-44 rounded" shimmer />
+        <div className="flex gap-1.5">
+          <Skeleton className="h-5 w-12 rounded-md" shimmer />
+          <Skeleton className="h-5 w-14 rounded-md" shimmer />
+          <Skeleton className="h-5 w-10 rounded-md" shimmer />
+        </div>
+        <div className="flex gap-5">
+          <Skeleton className="h-4 w-14 rounded" shimmer />
+          <Skeleton className="h-4 w-12 rounded" shimmer />
+        </div>
+        <div className="pt-1">
+          <Skeleton className="h-9 w-28 rounded-md" shimmer />
         </div>
       </div>
-
-      {/* Description */}
-      <div className="border-l-2 border-primary/20 pl-5 space-y-2">
-        <Skeleton className="h-3 w-8 rounded" shimmer />
-        <Skeleton className="h-4 w-full rounded" shimmer />
-        <Skeleton className="h-4 w-3/4 rounded" shimmer />
-      </div>
-
-      {/* Tab bar */}
-      <Skeleton className="h-11 w-36 rounded" shimmer />
-
-      {/* Track list */}
-      <div className="space-y-0.5">
-        <Skeleton className="h-4 w-20 rounded ml-3" shimmer />
-        {Array.from({ length: 8 }).map((_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
-          <TrackRowSkeleton index={i} key={i} />
-        ))}
-      </div>
     </div>
-  );
-};
+
+    {/* Description */}
+    <div className="border-l-2 border-primary/20 pl-5 py-0.5 space-y-2">
+      <p className="text-xs font-medium text-muted-foreground/60 uppercase tracking-widest">
+        简介
+      </p>
+      <Skeleton className="h-4 w-full rounded" shimmer />
+      <Skeleton className="h-4 w-3/4 rounded" shimmer />
+    </div>
+
+    {/* Tab bar */}
+    <TabBar active="songs" onChange={() => {}} />
+
+    {/* Track list */}
+    <div className="space-y-0.5">
+      <div className="flex items-center gap-3 px-3 pb-3 border-b border-border/30 mb-2">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          歌曲列表
+        </span>
+      </div>
+      {Array.from({ length: 8 }).map((_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
+        <TrackRowSkeleton index={i} key={i} />
+      ))}
+    </div>
+  </div>
+);
 
 /* ------------------------------------------------------------------ */
 /*  描述区域                                                            */

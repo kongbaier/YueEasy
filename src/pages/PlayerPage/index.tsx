@@ -56,7 +56,7 @@ export default function PlayerPage() {
   return (
     <div
       className={cn(
-        "fixed inset-0 z-50 bg-[#ffffff] dark:bg-[#121212] transition-transform duration-300 ease-out",
+        "fixed inset-0 z-50 bg-[#fafafa] dark:bg-[#0a0a0a] transition-transform duration-300 ease-out",
         visible ? "translate-y-0" : "translate-y-full",
       )}
     >

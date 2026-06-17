@@ -3,26 +3,23 @@ import { Heart } from "lucide-react";
 import { Suspense } from "react";
 import { TrackRow, TrackRowSkeleton } from "@/components/track";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
 import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
 
-const LikedSongsSkeleton = () => {
-  return (
-    <div className="p-6">
-      <Skeleton className="h-7 w-24 rounded" shimmer />
-      <div className="mt-4 space-y-0.5">
-        {Array.from({ length: 8 }).map((_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
-          <TrackRowSkeleton index={i} key={i} />
-        ))}
-      </div>
+const LikedSongsSkeleton = () => (
+  <div className="p-6">
+    <h1 className="mb-4 text-2xl font-bold">我喜欢</h1>
+    <div className="space-y-0.5">
+      {Array.from({ length: 8 }).map((_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
+        <TrackRowSkeleton index={i} key={i} />
+      ))}
     </div>
-  );
-};
+  </div>
+);
 
 const LikedSongsContent = () => {
   const userId = useAuthStore((s) => s.userId);

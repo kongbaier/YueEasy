@@ -3,30 +3,23 @@ import { Play } from "lucide-react";
 import { Suspense } from "react";
 import { TrackRow, TrackRowSkeleton } from "@/components/track";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { toast } from "@/lib/toast";
 import { ncm, toSongRef } from "@/services/ncm";
 import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
 
-const DailyRecommendSkeleton = () => {
-  return (
-    <div className="p-6">
-      <Skeleton className="h-7 w-32 rounded" shimmer />
-      <div className="mt-4 flex items-center gap-3">
-        <Skeleton className="h-4 w-32 rounded" shimmer />
-        <Skeleton className="h-7 w-24 rounded" shimmer />
-      </div>
-      <div className="mt-3 space-y-0.5">
-        {Array.from({ length: 8 }).map((_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
-          <TrackRowSkeleton index={i} key={i} />
-        ))}
-      </div>
+const DailyRecommendSkeleton = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-bold">每日推荐</h1>
+    <div className="mt-3 space-y-0.5">
+      {Array.from({ length: 8 }).map((_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
+        <TrackRowSkeleton index={i} key={i} />
+      ))}
     </div>
-  );
-};
+  </div>
+);
 
 const DailyRecommendContent = () => {
   const play = usePlayerStore((s) => s.play);
