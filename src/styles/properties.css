@@ -1,0 +1,76 @@
+@property --background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #ffffff;
+}
+@property --card {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #fdfdfd;
+}
+@property --popover {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #fdfdfd;
+}
+@property --sidebar {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #f8f8f8;
+}
+@property --secondary {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e5e7eb;
+}
+@property --muted {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #f3f3f3;
+}
+@property --accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #000000;
+}
+@property --border {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #d4d4d8;
+}
+@property --input {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e5e7eb;
+}
+@property --surface-hover {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --surface-active {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --sidebar-border {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e5e7eb;
+}
+
+html.theme-transition {
+  transition:
+    --background 0.4s ease,
+    --card 0.4s ease,
+    --popover 0.4s ease,
+    --sidebar 0.4s ease,
+    --secondary 0.4s ease,
+    --muted 0.4s ease,
+    --accent 0.4s ease,
+    --border 0.4s ease,
+    --input 0.4s ease,
+    --surface-hover 0.4s ease,
+    --surface-active 0.4s ease,
+    --sidebar-border 0.4s ease;
+}

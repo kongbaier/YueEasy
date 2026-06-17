@@ -1,4 +1,10 @@
-@import "./App.css";
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./properties.css";
+@import "./theme.css";
+@import "./animations.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 @keyframes banner-drift {
   from {
@@ -6,63 +12,5 @@
   }
   to {
     transform: translateX(0%);
-  }
-}
-
-*:focus:not(:focus-visible) {
-  outline: none;
-}
-@layer base {
-  button:not(:disabled),
-  [role="button"]:not(:disabled) {
-    cursor: pointer;
-  }
-
-  body {
-    font-family: var(--font-family);
-    color: var(--foreground);
-    background-color: transparent;
-  }
-
-  * {
-    border-color: var(--border);
-  }
-
-  *,
-  *::before,
-  *::after {
-    -webkit-user-select: none;
-    user-select: none;
-  }
-
-  img,
-  a {
-    -webkit-user-drag: none;
-    pointer-events: none;
-  }
-
-  input,
-  textarea,
-  [contenteditable] {
-    -webkit-user-select: text;
-    user-select: text;
-  }
-
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: rgba(128, 128, 128, 0.3);
-    border-radius: 3px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(128, 128, 128, 0.5);
   }
 }

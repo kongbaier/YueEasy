@@ -10,4 +10,10 @@ export const commentSlice = {
       limit: String(limit),
       offset: String(offset),
     }),
+  commentMusic: (id: number, limit = 20, offset = 0) =>
+    ncmApi<CommentResponse>("comment_music", {
+      id: String(id),
+      limit: String(limit),
+      offset: String(offset),
+    }),
 };

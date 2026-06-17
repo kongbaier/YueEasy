@@ -1,6 +1,20 @@
-import { ChevronDown, Download, Ellipsis, Heart, Share2 } from "lucide-react";
-import React, { Activity, useCallback, useEffect, useState } from "react";
+import {
+  ChevronDown,
+  Download,
+  Ellipsis,
+  Heart,
+  MessageCircleMore,
+  Share2,
+} from "lucide-react";
+import React, {
+  Activity,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { WindowControls } from "@/components/system";
+import { Button } from "@/components/ui/button";
 import { Cover } from "@/components/ui/cover";
 import type { Track } from "@/core/player/types";
 import { toast } from "@/lib/toast";
@@ -14,6 +28,7 @@ import {
   useUiStore,
 } from "@/stores";
 import { Lyrics } from "./lyrics/Lyrics";
+import { PlayerPageComments } from "./PlayerPageComments";
 import { PlayerPageControls } from "./PlayerPageControls";
 import { PlayerPageProgress } from "./PlayerPageProgress";
 import { PlayerPageQueue } from "./PlayerPageQueue";
@@ -25,6 +40,7 @@ export default function PlayerPage() {
   const close = usePlayerPageStore((s) => s.close);
   const [visible, setVisible] = useState(false);
   const [showQueue, setShowQueue] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   useEffect(() => {
     if (!currentTrack) return;
@@ -77,20 +93,35 @@ export default function PlayerPage() {
               <PlayerCover currentTrack={currentTrack} />
               <PlayerPageProgress />
               <PlayerPageControls
-                onToggleQueue={() => setShowQueue((v) => !v)}
+                onToggleQueue={() => {
+                  setShowQueue((v) => !v);
+                  setShowComments(false);
+                }}
                 showQueue={showQueue}
               />
               <PlayerPageVolume />
-              <PlayerMenu currentTrack={currentTrack} />
+              <PlayerMenu
+                currentTrack={currentTrack}
+                onToggleComments={() => {
+                  setShowComments((v) => !v);
+                  setShowQueue(false);
+                }}
+                showComments={showComments}
+              />
             </React.Fragment>
           )}
         </div>
 
         <div className="col-span-1 min-h-0">
-          <Activity mode={showQueue ? "visible" : "hidden"}>
+          <Activity mode={showComments ? "visible" : "hidden"}>
+            {currentTrack && (
+              <PlayerPageComments key="comments" songId={currentTrack.id} />
+            )}
+          </Activity>
+          <Activity mode={!showComments && showQueue ? "visible" : "hidden"}>
             <PlayerPageQueue key="queue" onBack={handleBack} />
           </Activity>
-          <Activity mode={showQueue ? "hidden" : "visible"}>
+          <Activity mode={!showComments && !showQueue ? "visible" : "hidden"}>
             <Lyrics />
           </Activity>
         </div>
@@ -142,11 +173,21 @@ const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
   );
 };
 
-const PlayerMenu = ({ currentTrack }: { currentTrack: Track }) => {
+const PlayerMenu = ({
+  currentTrack,
+  showComments,
+  onToggleComments,
+}: {
+  currentTrack: Track;
+  showComments: boolean;
+  onToggleComments: () => void;
+}) => {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
   const isLiked = useLikeStore((s) => s.isLiked(currentTrack.id));
   const toggleLike = useLikeStore((s) => s.toggle);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   const handleLike = useCallback(() => {
     if (!isLoggedIn) {
@@ -178,13 +219,20 @@ const PlayerMenu = ({ currentTrack }: { currentTrack: Track }) => {
     setLoginDialogOpen,
   ]);
 
+  useEffect(() => {
+    if (!moreOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [moreOpen]);
+
   return (
     <div className="w-full shrink-0 h-1/10 flex justify-between items-center gap-1 text-foreground">
-      <button
-        className="flex items-center justify-center size-9 rounded hover:bg-surface-hover"
-        onClick={handleLike}
-        type="button"
-      >
+      <Button onClick={handleLike} size="icon-lg" variant="ghost">
         <Heart
           className={cn(
             "size-5",
@@ -192,25 +240,43 @@ const PlayerMenu = ({ currentTrack }: { currentTrack: Track }) => {
           )}
           strokeWidth={1.5}
         />
-      </button>
-      <button
-        className="flex items-center justify-center size-9 rounded hover:bg-surface-hover opacity-40"
-        type="button"
+      </Button>
+      <Button
+        className={cn(
+          showComments
+            ? "text-primary hover:text-primary"
+            : "text-foreground hover:bg-transparent hover:text-primary",
+        )}
+        onClick={onToggleComments}
+        size="icon-lg"
+        variant={showComments ? "secondary" : "ghost"}
       >
-        <Download className="size-5" strokeWidth={1.5} />
-      </button>
-      <button
-        className="flex items-center justify-center size-9 rounded hover:bg-surface-hover opacity-40"
-        type="button"
-      >
+        <MessageCircleMore className="size-5" strokeWidth={1.5} />
+      </Button>
+      <Button disabled size="icon-lg" variant="ghost">
         <Share2 className="size-5" strokeWidth={1.5} />
-      </button>
-      <button
-        className="flex items-center justify-center size-9 rounded hover:bg-surface-hover opacity-40"
-        type="button"
-      >
-        <Ellipsis className="size-5" strokeWidth={1.5} />
-      </button>
+      </Button>
+      <div className="relative" ref={moreRef}>
+        <Button
+          onClick={() => setMoreOpen((v) => !v)}
+          size="icon-lg"
+          variant={moreOpen ? "secondary" : "ghost"}
+        >
+          <Ellipsis className="size-5" strokeWidth={1.5} />
+        </Button>
+        {moreOpen && (
+          <div className="absolute bottom-full right-0 mb-1 bg-popover border border-border rounded-lg shadow-lg py-1 min-w-30 z-50">
+            <Button
+              className="w-full justify-start opacity-60"
+              size="sm"
+              variant="ghost"
+            >
+              <Download className="size-4" />
+              下载
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

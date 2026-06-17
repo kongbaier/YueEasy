@@ -85,6 +85,7 @@ pub async fn ncm_request(
         "like" => client.like(&query).await,
         "likelist" => client.likelist(&query).await,
         "comment_playlist" => client.comment_playlist(&query).await,
+        "comment_music" => client.comment_music(&query).await,
         "record/recent/song" => client.record_recent_song(&query).await,
         _ => return Err(format!("Unknown method: {method}",)),
     };
