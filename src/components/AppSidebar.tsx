@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Icon from "@/assets/icon.svg?react";
 import {
   Sidebar,
   SidebarContent,
@@ -125,7 +124,8 @@ const SidebarBrand = ({ expanded }: { expanded: boolean }) => {
         entered ? "max-w-40 opacity-100" : "max-w-0 opacity-0",
       )}
     >
-      <Icon width={14} />
+      {" "}
+      <img alt="icon" className="size-4" src="/icon.svg" />
       <span className="text-sm">
         <span className="text-red-400">乐</span>·易
       </span>

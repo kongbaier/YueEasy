@@ -1,7 +1,7 @@
 :root {
   --font-family:
     "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --background: color-mix(in oklch, #ffffff 70%, transparent);
+  --background: color-mix(in oklch, #ffffff 45%, transparent);
   --foreground: #171717;
   --primary: #e74c3c;
   --primary-foreground: #ffffff;
@@ -12,38 +12,38 @@
   --primary-lighter: #f5b7b1;
   --primary-lightest: #fdedec;
   --ring: var(--primary);
-  --secondary: color-mix(in oklch, #e5e7eb 60%, transparent);
+  --secondary: color-mix(in oklch, #e5e7eb 45%, transparent);
   --secondary-foreground: #1f2937;
-  --muted: color-mix(in oklch, #f3f3f3 50%, transparent);
+  --muted: color-mix(in oklch, #f3f3f3 35%, transparent);
   --muted-foreground: #5d5d5d;
   --accent: color-mix(in oklch, black 4%, transparent);
   --accent-foreground: var(--foreground);
-  --card: color-mix(in oklch, #fdfdfd 78%, transparent);
+  --card: color-mix(in oklch, #fdfdfd 68%, transparent);
   --card-foreground: #171717;
   --popover: #fdfdfd;
   --popover-foreground: #171717;
   --border: #d4d4d8;
-  --input: color-mix(in oklch, #e5e7eb 18%, transparent);
+  --input: color-mix(in oklch, #e5e7eb 14%, transparent);
   --destructive: #c42b1c;
   --destructive-foreground: #ffffff;
   --radius: 0.25rem;
   --radius-overlay: 0.5rem;
-  --sidebar: color-mix(in oklch, #f8f8f8 73%, transparent);
+  --sidebar: color-mix(in oklch, #f8f8f8 40%, transparent);
   --sidebar-foreground: #171717;
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: color-mix(in oklch, black 5%, transparent);
+  --sidebar-accent: color-mix(in oklch, black 6%, transparent);
   --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: color-mix(in oklch, #e5e7eb 10%, transparent);
+  --sidebar-border: color-mix(in oklch, #e5e7eb 8%, transparent);
   --sidebar-ring: var(--primary);
-  --surface-hover: color-mix(in oklch, black 3%, transparent);
-  --surface-active: color-mix(in oklch, var(--primary) 10%, transparent);
+  --surface-hover: color-mix(in oklch, black 6%, transparent);
+  --surface-active: color-mix(in oklch, var(--primary) 14%, transparent);
 }
 
 :root.dark {
   --font-family:
     "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --background: color-mix(in oklch, #121212 72%, transparent);
+  --background: color-mix(in oklch, #121212 38%, transparent);
   --foreground: #f6f6f6;
   --primary: #e74c3c;
   --primary-foreground: #ffffff;
@@ -54,30 +54,30 @@
   --primary-lighter: #f5b7b1;
   --primary-lightest: #fdedec;
   --ring: var(--primary);
-  --secondary: color-mix(in oklch, #1e1e1e 55%, transparent);
+  --secondary: color-mix(in oklch, #1e1e1e 38%, transparent);
   --secondary-foreground: #e5e7eb;
-  --muted: color-mix(in oklch, #1e1e1e 42%, transparent);
+  --muted: color-mix(in oklch, #1e1e1e 28%, transparent);
   --muted-foreground: #a0a0a0;
   --accent: color-mix(in oklch, white 6%, transparent);
   --accent-foreground: var(--foreground);
-  --card: color-mix(in oklch, #1c1c1c 75%, transparent);
+  --card: color-mix(in oklch, #1c1c1c 60%, transparent);
   --card-foreground: #f6f6f6;
   --popover: #1c1c1c;
   --popover-foreground: #f6f6f6;
   --border: #3f3f46;
-  --input: color-mix(in oklch, #2a2a2a 16%, transparent);
+  --input: color-mix(in oklch, #2a2a2a 12%, transparent);
   --destructive: #d13438;
   --destructive-foreground: #ffffff;
-  --sidebar: color-mix(in oklch, #0d0d0d 75%, transparent);
+  --sidebar: color-mix(in oklch, #0d0d0d 35%, transparent);
   --sidebar-foreground: #f6f6f6;
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: color-mix(in oklch, white 5%, transparent);
   --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: color-mix(in oklch, #2a2a2a 8%, transparent);
+  --sidebar-border: color-mix(in oklch, #2a2a2a 6%, transparent);
   --sidebar-ring: var(--primary);
-  --surface-hover: color-mix(in oklch, white 3%, transparent);
-  --surface-active: color-mix(in oklch, var(--primary) 16%, transparent);
+  --surface-hover: color-mix(in oklch, white 5%, transparent);
+  --surface-active: color-mix(in oklch, var(--primary) 18%, transparent);
 }
 
 @theme inline {

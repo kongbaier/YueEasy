@@ -40,7 +40,7 @@ const QueueItem = ({
     )}
   >
     <button
-      className="flex-1 items-center flex text-left gap-3"
+      className="flex-1 min-w-0 items-center flex text-left gap-3"
       onDoubleClick={() => onPlay(index)}
       tabIndex={0}
       type="button"
