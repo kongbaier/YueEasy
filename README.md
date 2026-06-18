@@ -14,11 +14,11 @@
 
 ### 支持平台
 
-| 平台       | 状态 |
-| -------- | --- |
-| Windows  | ✅   |
-| macOS    | 未测试 |
-| Linux    | 未测试 |
+| 平台    | 状态   |
+| ------- | ------ |
+| Windows | ✅     |
+| macOS   | 未测试 |
+| Linux   | 未测试 |
 
 ## 功能
 
@@ -33,28 +33,24 @@
 
 ## 软件截图
 
-<!--
-截图请放到 screenshots/ 目录下，然后取消下方注释：
-
 <div align="center">
   <p>播放页面</p>
-  <img src="screenshots/player.png" alt="播放页面" style="width: 100%; max-width: 800px;">
+  <img src="assets/player.png" alt="播放页面" style="width: 100%; max-width: 800px;">
 </div>
 
 <br>
 
 <div align="center">
   <p>歌单</p>
-  <img src="screenshots/playlist.png" alt="歌单" style="width: 100%; max-width: 800px;">
+  <img src="assets/playlist.png" alt="歌单" style="width: 100%; max-width: 800px;">
 </div>
 
 <br>
 
 <div align="center">
   <p>搜索</p>
-  <img src="screenshots/search.png" alt="搜索" style="width: 100%; max-width: 800px;">
+  <img src="assets/search.png" alt="搜索" style="width: 100%; max-width: 800px;">
 </div>
--->
 
 ## 安装方式
 
@@ -79,15 +75,15 @@ pnpm tauri build
 
 ## 技术栈
 
-| 层 | 技术 |
-|------|------|
+| 层       | 技术                              |
+| -------- | --------------------------------- |
 | 桌面框架 | [Tauri v2](https://v2.tauri.app/) |
-| 前端 | React 19 + TypeScript + Vite |
-| 样式 | Tailwind CSS v4 |
-| 状态管理 | Zustand |
-| 路由 | React Router v7 |
-| 后端 | Rust（Axum 内嵌服务器） |
-| 数据库 | SQLite（rusqlite） |
+| 前端     | React 19 + TypeScript + Vite      |
+| 样式     | Tailwind CSS v4                   |
+| 状态管理 | Zustand                           |
+| 路由     | React Router v7                   |
+| 后端     | Rust（Axum 内嵌服务器）           |
+| 数据库   | SQLite（rusqlite）                |
 
 ## 参考
 
