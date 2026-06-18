@@ -39,10 +39,12 @@ export const Word = ({
     return (
       <span
         className="bg-clip-text text-transparent"
-        style={{
-          backgroundImage: `linear-gradient(to right, var(--primary) 0%, var(--primary) ${wordProgress * 100}%, var(--muted-foreground) ${wordProgress * 100}%)`,
-          WebkitBackgroundClip: "text",
-        } as React.CSSProperties}
+        style={
+          {
+            backgroundImage: `linear-gradient(to right, var(--primary) 0%, var(--primary) ${wordProgress * 100}%, var(--muted-foreground) ${wordProgress * 100}%)`,
+            WebkitBackgroundClip: "text",
+          } as React.CSSProperties
+        }
       >
         {text}
       </span>

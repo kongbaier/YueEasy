@@ -14,12 +14,12 @@ export const Cover = ({
   className,
   foregroundClassName,
 }: CoverProps) => (
-  <div className={cn("relative", className)}>
+  <div className={cn("isolate relative", className)}>
     {src && (
       <img
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 top-3 object-cover blur-lg opacity-60 scale-(92,96) -z-1"
+        className="absolute inset-0 object-cover blur-lg opacity-80 scale-96 -z-1"
         src={src}
       />
     )}

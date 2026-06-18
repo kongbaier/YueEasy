@@ -27,11 +27,7 @@ interface TrackRowProps {
   onPlay: (track: SongRef) => void;
 }
 
-export const TrackRow = ({
-  track,
-  index,
-  onPlay,
-}: TrackRowProps) => {
+export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
   const playNext = usePlayerStore((s) => s.playNext);
   const addToQueue = usePlayerStore((s) => s.addToQueue);
   const isLiked = useLikeStore((s) => s.isLiked(track.id));
@@ -121,10 +117,7 @@ export const TrackRow = ({
           title={isLiked ? "取消收藏" : "收藏"}
           type="button"
         >
-          <Heart
-            className="h-4 w-4"
-            fill={isLiked ? "#ef4444" : "none"}
-          />
+          <Heart className="h-4 w-4" fill={isLiked ? "#ef4444" : "none"} />
         </button>
         <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
           {formatDuration(track.duration / 1000)}
@@ -153,11 +146,7 @@ export const TrackRow = ({
   );
 };
 
-export const TrackRowSkeleton = ({
-  index,
-}: {
-  index: number;
-}) => {
+export const TrackRowSkeleton = ({ index }: { index: number }) => {
   return (
     <div className="flex items-center gap-3 rounded-lg px-3 py-2">
       <span className="w-8 text-center text-xs text-muted-foreground">

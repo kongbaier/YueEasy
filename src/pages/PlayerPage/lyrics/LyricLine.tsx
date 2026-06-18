@@ -13,8 +13,15 @@ interface LyricLineProps {
 }
 
 export const LyricLine = ({ line, lineIndex }: LyricLineProps) => {
-  const { index, contentWidth, currentWordIndex, wordProgress, hasWordLyrics } =
-    useLyricsContext();
+  const {
+    index,
+    contentWidth,
+    currentWordIndex,
+    wordProgress,
+    hasWordLyrics,
+    translatedLyric,
+  } = useLyricsContext();
+  const translatedText = translatedLyric[lineIndex];
   const isActive = lineIndex === index;
   const isPast = lineIndex < index;
   const layoutResult = useLineLayout(line.text, contentWidth);
@@ -78,6 +85,18 @@ export const LyricLine = ({ line, lineIndex }: LyricLineProps) => {
             {l.text}
           </p>
         ))
+      )}
+      {translatedText && (
+        <p
+          className={cn(
+            "text-xs leading-5 transition-colors",
+            isActive && "text-muted-foreground/80",
+            isPast && "text-muted-foreground/50",
+            !isActive && !isPast && "text-muted-foreground/40",
+          )}
+        >
+          {translatedText}
+        </p>
       )}
     </li>
   );

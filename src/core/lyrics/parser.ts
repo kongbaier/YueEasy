@@ -54,7 +54,6 @@ export function parseLrc(content: string): LyricLine[] {
     if (timestamps.length === 0) continue;
 
     const text = trimmed.replace(TIMESTAMP_RE, "").trim();
-    if (!text) continue;
 
     for (const startMs of timestamps) {
       lines.push({ startMs, durationMs: 0, text });

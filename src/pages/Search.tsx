@@ -110,9 +110,7 @@ export default function Search() {
   const hotQuery = useQuery({
     queryKey: ["searchHot"],
     queryFn: () =>
-      ncm
-        .searchHot()
-        .then((res) => res.result.hots.map((h) => h.first)),
+      ncm.searchHot().then((res) => res.result.hots.map((h) => h.first)),
     staleTime: 5 * 60 * 1000,
     enabled: false,
   });

@@ -11,11 +11,11 @@ export interface LyricsResult {
 export async function fetchLyrics(trackId: number): Promise<LyricsResult> {
   const data = await ncm.lyricNew(trackId);
 
-  const hasYrc = !!(data.yrc?.lyric);
+  const yrc = data.yrc;
 
   return {
-    lyric: data.lrc?.lyric && !hasYrc ? parseLrc(data.lrc.lyric) : [],
+    lyric: data.lrc?.lyric && !yrc ? parseLrc(data.lrc.lyric) : [],
     tlyric: data.tlyric?.lyric ? parseLrc(data.tlyric.lyric) : [],
-    yrc: hasYrc ? parseYrc(data.yrc!.lyric) : [],
+    yrc: yrc ? parseYrc(yrc.lyric) : [],
   };
 }

@@ -16,6 +16,7 @@ export const Lyrics = ({ className }: { className?: string }) => {
     currentWordIndex,
     wordProgress,
     hasWordLyrics,
+    translatedLyric,
   } = useLyrics();
   const trackId = usePlayerStore((s) => s.currentTrack?.id);
   const [contentWidth, setContentWidth] = useState(0);
@@ -73,6 +74,7 @@ export const Lyrics = ({ className }: { className?: string }) => {
               currentWordIndex,
               wordProgress,
               hasWordLyrics,
+              translatedLyric,
             }}
           >
             {lines.map((line, i) => (
@@ -95,6 +97,7 @@ interface LyricsContextValue {
   currentWordIndex: number;
   wordProgress: number;
   hasWordLyrics: boolean;
+  translatedLyric: string[];
 }
 
 const LyricsContext = createContext<LyricsContextValue | null>(null);

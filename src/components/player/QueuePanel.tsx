@@ -253,7 +253,10 @@ export const QueuePanel = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setClearConfirmOpen(false)} variant="outline">
+            <Button
+              onClick={() => setClearConfirmOpen(false)}
+              variant="outline"
+            >
               取消
             </Button>
             <Button onClick={handleClear}>确定</Button>

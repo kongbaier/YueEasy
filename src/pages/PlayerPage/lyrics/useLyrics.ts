@@ -15,6 +15,8 @@ interface LyricsState {
   wordProgress: number;
   /** Whether word-level (逐字) lyrics are available */
   hasWordLyrics: boolean;
+  /** Translated lyric texts, index-aligned with lines */
+  translatedLyric: string[];
 }
 
 export function useLyrics(): LyricsState {
@@ -33,8 +35,14 @@ export function useLyrics(): LyricsState {
   });
 
   const yrc = data?.yrc ?? [];
+  const rawLyric = data?.lyric ?? [];
+  const tlines = data?.tlyric ?? [];
+
   const hasWordLyrics = yrc.length > 0;
-  const lines = hasWordLyrics ? yrc : (data?.lyric ?? []);
+  const mainLines = hasWordLyrics ? yrc : rawLyric;
+  const lines = mainLines.length > 0 ? mainLines : tlines;
+  const translatedLyric =
+    mainLines.length > 0 ? tlines.map((l) => l.text) : [];
 
   const index = useMemo(() => {
     if (lines.length === 0) return -1;
@@ -49,7 +57,8 @@ export function useLyrics(): LyricsState {
   }, [lines, currentTime]);
 
   const { currentWordIndex, wordProgress } = useMemo(() => {
-    if (!hasWordLyrics || index < 0) return { currentWordIndex: -1, wordProgress: 0 };
+    if (!hasWordLyrics || index < 0)
+      return { currentWordIndex: -1, wordProgress: 0 };
     const line = lines[index];
     if (!line?.words?.length) return { currentWordIndex: -1, wordProgress: 0 };
 
@@ -80,5 +89,6 @@ export function useLyrics(): LyricsState {
     currentWordIndex,
     wordProgress,
     hasWordLyrics,
+    translatedLyric,
   };
 }
