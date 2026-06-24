@@ -33,6 +33,29 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
+      - name: Generate latest.json
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $nsisDir = "src-tauri\target\release\bundle\nsis"
+          $sig = Get-ChildItem $nsisDir -Filter "*.nsis.zip.sig" | Select-Object -First 1
+          if (-not $sig) { Write-Error "No .sig found"; exit 1 }
+          $signature = (Get-Content $sig.FullName -Raw).Trim()
+
+          $zip = Get-ChildItem $nsisDir -Filter "*.nsis.zip" | Where-Object { -not $_.Name.EndsWith(".sig") } | Select-Object -First 1
+          if (-not $zip) { Write-Error "No .nsis.zip found"; exit 1 }
+
+          $url = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/$($zip.Name)"
+          @{
+            version   = $version
+            notes     = "Release ${{ github.ref_name }}"
+            pub_date  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            platforms = @{
+              "windows-x86_64" = @{ signature = $signature; url = $url }
+            }
+          } | ConvertTo-Json -Depth 4 | Out-File latest.json -Encoding utf8
+          Write-Host "Generated latest.json for $version"
+
       - uses: softprops/action-gh-release@v2
         with:
           name: YueEasy ${{ github.ref_name }}
