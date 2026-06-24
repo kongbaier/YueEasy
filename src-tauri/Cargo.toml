@@ -18,7 +18,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-opener = "2"
 tauri-plugin-single-instance = "2"
 ncm-api-rs = { git = "https://github.com/SPlayer-Dev/ncm-api-rs.git" }
@@ -28,6 +28,7 @@ rusqlite = { version = "0.31", features = ["bundled"] }
 tokio = { version = "1", features = ["full"] }
 log = "0.4"
 tauri-plugin-media = "0.1.1"
+image = "0.25"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-window-state = "2"

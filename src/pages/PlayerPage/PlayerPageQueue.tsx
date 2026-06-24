@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ImageWithFade } from "@/components/ui/image";
+import { ImageWithFade } from "@/components/common/image";
 import { VirtuosoScroller } from "@/components/virtuoso";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";

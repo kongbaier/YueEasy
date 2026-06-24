@@ -7,7 +7,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { ImageWithFade } from "@/components/ui/image";
+import { ImageWithFade } from "@/components/common/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
 import { formatDuration } from "@/lib/format";

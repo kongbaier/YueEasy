@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ImageWithFade } from "@/components/ui/image";
+import { ImageWithFade } from "@/components/common/image";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";

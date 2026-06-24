@@ -11,8 +11,8 @@ import {
 import { useCallback, useMemo } from "react";
 import { useShallow } from "zustand/shallow";
 import { Button } from "@/components/ui/button";
-import { FollowTooltip } from "@/components/ui/follow-tooltip";
-import { ImageWithFade } from "@/components/ui/image";
+import { FollowTooltip } from "@/components/player/follow-tooltip";
+import { ImageWithFade } from "@/components/common/image";
 import { useMediaSession } from "@/hooks/useMediaSession";
 import { usePlayerAction } from "@/hooks/usePlayerAction";
 import { usePlayerKeyboard } from "@/hooks/usePlayerKeyboard";

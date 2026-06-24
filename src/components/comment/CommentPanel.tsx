@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { MessageCircle, ThumbsUp } from "lucide-react";
-import { ImageWithFade } from "@/components/ui/image";
+import { ImageWithFade } from "@/components/common/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCount } from "@/lib/format";
 import { cn, getNcmImageUrl } from "@/lib/utils";

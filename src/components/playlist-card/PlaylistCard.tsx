@@ -1,6 +1,6 @@
 import { ListMusic, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ImageWithFade } from "@/components/ui/image";
+import { ImageWithFade } from "@/components/common/image";
 import { formatCount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PlaylistDisplay } from "./PlaylistDisplay";

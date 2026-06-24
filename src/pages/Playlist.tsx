@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 import { CommentPanel, CommentSkeleton } from "@/components/comment";
 import { TrackRow, TrackRowSkeleton } from "@/components/track";
 import { Button } from "@/components/ui/button";
-import { Cover } from "@/components/ui/cover";
+import { Cover } from "@/components/common/cover";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
 import { useLoadMore } from "@/hooks/useLoadMore";

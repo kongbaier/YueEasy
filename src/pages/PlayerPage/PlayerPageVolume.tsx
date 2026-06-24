@@ -1,7 +1,7 @@
 import { Volume1, Volume2 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FollowTooltip } from "@/components/ui/follow-tooltip";
+import { FollowTooltip } from "@/components/player/follow-tooltip";
 import { usePlayerStore } from "@/stores";
 
 const STEP = 0.1;

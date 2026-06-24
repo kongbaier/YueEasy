@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "@/lib/toast";
 import {
   getSetting,
@@ -23,10 +24,14 @@ export default function Settings() {
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
   const [windowEffect, setWindowEffectState] = useState<Effect>(Effect.Mica);
+  const [closeToTray, setCloseToTray] = useState(false);
 
   useEffect(() => {
     getSetting("window_effect").then((effect) => {
-      if (effect) setWindowEffectState(effect);
+      if (effect) setWindowEffectState(effect as Effect);
+    });
+    getSetting("close_behavior").then((v) => {
+      setCloseToTray(v === "hide");
     });
   }, []);
 
@@ -38,6 +43,11 @@ export default function Settings() {
       setSetting("window_effect", Effect.Mica);
       toast.error("该效果不可用，已恢复为 Mica");
     });
+  };
+
+  const handleCloseToTrayChange = (checked: boolean) => {
+    setCloseToTray(checked);
+    setSetting("close_behavior", checked ? "hide" : "quit");
   };
 
   return (
@@ -103,6 +113,13 @@ export default function Settings() {
                   </Select.Positioner>
                 </Select.Portal>
               </Select.Root>
+            </Row>
+            <Row label="关闭时隐藏窗口">
+              <Switch
+                checked={closeToTray}
+                className=""
+                onCheckedChange={handleCloseToTrayChange}
+              />
             </Row>
             <Row description="界面显示语言" label="语言">
               <span className="text-sm text-muted-foreground">简体中文</span>

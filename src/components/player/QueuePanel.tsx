@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ImageWithFade } from "@/components/ui/image";
+import { ImageWithFade } from "@/components/common/image";
 import { VirtuosoScroller } from "@/components/virtuoso";
 import type { Track } from "@/core/player/types";
 import { toast } from "@/lib/toast";

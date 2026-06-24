@@ -15,7 +15,7 @@ import React, {
 } from "react";
 import { WindowControls } from "@/components/system";
 import { Button } from "@/components/ui/button";
-import { Cover } from "@/components/ui/cover";
+import { Cover } from "@/components/common/cover";
 import type { Track } from "@/core/player/types";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";

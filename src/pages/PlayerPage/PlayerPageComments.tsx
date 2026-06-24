@@ -1,7 +1,7 @@
 import { Heart, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
-import { ImageWithFade } from "@/components/ui/image";
+import { ImageWithFade } from "@/components/common/image";
 import { VirtuosoScroller } from "@/components/virtuoso";
 import { formatCount } from "@/lib/format";
 import { cn } from "@/lib/utils";

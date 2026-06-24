@@ -5,6 +5,8 @@ mod utils;
 
 use serde::Serialize;
 use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::menu::{MenuBuilder, MenuItemBuilder};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::window::{Effect, EffectState};
 use tauri::utils::config::WindowEffectsConfig;
 use tauri_plugin_media::{MediaControlEventType, MediaExt};
@@ -72,6 +74,52 @@ pub fn run() {
 
             window.show().expect("failed to show window");
 
+            // 系统托盘
+            let icon_bytes = include_bytes!("../icons/32x32.png");
+            let icon_img = image::load_from_memory(icon_bytes)
+                .expect("failed to load tray icon")
+                .to_rgba8();
+            let (icon_w, icon_h) = icon_img.dimensions();
+            let tray_icon = tauri::image::Image::new_owned(
+                icon_img.into_raw(),
+                icon_w,
+                icon_h,
+            );
+            let tray_menu = MenuBuilder::new(app)
+                .item(&MenuItemBuilder::with_id("show", "显示窗口").build(app)?)
+                .item(&MenuItemBuilder::with_id("quit", "退出").build(app)?)
+                .build()?;
+            TrayIconBuilder::new()
+                .icon(tray_icon)
+                .menu(&tray_menu)
+                .tooltip("乐易")
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        if let Some(window) = tray.app_handle().get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .on_menu_event(|app, event| match event.id().as_ref() {
+                    "show" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    _ => {}
+                })
+                .build(app)?;
+
             let app_data = app
                 .path()
                 .app_data_dir()
@@ -105,6 +153,35 @@ pub fn run() {
             }
 
             app.manage(db);
+
+            // 窗口关闭行为：根据设置决定隐藏到托盘还是退出
+            {
+                let app_handle = app.handle().clone();
+                window.on_window_event(move |event| {
+                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                        let db = app_handle.state::<db::connection::Database>();
+                        let behavior = db
+                            .conn
+                            .lock()
+                            .ok()
+                            .and_then(|conn| {
+                                conn.query_row::<String, _, _>(
+                                    "SELECT value FROM settings WHERE key = 'close_behavior'",
+                                    [],
+                                    |row| row.get(0),
+                                )
+                                .ok()
+                            })
+                            .unwrap_or_else(|| "quit".to_string());
+                        if behavior == "hide" {
+                            api.prevent_close();
+                            if let Some(w) = app_handle.get_webview_window("main") {
+                                let _ = w.hide();
+                            }
+                        }
+                    }
+                });
+            }
 
             // 恢复保存的窗口效果
             {

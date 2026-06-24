@@ -1,4 +1,4 @@
-import { ImageWithFade } from "@/components/ui/image";
+import { ImageWithFade } from "@/components/common/image";
 import { cn } from "@/lib/utils";
 
 interface CoverProps {
