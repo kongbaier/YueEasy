@@ -33,6 +33,21 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
+      - name: Diagnostic — list NSIS bundle
+        shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          Write-Host "=== NSIS bundle contents ==="
+          Get-ChildItem -Path "src-tauri\target\release\bundle\nsis" -Recurse | ForEach-Object { Write-Host "$($_.Length,10)  $($_.Name)" }
+          Write-Host "=== Env: TAURI_SIGNING_PRIVATE_KEY ==="
+          if ($env:TAURI_SIGNING_PRIVATE_KEY) {
+            Write-Host "Set (length: $($env:TAURI_SIGNING_PRIVATE_KEY.Length))"
+            Write-Host "First 30 chars: $($env:TAURI_SIGNING_PRIVATE_KEY.Substring(0, [Math]::Min(30, $env:TAURI_SIGNING_PRIVATE_KEY.Length)))"
+          } else {
+            Write-Host "NOT SET — signature will not be generated"
+          }
+
       - name: Generate update.json
         shell: pwsh
         run: |
