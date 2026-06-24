@@ -49,6 +49,8 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }))
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
                 .title("乐易")

@@ -1,6 +1,7 @@
+import { getVersion } from "@tauri-apps/api/app";
 import { Effect } from "@tauri-apps/api/window";
-import { Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Check, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -11,6 +12,12 @@ import {
   setWindowEffect,
   windowEffectLabels,
 } from "@/services/tauri";
+import {
+  checkForUpdate,
+  downloadAndInstall,
+  installAndRelaunch,
+  type UpdateInfo,
+} from "@/services/updater";
 import { useUiStore } from "@/stores";
 import type { Theme } from "@/stores/uiStore";
 
@@ -25,6 +32,25 @@ export default function Settings() {
   const setTheme = useUiStore((s) => s.setTheme);
   const [windowEffect, setWindowEffectState] = useState<Effect>(Effect.Mica);
   const [closeToTray, setCloseToTray] = useState(false);
+
+  // --- 检查更新状态 ---
+  type UpdateStatus =
+    | "idle"
+    | "checking"
+    | "up-to-date"
+    | "available"
+    | "downloading"
+    | "installing"
+    | "error";
+
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [appVersion, setAppVersion] = useState("...");
+
+  useEffect(() => {
+    getVersion().then(setAppVersion).catch(() => setAppVersion("0.0.0"));
+  }, []);
 
   useEffect(() => {
     getSetting("window_effect").then((effect) => {
@@ -49,6 +75,39 @@ export default function Settings() {
     setCloseToTray(checked);
     setSetting("close_behavior", checked ? "hide" : "quit");
   };
+
+  const handleCheckUpdate = useCallback(async () => {
+    setUpdateStatus("checking");
+    try {
+      const info = await checkForUpdate();
+      if (info) {
+        setUpdateInfo(info);
+        setUpdateStatus("available");
+      } else {
+        setUpdateStatus("up-to-date");
+      }
+    } catch {
+      setUpdateStatus("error");
+      toast.error("检查更新失败，请检查网络连接");
+    }
+  }, []);
+
+  const handleDownload = useCallback(async () => {
+    setUpdateStatus("downloading");
+    setDownloadProgress(0);
+    try {
+      await downloadAndInstall((downloaded, total) => {
+        if (total) {
+          setDownloadProgress(Math.round((downloaded / total) * 100));
+        }
+      });
+      setUpdateStatus("installing");
+      await installAndRelaunch();
+    } catch {
+      setUpdateStatus("available");
+      toast.error("下载失败，请重试");
+    }
+  }, []);
 
   return (
     <div className="mx-auto w-full max-w-2xl px-8 py-8 animate-content-enter">
@@ -157,10 +216,55 @@ export default function Settings() {
           <SectionTitle>关于</SectionTitle>
           <div className="space-y-0.5">
             <Row label="版本号">
-              <span className="text-sm text-muted-foreground">0.1.0</span>
+              <span className="text-sm text-muted-foreground">{appVersion}</span>
             </Row>
             <Row label="检查更新">
-              <span className="text-sm text-muted-foreground">已是最新</span>
+              {updateStatus === "idle" && (
+                <Button size="xs" variant="outline" onClick={handleCheckUpdate}>
+                  检查更新
+                </Button>
+              )}
+              {updateStatus === "checking" && (
+                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <RefreshCw className="size-3 animate-spin" />
+                  正在检查...
+                </span>
+              )}
+              {updateStatus === "up-to-date" && (
+                <span className="text-sm text-muted-foreground">已是最新</span>
+              )}
+              {updateStatus === "available" && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {updateInfo?.newVersion}
+                  </span>
+                  <Button size="xs" onClick={handleDownload}>
+                    立即更新
+                  </Button>
+                </div>
+              )}
+              {updateStatus === "downloading" && (
+                <span className="text-sm text-muted-foreground">
+                  下载中 {downloadProgress}%
+                </span>
+              )}
+              {updateStatus === "installing" && (
+                <span className="text-sm text-muted-foreground">
+                  正在安装...
+                </span>
+              )}
+              {updateStatus === "error" && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-red-500">检查失败</span>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={handleCheckUpdate}
+                  >
+                    重试
+                  </Button>
+                </div>
+              )}
             </Row>
           </div>
         </SectionCard>

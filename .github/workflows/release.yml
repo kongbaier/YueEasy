@@ -28,10 +28,48 @@ jobs:
 
       - uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - run: pnpm tauri build
+      - name: Build Tauri app
+        run: pnpm tauri build
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+
+      - name: Generate update.json
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $nsisDir = "src-tauri\target\release\bundle\nsis"
+          $sigFile = Get-ChildItem -Path $nsisDir -Filter "*.exe.sig" | Select-Object -First 1
+          if (-not $sigFile) {
+            Write-Error "No .sig file found in NSIS bundle directory"
+            exit 1
+          }
+          $signature = (Get-Content $sigFile.FullName -Raw).Trim()
+          $exeFile = Get-ChildItem -Path $nsisDir -Filter "*_x64-setup.exe" | Select-Object -First 1
+          if (-not $exeFile) {
+            Write-Error "No installer .exe found in NSIS bundle directory"
+            exit 1
+          }
+          $installerName = $exeFile.Name
+          $url = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${installerName}"
+          $updateJson = @{
+            version   = $version
+            notes     = "See release notes: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+            pub_date  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            platforms = @{
+              "windows-x86_64" = @{
+                signature = $signature
+                url       = $url
+              }
+            }
+          } | ConvertTo-Json -Depth 4
+          $updateJson | Out-File -FilePath update.json -Encoding utf8
+          Write-Host "Generated update.json for version $version"
+          Write-Host "Installer: $installerName"
 
       - uses: softprops/action-gh-release@v2
         with:
-          files: src-tauri/target/release/bundle/nsis/*.exe
+          files: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            update.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
