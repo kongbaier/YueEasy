@@ -16,7 +16,7 @@ import {
   checkForUpdate,
   downloadAndInstall,
   installAndRelaunch,
-  type UpdateInfo,
+  type Update,
 } from "@/services/updater";
 import { useUiStore } from "@/stores";
 import type { Theme } from "@/stores/uiStore";
@@ -44,7 +44,7 @@ export default function Settings() {
     | "error";
 
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [update, setUpdate] = useState<Update | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [appVersion, setAppVersion] = useState("...");
 
@@ -79,9 +79,9 @@ export default function Settings() {
   const handleCheckUpdate = useCallback(async () => {
     setUpdateStatus("checking");
     try {
-      const info = await checkForUpdate();
-      if (info) {
-        setUpdateInfo(info);
+      const u = await checkForUpdate();
+      if (u) {
+        setUpdate(u);
         setUpdateStatus("available");
       } else {
         setUpdateStatus("up-to-date");
@@ -93,10 +93,11 @@ export default function Settings() {
   }, []);
 
   const handleDownload = useCallback(async () => {
+    if (!update) return;
     setUpdateStatus("downloading");
     setDownloadProgress(0);
     try {
-      await downloadAndInstall((downloaded, total) => {
+      await downloadAndInstall(update, (downloaded, total) => {
         if (total) {
           setDownloadProgress(Math.round((downloaded / total) * 100));
         }
@@ -107,7 +108,7 @@ export default function Settings() {
       setUpdateStatus("available");
       toast.error("下载失败，请重试");
     }
-  }, []);
+  }, [update]);
 
   return (
     <div className="mx-auto w-full max-w-2xl px-8 py-8 animate-content-enter">
@@ -236,7 +237,7 @@ export default function Settings() {
               {updateStatus === "available" && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">
-                    {updateInfo?.newVersion}
+                    {update?.version}
                   </span>
                   <Button size="xs" onClick={handleDownload}>
                     立即更新

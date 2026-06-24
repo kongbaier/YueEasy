@@ -1,45 +1,30 @@
-import { check } from "@tauri-apps/plugin-updater";
+import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 
-export interface UpdateInfo {
-  currentVersion: string;
-  newVersion: string;
-  body?: string;
-  date?: string;
-}
+export { type Update };
 
-/** 检查是否有可用更新，返回更新信息或 null */
-export async function checkForUpdate(): Promise<UpdateInfo | null> {
-  const update = await check();
-  if (!update) return null;
-  return {
-    currentVersion: update.currentVersion,
-    newVersion: update.version,
-    body: update.body,
-    date: update.date,
-  };
-}
-
-interface DownloadProgress {
-  event: string;
-  downloaded?: number;
-  contentLength?: number | null;
+/** 检查是否有可用更新，返回 Update 对象或 null */
+export async function checkForUpdate(): Promise<Update | null> {
+  return check();
 }
 
 /** 下载并安装更新，onProgress 回调接收 (downloaded, total) */
 export async function downloadAndInstall(
+  update: Update,
   onProgress?: (downloaded: number, total: number | null) => void,
 ): Promise<void> {
-  const update = await check();
-  if (!update) throw new Error("No update available");
+  let downloaded = 0;
+  let contentLength: number | null = null;
 
-  await update.downloadAndInstall((status: DownloadProgress) => {
-    if (
-      onProgress &&
-      status.event === "Progress" &&
-      typeof status.downloaded === "number"
-    ) {
-      onProgress(status.downloaded, status.contentLength ?? null);
+  await update.downloadAndInstall((event) => {
+    switch (event.event) {
+      case "Started":
+        contentLength = event.data.contentLength ?? null;
+        break;
+      case "Progress":
+        downloaded += event.data.chunkLength;
+        onProgress?.(downloaded, contentLength);
+        break;
     }
   });
 }
