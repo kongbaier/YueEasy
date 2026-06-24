@@ -1,4 +1,5 @@
 name: Release
+run-name: Release ${{ inputs.tag || github.ref_name }}
 
 on:
   push:
@@ -19,15 +20,15 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Set tag
-        shell: pwsh
-        run: |
-          $tag = "${{ inputs.tag || github.ref_name }}"
-          Write-Host "tag=$tag" >> $env:GITHUB_ENV
-
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.tag || github.ref_name }}
+
+      - name: Resolve short commit SHA
+        shell: pwsh
+        run: |
+          $shortSha = "${{ github.sha }}".Substring(0, 7)
+          echo "short_sha=$shortSha" >> $env:GITHUB_ENV
 
       - uses: pnpm/action-setup@v4
         with:
@@ -42,53 +43,11 @@ jobs:
 
       - uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: Build Tauri app
-        run: pnpm tauri build
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-
-      - name: Diagnostic — list all output
-        shell: pwsh
-        run: |
-          Write-Host "=== NSIS bundle ==="
-          Get-ChildItem "src-tauri\target\release\bundle\nsis" -Recurse | ForEach-Object { Write-Host "$($_.Length,10)  $($_.FullName)" }
-          Write-Host "=== Target dir *.sig ==="
-          Get-ChildItem "src-tauri\target\release" -Recurse -Filter "*.sig" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
-          Write-Host "=== Env check ==="
-          if ($env:TAURI_SIGNING_PRIVATE_KEY) { Write-Host "KEY: set (length $($env:TAURI_SIGNING_PRIVATE_KEY.Length))" } else { Write-Host "KEY: NOT SET — updater artifacts won't be generated" }
-
-      - name: Generate latest.json
-        shell: pwsh
-        run: |
-          $version = $env:TAG -replace '^v', ''
-          $nsisDir = "src-tauri\target\release\bundle\nsis"
-          $sig = Get-ChildItem $nsisDir -Filter "*.sig" -Recurse | Select-Object -First 1
-          if (-not $sig) { Write-Error "No .sig found"; exit 1 }
-          $signature = (Get-Content $sig.FullName -Raw).Trim()
-          Write-Host "Sig: $($sig.Name)"
-
-          $nsisZip = Get-ChildItem $nsisDir -Filter "*.nsis.zip" -Recurse | Select-Object -First 1
-          if (-not $nsisZip) {
-            $nsisZip = Get-ChildItem $nsisDir -Filter "*_x64-setup.exe" -Recurse | Select-Object -First 1
-          }
-          if (-not $nsisZip) { Write-Error "No installer found"; exit 1 }
-
-          $url = "https://github.com/${{ github.repository }}/releases/download/$env:TAG/$($nsisZip.Name)"
-          @{
-            version   = $version
-            notes     = "Release $env:TAG"
-            pub_date  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-            platforms = @{
-              "windows-x86_64" = @{ signature = $signature; url = $url }
-            }
-          } | ConvertTo-Json -Depth 4 | Out-File latest.json -Encoding utf8
-          Write-Host "Generated latest.json for $version"
-
-      - uses: softprops/action-gh-release@v2
-        with:
-          name: YueEasy ${{ env.TAG }}
-          files: |
-            src-tauri/target/release/bundle/nsis/*
-            latest.json
+      - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        with:
+          tagName: ${{ inputs.tag || github.ref_name }}
+          releaseName: "YueEasy ${{ inputs.tag || github.ref_name }} (${{ env.short_sha }})"
+          updaterJsonPreferNsis: true
