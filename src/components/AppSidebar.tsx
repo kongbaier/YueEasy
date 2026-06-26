@@ -27,6 +27,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import type { TopPlaylist } from "@/services/ncm";
 import { ncm } from "@/services/ncm";
@@ -183,7 +184,7 @@ export const AppSidebar = () => {
           setUserPlaylists(res.playlist.filter((p) => p.specialType !== 5));
       })
       .catch(() => {
-        // silently ignore
+        toast.error("加载歌单失败，请检查网络");
       });
 
     return () => {

@@ -4,6 +4,7 @@ import { Virtuoso } from "react-virtuoso";
 import { ImageWithFade } from "@/components/common/image";
 import { VirtuosoScroller } from "@/components/virtuoso";
 import { formatCount } from "@/lib/format";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { ncm } from "@/services/ncm";
 import type { NcmComment } from "@/services/ncm/types/comment.response";
@@ -107,6 +108,7 @@ export const PlayerPageComments = ({ songId }: { songId: number }) => {
         setHotComments([]);
         setComments([]);
         setTotal(0);
+        toast.error("加载评论失败");
       })
       .finally(() => setLoading(false));
   }, [songId]);
