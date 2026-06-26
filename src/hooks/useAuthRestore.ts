@@ -38,7 +38,8 @@ export const useAuthRestore = () => {
           await clearNcmCookie();
         }
       } catch {
-        await clearNcmCookie().catch(() => {});
+        // 网络不可用或其他暂时性错误，不清除 cookie
+        // cookie 仍然有效，下次启动有网络时可以恢复登录
       }
     })();
   }, [setAuth]);
