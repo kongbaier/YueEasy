@@ -1,7 +1,8 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { Effect } from "@tauri-apps/api/window";
-import { Check, RefreshCw } from "lucide-react";
+import { Check, LogOut, RefreshCw, User } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { ImageWithFade } from "@/components/common/image";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -18,7 +19,7 @@ import {
   installAndRelaunch,
   type Update,
 } from "@/services/updater";
-import { useUiStore } from "@/stores";
+import { useAuthStore, useUiStore } from "@/stores";
 import type { Theme } from "@/stores/uiStore";
 
 const labels: Record<Theme, string> = {
@@ -30,6 +31,12 @@ const labels: Record<Theme, string> = {
 export default function Settings() {
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const nickname = useAuthStore((s) => s.nickname);
+  const avatarUrl = useAuthStore((s) => s.avatarUrl);
+  const userId = useAuthStore((s) => s.userId);
+  const logout = useAuthStore((s) => s.logout);
+  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
   const [windowEffect, setWindowEffectState] = useState<Effect>(Effect.Mica);
   const [closeToTray, setCloseToTray] = useState(false);
 
@@ -184,6 +191,55 @@ export default function Settings() {
             <Row description="界面显示语言" label="语言">
               <span className="text-sm text-muted-foreground">简体中文</span>
             </Row>
+          </div>
+        </SectionCard>
+
+        <SectionCard>
+          <SectionTitle>账户</SectionTitle>
+          <div className="space-y-0.5">
+            {isLoggedIn ? (
+              <>
+                <Row label="用户">
+                  <div className="flex items-center gap-2">
+                    {avatarUrl ? (
+                      <ImageWithFade
+                        alt={nickname}
+                        className="size-6 rounded-full object-cover"
+                        src={avatarUrl}
+                      />
+                    ) : (
+                      <User className="size-5 text-muted-foreground" />
+                    )}
+                    <span className="text-sm">{nickname || `ID: ${userId}`}</span>
+                  </div>
+                </Row>
+                <Row label="用户 ID">
+                  <span className="text-sm text-muted-foreground">{userId}</span>
+                </Row>
+                <Row label="退出登录">
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() => {
+                      logout();
+                      toast.success("已退出登录");
+                    }}
+                  >
+                    <LogOut className="size-3.5" />
+                    退出登录
+                  </Button>
+                </Row>
+              </>
+            ) : (
+              <Row label="登录网易云音乐">
+                <Button
+                  size="xs"
+                  onClick={() => setLoginDialogOpen(true)}
+                >
+                  立即登录
+                </Button>
+              </Row>
+            )}
           </div>
         </SectionCard>
 

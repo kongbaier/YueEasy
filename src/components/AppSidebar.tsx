@@ -241,35 +241,33 @@ export const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isLoggedIn && (
-          <SidebarGroup>
-            <SidebarGroupLabel>我的</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-0.5">
-                {myItems.map((item) => {
-                  const isActive = location.pathname === item.to;
-                  return (
-                    <SidebarMenuItem key={item.to}>
-                      <SidebarMenuButton
-                        className="gap-x-2"
-                        isActive={isActive}
-                        onClick={() => navigate(item.to)}
-                      >
-                        <item.icon
-                          className={cn(
-                            isActive &&
-                              "fill-primary text-primary-darkest dark:text-primary-lightest",
-                          )}
-                        />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        <SidebarGroup>
+          <SidebarGroupLabel>我的</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-0.5">
+              {myItems.map((item) => {
+                const isActive = location.pathname === item.to;
+                return (
+                  <SidebarMenuItem key={item.to}>
+                    <SidebarMenuButton
+                      className="gap-x-2"
+                      isActive={isActive}
+                      onClick={() => navigate(item.to)}
+                    >
+                      <item.icon
+                        className={cn(
+                          isActive &&
+                            "fill-primary text-primary-darkest dark:text-primary-lightest",
+                        )}
+                      />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
         {isLoggedIn && createdPlaylists.length > 0 && (
           <SidebarGroup>

@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Play } from "lucide-react";
+import { Play, Sparkles } from "lucide-react";
 import { Suspense } from "react";
 import { TrackRow, TrackRowSkeleton } from "@/components/track";
 import { Button } from "@/components/ui/button";
@@ -93,19 +93,10 @@ export default function DailyRecommend() {
 
   if (!isLoggedIn) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold">每日推荐</h1>
-        <p className="mt-4 text-sm text-muted-foreground">
-          请先
-          <button
-            className="mx-1 cursor-pointer text-primary underline"
-            onClick={() => setLoginDialogOpen(true)}
-            type="button"
-          >
-            登录
-          </button>
-          后查看每日推荐歌曲
-        </p>
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <Sparkles className="h-12 w-12 text-muted-foreground" />
+        <p className="text-muted-foreground">登录后查看每日推荐</p>
+        <Button onClick={() => setLoginDialogOpen(true)}>立即登录</Button>
       </div>
     );
   }
