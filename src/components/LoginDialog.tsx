@@ -56,6 +56,7 @@ export const LoginDialog = () => {
       profile?: { userId: number; nickname: string; avatarUrl: string },
     ) => {
       setNcmCookie(cookie);
+
       setAuth({
         isLoggedIn: true,
         cookie,
@@ -66,6 +67,31 @@ export const LoginDialog = () => {
       setOpen(false);
       toast.success(`登录成功，欢迎 ${profile?.nickname || "回来"}`);
       navigate("/");
+
+      // 扫码登录等场景不会返回 profile，后台补全用户信息
+      if (!profile?.userId) {
+        ncm
+          .loginStatus()
+          .then((statusRes) => {
+            const p =
+              statusRes.data?.profile ??
+              ((statusRes as unknown as Record<string, unknown>).profile as
+                | { userId: number; nickname: string; avatarUrl: string }
+                | undefined);
+            if (p?.userId) {
+              setAuth({
+                isLoggedIn: true,
+                cookie,
+                userId: p.userId,
+                nickname: p.nickname ?? "",
+                avatarUrl: p.avatarUrl ?? "",
+              });
+            }
+          })
+          .catch(() => {
+            // 后台获取 profile 失败，不影响已完成的登录流程
+          });
+      }
     },
     [setAuth, setOpen, navigate],
   );
