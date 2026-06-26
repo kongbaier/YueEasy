@@ -14,6 +14,29 @@ if ($Version -notmatch '^\d+\.\d+\.\d+$') {
 
 $Root = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 
+# 读取当前版本，用于确认提示
+$pjCurrent = Get-Content "$Root\package.json" -Raw
+$currentVersion = if ($pjCurrent -match '"version"\s*:\s*"([^"]*)"') { $matches[1] } else { $null }
+
+if ($currentVersion) {
+  Write-Host ""
+  if ([version]$Version -lt [version]$currentVersion) {
+    Write-Host "⚠️ 降级警告: v$currentVersion -> v$Version（新版本低于当前版本）" -ForegroundColor Yellow
+    $confirm = Read-Host "确认降级？输入版本号 '$Version' 继续"
+    if ($confirm -ne $Version) {
+      Write-Host "已取消。"
+      exit 0
+    }
+  } else {
+    Write-Host "版本变更: v$currentVersion -> v$Version" -ForegroundColor Cyan
+    $confirm = Read-Host "确认升级？输入 'y' 继续"
+    if ($confirm -ne 'y') {
+      Write-Host "已取消。"
+      exit 0
+    }
+  }
+}
+
 # package.json
 $pj = Get-Content "$Root\package.json" -Raw
 $pj = $pj -replace '("version"\s*:\s*")[^"]*(")', ('${1}' + $Version + '${2}')
