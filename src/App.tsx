@@ -16,6 +16,7 @@ import "./styles/index.css";
 const Home = lazy(() => import("./pages/Home"));
 const Search = lazy(() => import("./pages/Search"));
 const Playlist = lazy(() => import("./pages/Playlist"));
+const Album = lazy(() => import("./pages/Album"));
 const DailyRecommend = lazy(() => import("./pages/DailyRecommend"));
 const LikedSongs = lazy(() => import("./pages/LikedSongs"));
 const RecentPlays = lazy(() => import("./pages/RecentPlays"));
@@ -53,6 +54,7 @@ function App() {
         <Route element=<MainLayout />>
           <Route element=<Page element=<Home /> /> index />
           <Route element=<Page element=<Search /> /> path="search" />
+          <Route element=<Page element=<Album /> /> path="album/:id" />
           <Route element=<Page element=<Playlist /> /> path="playlist/:id" />
           <Route element=<Page element=<DailyRecommend /> /> path="daily" />
           <Route element=<Page element=<LikedSongs /> /> path="my/liked" />

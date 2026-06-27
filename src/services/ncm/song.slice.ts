@@ -1,10 +1,15 @@
 import { ncmApi } from "./api";
 import type {
+  AlbumDetailResponse,
   LikeListResponse,
   LyricNewResponse,
   LyricResponse,
   RecentSongResponse,
+  SearchAlbumResponse,
+  SearchArtistResponse,
   SearchResponse,
+  SearchSuggestResponse,
+  SearchUserResponse,
   SongDetailResponse,
   SongUrlResponse,
 } from "./types";
@@ -14,7 +19,10 @@ export type {
   LyricNewResponse,
   LyricResponse,
   RecentSongResponse,
+  SearchAlbumResponse,
+  SearchArtistResponse,
   SearchResponse,
+  SearchUserResponse,
   SongDetailResponse,
   SongUrlResponse,
 } from "./types";
@@ -27,6 +35,36 @@ export const songSlice = {
       limit: String(limit),
       offset: String(offset),
     }),
+
+  searchAlbum: (keywords: string, limit = 30, offset = 0) =>
+    ncmApi<SearchAlbumResponse>("cloudsearch", {
+      keywords,
+      type: "10",
+      limit: String(limit),
+      offset: String(offset),
+    }),
+
+  searchArtist: (keywords: string, limit = 30, offset = 0) =>
+    ncmApi<SearchArtistResponse>("cloudsearch", {
+      keywords,
+      type: "100",
+      limit: String(limit),
+      offset: String(offset),
+    }),
+
+  searchUser: (keywords: string, limit = 30, offset = 0) =>
+    ncmApi<SearchUserResponse>("cloudsearch", {
+      keywords,
+      type: "1002",
+      limit: String(limit),
+      offset: String(offset),
+    }),
+
+  searchSuggest: (keywords: string) =>
+    ncmApi<SearchSuggestResponse>("search/suggest", { keywords }),
+
+  albumDetail: (id: number) =>
+    ncmApi<AlbumDetailResponse>("album", { id: String(id) }),
 
   searchHot: () =>
     ncmApi<{

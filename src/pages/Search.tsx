@@ -1,111 +1,81 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  Play,
-  Search as SearchIcon,
-  SearchX,
-  TrendingUp,
-  X,
-} from "lucide-react";
+import { Play, Search as SearchIcon, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { TrackRow, TrackRowSkeleton } from "@/components/track";
+import type { SearchTabType } from "@/components/search/constants";
+import { SEARCH_TABS, TYPE_LABEL } from "@/components/search/constants";
+import { HotDropdown } from "@/components/search/HotDropdown";
+import { SearchResults } from "@/components/search/SearchResults";
+import type { SuggestionItem } from "@/components/search/SuggestDropdown";
+import { SuggestDropdown } from "@/components/search/SuggestDropdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { SongRef } from "@/core/playlist/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLoadMore } from "@/hooks/useLoadMore";
+import { ScrollContainerContext } from "@/hooks/useScrollContainer";
 import { toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
+import type { SearchSuggestResponse } from "@/services/ncm";
 import { ncm, toSongRef } from "@/services/ncm";
 import { usePlayerStore } from "@/stores";
 
-const SKELETON_COUNT = 8;
+/** Extract display suggestions from the /search/suggest response */
+function extractSuggestions(res: SearchSuggestResponse): SuggestionItem[] {
+  const items: SuggestionItem[] = [];
+  const { songs, albums, artists } = res.result;
 
-const LoadingState = () => (
-  <div className="mt-4 space-y-0.5">
-    {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-      // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, order never changes
-      <TrackRowSkeleton index={i} key={i} />
-    ))}
-  </div>
-);
-
-const HotDropdown = ({
-  words,
-  onPick,
-  onClose,
-}: {
-  words: string[];
-  onPick: (w: string) => void;
-  onClose: () => void;
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [onClose]);
-
-  return (
-    <div
-      className="absolute top-full left-0 right-0 z-50 mt-1 overflow-hidden rounded-lg border border-border/40 bg-popover p-1 shadow-lg"
-      ref={ref}
-    >
-      <div className="flex items-center gap-1.5 px-2.5 py-2">
-        <TrendingUp className="size-4 text-orange-500" />
-        <span className="text-xs font-medium text-muted-foreground">
-          热门搜索
-        </span>
-      </div>
-      <div className="max-h-64 overflow-y-auto">
-        {words.map((word, i) => (
-          <button
-            className="flex items-center gap-3 w-full rounded-[3px] px-2.5 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
-            key={word}
-            onClick={() => onPick(word)}
-            type="button"
-          >
-            <span
-              className={`w-5 text-center text-xs font-bold tabular-nums shrink-0 ${
-                i < 3 ? "text-orange-500" : "text-muted-foreground"
-              }`}
-            >
-              {i + 1}
-            </span>
-            <span className="flex-1 truncate">{word}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const NoResults = ({ keyword }: { keyword: string }) => (
-  <div className="flex flex-col items-center justify-center py-16 gap-3">
-    <SearchX className="size-10 text-muted-foreground/30" />
-    <p className="text-sm text-muted-foreground">
-      没有找到与 "<span className="text-foreground font-medium">{keyword}</span>
-      " 相关的结果
-    </p>
-  </div>
-);
+  if (songs) {
+    for (const s of songs.slice(0, 4)) {
+      const artist = s.artists?.map((a) => a.name).join("/") || "";
+      items.push({
+        label: artist ? `${s.name} — ${artist}` : s.name,
+        keyword: s.name,
+        kind: "song" as const,
+      });
+    }
+  }
+  if (albums) {
+    for (const a of albums.slice(0, 2)) {
+      items.push({
+        label: `${a.name} (专辑)`,
+        keyword: a.name,
+        kind: "album" as const,
+      });
+    }
+  }
+  if (artists) {
+    for (const a of artists.slice(0, 2)) {
+      items.push({
+        label: `${a.name} (歌手)`,
+        keyword: a.name,
+        kind: "artist" as const,
+      });
+    }
+  }
+  return items.slice(0, 8);
+}
 
 export default function Search() {
   const [keyword, setKeyword] = useState("");
-  const [results, setResults] = useState<SongRef[]>([]);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [results, setResults] = useState<unknown[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
-  const debouncedKeyword = useDebounce(keyword, 400);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
+  const [searchType, setSearchType] = useState<SearchTabType>("1");
+  const debouncedKeyword = useDebounce(keyword, 300);
   const play = usePlayerStore((s) => s.play);
   const replaceAndPlay = usePlayerStore((s) => s.replaceAndPlay);
   const visibleCount = useLoadMore(results.length);
   const inputRef = useRef<HTMLInputElement>(null);
-  const hasSearched = debouncedKeyword.trim().length > 0;
+  const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null);
+  const scrollRef = useCallback((el: HTMLDivElement | null) => {
+    setScrollEl(el);
+  }, []);
+  const hasSearched = searchKeyword.trim().length > 0;
 
   const hotQuery = useQuery({
     queryKey: ["searchHot"],
@@ -115,33 +85,30 @@ export default function Search() {
     enabled: false,
   });
 
+  // Fetch suggestions as user types (debounced).
+  // Skip when a search has already been committed — suggestions are for
+  // the typing phase only, not for after a hot-search pick or form submit.
   useEffect(() => {
-    if (!hasSearched) {
-      setResults([]);
-      setTotal(0);
+    if (!debouncedKeyword.trim() || hasSearched) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
     }
-  }, [hasSearched]);
-
-  useEffect(() => {
-    if (!hasSearched) return;
 
     let cancelled = false;
-    setLoading(true);
-    setError("");
-
     ncm
-      .search(debouncedKeyword, 30, 0)
+      .searchSuggest(debouncedKeyword)
       .then((res) => {
         if (!cancelled) {
-          setResults((res.result.songs || []).map(toSongRef));
-          setTotal(res.result.songCount);
-          setLoading(false);
+          const items = extractSuggestions(res);
+          setSuggestions(items);
+          setShowSuggestions(items.length > 0);
         }
       })
-      .catch((e) => {
+      .catch(() => {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "搜索失败");
-          setLoading(false);
+          setSuggestions([]);
+          setShowSuggestions(false);
         }
       });
 
@@ -149,6 +116,72 @@ export default function Search() {
       cancelled = true;
     };
   }, [debouncedKeyword, hasSearched]);
+
+  // Clear results when search keyword becomes empty
+  useEffect(() => {
+    if (!hasSearched) {
+      setResults([]);
+      setTotal(0);
+    }
+  }, [hasSearched]);
+
+  // Search effect — fires on form submit or tab switch
+  useEffect(() => {
+    if (!hasSearched) return;
+
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+
+    const doSearch = async () => {
+      switch (searchType) {
+        case "1": {
+          const res = await ncm.search(searchKeyword, 30, 0);
+          if (!cancelled) {
+            setResults((res.result.songs || []).map(toSongRef));
+            setTotal(res.result.songCount);
+          }
+          break;
+        }
+        case "10": {
+          const res = await ncm.searchAlbum(searchKeyword, 30, 0);
+          if (!cancelled) {
+            setResults(res.result.albums || []);
+            setTotal(res.result.albumCount);
+          }
+          break;
+        }
+        case "100": {
+          const res = await ncm.searchArtist(searchKeyword, 30, 0);
+          if (!cancelled) {
+            setResults(res.result.artists || []);
+            setTotal(res.result.artistCount);
+          }
+          break;
+        }
+        case "1002": {
+          const res = await ncm.searchUser(searchKeyword, 30, 0);
+          if (!cancelled) {
+            setResults(res.result.userprofiles || []);
+            setTotal(res.result.userprofileCount);
+          }
+          break;
+        }
+      }
+      if (!cancelled) setLoading(false);
+    };
+
+    doSearch().catch((e) => {
+      if (!cancelled) {
+        setError(e instanceof Error ? e.message : "搜索失败");
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchKeyword, hasSearched, searchType]);
 
   const handlePlay = useCallback(
     async (track: SongRef) => {
@@ -162,25 +195,48 @@ export default function Search() {
   );
 
   const handlePlayAll = useCallback(async () => {
-    if (!results.length) return;
+    if (!results.length || searchType !== "1") return;
     try {
-      await replaceAndPlay(results);
+      await replaceAndPlay(results as SongRef[]);
     } catch {
       toast.error("没有可播放的歌曲");
     }
-  }, [results, replaceAndPlay]);
+  }, [results, searchType, replaceAndPlay]);
+
+  const handleSubmit = useCallback(
+    (e: React.SubmitEvent) => {
+      e.preventDefault();
+      const trimmed = keyword.trim();
+      if (!trimmed) return;
+      setSearchKeyword(trimmed);
+      setShowSuggestions(false);
+      setShowDropdown(false);
+    },
+    [keyword],
+  );
 
   const handleHotPick = useCallback((word: string) => {
     setKeyword(word);
+    setSearchKeyword(word);
+    setShowDropdown(false);
+  }, []);
+
+  const handleSuggestionPick = useCallback((suggestionKeyword: string) => {
+    setKeyword(suggestionKeyword);
+    setSearchKeyword(suggestionKeyword);
+    setShowSuggestions(false);
     setShowDropdown(false);
   }, []);
 
   const handleClear = useCallback(() => {
     setKeyword("");
+    setSearchKeyword("");
     setResults([]);
     setTotal(0);
     setError("");
     setShowDropdown(false);
+    setShowSuggestions(false);
+    setSuggestions([]);
     inputRef.current?.focus();
   }, []);
 
@@ -195,91 +251,127 @@ export default function Search() {
     setShowDropdown(false);
   }, []);
 
+  const handleCloseSuggestions = useCallback(() => {
+    setShowSuggestions(false);
+  }, []);
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setKeyword(e.target.value);
+      setShowDropdown(false);
+    },
+    [],
+  );
+
+  const handleTabChange = useCallback((type: SearchTabType) => {
+    setSearchType(type);
+    setResults([]);
+    setTotal(0);
+  }, []);
+
   const hotWords = hotQuery.data ?? [];
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-semibold tracking-tight mb-4">搜索</h1>
-      <div className="relative max-w-lg mx-auto">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" />
-        <Input
-          autoFocus
-          className="pl-10 pr-8 h-9"
-          onChange={(e) => {
-            setKeyword(e.target.value);
-            setShowDropdown(false);
-          }}
-          onFocus={handleFocus}
-          placeholder="搜索歌曲、歌手、专辑..."
-          ref={inputRef}
-          value={keyword}
-        />
-        {keyword && (
-          <button
-            className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            onClick={handleClear}
-            type="button"
-          >
-            <X className="size-3.5" />
-          </button>
-        )}
+    <div className="flex flex-col h-full">
+      <div className="shrink-0 px-6 pt-6">
+        <form className="flex items-center gap-2" onSubmit={handleSubmit}>
+          <div className="relative flex-1">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" />
+            <Input
+              autoFocus
+              className="pl-10 pr-8 h-9"
+              onChange={handleInputChange}
+              onFocus={handleFocus}
+              placeholder="搜索歌曲、歌手、专辑..."
+              ref={inputRef}
+              value={keyword}
+            />
+            {keyword && (
+              <button
+                className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                onClick={handleClear}
+                type="button"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
 
-        {showDropdown && hotWords.length > 0 && (
-          <HotDropdown
-            onClose={handleCloseDropdown}
-            onPick={handleHotPick}
-            words={hotWords}
-          />
-        )}
-      </div>
+            {/* Hot search dropdown — shown on focus when input is empty */}
+            {showDropdown && !keyword.trim() && hotWords.length > 0 && (
+              <HotDropdown
+                onClose={handleCloseDropdown}
+                onPick={handleHotPick}
+                words={hotWords}
+              />
+            )}
 
-      <div className="mt-4 min-h-[200px]">
-        {error && (
-          <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 px-4 py-3 text-sm text-red-600 dark:text-red-400">
-            {error}
+            {/* Search suggestions dropdown — shown while typing */}
+            {showSuggestions && suggestions.length > 0 && (
+              <SuggestDropdown
+                items={suggestions}
+                onClose={handleCloseSuggestions}
+                onPick={handleSuggestionPick}
+              />
+            )}
           </div>
-        )}
+          <Button className="h-9" size="sm" type="submit">
+            搜索
+          </Button>
+        </form>
 
-        {loading && <LoadingState />}
+        {/* Search type tabs */}
+        <div className="flex items-center gap-1 mt-3">
+          {SEARCH_TABS.map((tab) => (
+            <button
+              className={cn(
+                "px-3 py-1 text-sm rounded-md transition-colors",
+                searchType === tab.type
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent",
+              )}
+              key={tab.type}
+              onClick={() => handleTabChange(tab.type)}
+              type="button"
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
         {!loading && !error && results.length > 0 && (
-          <>
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                找到{" "}
-                <span className="text-foreground font-medium">{total}</span>{" "}
-                首歌曲
-              </p>
+          <div className="mt-3 flex items-center justify-between pb-2">
+            <p className="text-sm text-muted-foreground">
+              找到 <span className="text-foreground font-medium">{total}</span>{" "}
+              {TYPE_LABEL[searchType]}
+            </p>
+            {searchType === "1" && (
               <Button onClick={handlePlayAll} size="xs">
                 <Play className="size-3" />
                 播放全部
               </Button>
-            </div>
-
-            <div className="space-y-0.5">
-              {results.slice(0, visibleCount).map((track, index) => (
-                <TrackRow
-                  index={index}
-                  key={track.id}
-                  onPlay={handlePlay}
-                  track={track}
-                />
-              ))}
-            </div>
-          </>
-        )}
-
-        {!loading && !error && hasSearched && results.length === 0 && (
-          <NoResults keyword={debouncedKeyword} />
-        )}
-
-        {!hasSearched && !loading && !showDropdown && (
-          <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground pt-12">
-            <SearchIcon className="size-10 opacity-20" />
-            <p className="text-sm">点击搜索框发现热门音乐</p>
+            )}
           </div>
         )}
       </div>
+
+      <ScrollContainerContext.Provider value={scrollEl}>
+        <div
+          className="flex-1 min-h-0 overflow-y-auto px-6 pb-6"
+          ref={scrollRef}
+        >
+          <SearchResults
+            error={error}
+            hasSearched={hasSearched}
+            keyword={searchKeyword}
+            loading={loading}
+            onPlay={handlePlay}
+            results={results}
+            searchType={searchType}
+            showDropdown={showDropdown}
+            visibleCount={visibleCount}
+          />
+        </div>
+      </ScrollContainerContext.Provider>
     </div>
   );
 }

@@ -11,7 +11,6 @@ import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
 
 const DailyRecommendSkeleton = () => (
   <div className="p-6">
-    <h1 className="text-2xl font-bold">每日推荐</h1>
     <div className="mt-3 space-y-0.5">
       {Array.from({ length: 8 }).map((_, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
@@ -55,8 +54,6 @@ const DailyRecommendContent = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold">每日推荐</h1>
-
       {songs.length > 0 ? (
         <>
           <div className="mt-4 flex items-center gap-3">

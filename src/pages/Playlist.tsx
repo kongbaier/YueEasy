@@ -3,9 +3,11 @@ import { ListMusic, MessageCircle, Play, Users } from "lucide-react";
 import { Suspense, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CommentPanel, CommentSkeleton } from "@/components/comment";
+import { Cover } from "@/components/common/cover";
+import { ExpandableText } from "@/components/common/ExpandableText";
+import { usePageTitle } from "@/components/layout/PageTitleContext";
 import { TrackRow, TrackRowSkeleton } from "@/components/track";
 import { Button } from "@/components/ui/button";
-import { Cover } from "@/components/common/cover";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SongRef } from "@/core/playlist/types";
 import { useLoadMore } from "@/hooks/useLoadMore";
@@ -118,36 +120,6 @@ const PlaylistSkeleton = () => (
 );
 
 /* ------------------------------------------------------------------ */
-/*  描述区域                                                            */
-/* ------------------------------------------------------------------ */
-
-const DESCRIPTION_PREVIEW = 120;
-
-const DescriptionBlock = ({ text }: { text: string }) => {
-  const [expanded, setExpanded] = useState(false);
-  const needsToggle = text.length > DESCRIPTION_PREVIEW;
-
-  return (
-    <div className="space-y-1.5">
-      <p className="text-sm text-muted-foreground leading-relaxed">
-        {expanded || !needsToggle
-          ? text
-          : `${text.slice(0, DESCRIPTION_PREVIEW)}…`}
-      </p>
-      {needsToggle && (
-        <button
-          className="inline-flex items-center gap-1 text-xs text-primary/80 hover:text-primary transition-colors"
-          onClick={() => setExpanded((v) => !v)}
-          type="button"
-        >
-          {expanded ? "收起" : "展开全文"}
-        </button>
-      )}
-    </div>
-  );
-};
-
-/* ------------------------------------------------------------------ */
 /*  页面主体                                                            */
 /* ------------------------------------------------------------------ */
 
@@ -165,6 +137,7 @@ const PlaylistContent = () => {
   });
 
   const playlist = data.playlist;
+  usePageTitle(playlist.name);
   const visibleCount = useLoadMore(playlist.tracks?.length ?? 0);
 
   const handlePlay = async (track: SongRef) => {
@@ -237,10 +210,7 @@ const PlaylistContent = () => {
 
         {/* 元数据 */}
         <div className="flex-1 min-w-0 space-y-4">
-          {/* 标题 */}
-          <h1 className="text-3xl font-bold tracking-tight leading-tight line-clamp-2">
-            {playlist.name}
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight">{playlist.name}</h1>
 
           {/* 创建者 + 时间 */}
           {metaParts.length > 0 && (
@@ -297,7 +267,7 @@ const PlaylistContent = () => {
           <p className="text-xs font-medium text-muted-foreground/60 uppercase tracking-widest">
             简介
           </p>
-          <DescriptionBlock text={playlist.description} />
+          <ExpandableText text={playlist.description} />
         </div>
       )}
 

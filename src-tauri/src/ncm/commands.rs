@@ -62,7 +62,9 @@ pub async fn ncm_request(
 
     let response = match method.as_str() {
         "search/hot" => client.search_hot(&query).await,
+        "search/suggest" => client.search_suggest(&query).await,
         "cloudsearch" => client.cloudsearch(&query).await,
+        "album" => client.album(&query).await,
         "song_url_v1" => client.song_url_v1(&query).await,
         "song_detail" => client.song_detail(&query).await,
         "lyric" => client.lyric(&query).await,

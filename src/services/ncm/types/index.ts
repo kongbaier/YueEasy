@@ -1,5 +1,5 @@
-// Song responses
-
+// Album responses
+export * from "./album.response";
 // Auth responses
 export * from "./auth.response";
 // Banner responses
@@ -10,4 +10,5 @@ export * from "./comment.response";
 export * from "./discover.response";
 // Playlist responses
 export * from "./playlist.response";
+export * from "./search.response";
 export * from "./song.response";

@@ -11,7 +11,6 @@ import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
 
 const LikedSongsSkeleton = () => (
   <div className="p-6">
-    <h1 className="mb-4 text-2xl font-bold">我喜欢</h1>
     <div className="space-y-0.5">
       {Array.from({ length: 8 }).map((_, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
@@ -50,7 +49,6 @@ const LikedSongsContent = () => {
 
   return (
     <div className="p-6">
-      <h1 className="mb-4 text-2xl font-bold">我喜欢</h1>
       {tracks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-2">
           <Heart className="h-8 w-8 text-muted-foreground" />

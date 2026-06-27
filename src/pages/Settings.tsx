@@ -119,8 +119,6 @@ export default function Settings() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-8 py-8 animate-content-enter">
-      <h1 className="mb-10 text-2xl font-semibold tracking-tight">设置</h1>
-
       <div className="space-y-6">
         <SectionCard>
           <SectionTitle>外观</SectionTitle>
