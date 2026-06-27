@@ -289,14 +289,16 @@ export const LoginDialog = () => {
         {error && <p className="text-center text-sm text-red-500">{error}</p>}
 
         {tab === "password" && (
-          <form className="space-y-4" onSubmit={handlePasswordLogin}>
+          <form autoComplete="off" className="space-y-4" onSubmit={handlePasswordLogin}>
             <Input
+              autoComplete="off"
               onChange={(e) => setPhone(e.target.value)}
               placeholder="手机号"
               type="text"
               value={phone}
             />
             <Input
+              autoComplete="off"
               onChange={(e) => setPassword(e.target.value)}
               placeholder="密码"
               type="password"
@@ -313,9 +315,10 @@ export const LoginDialog = () => {
         )}
 
         {tab === "sms" && (
-          <form className="space-y-4" onSubmit={handleSmsLogin}>
+          <form autoComplete="off" className="space-y-4" onSubmit={handleSmsLogin}>
             <div className="flex gap-2">
               <Input
+                autoComplete="off"
                 className="flex-1"
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="手机号"
@@ -336,6 +339,7 @@ export const LoginDialog = () => {
               </Button>
             </div>
             <Input
+              autoComplete="off"
               onChange={(e) => setCode(e.target.value)}
               placeholder="验证码"
               type="text"

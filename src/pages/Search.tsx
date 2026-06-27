@@ -71,6 +71,7 @@ export default function Search() {
   const replaceAndPlay = usePlayerStore((s) => s.replaceAndPlay);
   const visibleCount = useLoadMore(results.length);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [focused, setFocused] = useState(false);
   const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null);
   const scrollRef = useCallback((el: HTMLDivElement | null) => {
     setScrollEl(el);
@@ -85,11 +86,9 @@ export default function Search() {
     enabled: false,
   });
 
-  // Fetch suggestions as user types (debounced).
-  // Skip when a search has already been committed — suggestions are for
-  // the typing phase only, not for after a hot-search pick or form submit.
+  // Fetch suggestions as user types (debounced)
   useEffect(() => {
-    if (!debouncedKeyword.trim() || hasSearched) {
+    if (!debouncedKeyword.trim()) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -115,7 +114,7 @@ export default function Search() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedKeyword, hasSearched]);
+  }, [debouncedKeyword]);
 
   // Clear results when search keyword becomes empty
   useEffect(() => {
@@ -219,6 +218,7 @@ export default function Search() {
     setKeyword(word);
     setSearchKeyword(word);
     setShowDropdown(false);
+    inputRef.current?.blur();
   }, []);
 
   const handleSuggestionPick = useCallback((suggestionKeyword: string) => {
@@ -241,11 +241,20 @@ export default function Search() {
   }, []);
 
   const handleFocus = useCallback(() => {
+    setFocused(true);
     if (!keyword.trim()) {
       setShowDropdown(true);
       hotQuery.refetch();
+    } else {
+      // Restore suggestions that were hidden by outside-click during blur
+      setShowSuggestions(true);
     }
   }, [keyword, hotQuery]);
+
+  const handleBlur = useCallback(() => {
+    // Small delay so dropdown item clicks fire before the dropdown is removed
+    setTimeout(() => setFocused(false), 150);
+  }, []);
 
   const handleCloseDropdown = useCallback(() => {
     setShowDropdown(false);
@@ -274,12 +283,14 @@ export default function Search() {
   return (
     <div className="flex flex-col h-full">
       <div className="shrink-0 px-6 pt-6">
-        <form className="flex items-center gap-2" onSubmit={handleSubmit}>
+        <form autoComplete="off" className="flex items-center gap-2" onSubmit={handleSubmit}>
           <div className="relative flex-1">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" />
             <Input
+              autoComplete="off"
               autoFocus
               className="pl-10 pr-8 h-9"
+              onBlur={handleBlur}
               onChange={handleInputChange}
               onFocus={handleFocus}
               placeholder="搜索歌曲、歌手、专辑..."
@@ -305,8 +316,8 @@ export default function Search() {
               />
             )}
 
-            {/* Search suggestions dropdown — shown while typing */}
-            {showSuggestions && suggestions.length > 0 && (
+            {/* Search suggestions dropdown — shown while typing and focused */}
+            {focused && showSuggestions && suggestions.length > 0 && (
               <SuggestDropdown
                 items={suggestions}
                 onClose={handleCloseSuggestions}
