@@ -9,25 +9,25 @@ import { TrackRow, TrackRowSkeleton } from "@/components/track";
 import {
   SearchAlbumCard,
   SearchAlbumCardSkeleton,
-} from "@/components/search/SearchAlbumCard";
+} from "./SearchAlbumCard";
 import {
   SearchArtistCard,
   SearchArtistCardSkeleton,
-} from "@/components/search/SearchArtistCard";
+} from "./SearchArtistCard";
 import {
   SearchUserCard,
   SearchUserCardSkeleton,
-} from "@/components/search/SearchUserCard";
+} from "./SearchUserCard";
 import {
   GRID_SKELETON_COUNT,
   SKELETON_COUNT,
   TYPE_LABEL,
-  type SearchTabType,
+  type SearchType,
 } from "./constants";
 
 // ---- internal sub-components ----
 
-function LoadingState({ type }: { type: SearchTabType }) {
+function LoadingState({ type }: { type: SearchType }) {
   if (type === "1") {
     return (
       <div className="space-y-0.5">
@@ -61,7 +61,7 @@ function NoResults({
   type,
 }: {
   keyword: string;
-  type: SearchTabType;
+  type: SearchType;
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -77,14 +77,23 @@ function NoResults({
 // ---- public component ----
 
 interface SearchResultsProps {
+  /** 是否正在搜索中 */
   loading: boolean;
+  /** 搜索错误信息（空字符串表示无错误） */
   error: string;
+  /** 搜索结果原始数据（歌曲 / 专辑 / 歌手 / 用户） */
   results: unknown[];
-  searchType: SearchTabType;
+  /** 当前搜索分类 */
+  searchType: SearchType;
+  /** 当前可见的结果数量（懒加载） */
   visibleCount: number;
+  /** 是否已执行过搜索 */
   hasSearched: boolean;
+  /** 当前搜索关键词 */
   keyword: string;
+  /** 热门搜索下拉是否可见（影响初始引导提示） */
   showDropdown: boolean;
+  /** 播放某首歌曲 */
   onPlay: (track: SongRef) => void;
 }
 

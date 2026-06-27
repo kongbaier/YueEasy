@@ -6,6 +6,7 @@ import { getNcmImageUrl } from "@/lib/utils";
 import type { NcmSearchUser } from "@/services/ncm";
 
 interface SearchUserCardProps {
+  /** 用户搜索结果项 */
   item: NcmSearchUser;
 }
 

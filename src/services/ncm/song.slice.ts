@@ -7,21 +7,9 @@ import type {
   RecentSongResponse,
   SearchAlbumResponse,
   SearchArtistResponse,
+  SearchHotResponse,
   SearchResponse,
   SearchSuggestResponse,
-  SearchUserResponse,
-  SongDetailResponse,
-  SongUrlResponse,
-} from "./types";
-
-export type {
-  LikeListResponse,
-  LyricNewResponse,
-  LyricResponse,
-  RecentSongResponse,
-  SearchAlbumResponse,
-  SearchArtistResponse,
-  SearchResponse,
   SearchUserResponse,
   SongDetailResponse,
   SongUrlResponse,
@@ -66,12 +54,7 @@ export const songSlice = {
   albumDetail: (id: number) =>
     ncmApi<AlbumDetailResponse>("album", { id: String(id) }),
 
-  searchHot: () =>
-    ncmApi<{
-      result: {
-        hots: { first: string; iconType: number; second: number }[];
-      };
-    }>("search/hot"),
+  searchHot: () => ncmApi<SearchHotResponse>("search/hot"),
 
   songUrl: (id: number) =>
     ncmApi<SongUrlResponse>("song_url_v1", {

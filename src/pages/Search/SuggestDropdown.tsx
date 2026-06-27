@@ -2,17 +2,20 @@ import { Disc, Music, Search, User } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 export interface SuggestionItem {
-  /** display text */
+  /** 展示文本（含副标题，如 "七里香 — 周杰伦"） */
   label: string;
-  /** search keyword when clicked */
+  /** 点击后填入搜索框的关键词 */
   keyword: string;
-  /** type icon */
+  /** 类型：歌曲 / 专辑 / 歌手 */
   kind: "song" | "album" | "artist";
 }
 
 interface SuggestDropdownProps {
+  /** 建议项列表 */
   items: SuggestionItem[];
+  /** 选中某个建议 */
   onPick: (keyword: string) => void;
+  /** 关闭下拉面板（点击外部） */
   onClose: () => void;
 }
 
@@ -31,7 +34,9 @@ export function SuggestDropdown({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (!ref.current) return;
+
+      if (e.target instanceof Node && !ref.current.contains(e.target)) {
         onClose();
       }
     };

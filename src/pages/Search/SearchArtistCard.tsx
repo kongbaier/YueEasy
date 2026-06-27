@@ -5,6 +5,7 @@ import { getNcmImageUrl } from "@/lib/utils";
 import type { NcmSearchArtist } from "@/services/ncm";
 
 interface SearchArtistCardProps {
+  /** 歌手搜索结果项 */
   item: NcmSearchArtist;
 }
 

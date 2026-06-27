@@ -56,6 +56,17 @@ export interface SearchUserResponse {
   };
 }
 
+export interface SearchHotResponse {
+  code: number;
+  result: {
+    hots: {
+      first: string;
+      iconType: number;
+      second: number;
+      third: number;
+    }[];
+  };
+}
 // NCM API Response: /search/suggest
 
 export interface NcmSuggestSong {
@@ -75,12 +86,13 @@ export interface NcmSuggestArtist {
   name: string;
 }
 
+type NcmSuggestType = "song" | "album" | "artist";
+
 export interface SearchSuggestResponse {
   result: {
     songs?: NcmSuggestSong[];
     albums?: NcmSuggestAlbum[];
     artists?: NcmSuggestArtist[];
-    playlists?: Array<{ id: number; name: string }>;
-    order?: string[];
+    order?: NcmSuggestType[];
   };
 }

@@ -2,17 +2,21 @@ import { TrendingUp } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 interface HotDropdownProps {
-  words: string[];
-  onPick: (w: string) => void;
+  /** 热门搜索词列表 */
+  hots: string[];
+  /** 选中某个热词 */
+  onPick: (word: string) => void;
+  /** 关闭下拉面板（点击外部） */
   onClose: () => void;
 }
 
-export function HotDropdown({ words, onPick, onClose }: HotDropdownProps) {
+export function HotDropdown({ hots, onPick, onClose }: HotDropdownProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (!ref.current) return;
+      if (e.target instanceof Node && !ref.current.contains(e.target)) {
         onClose();
       }
     };
@@ -32,7 +36,7 @@ export function HotDropdown({ words, onPick, onClose }: HotDropdownProps) {
         </span>
       </div>
       <div className="max-h-64 overflow-y-auto">
-        {words.map((word, i) => (
+        {hots.map((word, i) => (
           <button
             className="flex items-center gap-3 w-full rounded-[3px] px-2.5 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
             key={word}
