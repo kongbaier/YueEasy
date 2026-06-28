@@ -265,6 +265,7 @@ pub fn run() {
             commands::cache::cache_set,
             commands::cache::cache_delete,
             commands::cache::cache_clear,
+            commands::cache::cache_size,
             commands::history::history_add,
             commands::history::history_get,
             commands::history::history_mark_synced,

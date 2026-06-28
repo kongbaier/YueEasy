@@ -72,7 +72,7 @@ const LikedSongsContent = () => {
 };
 
 export default function LikedSongs() {
-  usePageTitle("我的喜欢");
+  usePageTitle("我的喜欢", { root: true });
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
 

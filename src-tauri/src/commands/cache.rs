@@ -42,3 +42,16 @@ pub fn cache_clear(db: State<'_, Database>, prefix: String) -> Result<(), String
     .map_err(|e| e.to_string())?;
     Ok(())
 }
+
+#[tauri::command]
+pub fn cache_size(db: State<'_, Database>) -> Result<u64, String> {
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    let total: u64 = conn
+        .query_row(
+            "SELECT COALESCE(SUM(LENGTH(key) + LENGTH(value)), 0) FROM cache",
+            [],
+            |row| row.get(0),
+        )
+        .map_err(|e| e.to_string())?;
+    Ok(total)
+}

@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 import { usePageTitle } from "@/app/layout/PageTitleContext";
 import { toast } from "@/shared/lib/toast";
 import {
+  cacheClearAll,
+  cacheSize,
   getSetting,
   setSetting,
   setWindowEffect,
@@ -30,7 +32,7 @@ const labels: Record<Theme, string> = {
 };
 
 export default function Settings() {
-  usePageTitle("设置");
+  usePageTitle("设置", { root: true });
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
@@ -41,6 +43,26 @@ export default function Settings() {
   const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
   const [windowEffect, setWindowEffectState] = useState<Effect>(Effect.Mica);
   const [closeToTray, setCloseToTray] = useState(false);
+  const [cacheBytes, setCacheBytes] = useState<number | null>(null);
+
+  const loadCacheSize = () => {
+    cacheSize()
+      .then(setCacheBytes)
+      .catch(() => setCacheBytes(null));
+  };
+
+  useEffect(() => {
+    loadCacheSize();
+  }, []);
+
+  const handleClearCache = () => {
+    cacheClearAll()
+      .then(() => {
+        setCacheBytes(0);
+        toast.success("缓存已清除");
+      })
+      .catch(() => toast.error("清除缓存失败"));
+  };
 
   // --- 检查更新状态 ---
   type UpdateStatus =
@@ -262,10 +284,23 @@ export default function Settings() {
           <SectionTitle>缓存</SectionTitle>
           <div className="space-y-0.5">
             <Row description="本地缓存占用空间" label="缓存大小">
-              <span className="text-sm text-muted-foreground">-- MB</span>
+              <span className="text-sm text-muted-foreground">
+                {cacheBytes === null
+                  ? "--"
+                  : cacheBytes < 1024
+                    ? `${cacheBytes} B`
+                    : cacheBytes < 1024 * 1024
+                      ? `${(cacheBytes / 1024).toFixed(1)} KB`
+                      : `${(cacheBytes / (1024 * 1024)).toFixed(1)} MB`}
+              </span>
             </Row>
             <Row label="清除缓存">
-              <Button size="xs" variant="outline">
+              <Button
+                disabled={cacheBytes === 0 || cacheBytes === null}
+                onClick={handleClearCache}
+                size="xs"
+                variant="outline"
+              >
                 清除
               </Button>
             </Row>

@@ -16,7 +16,7 @@ import {
 } from "./useSearch";
 
 export default function SearchPage() {
-  usePageTitle("搜索");
+  usePageTitle("搜索", { root: true });
   // Data hooks — write results to store, return refetch methods
   const searchHot = useSearchHot();
   const searchSuggest = useSearchSuggest();

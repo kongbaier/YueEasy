@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { usePageTitle } from "@/app/layout/PageTitleContext";
 import { useLoadMore } from "@/shared/hooks/useLoadMore";
 import { toast } from "@/shared/lib/toast";
+import { CacheKeys, cachedFetch } from "@/shared/services/cache";
 import { ncm, toSongRef } from "@/shared/services/ncm";
 import type { SongRef } from "@/shared/types/playlist";
 import { Button } from "@/shared/ui/button";
@@ -25,12 +26,13 @@ const DailyRecommendContent = () => {
   const play = usePlayerStore((s) => s.play);
   const replaceAndPlay = usePlayerStore((s) => s.replaceAndPlay);
 
+  const today = new Date().toISOString().slice(0, 10);
+
   const { data: songs } = useSuspenseQuery({
     queryKey: ["dailyRecommend"],
     queryFn: () =>
-      ncm
-        .recommendSongs()
-        .then((res) => (res.data.dailySongs ?? []).map(toSongRef)),
+      cachedFetch(CacheKeys.dailyRecommend(today), () => ncm.recommendSongs())
+        .then((r) => (r.data.data.dailySongs ?? []).map(toSongRef)),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -86,7 +88,7 @@ const DailyRecommendContent = () => {
 };
 
 export default function DailyRecommend() {
-  usePageTitle("每日推荐");
+  usePageTitle("每日推荐", { root: true });
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
 

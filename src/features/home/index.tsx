@@ -6,7 +6,7 @@ import { PersonalizedPlaylists } from "./PersonalizedPlaylists";
 import { TopPlaylists } from "./TopPlaylists";
 
 export default function Home() {
-  usePageTitle("发现");
+  usePageTitle("发现", { root: true });
   return (
     <div className="space-y-8 px-6 py-3">
       <Suspense fallback={<BannerFallback />}>

@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import type { SearchSuggestResponse } from "@/shared/services/ncm";
 import { ncm, toSongRef } from "@/shared/services/ncm";
+import { CacheKeys, cachedFetch } from "@/shared/services/cache";
 import { SearchType } from "./constants";
 import { useSearchStore } from "./store";
 import type { SuggestionItem } from "./SuggestDropdown";
@@ -90,7 +91,8 @@ export function useSearchHot() {
   const query = useQuery({
     queryKey: ["searchHot"],
     queryFn: () =>
-      ncm.searchHot().then((res) => res.result.hots.map((h) => h.first)),
+      cachedFetch(CacheKeys.searchHot, () => ncm.searchHot())
+        .then((r) => r.data.result.hots.map((h) => h.first)),
     staleTime: 5 * 60 * 1000,
     enabled: false,
   });

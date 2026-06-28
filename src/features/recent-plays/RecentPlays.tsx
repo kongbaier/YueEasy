@@ -69,7 +69,7 @@ const RecentPlaysContent = () => {
 };
 
 export default function RecentPlays() {
-  usePageTitle("最近播放");
+  usePageTitle("最近播放", { root: true });
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
 

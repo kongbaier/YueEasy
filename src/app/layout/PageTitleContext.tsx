@@ -1,67 +1,70 @@
 import { useEffectOnActive } from "keepalive-for-react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-interface PageTitleState {
-  title: string;
+interface BreadcrumbEntry {
+  pathname: string;
+  segment: string;
 }
 
-const PageTitleContext = createContext<PageTitleState>({ title: "" });
+interface PageTitleContextValue {
+  breadcrumbs: BreadcrumbEntry[];
+  pushBreadcrumb: (pathname: string, segment: string, root?: boolean) => void;
+}
 
-const SetTitleContext = createContext<
-  (pathname: string, title: string | undefined) => void
->(() => {});
+const PageTitleContext = createContext<PageTitleContextValue>({
+  breadcrumbs: [],
+  pushBreadcrumb: () => {},
+});
+
+interface UsePageTitleOptions {
+  /** Replace the entire breadcrumb trail (for top-level / sidebar pages). */
+  root?: boolean;
+}
 
 /**
- * Read or set the page title for the current route.
- * - `usePageTitle("标题")` — register the title (auto-clears when page hides via keepalive)
- * - `usePageTitle()` — read current title (used by layout/header)
+ * Register a breadcrumb segment for the current route.
+ *
+ * - `usePageTitle("发现", { root: true })` — top-level page, replaces all previous breadcrumbs
+ * - `usePageTitle("歌单名")` — detail page, appends to the existing trail
+ * - `usePageTitle()` — read current breadcrumbs (used by layout/header)
  */
-export function usePageTitle(title?: string) {
+export function usePageTitle(segment?: string, opts?: UsePageTitleOptions) {
   const location = useLocation();
-  const setTitle = useContext(SetTitleContext);
+  const { pushBreadcrumb, breadcrumbs } = useContext(PageTitleContext);
   const pathname = location.pathname;
 
   useEffectOnActive(() => {
-    if (title !== undefined) {
-      setTitle(pathname, title);
-      return () => setTitle(pathname, undefined);
+    if (segment !== undefined) {
+      pushBreadcrumb(pathname, segment, opts?.root);
     }
-  }, [title, pathname, setTitle]);
+  }, [segment, pathname, pushBreadcrumb, opts?.root]);
 
-  return useContext(PageTitleContext);
+  return { breadcrumbs };
 }
 
 export function PageTitleProvider({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
-  const [title, setTitleState] = useState("");
-  const pathRef = useRef(location.pathname);
-  pathRef.current = location.pathname;
+  const [stack, setStack] = useState<BreadcrumbEntry[]>([]);
 
-  // Guard with pathRef so a stale cleanup from a hidden keepalive page
-  // can't clear the title of the currently active page.
-  const setTitle = useCallback(
-    (pathname: string, value: string | undefined) => {
-      if (pathname !== pathRef.current) return;
-      setTitleState(value ?? "");
+  const pushBreadcrumb = useCallback(
+    (pathname: string, segment: string, root?: boolean) => {
+      setStack((prev) => {
+        if (root) {
+          return [{ pathname, segment }];
+        }
+        const idx = prev.findIndex((e) => e.pathname === pathname);
+        if (idx >= 0) {
+          return [...prev.slice(0, idx), { pathname, segment }];
+        }
+        return [...prev, { pathname, segment }];
+      });
     },
     [],
   );
 
-  const pageValue = useMemo<PageTitleState>(() => ({ title }), [title]);
-
   return (
-    <SetTitleContext.Provider value={setTitle}>
-      <PageTitleContext.Provider value={pageValue}>
-        {children}
-      </PageTitleContext.Provider>
-    </SetTitleContext.Provider>
+    <PageTitleContext.Provider value={{ breadcrumbs: stack, pushBreadcrumb }}>
+      {children}
+    </PageTitleContext.Provider>
   );
 }

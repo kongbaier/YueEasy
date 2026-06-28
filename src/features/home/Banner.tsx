@@ -4,15 +4,15 @@ import React, { useEffect, useState } from "react";
 import { ParallaxCarousel } from "@/shared/ui/carousel";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { BannerType, ncm } from "@/shared/services/ncm";
+import { CacheKeys, cachedFetch } from "@/shared/services/cache";
 
 export const Banner = () => {
   const { data: banners } = useSuspenseQuery({
     queryKey: ["banner"],
     queryFn: () =>
-      ncm
-        .banner()
+      cachedFetch(CacheKeys.banner, () => ncm.banner())
         .then((r) =>
-          r.banners.filter((banner) => banner.targetType !== BannerType.AD),
+          r.data.banners.filter((banner) => banner.targetType !== BannerType.AD),
         )
         .catch(() => []),
   });

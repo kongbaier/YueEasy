@@ -67,8 +67,11 @@ export async function historyMarkSynced(ids: number[]): Promise<void> {
 
 export {
   CacheKeys,
+  cacheClearAll,
   cacheClearPrefix,
   cacheDelete,
   cacheGet,
   cacheSet,
+  cacheSize,
+  cachedFetch,
 } from "./cache";

@@ -2,14 +2,14 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { HorizontalCarousel } from "@/shared/ui/carousel";
 import { PlaylistCard, toPlaylistDisplay } from "@/shared/ui/playlist-card";
 import { ncm } from "@/shared/services/ncm";
+import { CacheKeys, cachedFetch } from "@/shared/services/cache";
 
 export const TopPlaylists = () => {
   const { data: topPlaylists } = useSuspenseQuery({
     queryKey: ["topPlaylist", "全部"],
     queryFn: () =>
-      ncm
-        .topPlaylist("全部", 20)
-        .then((r) => r.playlists.map(toPlaylistDisplay))
+      cachedFetch(CacheKeys.topPlaylists("全部"), () => ncm.topPlaylist("全部", 20))
+        .then((r) => r.data.playlists.map(toPlaylistDisplay))
         .catch(() => []),
   });
 

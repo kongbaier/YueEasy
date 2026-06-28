@@ -24,7 +24,7 @@ function useCanGoBack() {
 export const AppHeader = () => {
   const navigate = useNavigate();
   const canGoBack = useCanGoBack();
-  const { title } = usePageTitle();
+  const { breadcrumbs } = usePageTitle();
 
   return (
     <header
@@ -41,13 +41,20 @@ export const AppHeader = () => {
           <ChevronLeft className="size-4" />
         </button>
       )}
-      {title && (
+      {breadcrumbs.length > 0 && (
         <nav className="ml-3 flex items-center gap-1.5 text-xs min-w-0">
           <span className="text-muted-foreground/60 font-medium">乐·易</span>
-          <span className="text-muted-foreground/40">/</span>
-          <span className="text-foreground/80 font-medium truncate">
-            {title}
-          </span>
+          {breadcrumbs.map((entry) => (
+            <span
+              className="flex items-center gap-1.5 min-w-0"
+              key={entry.pathname}
+            >
+              <span className="text-muted-foreground/40">/</span>
+              <span className="text-foreground/80 font-medium truncate">
+                {entry.segment}
+              </span>
+            </span>
+          ))}
         </nav>
       )}
       <WindowControls className="ml-auto mr-1" />
