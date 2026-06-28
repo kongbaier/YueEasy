@@ -1,5 +1,5 @@
-export { useAuthStore } from "./authStore";
-export { useLikeStore } from "./likeStore";
-export { usePlayerPageStore } from "./playerPageStore";
-export { usePlayerStore } from "./playerStore";
-export { useUiStore } from "./uiStore";
+export { useAuthStore } from "./auth";
+export { useLikeStore } from "./like";
+export { usePlayerPageStore } from "@/features/player/player-page-store";
+export { usePlayerStore } from "@/features/player/store";
+export { useUiStore } from "./settings";
