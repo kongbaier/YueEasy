@@ -17,6 +17,7 @@
     "core:window:allow-set-effects",
     "media:default",
     "updater:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    "store:default"
   ]
 }

@@ -3,14 +3,22 @@ import { useCallback, useRef, useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { FollowTooltip } from "@/features/player/components/follow-tooltip";
 import { usePlayerStore } from "@/stores";
+import { usePlayerSetting } from "@/shared/hooks/useSetting";
+import { useAppSettings } from "@/stores/settings";
 
 const STEP = 0.1;
 
 export const PlayerPageVolume = ({ className }: { className?: string }) => {
-  const volume = usePlayerStore((s) => s.volume);
-  const muted = usePlayerStore((s) => s.muted);
-  const setVolume = usePlayerStore((s) => s.setVolume);
-  const setMuted = usePlayerStore((s) => s.setMuted);
+  const [volume, setVolume] = usePlayerSetting("volume");
+  const [muted, setMuted] = usePlayerSetting("muted");
+  const player = usePlayerStore((s) => s.core);
+
+  const applyVolume = (v: number) => {
+    player.volume = v;
+    setVolume(v);
+    setMuted(false);
+  };
+
   const barRef = useRef<HTMLDivElement>(null);
   const [scrubVolume, setScrubVolume] = useState<number | null>(null);
 
@@ -45,15 +53,14 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
     const rect = bar.getBoundingClientRect();
     const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
     const ratio = x / rect.width;
-    setMuted(false);
-    setVolume(ratio);
+    applyVolume(ratio);
     setScrubVolume(ratio);
 
     const handlePointerMove = (e: PointerEvent) => {
       const rect = bar.getBoundingClientRect();
       const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
       const ratio = x / rect.width;
-      setVolume(ratio);
+      applyVolume(ratio);
       setScrubVolume(ratio);
     };
 
@@ -70,9 +77,14 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
   };
 
   const adjustVolume = (delta: number) => {
-    const { muted, volume } = usePlayerStore.getState();
-    if (muted) setMuted(false);
-    setVolume(Math.max(0, Math.min(1, volume + delta)));
+    const state = useAppSettings.getState().settings;
+    if (state.muted) {
+      player.muted = false;
+      setMuted(false);
+    }
+    const next = Math.max(0, Math.min(1, state.volume + delta));
+    player.volume = next;
+    setVolume(next);
   };
 
   const hoverVolume =

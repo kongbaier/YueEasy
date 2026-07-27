@@ -31,7 +31,8 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/shared/ui/sidebar";
-import { useAuthStore, useUiStore } from "@/stores";
+import { useAuthStore } from "@/stores";
+import { useLoginDialog } from "@/features/auth/login-dialog-store";
 
 const items = [
   { to: "/", icon: Home, label: "发现" },
@@ -140,7 +141,7 @@ export const AppSidebar = () => {
   const { state } = useSidebar();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const userId = useAuthStore((s) => s.userId);
-  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
+  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
 
   const [delayedCollapse, setDelayedCollapse] = useState(state === "collapsed");
 

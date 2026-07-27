@@ -26,8 +26,8 @@ import {
   useLikeStore,
   usePlayerPageStore,
   usePlayerStore,
-  useUiStore,
 } from "@/stores";
+import { useLoginDialog } from "@/features/auth/login-dialog-store";
 import { useQueuePanelStore } from "@/features/player/queue-panel-store";
 import { PlayModeControl } from "./PlayModeControl";
 import { SeekBar } from "./SeekBar";
@@ -214,7 +214,7 @@ const PlayerMenu = () => {
   const queue = usePlayerStore((s) => s.queue);
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
+  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
   const isLiked = useLikeStore((s) =>
     currentTrack ? s.isLiked(currentTrack.id) : false,
   );

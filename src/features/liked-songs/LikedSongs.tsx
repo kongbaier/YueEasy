@@ -8,7 +8,8 @@ import { ncm, toSongRef } from "@/shared/services/ncm";
 import type { SongRef } from "@/shared/types/playlist";
 import { Button } from "@/shared/ui/button";
 import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
-import { useAuthStore, usePlayerStore, useUiStore } from "@/stores";
+import { useAuthStore, usePlayerStore } from "@/stores";
+import { useLoginDialog } from "@/features/auth/login-dialog-store";
 
 const LikedSongsSkeleton = () => (
   <div className="p-6">
@@ -74,7 +75,7 @@ const LikedSongsContent = () => {
 export default function LikedSongs() {
   usePageTitle("我的喜欢", { root: true });
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
+  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
 
   if (!isLoggedIn) {
     return (

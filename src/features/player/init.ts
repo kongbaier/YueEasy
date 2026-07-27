@@ -1,42 +1,36 @@
 import { createPlayModeStrategy } from "@/features/player/core";
 import type { PlayMode, Track } from "@/features/player/core/types";
 import { usePlayerStore } from "@/features/player/store";
-import { getSetting, setSetting } from "@/shared/services/tauri";
+import { getStoreValue, setStoreValue } from "@/shared/services/store";
+import { useAppSettings } from "@/stores/settings";
 
 // ── restore saved player state ──
 
 export async function initPlayer() {
-  let raw: string;
-  try {
-    raw = await getSetting("player_state");
-  } catch {
-    return;
-  }
+  const raw = await getStoreValue("player_state");
   if (!raw) return;
 
-  let data: {
+  // ponytail: old SQLite stored player_state as JSON string, store plugin stores native objects
+  const data = (typeof raw === "string" ? JSON.parse(raw) : raw) as {
     queue: Track[];
     index: number;
     currentTime: number;
     playMode: PlayMode;
-    volume: number;
-    muted: boolean;
   };
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    await setSetting("player_state", "").catch(() => {});
-    return;
-  }
   if (!data.queue?.length) return;
 
   const player = usePlayerStore.getState().core;
   const tracks: Track[] = data.queue as Track[];
   const index = Math.min(Math.max(data.index, 0), tracks.length - 1);
 
+  // volume/muted from persisted settings
+  const settings = useAppSettings.getState().settings;
+  const savedVolume = settings.volume;
+  const savedMuted = settings.muted;
+
   player.initialize({
-    volume: data.volume ?? 1,
-    muted: data.muted ?? false,
+    volume: savedVolume,
+    muted: savedMuted,
     mode: createPlayModeStrategy(data.playMode ?? "sequential"),
   });
   player.setQueue(tracks, index);
@@ -45,8 +39,6 @@ export async function initPlayer() {
     queue: player.queue,
     currentTrack: player.currentTrack ?? null,
     playMode: data.playMode ?? "sequential",
-    volume: player.volume,
-    muted: player.muted,
     currentTime: data.currentTime ?? 0,
     duration: player.duration,
   });
@@ -56,7 +48,7 @@ export async function initPlayer() {
 
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
 
-function persistQueue() {
+async function persistQueue() {
   const data = usePlayerStore.getState();
   if (data.queue.length === 0 && !data.currentTrack) return;
 
@@ -71,11 +63,9 @@ function persistQueue() {
     index: data.core.index,
     currentTime: data.currentTime,
     playMode: data.playMode,
-    volume: data.volume,
-    muted: data.muted,
   };
 
-  setSetting("player_state", JSON.stringify(payload)).catch(() => {});
+  await setStoreValue("player_state", payload);
 }
 
 export function initQueuePersistence() {
@@ -83,9 +73,7 @@ export function initQueuePersistence() {
     if (
       state.queue === prevState.queue &&
       state.core.index === prevState.core.index &&
-      state.playMode === prevState.playMode &&
-      state.volume === prevState.volume &&
-      state.muted === prevState.muted
+      state.playMode === prevState.playMode
     )
       return;
     clearTimeout(saveTimer);

@@ -1,57 +1,114 @@
-use crate::db::connection::Database;
+use std::path::PathBuf;
 use tauri::State;
 
-#[tauri::command]
-pub fn cache_get(db: State<'_, Database>, key: String) -> Result<Option<String>, String> {
-    let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    match conn.query_row("SELECT value FROM cache WHERE key = ?1", [&key], |row| {
-        row.get::<_, String>(0)
-    }) {
-        Ok(v) => Ok(Some(v)),
-        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-        Err(e) => Err(e.to_string()),
+/// Filesystem-backed cache store.
+/// Replaces the old SQLite `cache` table.
+pub struct CacheState {
+    dir: PathBuf,
+}
+
+impl CacheState {
+    pub fn new(data_dir: &PathBuf) -> Self {
+        Self {
+            dir: data_dir.join("cache"),
+        }
+    }
+
+    fn key_path(&self, key: &str) -> PathBuf {
+        let safe: String = key
+            .chars()
+            .map(|c| {
+                if c.is_alphanumeric() || c == '-' || c == '_' || c == '.' || c == ':' {
+                    c
+                } else {
+                    '_'
+                }
+            })
+            .collect();
+        self.dir.join(format!("{safe}.json"))
     }
 }
 
 #[tauri::command]
-pub fn cache_set(db: State<'_, Database>, key: String, value: String) -> Result<(), String> {
-    let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    conn.execute(
-        "INSERT OR REPLACE INTO cache (key, value, updated_at) VALUES (?1, ?2, datetime('now'))",
-        rusqlite::params![key, value],
-    )
-    .map_err(|e| e.to_string())?;
+pub fn cache_get(
+    state: State<'_, CacheState>,
+    key: String,
+) -> Result<Option<String>, String> {
+    let path = state.key_path(&key);
+    if !path.exists() {
+        return Ok(None);
+    }
+    std::fs::read_to_string(&path)
+        .map(Some)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn cache_set(
+    state: State<'_, CacheState>,
+    key: String,
+    value: String,
+) -> Result<(), String> {
+    std::fs::create_dir_all(&state.dir).ok();
+    std::fs::write(state.key_path(&key), &value).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn cache_delete(
+    state: State<'_, CacheState>,
+    key: String,
+) -> Result<(), String> {
+    let path = state.key_path(&key);
+    if path.exists() {
+        std::fs::remove_file(&path).map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 
 #[tauri::command]
-pub fn cache_delete(db: State<'_, Database>, key: String) -> Result<(), String> {
-    let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM cache WHERE key = ?1", [&key])
-        .map_err(|e| e.to_string())?;
+pub fn cache_clear(
+    state: State<'_, CacheState>,
+    prefix: String,
+) -> Result<(), String> {
+    if !state.dir.exists() {
+        return Ok(());
+    }
+    let safe_prefix: String = prefix
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() || c == '-' || c == '_' || c == '.' || c == ':' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+
+    let entries = std::fs::read_dir(&state.dir).map_err(|e| e.to_string())?;
+    for entry in entries {
+        if let Ok(entry) = entry {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if safe_prefix.is_empty() || name.starts_with(&safe_prefix) {
+                std::fs::remove_file(entry.path()).ok();
+            }
+        }
+    }
     Ok(())
 }
 
 #[tauri::command]
-pub fn cache_clear(db: State<'_, Database>, prefix: String) -> Result<(), String> {
-    let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    conn.execute(
-        "DELETE FROM cache WHERE key LIKE ?1",
-        [format!("{prefix}%")],
-    )
-    .map_err(|e| e.to_string())?;
-    Ok(())
-}
-
-#[tauri::command]
-pub fn cache_size(db: State<'_, Database>) -> Result<u64, String> {
-    let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    let total: u64 = conn
-        .query_row(
-            "SELECT COALESCE(SUM(LENGTH(key) + LENGTH(value)), 0) FROM cache",
-            [],
-            |row| row.get(0),
-        )
-        .map_err(|e| e.to_string())?;
+pub fn cache_size(state: State<'_, CacheState>) -> Result<u64, String> {
+    if !state.dir.exists() {
+        return Ok(0);
+    }
+    let mut total = 0u64;
+    let entries = std::fs::read_dir(&state.dir).map_err(|e| e.to_string())?;
+    for entry in entries {
+        if let Ok(entry) = entry {
+            if let Ok(meta) = entry.metadata() {
+                total += meta.len();
+            }
+        }
+    }
     Ok(total)
 }

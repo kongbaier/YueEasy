@@ -3,27 +3,23 @@ import { Effect } from "@tauri-apps/api/window";
 import { Check, LogOut, RefreshCw, User } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { usePageTitle } from "@/app/layout/PageTitleContext";
+import { useLoginDialog } from "@/features/auth/login-dialog-store";
+import { useAppearanceSetting } from "@/shared/hooks/useSetting";
 import { toast } from "@/shared/lib/toast";
-import {
-  cacheClearAll,
-  cacheSize,
-  getSetting,
-  setSetting,
-  setWindowEffect,
-  windowEffectLabels,
-} from "@/shared/services/tauri";
+import { cacheClearAll, cacheSize } from "@/shared/services/cache";
+import { setWindowEffect } from "@/shared/services/effect";
 import type { Update } from "@/shared/services/updater";
 import {
   checkForUpdate,
   downloadAndInstall,
   installAndRelaunch,
 } from "@/shared/services/updater";
+import type { Theme, WindowsEffect } from "@/shared/types/settings";
 import { Button } from "@/shared/ui/button";
 import { ImageWithFade } from "@/shared/ui/image";
 import { Select } from "@/shared/ui/select";
 import { Switch } from "@/shared/ui/switch";
-import { useAuthStore, useUiStore } from "@/stores";
-import type { Theme } from "@/stores/settings";
+import { useAuthStore } from "@/stores";
 
 const labels: Record<Theme, string> = {
   system: "系统",
@@ -31,29 +27,38 @@ const labels: Record<Theme, string> = {
   dark: "深色",
 };
 
+const windowEffectLabels: Record<WindowsEffect, string> = {
+  [Effect.Mica]: "Mica",
+  [Effect.Tabbed]: "Mica Alt",
+  [Effect.Acrylic]: "Acrylic",
+  [Effect.Blur]: "Acrylic Thin",
+};
+
 export default function Settings() {
   usePageTitle("设置", { root: true });
-  const theme = useUiStore((s) => s.theme);
-  const setTheme = useUiStore((s) => s.setTheme);
+  const [theme, setTheme] = useAppearanceSetting("theme");
+  const [windowEffect, setWindowEffectState] =
+    useAppearanceSetting("window_effect");
+  const [closeBehavior, setCloseBehavior] =
+    useAppearanceSetting("close_behavior");
+  const closeToTray = closeBehavior === "hide";
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const nickname = useAuthStore((s) => s.nickname);
   const avatarUrl = useAuthStore((s) => s.avatarUrl);
   const userId = useAuthStore((s) => s.userId);
   const logout = useAuthStore((s) => s.logout);
-  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
-  const [windowEffect, setWindowEffectState] = useState<Effect>(Effect.Mica);
-  const [closeToTray, setCloseToTray] = useState(false);
+  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
   const [cacheBytes, setCacheBytes] = useState<number | null>(null);
 
-  const loadCacheSize = () => {
+  const loadCacheSize = useCallback(() => {
     cacheSize()
       .then(setCacheBytes)
       .catch(() => setCacheBytes(null));
-  };
+  }, []);
 
   useEffect(() => {
     loadCacheSize();
-  }, []);
+  }, [loadCacheSize]);
 
   const handleClearCache = () => {
     cacheClearAll()
@@ -85,28 +90,16 @@ export default function Settings() {
       .catch(() => setAppVersion("0.0.0"));
   }, []);
 
-  useEffect(() => {
-    getSetting("window_effect").then((effect) => {
-      if (effect) setWindowEffectState(effect as Effect);
-    });
-    getSetting("close_behavior").then((v) => {
-      setCloseToTray(v === "hide");
-    });
-  }, []);
-
-  const handleEffectChange = (effect: Effect) => {
+  const handleEffectChange = (effect: WindowsEffect) => {
     setWindowEffectState(effect);
-    setSetting("window_effect", effect);
     setWindowEffect(effect).catch(() => {
       setWindowEffectState(Effect.Mica);
-      setSetting("window_effect", Effect.Mica);
       toast.error("该效果不可用，已恢复为 Mica");
     });
   };
 
   const handleCloseToTrayChange = (checked: boolean) => {
-    setCloseToTray(checked);
-    setSetting("close_behavior", checked ? "hide" : "quit");
+    setCloseBehavior(checked ? "hide" : "quit");
   };
 
   const handleCheckUpdate = useCallback(async () => {
@@ -155,7 +148,7 @@ export default function Settings() {
                 value={theme}
               >
                 <Select.Trigger className="w-28">
-                  <Select.Value>{labels[theme]}</Select.Value>
+                  <Select.Value>{labels[theme as Theme]}</Select.Value>
                 </Select.Trigger>
                 <Select.Portal>
                   <Select.Positioner>
@@ -177,7 +170,7 @@ export default function Settings() {
             </Row>
             <Row description="Windows 窗口材质效果" label="窗口效果">
               <Select.Root
-                onValueChange={(v) => handleEffectChange(v as Effect)}
+                onValueChange={(v) => handleEffectChange(v as WindowsEffect)}
                 value={windowEffect}
               >
                 <Select.Trigger className="w-30">

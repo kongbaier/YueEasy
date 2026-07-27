@@ -18,8 +18,8 @@ import {
   useAuthStore,
   useLikeStore,
   usePlayerStore,
-  useUiStore,
 } from "@/stores";
+import { useLoginDialog } from "@/features/auth/login-dialog-store";
 
 interface TrackRowProps {
   track: SongRef;
@@ -33,7 +33,7 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
   const isLiked = useLikeStore((s) => s.isLiked(track.id));
   const toggleLike = useLikeStore((s) => s.toggle);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
+  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
 
   const handlePlayNext = () => {
     playNext(track);

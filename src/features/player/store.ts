@@ -28,8 +28,6 @@ interface PlayerStore {
   playMode: PlayMode;
   currentTime: number;
   duration: number;
-  muted: boolean;
-  volume: number;
 
   play: (track: Track) => Promise<void>;
   replaceAndPlay: (tracks: Track[], startIndex?: number) => Promise<void>;
@@ -40,8 +38,6 @@ interface PlayerStore {
   seek: (time: number) => void;
   setMode: (mode: PlayMode) => void;
   cycleMode: () => void;
-  setMuted: (muted: boolean) => void;
-  setVolume: (volume: number) => void;
   addToQueue: (track: Track) => Promise<void>;
   playNext: (track: Track) => Promise<void>;
   playFromIndex: (index: number) => Promise<void>;
@@ -78,8 +74,6 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     playMode: "sequential",
     currentTime: 0,
     duration: 0,
-    muted: player.muted,
-    volume: player.volume,
 
     play: async (track) => {
       const { currentTrack, queue } = get();
@@ -154,16 +148,6 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
             : "sequential";
       player.mode = createPlayModeStrategy(next);
       set({ playMode: next });
-    },
-
-    setMuted: (muted) => {
-      player.muted = muted;
-      set({ muted: player.muted });
-    },
-
-    setVolume: (volume) => {
-      player.volume = volume;
-      set({ volume: player.volume });
     },
 
     addToQueue: async (track) => {

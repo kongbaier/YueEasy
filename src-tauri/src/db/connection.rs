@@ -19,18 +19,7 @@ impl Database {
 
     fn migrate(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS settings (
-                key   TEXT PRIMARY KEY,
-                value TEXT NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS cache (
-                key        TEXT PRIMARY KEY,
-                value      TEXT NOT NULL,
-                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-            );
-
-            CREATE TABLE IF NOT EXISTS play_history (
+            "CREATE TABLE IF NOT EXISTS play_history (
                 id        INTEGER PRIMARY KEY AUTOINCREMENT,
                 song_id   INTEGER NOT NULL,
                 song_name TEXT NOT NULL,

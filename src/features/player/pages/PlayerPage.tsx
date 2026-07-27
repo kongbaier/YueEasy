@@ -25,8 +25,8 @@ import {
   useLikeStore,
   usePlayerPageStore,
   usePlayerStore,
-  useUiStore,
 } from "@/stores";
+import { useLoginDialog } from "@/features/auth/login-dialog-store";
 import { Lyrics } from "@/features/lyric/components/Lyrics";
 import { PlayerPageComments } from "./PlayerPageComments";
 import { PlayerPageControls } from "./PlayerPageControls";
@@ -183,7 +183,7 @@ const PlayerMenu = ({
   onToggleComments: () => void;
 }) => {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const setLoginDialogOpen = useUiStore((s) => s.setLoginDialogOpen);
+  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
   const isLiked = useLikeStore((s) => s.isLiked(currentTrack.id));
   const toggleLike = useLikeStore((s) => s.toggle);
   const [moreOpen, setMoreOpen] = useState(false);

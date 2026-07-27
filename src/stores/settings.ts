@@ -1,33 +1,54 @@
+import { Effect } from "@tauri-apps/api/window";
 import { create } from "zustand";
+import { loadAllEntries, setStoreValue } from "@/shared/services/store";
+import type {
+  AppearanceSettings,
+  PlayerSettings,
+  Settings,
+} from "@/shared/types/settings";
 
-export type Theme = "light" | "dark" | "system";
+export const PLAYER_DEFAULTS: PlayerSettings = {
+  volume: 1,
+  muted: false,
+};
 
-function getStoredTheme(): Theme {
-  if (typeof window === "undefined") return "system";
-  const stored = localStorage.getItem("theme");
-  if (stored === "light" || stored === "dark" || stored === "system")
-    return stored;
-  return "system";
+export const APPEARANCE_DEFAULTS: AppearanceSettings = {
+  theme: "system",
+  window_effect: Effect.Mica,
+  close_behavior: "quit",
+};
+
+const DEFAULTS: Settings = { ...PLAYER_DEFAULTS, ...APPEARANCE_DEFAULTS };
+
+async function loadSettings(): Promise<Settings> {
+  const settings = await loadAllEntries<Settings>();
+  return {
+    ...DEFAULTS,
+    ...settings,
+  };
 }
 
-interface UiStore {
-  theme: Theme;
-  loginDialogOpen: boolean;
-  isMaximized: boolean;
-  setTheme: (theme: Theme) => void;
-  setLoginDialogOpen: (open: boolean) => void;
-  setMaximized: (maximized: boolean) => void;
+interface SettingStore {
+  settings: Settings;
+  ready: boolean;
+
+  init: () => Promise<void>;
+  mergeSetting: (partial: Partial<Settings>) => void;
 }
 
-export const useUiStore = create<UiStore>((set) => ({
-  theme: getStoredTheme(),
-  loginDialogOpen: false,
-  isMaximized: false,
+export const useAppSettings = create<SettingStore>((set) => ({
+  settings: { ...DEFAULTS },
+  ready: false,
 
-  setTheme: (theme) => {
-    localStorage.setItem("theme", theme);
-    set({ theme });
+  init: async () => {
+    const settings = await loadSettings();
+    set({ settings, ready: true });
   },
-  setLoginDialogOpen: (open) => set({ loginDialogOpen: open }),
-  setMaximized: (maximized) => set({ isMaximized: maximized }),
+
+  mergeSetting: (partial) => {
+    set((store) => ({ settings: { ...store.settings, ...partial } }));
+    for (const [key, value] of Object.entries(partial)) {
+      setStoreValue(key, value);
+    }
+  },
 }));

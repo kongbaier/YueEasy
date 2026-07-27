@@ -4,7 +4,7 @@ use ncm_api_rs::Query;
 use serde_json::Value;
 
 use super::NcmState;
-use crate::db::connection::Database;
+use tauri_plugin_store::StoreExt;
 
 fn merge_cookies(existing: &str, new_cookies: &[String]) -> String {
     let mut map: HashMap<String, String> = HashMap::new();
@@ -49,8 +49,8 @@ fn build_query(params: &HashMap<String, String>, cookie: &str) -> Query {
 
 #[tauri::command]
 pub async fn ncm_request(
+    app_handle: tauri::AppHandle,
     state: tauri::State<'_, NcmState>,
-    db: tauri::State<'_, Database>,
     method: String,
     params: HashMap<String, String>,
 ) -> Result<Value, String> {
@@ -100,16 +100,11 @@ pub async fn ncm_request(
                 let new_cookie = merge_cookies(&inner.cookie, &resp.cookie);
                 inner.cookie = new_cookie.clone();
                 drop(inner);
-                log::info!(
-                    "[ncm_request] persisting cookie to SQLite (len={})",
-                    new_cookie.len()
-                );
-                let conn = db.conn.lock().map_err(|e| e.to_string())?;
-                conn.execute(
-                    "INSERT OR REPLACE INTO settings (key, value) VALUES ('auth_cookie', ?1)",
-                    [&new_cookie],
-                )
-                .map_err(|e| e.to_string())?;
+                log::info!("[ncm_request] persisting cookie (len={})", new_cookie.len());
+                if let Ok(store) = app_handle.store("settings.json") {
+                    store.set("auth_cookie", serde_json::json!(new_cookie));
+                    store.save().ok();
+                }
             }
             Ok(resp.body.take())
         }
@@ -119,22 +114,17 @@ pub async fn ncm_request(
 
 #[tauri::command]
 pub async fn ncm_set_cookie(
+    app_handle: tauri::AppHandle,
     state: tauri::State<'_, NcmState>,
-    db: tauri::State<'_, Database>,
     cookie: String,
 ) -> Result<(), String> {
     state.inner.lock().unwrap().cookie = cookie.clone();
-    log::info!(
-        "[ncm_set_cookie] persisting cookie to SQLite (len={})",
-        cookie.len()
-    );
-    let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    conn.execute(
-        "INSERT OR REPLACE INTO settings (key, value) VALUES ('auth_cookie', ?1)",
-        [&cookie],
-    )
-    .map_err(|e| e.to_string())?;
-    Ok(())
+    log::info!("[ncm_set_cookie] persisting cookie (len={})", cookie.len());
+    let store = app_handle
+        .store("settings.json")
+        .map_err(|e| e.to_string())?;
+    store.set("auth_cookie", serde_json::json!(cookie));
+    store.save().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -144,13 +134,14 @@ pub async fn ncm_get_cookie(state: tauri::State<'_, NcmState>) -> Result<String,
 
 #[tauri::command]
 pub async fn ncm_clear_cookie(
+    app_handle: tauri::AppHandle,
     state: tauri::State<'_, NcmState>,
-    db: tauri::State<'_, Database>,
 ) -> Result<(), String> {
-    log::info!("[ncm_clear_cookie] clearing cookie from memory and SQLite");
+    log::info!("[ncm_clear_cookie] clearing cookie from memory and store");
     state.inner.lock().unwrap().cookie.clear();
-    let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM settings WHERE key = 'auth_cookie'", [])
+    let store = app_handle
+        .store("settings.json")
         .map_err(|e| e.to_string())?;
-    Ok(())
+    store.set("auth_cookie", serde_json::json!(""));
+    store.save().map_err(|e| e.to_string())
 }

@@ -1,5 +1,6 @@
-import { use, useEffect, useRef, useState } from "react";
-import { ScrollContainerContext } from "@/shared/hooks/useScrollContainer";
+import { createContext, use, useEffect, useRef, useState } from "react";
+
+export const ScrollContainerContext = createContext<HTMLElement | null>(null);
 
 const BATCH = 30;
 const THRESHOLD = 600;

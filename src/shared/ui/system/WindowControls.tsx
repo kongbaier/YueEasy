@@ -1,11 +1,21 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Copy, Minus, Square, X } from "lucide-react";
-import { useUiStore } from "@/stores";
+import { useEffect, useState } from "react";
 import { Button } from "@/shared/ui/button";
 
 export const WindowControls = ({ className }: { className?: string }) => {
   const appWindow = getCurrentWindow();
-  const isMaximized = useUiStore((s) => s.isMaximized);
+  const [isMaximized, setIsMaximized] = useState(false);
+
+  useEffect(() => {
+    appWindow.isMaximized().then(setIsMaximized);
+    const unlisten = appWindow.onResized(() => {
+      appWindow.isMaximized().then(setIsMaximized);
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [appWindow]);
 
   const handleMinimize = () => appWindow.minimize();
   const handleClose = () => appWindow.close();

@@ -10,6 +10,7 @@ use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}
 use tauri::window::{Effect, EffectState};
 use tauri::utils::config::WindowEffectsConfig;
 use tauri_plugin_media::{MediaControlEventType, MediaExt};
+use tauri_plugin_store::StoreExt;
 use tauri_plugin_window_state::{StateFlags, WindowExt};
 
 #[derive(Debug, Clone, Serialize)]
@@ -43,6 +44,7 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_media::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
@@ -131,48 +133,67 @@ pub fn run() {
             let db = db::connection::Database::new(app_data.clone())
                 .map_err(|e| Box::<dyn std::error::Error>::from(e.to_string()))?;
 
-            let saved_cookie = db
-                .conn
-                .lock()
-                .ok()
-                .and_then(|conn| {
-                    conn.query_row::<String, _, _>(
-                        "SELECT value FROM settings WHERE key = 'auth_cookie'",
-                        [],
-                        |row| row.get(0),
-                    )
-                    .ok()
-                })
+            let cache_state = commands::cache::CacheState::new(&app_data);
+
+            // settings store (tauri-plugin-store backed JSON file)
+            let store = app.store("settings.json")?;
+
+            // one-time: migrate old SQLite settings → store
+            {
+                let conn = db.conn.lock().ok();
+                if let Some(conn) = conn {
+                    let mut stmt = conn
+                        .prepare("SELECT key, value FROM settings")
+                        .ok();
+                    if let Some(stmt) = stmt.as_mut() {
+                        let rows: Vec<(String, String)> = stmt
+                            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+                            .ok()
+                            .into_iter()
+                            .flat_map(|r| r.filter_map(|r| r.ok()))
+                            .collect();
+                        if !rows.is_empty() {
+                            log::info!(
+                                "[migration] moving {} keys from SQLite → store",
+                                rows.len()
+                            );
+                            for (key, value) in &rows {
+                                store.set(key, serde_json::json!(value));
+                            }
+                            store.save().ok();
+                        }
+                    }
+                }
+            }
+
+            let saved_cookie = store
+                .get("auth_cookie")
+                .and_then(|v| v.as_str().map(|s| s.to_string()))
                 .unwrap_or_default();
 
             if saved_cookie.is_empty() {
-                log::info!("[setup] no saved cookie found in SQLite");
+                log::info!("[setup] no saved cookie found");
             } else {
                 log::info!(
-                    "[setup] restored cookie from SQLite (len={})",
+                    "[setup] restored cookie from store (len={})",
                     saved_cookie.len()
                 );
             }
 
             app.manage(db);
+            app.manage(cache_state);
 
             // 窗口关闭行为：根据设置决定隐藏到托盘还是退出
             {
                 let app_handle = app.handle().clone();
                 window.on_window_event(move |event| {
                     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                        let db = app_handle.state::<db::connection::Database>();
-                        let behavior = db
-                            .conn
-                            .lock()
+                        let behavior = app_handle
+                            .store("settings.json")
                             .ok()
-                            .and_then(|conn| {
-                                conn.query_row::<String, _, _>(
-                                    "SELECT value FROM settings WHERE key = 'close_behavior'",
-                                    [],
-                                    |row| row.get(0),
-                                )
-                                .ok()
+                            .and_then(|s| {
+                                s.get("close_behavior")
+                                    .and_then(|v| v.as_str().map(String::from))
                             })
                             .unwrap_or_else(|| "quit".to_string());
                         if behavior == "hide" {
@@ -187,19 +208,9 @@ pub fn run() {
 
             // 恢复保存的窗口效果
             {
-                let db = app.state::<db::connection::Database>();
-                let saved_effect = db
-                    .conn
-                    .lock()
-                    .ok()
-                    .and_then(|conn| {
-                        conn.query_row::<String, _, _>(
-                            "SELECT value FROM settings WHERE key = 'window_effect'",
-                            [],
-                            |row| row.get(0),
-                        )
-                        .ok()
-                    })
+                let saved_effect = store
+                    .get("window_effect")
+                    .and_then(|v| v.as_str().map(|s| s.to_string()))
                     .unwrap_or_else(|| "mica".to_string());
 
                 let effect = match saved_effect.as_str() {
@@ -269,8 +280,6 @@ pub fn run() {
             commands::history::history_add,
             commands::history::history_get,
             commands::history::history_mark_synced,
-            commands::settings::get_setting,
-            commands::settings::set_setting,
             commands::download::download_song,
             commands::smtc::init_smtc,
             commands::smtc::update_smtc_metadata,

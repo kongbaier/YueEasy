@@ -3,12 +3,24 @@ import { useRef, useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { usePlayerStore } from "@/stores";
+import { usePlayerSetting } from "@/shared/hooks/useSetting";
 
 export const VolumeControl = () => {
-  const volume = usePlayerStore((s) => s.volume);
-  const muted = usePlayerStore((s) => s.muted);
-  const setVolume = usePlayerStore((s) => s.setVolume);
-  const setMuted = usePlayerStore((s) => s.setMuted);
+  const [volume, setVolume] = usePlayerSetting("volume");
+  const [muted, setMuted] = usePlayerSetting("muted");
+  const player = usePlayerStore((s) => s.core);
+
+  const applyVolume = (v: number) => {
+    player.volume = v;
+    setVolume(v);
+    setMuted(false);
+  };
+
+  const applyMuted = (m: boolean) => {
+    player.muted = m;
+    setMuted(m);
+  };
+
   const [open, setOpen] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -19,14 +31,13 @@ export const VolumeControl = () => {
     const rect = bar.getBoundingClientRect();
     const y = Math.max(0, Math.min(rect.bottom - e.clientY, rect.height));
     const ratio = y / rect.height;
-    setMuted(false);
-    setVolume(ratio);
+    applyVolume(ratio);
 
     const handlePointerMove = (e: PointerEvent) => {
       const rect = bar.getBoundingClientRect();
       const y = Math.max(0, Math.min(rect.bottom - e.clientY, rect.height));
       const ratio = y / rect.height;
-      setVolume(ratio);
+      applyVolume(ratio);
     };
 
     const handlePointerUp = () => {
@@ -40,7 +51,7 @@ export const VolumeControl = () => {
     bar.addEventListener("pointerup", handlePointerUp);
   };
 
-  const toggleMute = () => setMuted(!muted);
+  const toggleMute = () => applyMuted(!muted);
 
   const handleControlEnter = () => {
     clearTimeout(closeTimerRef.current);

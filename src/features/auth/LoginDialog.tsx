@@ -12,7 +12,8 @@ import {
 } from "@/shared/ui/dialog";
 import { ImageWithFade } from "@/shared/ui/image";
 import { Input } from "@/shared/ui/input";
-import { useAuthStore, useUiStore } from "@/stores";
+import { useAuthStore } from "@/stores";
+import { useLoginDialog } from "@/features/auth/login-dialog-store";
 
 type LoginTab = "password" | "sms" | "qr";
 
@@ -40,8 +41,8 @@ export const LoginDialog = () => {
   );
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const open = useUiStore((s) => s.loginDialogOpen);
-  const setOpen = useUiStore((s) => s.setLoginDialogOpen);
+  const open = useLoginDialog((s) => s.open);
+  const setOpen = useLoginDialog((s) => s.setOpen);
 
   const clearQrTimer = useCallback(() => {
     if (qrTimerRef.current !== undefined) {

@@ -4,7 +4,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import type { SongRef } from "@/shared/types/playlist";
 import { useLoadMore } from "@/shared/hooks/useLoadMore";
-import { ScrollContainerContext } from "@/shared/hooks/useScrollContainer";
+import { ScrollContainerContext } from "@/shared/hooks/useLoadMore";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
 import { usePlayerStore } from "@/stores";
