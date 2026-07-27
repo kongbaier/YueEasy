@@ -58,12 +58,12 @@ export function SuggestDropdown({
         </span>
       </div>
       <div className="max-h-64 overflow-y-auto">
-        {items.map((item, i) => {
+        {items.map((item) => {
           const Icon = ICON_MAP[item.kind];
           return (
             <button
               className="flex items-center gap-3 w-full rounded-[3px] px-2.5 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
-              key={`${item.kind}-${i}`}
+              key={item.label + item.kind}
               onClick={() => onPick(item.keyword)}
               type="button"
             >

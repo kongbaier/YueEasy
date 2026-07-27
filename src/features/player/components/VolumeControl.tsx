@@ -3,21 +3,19 @@ import { useRef, useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { usePlayerStore } from "@/stores";
-import { usePlayerSetting } from "@/shared/hooks/useSetting";
+
 
 export const VolumeControl = () => {
-  const [volume, setVolume] = usePlayerSetting("volume");
-  const [muted, setMuted] = usePlayerSetting("muted");
-  const player = usePlayerStore((s) => s.core);
+  const volume = usePlayerStore((s) => s.volume);
+  const muted = usePlayerStore((s) => s.muted);
+  const setVolume = usePlayerStore((s) => s.setVolume);
+  const setMuted = usePlayerStore((s) => s.setMuted);
 
   const applyVolume = (v: number) => {
-    player.volume = v;
     setVolume(v);
-    setMuted(false);
   };
 
   const applyMuted = (m: boolean) => {
-    player.muted = m;
     setMuted(m);
   };
 

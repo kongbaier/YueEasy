@@ -1,0 +1,39 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react"],
+  "env": {
+    "browser": true,
+    "es2022": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "style": "off",
+    "perf": "warn",
+    "pedantic": "off",
+    "restriction": "off",
+    "nursery": "off"
+  },
+  "rules": {
+    "no-shadow": "off",
+    "prefer-const": "warn",
+    "react/react-compiler": "error",
+    "react/react-in-jsx-scope": "off",
+    "react/no-unstable-nested-components": [
+      "warn",
+      {
+        "allowAsProps": true
+      }
+    ],
+    "typescript/consistent-type-imports": [
+      "warn",
+      { "fixStyle": "separate-type-imports" }
+    ]
+  },
+  "settings": {
+    "react": {
+      "version": "19.0.0"
+    }
+  },
+  "ignorePatterns": ["dist/", "build/", "node_modules/", "src-tauri/"]
+}

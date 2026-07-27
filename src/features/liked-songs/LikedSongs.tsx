@@ -15,7 +15,7 @@ const LikedSongsSkeleton = () => (
   <div className="p-6">
     <div className="space-y-0.5">
       {Array.from({ length: 8 }).map((_, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
+        // oxlint-disable-next-line react/no-array-index-key
         <TrackRowSkeleton index={i} key={i} />
       ))}
     </div>

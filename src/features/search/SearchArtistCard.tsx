@@ -49,7 +49,10 @@ export function SearchArtistCard({ item }: SearchArtistCardProps) {
 export function SearchArtistCardSkeleton() {
   return (
     <div className="rounded-lg p-3 flex flex-col items-center">
-      <Skeleton className="w-full max-w-[160px] aspect-square rounded-full" shimmer />
+      <Skeleton
+        className="w-full max-w-[160px] aspect-square rounded-full"
+        shimmer
+      />
       <Skeleton className="h-4 w-2/3 mt-2 rounded" shimmer />
       <Skeleton className="h-3 w-1/3 mt-1 rounded" shimmer />
     </div>

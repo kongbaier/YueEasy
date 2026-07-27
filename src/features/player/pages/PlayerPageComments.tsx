@@ -1,5 +1,4 @@
 import { Heart, MessageSquare } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { ImageWithFade } from "@/shared/ui/image";
 import { VirtuosoScroller } from "@/shared/ui/virtuoso";
@@ -8,6 +7,7 @@ import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
 import { ncm } from "@/shared/services/ncm";
 import type { NcmComment } from "@/shared/services/ncm/types/comment.response";
+import { useQuery } from "@tanstack/react-query";
 
 function relativeTime(timestamp: number): string {
   const now = Date.now();
@@ -90,30 +90,20 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
 };
 
 export const PlayerPageComments = ({ songId }: { songId: number }) => {
-  const [hotComments, setHotComments] = useState<NcmComment[]>([]);
-  const [comments, setComments] = useState<NcmComment[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const { isLoading, data } = useQuery({
+    queryKey: ["comments", songId],
+    queryFn: () =>
+      ncm
+        .commentMusic(songId, 40, 0)
+        .then((data) => {
+          return data;
+        })
+        .catch(() => {
+          toast.error("加载评论失败");
+        }),
+  });
 
-  useEffect(() => {
-    setLoading(true);
-    ncm
-      .commentMusic(songId, 40, 0)
-      .then((data) => {
-        setHotComments(data.hotComments ?? []);
-        setComments(data.comments ?? []);
-        setTotal(data.total ?? 0);
-      })
-      .catch(() => {
-        setHotComments([]);
-        setComments([]);
-        setTotal(0);
-        toast.error("加载评论失败");
-      })
-      .finally(() => setLoading(false));
-  }, [songId]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="h-full w-full flex items-center justify-center">
         <p className="text-xs text-muted-foreground">加载中...</p>
@@ -121,8 +111,9 @@ export const PlayerPageComments = ({ songId }: { songId: number }) => {
     );
   }
 
-  const allComments = [...hotComments, ...comments];
-  const hotCount = hotComments.length;
+  const allComments = [...(data?.hotComments ?? []), ...(data?.comments ?? [])];
+  const hotCount = data?.hotComments?.length ?? 0;
+  const total = data?.total ?? 0;
 
   return (
     <div className="h-full w-full flex flex-col">

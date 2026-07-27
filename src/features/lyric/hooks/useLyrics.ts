@@ -41,8 +41,7 @@ export function useLyrics(): LyricsState {
   const hasWordLyrics = yrc.length > 0;
   const mainLines = hasWordLyrics ? yrc : rawLyric;
   const lines = mainLines.length > 0 ? mainLines : tlines;
-  const translatedLyric =
-    mainLines.length > 0 ? tlines.map((l) => l.text) : [];
+  const translatedLyric = mainLines.length > 0 ? tlines.map((l) => l.text) : [];
 
   const index = useMemo(() => {
     if (lines.length === 0) return -1;
@@ -56,30 +55,34 @@ export function useLyrics(): LyricsState {
     return -1;
   }, [lines, currentTime]);
 
-  const { currentWordIndex, wordProgress } = useMemo(() => {
-    if (!hasWordLyrics || index < 0)
-      return { currentWordIndex: -1, wordProgress: 0 };
-    const line = lines[index];
-    if (!line?.words?.length) return { currentWordIndex: -1, wordProgress: 0 };
+  const line = lines[index];
+
+  const [currentWordIndex, wordProgress] = useMemo(() => {
+    if (!hasWordLyrics || !line?.words?.length) {
+      return [-1, 0] as const;
+    }
 
     const elapsed = currentTime * 1000 - line.startMs;
+    const words = line.words;
 
-    for (let i = line.words.length - 1; i >= 0; i--) {
-      const w = line.words[i];
-      if (elapsed >= w.startMs) {
-        if (elapsed <= w.startMs + w.durationMs) {
-          // Within this word
-          return {
-            currentWordIndex: i,
-            wordProgress: Math.min((elapsed - w.startMs) / w.durationMs, 1),
-          };
-        }
-        // Past this word's end — still the last word we've reached
-        return { currentWordIndex: i, wordProgress: 1 };
+    for (let i = words.length - 1; i >= 0; i--) {
+      const word = words[i];
+      if (elapsed < word.startMs) continue;
+
+      const wordEnd = word.startMs + word.durationMs;
+
+      if (elapsed <= wordEnd) {
+        return [
+          i,
+          Math.min((elapsed - word.startMs) / word.durationMs, 1),
+        ] as const;
       }
+
+      return [i, 1] as const;
     }
-    return { currentWordIndex: -1, wordProgress: 0 };
-  }, [hasWordLyrics, index, lines, currentTime]);
+
+    return [-1, 0] as const;
+  }, [hasWordLyrics, line, currentTime]);
 
   return {
     lines,

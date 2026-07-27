@@ -28,7 +28,7 @@ export async function historyGet(
   limit: number,
   offset: number,
 ): Promise<PlayRecord[]> {
-  // biome-ignore lint/suspicious/noExplicitAny: Tauri IPC typing
+  // oxlint-disable-next-line typescript/no-explicit-any
   const raw = await invoke<any[]>("history_get", { limit, offset });
   return raw.map((r) => ({
     ...r,

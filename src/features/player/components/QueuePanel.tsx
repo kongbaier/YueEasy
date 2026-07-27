@@ -1,7 +1,8 @@
 import { Music, Trash2, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { VirtuosoHandle } from "react-virtuoso";
 import { Virtuoso } from "react-virtuoso";
+import { AnimatePresence, motion } from "motion/react";
 import { useShallow } from "zustand/shallow";
 import { Button } from "@/shared/ui/button";
 import {
@@ -99,25 +100,10 @@ export const QueuePanel = () => {
       close: s.close,
     })),
   );
-  const [visible, setVisible] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
-  useEffect(() => {
-    if (opened) {
-      setVisible(true);
-    }
-  }, [opened]);
-
-  const handleClose = () => {
-    setVisible(false);
-  };
-
-  const handleTransitionEnd = () => {
-    if (!visible) {
-      close();
-    }
-  };
+  const handleClose = () => close();
 
   const handlePlayTrack = (index: number) => {
     playFromIndex(index);
@@ -148,121 +134,123 @@ export const QueuePanel = () => {
     }
   }, [currentIndex]);
 
-  if (!opened) return null;
-
   return (
-    <div className="isolate fixed inset-0 z-50 flex justify-end">
-      <button
-        aria-label="关闭播放列表"
-        className="absolute inset-0 cursor-default"
-        onClick={handleClose}
-        type="button"
-      />
+    <AnimatePresence>
+      {opened && (
+        <div className="isolate fixed inset-0 z-50 flex justify-end">
+          <button
+            aria-label="关闭播放列表"
+            className="absolute inset-0 cursor-default"
+            onClick={handleClose}
+            type="button"
+          />
 
-      <aside
-        className={cn(
-          "relative w-80 h-full bg-white dark:bg-black shadow-xl dark:shadow-black/30 flex flex-col z-10 transition-transform duration-300 ease-out",
-          visible ? "translate-x-0" : "translate-x-full",
-        )}
-        onTransitionEnd={handleTransitionEnd}
-      >
-        <header className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-          <h2 className="text-sm font-medium">
-            播放列表
-            {queue.length > 0 && (
-              <span className="ml-1.5 text-xs text-text-muted">
-                ({queue.length})
-              </span>
-            )}
-          </h2>
-          <div className="flex items-center gap-1">
-            {queue.length > 0 && (
-              <Button
-                className="border-none"
-                onClick={() => setClearConfirmOpen(true)}
-                title="清空播放列表"
-                type="button"
-                variant="outline"
+          <motion.aside
+            animate={{ x: 0 }}
+            className="relative w-80 h-full bg-white dark:bg-black shadow-xl dark:shadow-black/30 flex flex-col z-10"
+            exit={{ x: "100%" }}
+            initial={{ x: "100%" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <header className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+              <h2 className="text-sm font-medium">
+                播放列表
+                {queue.length > 0 && (
+                  <span className="ml-1.5 text-xs text-text-muted">
+                    ({queue.length})
+                  </span>
+                )}
+              </h2>
+              <div className="flex items-center gap-1">
+                {queue.length > 0 && (
+                  <Button
+                    className="border-none"
+                    onClick={() => setClearConfirmOpen(true)}
+                    title="清空播放列表"
+                    type="button"
+                    variant="outline"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                )}
+                <Button
+                  className="border-none"
+                  onClick={handleClose}
+                  type="button"
+                  variant="outline"
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+            </header>
+
+            <div className="flex-1 relative">
+              <div
+                className={cn(
+                  "absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-muted transition-all duration-300",
+                  queue.length === 0
+                    ? "opacity-100 scale-100"
+                    : "opacity-0 scale-95 pointer-events-none",
+                )}
               >
-                <Trash2 className="size-4" />
-              </Button>
-            )}
-            <Button
-              className="border-none"
-              onClick={handleClose}
-              type="button"
-              variant="outline"
-            >
-              <X className="size-4" />
-            </Button>
-          </div>
-        </header>
-
-        <div className="flex-1 relative">
-          <div
-            className={cn(
-              "absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-muted transition-all duration-300",
-              queue.length === 0
-                ? "opacity-100 scale-100"
-                : "opacity-0 scale-95 pointer-events-none",
-            )}
-          >
-            <Music className="size-10 opacity-30" />
-            <p className="text-xs">播放列表为空</p>
-            <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
-          </div>
-          <div
-            className={cn(
-              "h-full transition-all duration-300",
-              queue.length > 0
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-2 pointer-events-none",
-            )}
-          >
-            <Virtuoso
-              components={{ Scroller: VirtuosoScroller }}
-              computeItemKey={(index) => queue[index]?.id ?? index}
-              fixedItemHeight={48}
-              itemContent={(index) => (
-                <QueueItem
-                  index={index}
-                  isCurrent={currentTrack?.id === queue[index]?.id}
-                  onPlay={handlePlayTrack}
-                  onRemove={handleRemove}
-                  track={queue[index]}
+                <Music className="size-10 opacity-30" />
+                <p className="text-xs">播放列表为空</p>
+                <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
+              </div>
+              <div
+                className={cn(
+                  "h-full transition-all duration-300",
+                  queue.length > 0
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-2 pointer-events-none",
+                )}
+              >
+                <Virtuoso
+                  components={{ Scroller: VirtuosoScroller }}
+                  computeItemKey={(index) => queue[index]?.id ?? index}
+                  fixedItemHeight={48}
+                  itemContent={(index) => (
+                    <QueueItem
+                      index={index}
+                      isCurrent={currentTrack?.id === queue[index]?.id}
+                      onPlay={handlePlayTrack}
+                      onRemove={handleRemove}
+                      track={queue[index]}
+                    />
+                  )}
+                  overscan={100}
+                  ref={(ref) => {
+                    virtuosoRef.current = ref;
+                    if (ref && currentIndex >= 0) scrollToCurrent();
+                  }}
+                  style={{ height: "100%" }}
+                  totalCount={queue.length}
                 />
-              )}
-              overscan={100}
-              ref={(ref) => {
-                virtuosoRef.current = ref;
-                if (ref && currentIndex >= 0) scrollToCurrent();
-              }}
-              style={{ height: "100%" }}
-              totalCount={queue.length}
-            />
-          </div>
-        </div>
-      </aside>
+              </div>
+            </div>
+          </motion.aside>
 
-      <Dialog onOpenChange={setClearConfirmOpen} open={clearConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>清空播放列表</DialogTitle>
-            <DialogDescription>
-              确定要清空播放列表吗？此操作不可撤销。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              onClick={() => setClearConfirmOpen(false)}
-              variant="outline"
-            >
-              取消
-            </Button>
-            <Button onClick={handleClear}>确定</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          <Dialog onOpenChange={setClearConfirmOpen} open={clearConfirmOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>清空播放列表</DialogTitle>
+                <DialogDescription>
+                  确定要清空播放列表吗？此操作不可撤销。
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  onClick={() => setClearConfirmOpen(false)}
+                  variant="outline"
+                >
+                  取消
+                </Button>
+                <Button onClick={handleClear}>确定</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
+    </AnimatePresence>
   );
 };

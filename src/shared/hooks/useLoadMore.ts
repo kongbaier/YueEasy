@@ -6,13 +6,11 @@ const BATCH = 30;
 const THRESHOLD = 600;
 
 export const useLoadMore = (total: number) => {
-  const [count, setCount] = useState(() => Math.min(BATCH, total));
+  const [loadedCount, setLoadedCount] = useState(BATCH);
   const container = use(ScrollContainerContext);
   const rafRef = useRef<number>(0);
 
-  useEffect(() => {
-    setCount(Math.min(BATCH, total));
-  }, [total]);
+  const count = Math.min(loadedCount, total);
 
   useEffect(() => {
     if (!container || count >= total) return;
@@ -23,7 +21,7 @@ export const useLoadMore = (total: number) => {
         rafRef.current = 0;
         const maxScroll = container.scrollHeight - container.clientHeight;
         if (maxScroll - container.scrollTop < THRESHOLD) {
-          setCount((prev) => Math.min(prev + BATCH, total));
+          setLoadedCount((prev) => Math.min(prev + BATCH, total));
         }
       });
     };

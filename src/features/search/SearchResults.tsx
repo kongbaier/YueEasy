@@ -6,18 +6,9 @@ import type {
   NcmSearchUser,
 } from "@/shared/services/ncm";
 import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
-import {
-  SearchAlbumCard,
-  SearchAlbumCardSkeleton,
-} from "./SearchAlbumCard";
-import {
-  SearchArtistCard,
-  SearchArtistCardSkeleton,
-} from "./SearchArtistCard";
-import {
-  SearchUserCard,
-  SearchUserCardSkeleton,
-} from "./SearchUserCard";
+import { SearchAlbumCard, SearchAlbumCardSkeleton } from "./SearchAlbumCard";
+import { SearchArtistCard, SearchArtistCardSkeleton } from "./SearchArtistCard";
+import { SearchUserCard, SearchUserCardSkeleton } from "./SearchUserCard";
 import {
   GRID_SKELETON_COUNT,
   SKELETON_COUNT,
@@ -32,7 +23,7 @@ function LoadingState({ type }: { type: SearchType }) {
     return (
       <div className="space-y-0.5">
         {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, order never changes
+          // oxlint-disable-next-line react/no-array-index-key
           <TrackRowSkeleton index={i} key={i} />
         ))}
       </div>
@@ -49,26 +40,21 @@ function LoadingState({ type }: { type: SearchType }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
       {Array.from({ length: GRID_SKELETON_COUNT }).map((_, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, order never changes
+        // oxlint-disable-next-line react/no-array-index-key
         <SkeletonComponent key={i} />
       ))}
     </div>
   );
 }
 
-function NoResults({
-  keyword,
-  type,
-}: {
-  keyword: string;
-  type: SearchType;
-}) {
+function NoResults({ keyword, type }: { keyword: string; type: SearchType }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-3">
       <SearchX className="size-10 text-muted-foreground/30" />
       <p className="text-sm text-muted-foreground">
-        没有找到与 "<span className="text-foreground font-medium">{keyword}</span>
-        " 相关的{TYPE_LABEL[type]}
+        没有找到与 "
+        <span className="text-foreground font-medium">{keyword}</span>" 相关的
+        {TYPE_LABEL[type]}
       </p>
     </div>
   );

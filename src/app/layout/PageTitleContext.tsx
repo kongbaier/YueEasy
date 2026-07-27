@@ -1,5 +1,11 @@
 import { useEffectOnActive } from "keepalive-for-react";
-import { createContext, useCallback, useContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import { useLocation } from "react-router-dom";
 
 interface BreadcrumbEntry {
@@ -62,8 +68,13 @@ export function PageTitleProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const value = useMemo(
+    () => ({ breadcrumbs: stack, pushBreadcrumb }),
+    [stack, pushBreadcrumb],
+  );
+
   return (
-    <PageTitleContext.Provider value={{ breadcrumbs: stack, pushBreadcrumb }}>
+    <PageTitleContext.Provider value={value}>
       {children}
     </PageTitleContext.Provider>
   );

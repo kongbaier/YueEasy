@@ -3,24 +3,17 @@ import { useCallback, useRef, useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { FollowTooltip } from "@/features/player/components/follow-tooltip";
 import { usePlayerStore } from "@/stores";
-import { usePlayerSetting } from "@/shared/hooks/useSetting";
-import { useAppSettings } from "@/stores/settings";
 
 const STEP = 0.1;
 
 export const PlayerPageVolume = ({ className }: { className?: string }) => {
-  const [volume, setVolume] = usePlayerSetting("volume");
-  const [muted, setMuted] = usePlayerSetting("muted");
-  const player = usePlayerStore((s) => s.core);
-
-  const applyVolume = (v: number) => {
-    player.volume = v;
-    setVolume(v);
-    setMuted(false);
-  };
+  const volume = usePlayerStore((s) => s.volume);
+  const muted = usePlayerStore((s) => s.muted);
+  const setVolume = usePlayerStore((s) => s.setVolume);
 
   const barRef = useRef<HTMLDivElement>(null);
   const [scrubVolume, setScrubVolume] = useState<number | null>(null);
+  const [hoverVolume, setHoverVolume] = useState(0);
 
   const displayVolume = muted ? 0 : (scrubVolume ?? volume);
 
@@ -33,6 +26,7 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
     const rect = bar.getBoundingClientRect();
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
     setHoverBarX(x);
+    setHoverVolume(x / rect.width);
     setIsHovering(true);
   }, []);
 
@@ -53,44 +47,36 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
     const rect = bar.getBoundingClientRect();
     const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
     const ratio = x / rect.width;
-    applyVolume(ratio);
+    setVolume(ratio);
     setScrubVolume(ratio);
 
-    const handlePointerMove = (e: PointerEvent) => {
-      const rect = bar.getBoundingClientRect();
-      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-      const ratio = x / rect.width;
-      applyVolume(ratio);
-      setScrubVolume(ratio);
+    const handleDragMove = () => {
+      const dragRect = bar.getBoundingClientRect();
+      const dragX = Math.max(
+        0,
+        Math.min(e.clientX - dragRect.left, dragRect.width),
+      );
+      const dragRatio = dragX / dragRect.width;
+      setVolume(dragRatio);
+      setScrubVolume(dragRatio);
     };
 
     const handlePointerUp = () => {
       setScrubVolume(null);
       bar.releasePointerCapture(e.pointerId);
-      bar.removeEventListener("pointermove", handlePointerMove);
+      bar.removeEventListener("pointermove", handleDragMove);
       bar.removeEventListener("pointerup", handlePointerUp);
     };
 
     bar.setPointerCapture(e.pointerId);
-    bar.addEventListener("pointermove", handlePointerMove);
+    bar.addEventListener("pointermove", handleDragMove);
     bar.addEventListener("pointerup", handlePointerUp);
   };
 
   const adjustVolume = (delta: number) => {
-    const state = useAppSettings.getState().settings;
-    if (state.muted) {
-      player.muted = false;
-      setMuted(false);
-    }
-    const next = Math.max(0, Math.min(1, state.volume + delta));
-    player.volume = next;
+    const next = Math.max(0, Math.min(1, volume + delta));
     setVolume(next);
   };
-
-  const hoverVolume =
-    barRef.current && isHovering
-      ? hoverBarX / barRef.current.getBoundingClientRect().width
-      : displayVolume;
 
   return (
     <div className={`flex items-center gap-1 ${className ?? ""}`}>

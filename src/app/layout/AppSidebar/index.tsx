@@ -10,8 +10,9 @@ import {
   Settings,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "motion/react";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
 import type { TopPlaylist } from "@/shared/services/ncm";
@@ -28,9 +29,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarSeparator,
   SidebarTrigger,
   useSidebar,
 } from "@/shared/ui/sidebar";
+import { useLocalStorageState } from "@/shared/hooks/useLocalStorageState";
 import { useAuthStore } from "@/stores";
 import { useLoginDialog } from "@/features/auth/login-dialog-store";
 
@@ -47,93 +50,85 @@ const myItems = [
 
 const footerItems = [{ to: "/settings", icon: Settings, label: "设置" }];
 
-const useNavIndicator = () => {
+const useNavIndicator = (): React.CSSProperties => {
   const location = useLocation();
   const { state } = useSidebar();
-  const elRef = useRef<HTMLDivElement>(null);
+  const locationPathname = location.pathname;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is a trigger, not a value read
-  useEffect(() => {
-    const el = elRef.current;
-    if (!el) return;
+  // Only store measured position; derived-from-state opacity is handled during render
+  const [position, setPosition] = useState<{
+    left: number;
+    top: number;
+    height: number;
+  } | null>(null);
 
-    if (state === "collapsed") {
-      el.style.opacity = "0";
-      return;
-    }
+  useLayoutEffect(() => {
+    if (state === "collapsed") return;
 
-    const sidebar = document.querySelector(
-      '[data-sidebar="sidebar"]',
-    ) as HTMLElement;
-    if (!sidebar) return;
+    const raf = requestAnimationFrame(() => {
+      const sidebar = document.querySelector(
+        '[data-sidebar="sidebar"]',
+      ) as HTMLElement;
+      if (!sidebar) return;
 
-    const activeBtn = sidebar.querySelector("[data-active]") as HTMLElement;
-    if (!activeBtn) {
-      el.style.opacity = "0";
-      return;
-    }
+      const activeBtn = sidebar.querySelector("[data-active]") as HTMLElement;
+      if (!activeBtn) return;
 
-    const sidebarRect = sidebar.getBoundingClientRect();
-    const btnRect = activeBtn.getBoundingClientRect();
-    const btnH = btnRect.height;
-    const top = btnRect.top - sidebarRect.top + btnH * 0.25;
-    const left = btnRect.left - sidebarRect.left;
-    const height = btnH * 0.5;
+      const sidebarRect = sidebar.getBoundingClientRect();
+      const btnRect = activeBtn.getBoundingClientRect();
+      const btnH = btnRect.height;
 
-    el.style.left = `${left}px`;
-    el.style.height = `${height}px`;
-    el.style.transform = `translateY(${top}px)`;
-    el.style.opacity = "1";
-  }, [location.pathname, state]);
+      setPosition({
+        left: btnRect.left - sidebarRect.left,
+        height: btnH * 0.5,
+        top: btnRect.top - sidebarRect.top + btnH * 0.25,
+      });
+    });
 
-  return elRef;
+    return () => cancelAnimationFrame(raf);
+  }, [locationPathname, state]);
+
+  // Derive indicator style during render to avoid setState in effect
+  if (state === "collapsed" || !position) {
+    return { opacity: 0 };
+  }
+
+  return {
+    left: position.left,
+    height: position.height,
+    transform: `translateY(${position.top}px)`,
+    opacity: 1,
+  };
 };
 
 const NavIndicator = () => {
-  const ref = useNavIndicator();
+  const indicatorStyle = useNavIndicator();
   return (
     <div
-      className="pointer-events-none absolute top-0 z-10 w-0.5 rounded-r-full bg-primary opacity-0 transition-[transform,opacity] duration-250 ease-out"
-      ref={ref}
+      className="pointer-events-none absolute top-0 z-10 w-0.5 rounded-r-full bg-primary transition-[transform,opacity] duration-250 ease-out"
+      style={indicatorStyle}
     />
   );
 };
 
-const SidebarBrand = ({ expanded }: { expanded: boolean }) => {
-  const [visible, setVisible] = useState(expanded);
-  const [entered, setEntered] = useState(expanded);
-
-  useEffect(() => {
-    if (expanded) {
-      setVisible(true);
-      const raf = requestAnimationFrame(() => {
-        setEntered(true);
-      });
-      return () => cancelAnimationFrame(raf);
-    } else {
-      setEntered(false);
-      const timer = setTimeout(() => setVisible(false), 200);
-      return () => clearTimeout(timer);
-    }
-  }, [expanded]);
-
-  if (!visible) return null;
-
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-2 shrink-0 overflow-hidden whitespace-nowrap transition-all duration-200",
-        entered ? "max-w-40 opacity-100" : "max-w-0 opacity-0",
-      )}
-    >
-      {" "}
-      <img alt="icon" className="size-4" src="/icon.svg" />
-      <span className="text-sm">
-        <span className="text-red-400">乐</span>·易
-      </span>
-    </div>
-  );
-};
+const SidebarBrand = ({ expanded }: { expanded: boolean }) => (
+  <AnimatePresence>
+    {expanded && (
+      <motion.div
+        animate={{ maxWidth: "10rem", opacity: 1 }}
+        className="flex items-center gap-2 shrink-0 overflow-hidden whitespace-nowrap"
+        exit={{ maxWidth: 0, opacity: 0 }}
+        initial={{ maxWidth: 0, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <img alt="icon" className="size-4" src="/icon.svg" />
+        <span className="text-sm">
+          <span className="text-red-400">乐</span>·易
+        </span>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
 
 export const AppSidebar = () => {
   const location = useLocation();
@@ -143,35 +138,15 @@ export const AppSidebar = () => {
   const userId = useAuthStore((s) => s.userId);
   const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
 
-  const [delayedCollapse, setDelayedCollapse] = useState(state === "collapsed");
-
-  useEffect(() => {
-    if (state !== "collapsed") {
-      setDelayedCollapse(false);
-      return;
-    }
-    const timer = setTimeout(() => setDelayedCollapse(true), 200);
-    return () => clearTimeout(timer);
-  }, [state]);
-
   const [userPlaylists, setUserPlaylists] = useState<TopPlaylist[]>([]);
-  const [createdCollapsed, setCreatedCollapsed] = useState(() => {
-    return localStorage.getItem("sidebar_created_collapsed") === "true";
-  });
-  const [favoritedCollapsed, setFavoritedCollapsed] = useState(() => {
-    return localStorage.getItem("sidebar_favorited_collapsed") === "true";
-  });
-
-  useEffect(() => {
-    localStorage.setItem("sidebar_created_collapsed", String(createdCollapsed));
-  }, [createdCollapsed]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      "sidebar_favorited_collapsed",
-      String(favoritedCollapsed),
-    );
-  }, [favoritedCollapsed]);
+  const [createdCollapsed, setCreatedCollapsed] = useLocalStorageState(
+    "sidebar_created_collapsed",
+    false,
+  );
+  const [favoritedCollapsed, setFavoritedCollapsed] = useLocalStorageState(
+    "sidebar_favorited_collapsed",
+    false,
+  );
 
   useEffect(() => {
     if (!isLoggedIn || !userId) return;
@@ -203,10 +178,7 @@ export const AppSidebar = () => {
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar">
       <SidebarHeader
-        className={cn(
-          "h-10 flex-row items-center shrink-0 justify-between overflow-hidden",
-          delayedCollapse && "justify-center",
-        )}
+        className="h-10 flex-row items-center shrink-0 justify-between overflow-hidden"
         data-drag-region
       >
         <SidebarBrand expanded={state === "expanded"} />
@@ -226,6 +198,7 @@ export const AppSidebar = () => {
                       className="gap-x-2"
                       isActive={isActive}
                       onClick={() => navigate(item.to)}
+                      tooltip={item.label}
                     >
                       <item.icon
                         className={cn(
@@ -243,7 +216,9 @@ export const AppSidebar = () => {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>我的</SidebarGroupLabel>
+          <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
+            我的
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
               {myItems.map((item) => {
@@ -254,6 +229,7 @@ export const AppSidebar = () => {
                       className="gap-x-2"
                       isActive={isActive}
                       onClick={() => navigate(item.to)}
+                      tooltip={item.label}
                     >
                       <item.icon
                         className={cn(
@@ -270,10 +246,15 @@ export const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {isLoggedIn &&
+          (createdPlaylists.length > 0 || favoritedPlaylists.length > 0) && (
+            <SidebarSeparator className="group-data-[collapsible=icon]:mx-1.5" />
+          )}
+
         {isLoggedIn && createdPlaylists.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel
-              className="cursor-pointer hover:text-foreground transition-colors"
+              className="cursor-pointer group-data-[collapsible=icon]:hidden"
               onClick={() => setCreatedCollapsed(!createdCollapsed)}
             >
               <span>创建的歌单</span>
@@ -284,8 +265,8 @@ export const AppSidebar = () => {
                 )}
               />
             </SidebarGroupLabel>
-            {!createdCollapsed && (
-              <SidebarGroupContent className="max-h-48 overflow-y-auto">
+            {(state === "collapsed" || !createdCollapsed) && (
+              <SidebarGroupContent className="max-h-48 overflow-y-auto overflow-x-hidden">
                 <SidebarMenu className="space-y-0.5">
                   {createdPlaylists.map((p) => {
                     const isActive = location.pathname === `/playlist/${p.id}`;
@@ -295,11 +276,12 @@ export const AppSidebar = () => {
                           className="gap-x-2"
                           isActive={isActive}
                           onClick={() => navigate(`/playlist/${p.id}`)}
+                          tooltip={p.name}
                         >
                           {p.coverImgUrl ? (
                             <img
                               alt=""
-                              className="h-5 w-5 shrink-0 rounded-sm object-cover"
+                              className="h-5 w-5 shrink-0 rounded-sm object-cover group-data-[collapsible=icon]:size-4"
                               src={p.coverImgUrl}
                             />
                           ) : (
@@ -319,7 +301,7 @@ export const AppSidebar = () => {
         {isLoggedIn && favoritedPlaylists.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel
-              className="cursor-pointer hover:text-foreground transition-colors"
+              className="cursor-pointer group-data-[collapsible=icon]:hidden"
               onClick={() => setFavoritedCollapsed(!favoritedCollapsed)}
             >
               <span>收藏的歌单</span>
@@ -330,8 +312,8 @@ export const AppSidebar = () => {
                 )}
               />
             </SidebarGroupLabel>
-            {!favoritedCollapsed && (
-              <SidebarGroupContent className="max-h-48 overflow-y-auto">
+            {(state === "collapsed" || !favoritedCollapsed) && (
+              <SidebarGroupContent className="max-h-48 overflow-y-auto overflow-x-hidden">
                 <SidebarMenu className="space-y-0.5">
                   {favoritedPlaylists.map((p) => {
                     const isActive = location.pathname === `/playlist/${p.id}`;
@@ -341,11 +323,12 @@ export const AppSidebar = () => {
                           className="gap-x-2"
                           isActive={isActive}
                           onClick={() => navigate(`/playlist/${p.id}`)}
+                          tooltip={p.name}
                         >
                           {p.coverImgUrl ? (
                             <img
                               alt=""
-                              className="h-5 w-5 shrink-0 rounded-sm object-cover"
+                              className="h-5 w-5 shrink-0 rounded-sm object-cover group-data-[collapsible=icon]:size-4"
                               src={p.coverImgUrl}
                             />
                           ) : (

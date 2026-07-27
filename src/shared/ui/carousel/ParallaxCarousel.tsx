@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/shared/ui/button";
 import type { CarouselApi } from "@/shared/ui/carousel-base";
 import {
@@ -29,7 +29,12 @@ export const ParallaxCarousel = <T,>({
 }: ParallaxCarouselProps<T>) => {
   const [api, setApi] = useState<CarouselApi>();
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [displayIndex, setDisplayIndex] = useState(0);
+  const len = items.length;
+
+  const displayIndex = useMemo(() => {
+    const progressInSlides = scrollProgress * len;
+    return ((Math.round(progressInSlides) % len) + len) % len;
+  }, [scrollProgress, len]);
 
   const handleScroll = useCallback(() => {
     if (!api) return;
@@ -39,22 +44,16 @@ export const ParallaxCarousel = <T,>({
   useEffect(() => {
     if (!api) return;
     api.on("scroll", handleScroll);
-    handleScroll();
     return () => {
       api.off("scroll", handleScroll);
     };
   }, [api, handleScroll]);
 
-  const len = items.length;
   const progressInSlides = scrollProgress * len;
-  const newDisplayIndex = ((Math.round(progressInSlides) % len) + len) % len;
 
   useEffect(() => {
-    if (newDisplayIndex !== displayIndex) {
-      setDisplayIndex(newDisplayIndex);
-      onActiveIndexChange?.(newDisplayIndex);
-    }
-  }, [newDisplayIndex, displayIndex, onActiveIndexChange]);
+    onActiveIndexChange?.(displayIndex);
+  }, [displayIndex, onActiveIndexChange]);
 
   return (
     <Carousel

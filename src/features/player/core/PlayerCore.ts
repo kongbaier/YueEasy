@@ -100,7 +100,7 @@ export class PlayerCore<T extends { id: number }> {
     this.#transition("playing");
     try {
       await this.#engine.play();
-    } catch (_err) {
+    } catch {
       this.#transition("error");
     }
   }

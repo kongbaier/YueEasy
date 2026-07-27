@@ -2,7 +2,7 @@ import { createPlayModeStrategy } from "@/features/player/core";
 import type { PlayMode, Track } from "@/features/player/core/types";
 import { usePlayerStore } from "@/features/player/store";
 import { getStoreValue, setStoreValue } from "@/shared/services/store";
-import { useAppSettings } from "@/stores/settings";
+
 
 // ── restore saved player state ──
 
@@ -23,10 +23,9 @@ export async function initPlayer() {
   const tracks: Track[] = data.queue as Track[];
   const index = Math.min(Math.max(data.index, 0), tracks.length - 1);
 
-  // volume/muted from persisted settings
-  const settings = useAppSettings.getState().settings;
-  const savedVolume = settings.volume;
-  const savedMuted = settings.muted;
+  const savedVolume = (await getStoreValue<number>("volume")) ?? 1;
+  const savedMuted = (await getStoreValue<boolean>("muted")) ?? false;
+  usePlayerStore.setState({ volume: savedVolume, muted: savedMuted });
 
   player.initialize({
     volume: savedVolume,

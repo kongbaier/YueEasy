@@ -24,6 +24,7 @@ export function useLyricScroll(
     null,
   );
   const isUserOperateRef = useRef(false);
+  const [isUserOperate, setIsUserOperateState] = useState(false);
   const prevIndexRef = useRef(-1);
   const prevResetKeyRef = useRef(resetKey);
   const recenterRef = useRef<() => void>(null);
@@ -41,6 +42,7 @@ export function useLyricScroll(
   const setIsUserOperate = useCallback(
     (v: boolean) => {
       isUserOperateRef.current = v;
+      setIsUserOperateState(v);
       clearIdleTimer();
       if (resumeRafRef.current) {
         cancelAnimationFrame(resumeRafRef.current);
@@ -66,7 +68,6 @@ export function useLyricScroll(
   useEffect(() => {
     if (!enabled) {
       hasPositionedRef.current = false;
-      setHasPositioned(false);
     }
   }, [enabled]);
 
@@ -131,7 +132,9 @@ export function useLyricScroll(
     setTranslateY(Math.max(maxTranslate, Math.min(minTranslate, ideal)));
   }, [activeLineIndex]);
 
-  recenterRef.current = recenter;
+  useLayoutEffect(() => {
+    recenterRef.current = recenter;
+  });
 
   // 在 paint 之前完成定位，避免第一帧看到错误位置
   useLayoutEffect(() => {
@@ -201,9 +204,7 @@ export function useLyricScroll(
     contentStyle: {
       transform: `translateY(${translateY}px)`,
       transition:
-        !hasPositioned || isUserOperateRef.current
-          ? "none"
-          : "transform 0.3s ease-in-out",
+        !hasPositioned || isUserOperate ? "none" : "transform 0.3s ease-in-out",
     },
   };
 }

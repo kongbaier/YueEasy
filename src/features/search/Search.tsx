@@ -54,9 +54,7 @@ export function SearchInput({
           autoComplete="off"
           autoFocus
           className="pl-10 pr-8 h-9"
-          onChange={(e) =>
-            useSearchStore.setState({ input: e.target.value })
-          }
+          onChange={(e) => useSearchStore.setState({ input: e.target.value })}
           onFocus={onFocus}
           placeholder="搜索歌曲、歌手、专辑..."
           value={input}
@@ -119,9 +117,7 @@ export function SearchDropdown() {
         <HotDropdown
           hots={hots}
           onClose={() => useSearchStore.setState({ show: null })}
-          onPick={(keyword) =>
-            useSearchStore.setState({ input: keyword })
-          }
+          onPick={(keyword) => useSearchStore.setState({ input: keyword })}
         />
       )}
       {show === "suggest" && suggestions.length > 0 && (
@@ -170,10 +166,7 @@ export function SearchResultsDisplay() {
 
   return (
     <ScrollContainerContext.Provider value={scrollEl}>
-      <div
-        className="flex-1 min-h-0 overflow-y-auto px-6 pb-6"
-        ref={scrollRef}
-      >
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6" ref={scrollRef}>
         <SearchResults
           error={error}
           hasSearched={hasSearched}

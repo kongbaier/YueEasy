@@ -16,7 +16,7 @@ const DailyRecommendSkeleton = () => (
   <div className="p-6">
     <div className="mt-3 space-y-0.5">
       {Array.from({ length: 8 }).map((_, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
+        // oxlint-disable-next-line react/no-array-index-key
         <TrackRowSkeleton index={i} key={i} />
       ))}
     </div>
@@ -32,8 +32,9 @@ const DailyRecommendContent = () => {
   const { data: songs } = useSuspenseQuery({
     queryKey: ["dailyRecommend"],
     queryFn: () =>
-      cachedFetch(CacheKeys.dailyRecommend(today), () => ncm.recommendSongs())
-        .then((r) => (r.data.data.dailySongs ?? []).map(toSongRef)),
+      cachedFetch(CacheKeys.dailyRecommend(today), () =>
+        ncm.recommendSongs(),
+      ).then((r) => (r.data.data.dailySongs ?? []).map(toSongRef)),
     staleTime: 5 * 60 * 1000,
   });
 

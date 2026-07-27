@@ -8,7 +8,7 @@ import {
   Pause,
   Play,
 } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useShallow } from "zustand/shallow";
 import { Button } from "@/shared/ui/button";
 import { FollowTooltip } from "@/features/player/components/follow-tooltip";
@@ -32,6 +32,7 @@ import { useQueuePanelStore } from "@/features/player/queue-panel-store";
 import { PlayModeControl } from "./PlayModeControl";
 import { SeekBar } from "./SeekBar";
 import { VolumeControl } from "./VolumeControl";
+import type { PlayerState } from "../core";
 
 const PlayerProgress = () => {
   const { percentage, formatted } = useProgress();
@@ -78,23 +79,24 @@ const PlayerProgress = () => {
   );
 };
 
+const PlayIcon = ({ state }: { state: PlayerState }) => {
+  switch (state) {
+    case "loading":
+      return (
+        <Loader2 className="size-4 animate-spin text-primary-foreground" />
+      );
+    case "playing":
+      return <Pause className="size-4 text-primary-foreground" />;
+    default:
+      return <Play className="size-4 text-primary-foreground" />;
+  }
+};
+
 const PlayerControls = () => {
   const { handlePlay, handleNext, handlePrev } = usePlayerAction();
   const state = usePlayerStore((s) => s.core.state);
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const hasTrack = !!currentTrack;
-  const PlayIcon = useMemo(() => {
-    switch (state) {
-      case "loading":
-        return () => (
-          <Loader2 className="size-4 animate-spin text-primary-foreground" />
-        );
-      case "playing":
-        return () => <Pause className="size-4 text-primary-foreground" />;
-      default:
-        return () => <Play className="size-4 text-primary-foreground" />;
-    }
-  }, [state]);
   return (
     <article className="flex items-center gap-x-6">
       <section className="flex items-center">
@@ -121,7 +123,7 @@ const PlayerControls = () => {
           onClick={handlePlay}
           type="button"
         >
-          <PlayIcon />
+          <PlayIcon state={state} />
         </Button>
 
         <Button

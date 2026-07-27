@@ -97,7 +97,6 @@ function SidebarProvider({
       }
 
       // This sets the cookie to keep the sidebar state.
-      // biome-ignore lint/suspicious/noDocumentCookie: <简单的侧边栏cookie设置>
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
     [setOpenProp, open],
@@ -333,20 +332,32 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
     wrapper.style.setProperty("--sidebar-width", `${newWidth}px`);
   }, []);
 
+  const onMouseUpRef = React.useRef<() => void>(undefined);
+
   const onMouseUp = React.useCallback(() => {
     clearTimeout(pressTimer.current);
+
     document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
+    document.removeEventListener("mouseup", onMouseUpRef.current!);
+
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
+
     railEl.current?.removeAttribute("data-dragging");
-    // restore transitions
-    if (gapEl.current) gapEl.current.style.transition = "";
+
+    if (gapEl.current) {
+      gapEl.current.style.transition = "";
+    }
+
     if (containerEl.current) {
       containerEl.current.style.transition = "";
       saveSidebarWidth(containerEl.current.getBoundingClientRect().width);
     }
   }, [onMouseMove]);
+
+  React.useEffect(() => {
+    onMouseUpRef.current = onMouseUp;
+  }, [onMouseUp]);
 
   const handleMouseDown = React.useCallback(
     (e: React.MouseEvent) => {

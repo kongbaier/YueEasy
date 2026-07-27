@@ -15,7 +15,7 @@ function Trigger({
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        "flex h-8 w-full items-center justify-between gap-2 rounded-md border border-border/60 bg-card px-2.5 text-sm text-foreground whitespace-nowrap outline-none transition-colors duration-[83ms] ease-out",
+        "flex h-8 w-full items-center justify-between gap-2 rounded-md border border-border/60 bg-card px-2.5 text-sm text-foreground whitespace-nowrap outline-none transition-colors duration-83 ease-out",
         "hover:border-border hover:bg-muted",
         "focus-visible:border-ring/40 focus-visible:ring-2 focus-visible:ring-ring/20",
         "disabled:pointer-events-none disabled:opacity-30",
@@ -96,7 +96,7 @@ function Item({ className, children, ...props }: SelectPrimitive.Item.Props) {
   return (
     <SelectPrimitive.Item
       className={cn(
-        "relative flex cursor-pointer items-center gap-2 rounded-[3px] px-2.5 py-1.5 text-sm text-foreground outline-none select-none transition-colors duration-[83ms] ease-out",
+        "relative flex cursor-pointer items-center gap-2 rounded-[3px] px-2.5 py-1.5 text-sm text-foreground outline-none select-none transition-colors duration-83 ease-out",
         "data-highlighted:bg-accent",
         "data-selected:bg-accent data-selected:font-medium",
         className,
@@ -115,7 +115,7 @@ function ItemText({ className, ...props }: SelectPrimitive.ItemText.Props) {
 }
 
 function ItemIndicator({
-  className,
+  // className,
   ...props
 }: SelectPrimitive.ItemIndicator.Props) {
   return <SelectPrimitive.ItemIndicator {...props} />;

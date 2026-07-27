@@ -117,7 +117,7 @@ export const HorizontalCarousel = ({
         <CarouselContent>
           {loading
             ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, order never changes
+                // oxlint-disable-next-line react/no-array-index-key
                 <CarouselItem className="basis-auto" key={i}>
                   <CardSkeleton />
                 </CarouselItem>

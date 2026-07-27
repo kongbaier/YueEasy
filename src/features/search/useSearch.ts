@@ -91,8 +91,9 @@ export function useSearchHot() {
   const query = useQuery({
     queryKey: ["searchHot"],
     queryFn: () =>
-      cachedFetch(CacheKeys.searchHot, () => ncm.searchHot())
-        .then((r) => r.data.result.hots.map((h) => h.first)),
+      cachedFetch(CacheKeys.searchHot, () => ncm.searchHot()).then((r) =>
+        r.data.result.hots.map((h) => h.first),
+      ),
     staleTime: 5 * 60 * 1000,
     enabled: false,
   });

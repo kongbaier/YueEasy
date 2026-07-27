@@ -80,7 +80,7 @@ const CommentItem = ({ comment }: { comment: NcmComment }) => (
 const CommentSkeleton = () => (
   <div className="space-y-1">
     {Array.from({ length: 5 }).map((_, i) => (
-      // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
+      // oxlint-disable-next-line react/no-array-index-key
       <div className="flex gap-2 rounded-lg px-3 py-2.5" key={`sk-${i}`}>
         <Skeleton className="h-7 w-7 shrink-0 rounded-full" shimmer />
         <div className="flex-1 min-w-0 space-y-1.5">

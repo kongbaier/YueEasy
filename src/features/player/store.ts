@@ -6,6 +6,7 @@ import {
 } from "@/features/player/core";
 import type { PlayMode, Track } from "@/features/player/core/types";
 import { resolveUrl } from "@/shared/services/track";
+import { setStoreValue } from "@/shared/services/store";
 
 const player = new PlayerCore<Track>(new SequenceStrategy());
 
@@ -28,6 +29,8 @@ interface PlayerStore {
   playMode: PlayMode;
   currentTime: number;
   duration: number;
+  volume: number;
+  muted: boolean;
 
   play: (track: Track) => Promise<void>;
   replaceAndPlay: (tracks: Track[], startIndex?: number) => Promise<void>;
@@ -43,6 +46,8 @@ interface PlayerStore {
   playFromIndex: (index: number) => Promise<void>;
   removeFromQueue: (index: number) => Promise<void>;
   clearQueue: () => void;
+  setVolume: (v: number) => void;
+  setMuted: (m: boolean) => void;
 }
 
 export const usePlayerStore = create<PlayerStore>((set, get) => {
@@ -74,6 +79,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     playMode: "sequential",
     currentTime: 0,
     duration: 0,
+    volume: 1,
+    muted: false,
 
     play: async (track) => {
       const { currentTrack, queue } = get();
@@ -222,6 +229,18 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       player.replace([]);
       player.stop();
       set({ queue: [], currentTrack: null });
+    },
+
+    setVolume: (v: number) => {
+      get().core.volume = v;
+      set({ volume: v, muted: false });
+      setStoreValue("volume", v);
+    },
+
+    setMuted: (m: boolean) => {
+      get().core.muted = m;
+      set({ muted: m });
+      setStoreValue("muted", m);
     },
   };
 });

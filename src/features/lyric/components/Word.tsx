@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 interface WordProps {
   text: string;
   lineIndex: number;
@@ -7,7 +9,7 @@ interface WordProps {
   wordProgress: number;
 }
 
-export const Word = ({
+export const Word = memo(({
   text,
   lineIndex,
   wordIndex,
@@ -52,4 +54,4 @@ export const Word = ({
   }
 
   return <span className="text-muted-foreground">{text}</span>;
-};
+});

@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: 函数参数逆变 */
+/* oxlint-disable typescript/no-explicit-any */
 
 export class EventEmitter<
   Events extends Record<string, (...args: any[]) => any>,

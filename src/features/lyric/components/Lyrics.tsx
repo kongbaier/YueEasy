@@ -1,6 +1,6 @@
 import { Loader2, Music } from "lucide-react";
 import type { ReactNode } from "react";
-import { createContext, use, useEffect, useState } from "react";
+import { createContext, use, useMemo } from "react";
 import { cn } from "@/shared/lib/utils";
 import { usePlayerStore } from "@/stores";
 import { LyricLine } from "./LyricLine";
@@ -19,7 +19,6 @@ export const Lyrics = ({ className }: { className?: string }) => {
     translatedLyric,
   } = useLyrics();
   const trackId = usePlayerStore((s) => s.currentTrack?.id);
-  const [contentWidth, setContentWidth] = useState(0);
 
   const { containerRef, contentRef, contentStyle } = useLyricScroll(
     index,
@@ -27,18 +26,6 @@ export const Lyrics = ({ className }: { className?: string }) => {
     trackId,
   );
 
-  useEffect(() => {
-    if (!hasLyrics) return;
-    if (!contentRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      const newWidth = entries[0].contentRect.width;
-      setContentWidth(newWidth);
-    });
-    observer.observe(contentRef.current);
-    return () => observer.disconnect();
-  }, [contentRef, hasLyrics]);
-
-  // 加载中
   if (isLoading) {
     return (
       <div className={cn("h-full flex flex-col", className)}>
@@ -50,7 +37,6 @@ export const Lyrics = ({ className }: { className?: string }) => {
     );
   }
 
-  // 无歌词
   if (!hasLyrics) {
     return (
       <div className={cn("h-full flex flex-col", className)}>
@@ -62,26 +48,32 @@ export const Lyrics = ({ className }: { className?: string }) => {
     );
   }
 
+  const contextValue = useMemo(
+    () => ({
+      index,
+      hasWordLyrics,
+      translatedLyric,
+    }),
+    [index, hasWordLyrics, translatedLyric],
+  );
+
   // 有歌词
   return (
     <div className={cn("h-full flex flex-col", className)}>
       <div className="relative overflow-hidden flex-1 mb-4" ref={containerRef}>
-        <ul className="space-y-2 mx-4" ref={contentRef} style={contentStyle}>
-          <LyricsProvider
-            value={{
-              index,
-              contentWidth,
-              currentWordIndex,
-              wordProgress,
-              hasWordLyrics,
-              translatedLyric,
-            }}
-          >
+        <ul
+          className="space-y-2 mx-4 font-sans w-full"
+          ref={contentRef}
+          style={contentStyle}
+        >
+          <LyricsProvider value={contextValue}>
             {lines.map((line, i) => (
               <LyricLine
                 key={`${line.startMs}-${line.text.slice(0, 8)}`}
                 line={line}
                 lineIndex={i}
+                currentWordIndex={i === index ? currentWordIndex : -1}
+                wordProgress={i === index ? wordProgress : 0}
               />
             ))}
           </LyricsProvider>
@@ -93,9 +85,6 @@ export const Lyrics = ({ className }: { className?: string }) => {
 
 interface LyricsContextValue {
   index: number;
-  contentWidth: number;
-  currentWordIndex: number;
-  wordProgress: number;
   hasWordLyrics: boolean;
   translatedLyric: string[];
 }

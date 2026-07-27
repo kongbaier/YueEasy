@@ -33,12 +33,14 @@ import { PlayerPageControls } from "./PlayerPageControls";
 import { PlayerPageProgress } from "./PlayerPageProgress";
 import { PlayerPageQueue } from "./PlayerPageQueue";
 import { PlayerPageVolume } from "./PlayerPageVolume";
+import { AnimatePresence, motion } from "motion/react";
+import { useShallow } from "zustand/shallow";
 
 export default function PlayerPage() {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
-  const isOpen = usePlayerPageStore((s) => s.isOpen);
-  const close = usePlayerPageStore((s) => s.close);
-  const [visible, setVisible] = useState(false);
+  const { close, isOpen } = usePlayerPageStore(
+    useShallow((s) => ({ isOpen: s.isOpen, close: s.close })),
+  );
   const [showQueue, setShowQueue] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
@@ -54,79 +56,75 @@ export default function PlayerPage() {
     }
   }, [currentTrack]);
 
-  const handleBack = () => {
-    setVisible(false);
-    setTimeout(() => close(), 300);
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      setVisible(true);
-    } else {
-      setVisible(false);
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
+  const handleBack = () => close();
 
   return (
-    <div
-      className={cn(
-        "fixed inset-0 z-50 bg-[#fafafa] dark:bg-[#0a0a0a] transition-transform duration-300 ease-out",
-        visible ? "translate-y-0" : "translate-y-full",
-      )}
-    >
-      <PlayerHeader handleBack={handleBack} />
-
-      <div className="relative h-[calc(100vh-40px)] grid grid-cols-[1fr_1fr] overflow-auto">
-        <div
-          className={cn(
-            "col-span-1 justify-self-center min-h-0",
-            "pb-4 gap-2 px-4",
-            "flex flex-col justify-around",
-            "w-4/5 max-w-md",
-          )}
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          animate={{ y: 0 }}
+          className="fixed inset-0 z-50 bg-[#fafafa] dark:bg-[#0a0a0a]"
+          exit={{ y: "100%" }}
+          initial={{ y: "100%" }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
         >
-          {currentTrack && (
-            <React.Fragment>
-              <PlayerTitle currentTrack={currentTrack} />
-              <PlayerCover currentTrack={currentTrack} />
-              <PlayerPageProgress />
-              <PlayerPageControls
-                onToggleQueue={() => {
-                  setShowQueue((v) => !v);
-                  setShowComments(false);
-                }}
-                showQueue={showQueue}
-              />
-              <PlayerPageVolume />
-              <PlayerMenu
-                currentTrack={currentTrack}
-                onToggleComments={() => {
-                  setShowComments((v) => !v);
-                  setShowQueue(false);
-                }}
-                showComments={showComments}
-              />
-            </React.Fragment>
-          )}
-        </div>
+          <PlayerHeader handleBack={handleBack} />
 
-        <div className="col-span-1 min-h-0">
-          <Activity mode={showComments ? "visible" : "hidden"}>
-            {currentTrack && (
-              <PlayerPageComments key="comments" songId={currentTrack.id} />
-            )}
-          </Activity>
-          <Activity mode={!showComments && showQueue ? "visible" : "hidden"}>
-            <PlayerPageQueue key="queue" onBack={handleBack} />
-          </Activity>
-          <Activity mode={!showComments && !showQueue ? "visible" : "hidden"}>
-            <Lyrics />
-          </Activity>
-        </div>
-      </div>
-    </div>
+          <div className="relative h-[calc(100vh-40px)] grid grid-cols-[1fr_1fr] overflow-auto">
+            <div
+              className={cn(
+                "col-span-1 justify-self-center min-h-0",
+                "pb-4 gap-2 px-4",
+                "flex flex-col justify-around",
+                "w-4/5 max-w-md",
+              )}
+            >
+              {currentTrack && (
+                <React.Fragment>
+                  <PlayerTitle currentTrack={currentTrack} />
+                  <PlayerCover currentTrack={currentTrack} />
+                  <PlayerPageProgress />
+                  <PlayerPageControls
+                    onToggleQueue={() => {
+                      setShowQueue((v) => !v);
+                      setShowComments(false);
+                    }}
+                    showQueue={showQueue}
+                  />
+                  <PlayerPageVolume />
+                  <PlayerMenu
+                    currentTrack={currentTrack}
+                    onToggleComments={() => {
+                      setShowComments((v) => !v);
+                      setShowQueue(false);
+                    }}
+                    showComments={showComments}
+                  />
+                </React.Fragment>
+              )}
+            </div>
+
+            <div className="col-span-1 min-h-0">
+              <Activity mode={showComments ? "visible" : "hidden"}>
+                {currentTrack && (
+                  <PlayerPageComments key="comments" songId={currentTrack.id} />
+                )}
+              </Activity>
+              <Activity
+                mode={!showComments && showQueue ? "visible" : "hidden"}
+              >
+                <PlayerPageQueue key="queue" onBack={handleBack} />
+              </Activity>
+              <Activity
+                mode={!showComments && !showQueue ? "visible" : "hidden"}
+              >
+                <Lyrics />
+              </Activity>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

@@ -19,13 +19,13 @@ export const PlayerPageProgress = ({ className }: { className?: string }) => {
         percentage={percentage}
       >
         {({
-            displayPercentage,
-            barRef,
-            barWidth,
-            isHovering,
-            hoverBarX,
-            hoverPercentage,
-          }) => {
+          displayPercentage,
+          barRef,
+          barWidth,
+          isHovering,
+          hoverBarX,
+          hoverPercentage,
+        }) => {
           const rawX = (displayPercentage / 100) * barWidth;
           const dpr = window.devicePixelRatio || 1;
           const snappedX = Math.round(rawX * dpr) / dpr;

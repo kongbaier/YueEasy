@@ -43,7 +43,6 @@ export const LoginDialog = () => {
   const setAuth = useAuthStore((s) => s.setAuth);
   const open = useLoginDialog((s) => s.open);
   const setOpen = useLoginDialog((s) => s.setOpen);
-
   const clearQrTimer = useCallback(() => {
     if (qrTimerRef.current !== undefined) {
       clearInterval(qrTimerRef.current);
@@ -164,7 +163,7 @@ export const LoginDialog = () => {
     }
   };
 
-  const handleSmsLogin = async (e: React.FormEvent) => {
+  const handleSmsLogin = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!code) return;
     setLoading(true);
@@ -187,9 +186,11 @@ export const LoginDialog = () => {
   // --- QR login ---
   const startQrFlow = useCallback(async () => {
     clearQrTimer();
-    setQrLoading(true);
-    setQrStatus("");
-    setError("");
+    queueMicrotask(() => {
+      setQrLoading(true);
+      setQrStatus("");
+      setError("");
+    });
     try {
       const keyRes = await ncm.qrKey();
       const key = keyRes.unikey;
@@ -243,7 +244,7 @@ export const LoginDialog = () => {
   // Start QR flow when tab becomes "qr" and dialog is open
   useEffect(() => {
     if (tab === "qr" && open) {
-      startQrFlow();
+      queueMicrotask(() => startQrFlow());
     }
     return () => {
       clearQrTimer();

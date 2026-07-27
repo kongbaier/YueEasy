@@ -3,14 +3,8 @@ import { create } from "zustand";
 import { loadAllEntries, setStoreValue } from "@/shared/services/store";
 import type {
   AppearanceSettings,
-  PlayerSettings,
   Settings,
 } from "@/shared/types/settings";
-
-export const PLAYER_DEFAULTS: PlayerSettings = {
-  volume: 1,
-  muted: false,
-};
 
 export const APPEARANCE_DEFAULTS: AppearanceSettings = {
   theme: "system",
@@ -18,7 +12,7 @@ export const APPEARANCE_DEFAULTS: AppearanceSettings = {
   close_behavior: "quit",
 };
 
-const DEFAULTS: Settings = { ...PLAYER_DEFAULTS, ...APPEARANCE_DEFAULTS };
+const DEFAULTS: Settings = { ...APPEARANCE_DEFAULTS };
 
 async function loadSettings(): Promise<Settings> {
   const settings = await loadAllEntries<Settings>();

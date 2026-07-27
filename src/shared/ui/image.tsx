@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { cn } from "@/shared/lib/utils";
 
 type ImgStatus = "loading" | "loaded" | "error";
@@ -8,28 +8,15 @@ interface ImageWithFadeProps extends React.ComponentProps<"img"> {
   fill?: boolean;
 }
 
-function ImageWithFade({
+const ImageWithFade = ({
   className,
   src,
   alt,
   fallback,
   fill,
   ...rest
-}: ImageWithFadeProps) {
+}: ImageWithFadeProps) => {
   const [status, setStatus] = useState<ImgStatus>("loading");
-  const prevSrcRef = useRef(src);
-
-  useEffect(() => {
-    if (!src) {
-      setStatus("error");
-      return;
-    }
-
-    if (src !== prevSrcRef.current) {
-      setStatus("loading");
-      prevSrcRef.current = src;
-    }
-  }, [src]);
 
   // 始终让 <img> 持有 src，浏览器在挂载时就开始加载；
   // onLoad 确保图片已在该元素上完成解码后才开始 fade-in
@@ -57,6 +44,7 @@ function ImageWithFade({
       {status === "error" &&
         (fallback ?? <span className="absolute inset-0 bg-muted" />)}
       <img
+        key={src}
         alt={alt}
         className={cn(
           className,
@@ -71,7 +59,7 @@ function ImageWithFade({
       />
     </span>
   );
-}
+};
 
 export type { ImageWithFadeProps };
 export { ImageWithFade };
