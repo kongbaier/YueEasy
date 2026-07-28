@@ -23,8 +23,7 @@ export function useLyricScroll(
   const resumeRafRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(
     null,
   );
-  const isUserOperateRef = useRef(false);
-  const [isUserOperate, setIsUserOperateState] = useState(false);
+  const [isUserOperate, setIsUserOperate] = useState(false);
   const prevIndexRef = useRef(-1);
   const prevResetKeyRef = useRef(resetKey);
   const recenterRef = useRef<() => void>(null);
@@ -38,28 +37,6 @@ export function useLyricScroll(
       idleTimerRef.current = null;
     }
   }, []);
-
-  const setIsUserOperate = useCallback(
-    (v: boolean) => {
-      isUserOperateRef.current = v;
-      setIsUserOperateState(v);
-      clearIdleTimer();
-      if (resumeRafRef.current) {
-        cancelAnimationFrame(resumeRafRef.current);
-        resumeRafRef.current = null;
-      }
-      if (v) {
-        idleTimerRef.current = setTimeout(() => {
-          recenterRef.current?.();
-          resumeRafRef.current = requestAnimationFrame(() => {
-            resumeRafRef.current = null;
-            isUserOperateRef.current = false;
-          });
-        }, USER_IDLE_MS);
-      }
-    },
-    [clearIdleTimer],
-  );
 
   useEffect(() => {
     prevIndexRef.current = activeLineIndex;
@@ -89,9 +66,14 @@ export function useLyricScroll(
     if (!container) return;
 
     const handleWheel = (e: WheelEvent) => {
+      clearIdleTimer();
       e.preventDefault();
       setIsUserOperate(true);
       setTranslateY((prev) => clampTranslate(prev - e.deltaY));
+
+      idleTimerRef.current = setTimeout(() => {
+        setIsUserOperate(false);
+      }, USER_IDLE_MS);
     };
 
     container.addEventListener("wheel", handleWheel, { passive: false });
@@ -129,8 +111,10 @@ export function useLyricScroll(
     const minTranslate = 0;
     const maxTranslate = overflow > 0 ? -overflow : 0;
 
-    setTranslateY(Math.max(maxTranslate, Math.min(minTranslate, ideal)));
-  }, [activeLineIndex]);
+    if (!isUserOperate) {
+      setTranslateY(Math.max(maxTranslate, Math.min(minTranslate, ideal)));
+    }
+  }, [activeLineIndex, isUserOperate]);
 
   useLayoutEffect(() => {
     recenterRef.current = recenter;
@@ -149,12 +133,7 @@ export function useLyricScroll(
       setHasPositioned(false);
     }
 
-    if (prevIndexRef.current !== activeLineIndex) {
-      setIsUserOperate(false);
-    }
-
     if (activeLineIndex < 0 || !enabled) return;
-    if (isUserOperateRef.current) return;
 
     recenter();
 
@@ -175,8 +154,6 @@ export function useLyricScroll(
     if (!content) return;
 
     const observer = new ResizeObserver(() => {
-      if (isUserOperateRef.current) return;
-
       if (!hasPositionedRef.current) {
         recenterRef.current?.();
         const el = contentRef.current;

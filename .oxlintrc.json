@@ -16,6 +16,7 @@
   },
   "rules": {
     "no-shadow": "off",
+    "no-unused-vars": "warn",
     "prefer-const": "warn",
     "react/react-compiler": "error",
     "react/react-in-jsx-scope": "off",

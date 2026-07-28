@@ -1,97 +1,128 @@
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { LyricLine } from "@/features/lyric/parser";
-import { fetchLyrics } from "@/features/lyric/lyrics-service";
+import type { LyricsResult } from "@/features/lyric/lyrics-service";
 import { usePlayerStore } from "@/stores";
 
 interface LyricsState {
   lines: LyricLine[];
-  index: number;
+  active: readonly [number, number];
   hasLyrics: boolean;
-  isLoading: boolean;
-  /** Current word index within the active line (-1 if none) */
-  currentWordIndex: number;
-  /** 0–1 progress within the current word */
-  wordProgress: number;
-  /** Whether word-level (逐字) lyrics are available */
-  hasWordLyrics: boolean;
-  /** Translated lyric texts, index-aligned with lines */
-  translatedLyric: string[];
+  hasYrc: boolean;
+  tlyric: LyricLine[];
 }
 
-export function useLyrics(): LyricsState {
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
-  const currentTime = usePlayerStore((s) => s.currentTime);
-  const trackId = currentTrack?.id;
+/**
+ * Synchronously compute [lineIndex, wordIndex] from the given time and lyric data.
+ * Pure function — no side effects, safe for lazy state init and subscriber callbacks.
+ */
+function computeActive(
+  currentTime: number,
+  lines: LyricLine[],
+  hasYrc: boolean,
+): readonly [number, number] {
+  if (lines.length === 0) return [-1, -1];
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["lyrics", trackId],
-    queryFn: () => {
-      if (!trackId) return { lyric: [], tlyric: [], yrc: [] };
-      return fetchLyrics(trackId);
-    },
-    enabled: !!trackId,
-    staleTime: Infinity,
+  const ms = currentTime * 1000;
+
+  // Find active line (reverse scan)
+  let lineIndex = -1;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (ms >= lines[i].startMs) {
+      lineIndex = i;
+      break;
+    }
+  }
+
+  // Find active word (YRC only)
+  let wordIndex = -1;
+  if (hasYrc && lineIndex >= 0) {
+    const line = lines[lineIndex];
+    if (line.words?.length) {
+      const elapsed = ms - line.startMs;
+      for (let i = line.words.length - 1; i >= 0; i--) {
+        const word = line.words[i];
+        if (elapsed < word.startMs) continue;
+        const wordEnd = word.startMs + word.durationMs;
+        if (elapsed <= wordEnd) {
+          wordIndex = i;
+          break;
+        }
+        wordIndex = i;
+        break;
+      }
+    }
+  }
+
+  return [lineIndex, wordIndex];
+}
+
+export const useLyrics = (
+  lyricResult: LyricsResult | undefined,
+): LyricsState => {
+  const yrc = lyricResult?.yrc ?? [];
+  const lyric = lyricResult?.lyric ?? [];
+  const tlyric = lyricResult?.tlyric ?? [];
+
+  const hasYrc = yrc.length > 0;
+  const mainLines = hasYrc ? yrc : lyric;
+  const lines = mainLines.length > 0 ? mainLines : tlyric;
+
+  // Refs hold latest data for the Zustand subscriber without effect deps churn
+  const linesRef = useRef(lines);
+  const hasYrcRef = useRef(hasYrc);
+
+  // Sync refs after render so subscriber always reads the latest lyrics data.
+  // No deps: intentionally runs after every render to keep refs current.
+  useEffect(() => {
+    linesRef.current = lines;
+    hasYrcRef.current = hasYrc;
   });
 
-  const yrc = data?.yrc ?? [];
-  const rawLyric = data?.lyric ?? [];
-  const tlines = data?.tlyric ?? [];
+  // Eagerly compute active on mount so the scroll position is correct on first paint.
+  // Lazy initializer runs once; subsequent updates come from the Zustand subscriber.
+  const [active, setActive] = useState<readonly [number, number]>(() =>
+    computeActive(
+      usePlayerStore.getState().currentTime,
+      lines,
+      hasYrc,
+    ),
+  );
 
-  const hasWordLyrics = yrc.length > 0;
-  const mainLines = hasWordLyrics ? yrc : rawLyric;
-  const lines = mainLines.length > 0 ? mainLines : tlines;
-  const translatedLyric = mainLines.length > 0 ? tlines.map((l) => l.text) : [];
+  // Subscribe to currentTime via Zustand — only setState when line or word index changes.
+  // Module-level import is stable, empty deps is intentional.
+  useEffect(() => {
+    let prevLine = active[0];
+    let prevWord = active[1];
+    let prevTime = -1;
 
-  const index = useMemo(() => {
-    if (lines.length === 0) return -1;
-    const ms = currentTime * 1000;
+    const unsub = usePlayerStore.subscribe((state) => {
+      const { currentTime } = state;
+      // Skip if currentTime hasn't changed (avoids recomputation on unrelated state updates)
+      if (currentTime === prevTime) return;
+      prevTime = currentTime;
 
-    for (let i = lines.length - 1; i >= 0; i--) {
-      if (ms >= lines[i].startMs) {
-        return i;
+      const [lineIndex, wordIndex] = computeActive(
+        currentTime,
+        linesRef.current,
+        hasYrcRef.current,
+      );
+
+      // Only trigger React re-render on meaningful changes
+      if (lineIndex !== prevLine || wordIndex !== prevWord) {
+        prevLine = lineIndex;
+        prevWord = wordIndex;
+        setActive([lineIndex, wordIndex]);
       }
-    }
-    return -1;
-  }, [lines, currentTime]);
+    });
 
-  const line = lines[index];
-
-  const [currentWordIndex, wordProgress] = useMemo(() => {
-    if (!hasWordLyrics || !line?.words?.length) {
-      return [-1, 0] as const;
-    }
-
-    const elapsed = currentTime * 1000 - line.startMs;
-    const words = line.words;
-
-    for (let i = words.length - 1; i >= 0; i--) {
-      const word = words[i];
-      if (elapsed < word.startMs) continue;
-
-      const wordEnd = word.startMs + word.durationMs;
-
-      if (elapsed <= wordEnd) {
-        return [
-          i,
-          Math.min((elapsed - word.startMs) / word.durationMs, 1),
-        ] as const;
-      }
-
-      return [i, 1] as const;
-    }
-
-    return [-1, 0] as const;
-  }, [hasWordLyrics, line, currentTime]);
+    return unsub;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     lines,
-    index,
+    active,
     hasLyrics: lines.length > 0,
-    isLoading,
-    currentWordIndex,
-    wordProgress,
-    hasWordLyrics,
-    translatedLyric,
+    hasYrc,
+    tlyric,
   };
-}
+};

@@ -401,7 +401,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
     <button
       aria-label="Resize Sidebar"
       className={cn(
-        "absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear group-data-[side=left]:-right-2 group-data-[side=right]:-left-2 after:absolute after:inset-y-0 after:left-1/2 after:-translate-x-0.5 after:w-1 after:transition-colors after:delay-200 after:duration-150 hover:after:bg-primary/50 data-dragging:after:bg-primary/50 sm:flex outline-hidden",
+        "absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear group-data-[side=left]:-right-2 group-data-[side=right]:-left-2 after:absolute after:inset-y-0 after:left-1/2 after:-translate-x-1/2 after:w-2 after:transition-colors after:delay-200 after:duration-150 hover:after:bg-primary/50 data-dragging:after:bg-primary/50 sm:flex outline-hidden",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
         "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
         className,
@@ -411,7 +411,6 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
       onMouseDown={handleMouseDown}
       ref={railEl}
       tabIndex={-1}
-      title="Resize Sidebar"
       {...props}
     />
   );

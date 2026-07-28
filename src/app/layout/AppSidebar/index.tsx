@@ -198,7 +198,6 @@ export const AppSidebar = () => {
                       className="gap-x-2"
                       isActive={isActive}
                       onClick={() => navigate(item.to)}
-                      tooltip={item.label}
                     >
                       <item.icon
                         className={cn(
@@ -229,7 +228,6 @@ export const AppSidebar = () => {
                       className="gap-x-2"
                       isActive={isActive}
                       onClick={() => navigate(item.to)}
-                      tooltip={item.label}
                     >
                       <item.icon
                         className={cn(
@@ -276,7 +274,6 @@ export const AppSidebar = () => {
                           className="gap-x-2"
                           isActive={isActive}
                           onClick={() => navigate(`/playlist/${p.id}`)}
-                          tooltip={p.name}
                         >
                           {p.coverImgUrl ? (
                             <img
@@ -323,7 +320,6 @@ export const AppSidebar = () => {
                           className="gap-x-2"
                           isActive={isActive}
                           onClick={() => navigate(`/playlist/${p.id}`)}
-                          tooltip={p.name}
                         >
                           {p.coverImgUrl ? (
                             <img

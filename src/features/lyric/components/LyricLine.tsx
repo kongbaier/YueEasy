@@ -7,38 +7,37 @@ import { Word } from "./Word";
 
 interface LyricLineProps {
   line: LyricLineType;
+  tline?: LyricLineType;
   lineIndex: number;
-  currentWordIndex: number;
-  wordProgress: number;
+  status: 'past' | 'active' | 'future';
+  activeWord: number;
 }
 
 export const LyricLine = ({
   line,
+  tline,
   lineIndex,
-  currentWordIndex,
-  wordProgress,
+  status,
+  activeWord,
 }: LyricLineProps) => {
-  const { index, hasWordLyrics, translatedLyric } = useLyricsContext();
-  const translatedText = translatedLyric[lineIndex];
+  const { hasYrc } = useLyricsContext();
   const seek = usePlayerStore((s) => s.seek);
 
   const handleSeek = useCallback(() => {
     seek(line.startMs / 1000);
   }, [seek, line.startMs]);
 
-  const showWords = hasWordLyrics && line.words?.length;
+  const showWords = hasYrc && line.words?.length;
 
   return (
     <li
       className={cn(
         "cursor-pointer w-full group",
-        !hasWordLyrics && "data-[status=active]:text-primary",
+        !hasYrc && "data-[status=active]:text-primary",
         "data-[status=future]:text-muted-foreground",
       )}
       data-line={lineIndex}
-      data-status={
-        lineIndex < index ? "past" : lineIndex === index ? "active" : "future"
-      }
+      data-status={status}
       onClick={handleSeek}
     >
       <p
@@ -48,21 +47,29 @@ export const LyricLine = ({
         )}
       >
         {showWords
-          ? line.words?.map((w, wordIndex) => (
-              <Word
-                activeLineIndex={index}
-                currentWordIndex={currentWordIndex}
-                // oxlint-disable-next-line react/no-array-index-key 歌词的index不会随便改变
-                key={wordIndex}
-                lineIndex={lineIndex}
-                text={w.text}
-                wordIndex={wordIndex}
-                wordProgress={wordProgress}
-              />
-            ))
+          ? line.words?.map((w, wordIndex) => {
+              const wordStatus =
+                status !== 'active'
+                  ? (status === 'past' ? ('past-line' as const) : ('future-line' as const))
+                  : wordIndex < activeWord
+                    ? ('past-word' as const)
+                    : wordIndex === activeWord
+                      ? ('current-word' as const)
+                      : ('future-word' as const);
+              return (
+                <Word
+                  // oxlint-disable-next-line react/no-array-index-key 歌词的index不会随便改变
+                  key={wordIndex}
+                  text={w.text}
+                  status={wordStatus}
+                  absoluteStartMs={line.startMs + w.startMs}
+                  durationMs={w.durationMs}
+                />
+              );
+            })
           : line.text}
       </p>
-      {translatedText && <TranslatedText text={translatedText} />}
+      {tline && <TranslatedText text={tline.text} />}
     </li>
   );
 };

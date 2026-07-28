@@ -1,27 +1,31 @@
 import { Loader2, Music } from "lucide-react";
 import type { ReactNode } from "react";
-import { createContext, use, useMemo } from "react";
+import { createContext, use } from "react";
 import { cn } from "@/shared/lib/utils";
 import { usePlayerStore } from "@/stores";
 import { LyricLine } from "./LyricLine";
 import { useLyricScroll } from "../hooks/useLyricScroll";
 import { useLyrics } from "../hooks/useLyrics";
+import { useQuery } from "@tanstack/react-query";
+import { fetchLyrics } from "../lyrics-service";
 
 export const Lyrics = ({ className }: { className?: string }) => {
-  const {
-    lines,
-    index,
-    hasLyrics,
-    isLoading,
-    currentWordIndex,
-    wordProgress,
-    hasWordLyrics,
-    translatedLyric,
-  } = useLyrics();
+  console.log("render");
   const trackId = usePlayerStore((s) => s.currentTrack?.id);
+  const { data, isLoading } = useQuery({
+    queryKey: ["lyrics", trackId],
+    queryFn: () => {
+      if (!trackId) return { lyric: [], tlyric: [], yrc: [] };
+      return fetchLyrics(trackId);
+    },
+    enabled: Boolean(trackId),
+    staleTime: Infinity,
+  });
+  const { lines, active, hasLyrics, hasYrc, tlyric } = useLyrics(data);
+  const [activeLine, activeWord] = active;
 
   const { containerRef, contentRef, contentStyle } = useLyricScroll(
-    index,
+    activeLine,
     hasLyrics,
     trackId,
   );
@@ -48,15 +52,6 @@ export const Lyrics = ({ className }: { className?: string }) => {
     );
   }
 
-  const contextValue = useMemo(
-    () => ({
-      index,
-      hasWordLyrics,
-      translatedLyric,
-    }),
-    [index, hasWordLyrics, translatedLyric],
-  );
-
   // 有歌词
   return (
     <div className={cn("h-full flex flex-col", className)}>
@@ -66,16 +61,25 @@ export const Lyrics = ({ className }: { className?: string }) => {
           ref={contentRef}
           style={contentStyle}
         >
-          <LyricsProvider value={contextValue}>
-            {lines.map((line, i) => (
-              <LyricLine
-                key={`${line.startMs}-${line.text.slice(0, 8)}`}
-                line={line}
-                lineIndex={i}
-                currentWordIndex={i === index ? currentWordIndex : -1}
-                wordProgress={i === index ? wordProgress : 0}
-              />
-            ))}
+          <LyricsProvider value={{ hasYrc }}>
+            {lines.map((line, i) => {
+              const status =
+                i < activeLine
+                  ? ("past" as const)
+                  : i > activeLine
+                    ? ("future" as const)
+                    : ("active" as const);
+              return (
+                <LyricLine
+                  key={`${line.startMs}-${line.text.slice(0, 8)}`}
+                  line={line}
+                  lineIndex={i}
+                  tline={tlyric[i]}
+                  status={status}
+                  activeWord={status === "active" ? activeWord : -1}
+                />
+              );
+            })}
           </LyricsProvider>
         </ul>
       </div>
@@ -84,9 +88,7 @@ export const Lyrics = ({ className }: { className?: string }) => {
 };
 
 interface LyricsContextValue {
-  index: number;
-  hasWordLyrics: boolean;
-  translatedLyric: string[];
+  hasYrc: boolean;
 }
 
 const LyricsContext = createContext<LyricsContextValue | null>(null);
