@@ -29,6 +29,15 @@ impl CacheState {
     }
 }
 
+impl Default for CacheState {
+    fn default() -> Self {
+        let dir = dirs::data_dir()
+            .expect("failed to resolve app data dir")
+            .join("com.kongbai.yueeasy");
+        CacheState::new(&dir)
+    }
+}
+
 #[tauri::command]
 pub fn cache_get(
     state: State<'_, CacheState>,

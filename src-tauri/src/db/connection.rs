@@ -41,3 +41,12 @@ impl Database {
         Ok(())
     }
 }
+
+impl Default for Database {
+    fn default() -> Self {
+        let dir = dirs::data_dir()
+            .expect("failed to resolve app data dir")
+            .join("com.kongbai.yueeasy");
+        Database::new(dir).expect("failed to open database")
+    }
+}

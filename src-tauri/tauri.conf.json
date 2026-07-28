@@ -12,7 +12,22 @@
   "app": {
     "security": {
       "csp": null
-    }
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "乐易",
+        "width": 1280,
+        "height": 768,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "transparent": true,
+        "decorations": false,
+        "visible": false,
+        "additionalBrowserArgs": "--disable-features=MediaSessionService,msWebOOUI,msPdfOOUI,msSmartScreenProtection"
+      }
+    ]
   },
   "plugins": {
     "updater": {

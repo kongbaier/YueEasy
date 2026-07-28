@@ -1,26 +1,18 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Copy, Minus, Square, X } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Button } from "@/shared/ui/button";
+import { useWindowState } from "@/shared/hooks/useWindowState";
 
 export const WindowControls = ({ className }: { className?: string }) => {
   const appWindow = getCurrentWindow();
-  const [isMaximized, setIsMaximized] = useState(false);
-
-  useEffect(() => {
-    appWindow.isMaximized().then(setIsMaximized);
-    const unlisten = appWindow.onResized(() => {
-      appWindow.isMaximized().then(setIsMaximized);
-    });
-    return () => {
-      unlisten.then((fn) => fn());
-    };
-  }, [appWindow]);
+  const { state, toggleMaximize } = useWindowState();
 
   const handleMinimize = () => appWindow.minimize();
   const handleClose = () => appWindow.close();
+  const handleMaximize = async () => await toggleMaximize();
 
-  const toggleMaximize = async () => await appWindow.toggleMaximize();
+  // Hide all controls when in fullscreen to avoid Tauri maximize/fullscreen conflict.
+  if (state === "fullscreen") return null;
 
   return (
     <div
@@ -38,11 +30,11 @@ export const WindowControls = ({ className }: { className?: string }) => {
 
       <Button
         className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-gray-500/20"
-        onPointerUp={toggleMaximize}
+        onPointerUp={handleMaximize}
         type="button"
         variant="ghost"
       >
-        {isMaximized ? (
+        {state === "maximized" ? (
           <Copy className="size-3" />
         ) : (
           <Square className="size-3" />
