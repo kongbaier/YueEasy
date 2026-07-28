@@ -124,7 +124,6 @@
 
 @theme inline {
   --animate-shimmer: shimmer 2s ease-in-out infinite;
-  --animate-content-enter: content-enter 250ms ease-out;
 }
 
 @layer base {

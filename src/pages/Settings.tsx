@@ -1,6 +1,15 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { Effect } from "@tauri-apps/api/window";
-import { Check, LogOut, RefreshCw, User } from "lucide-react";
+import {
+  Check,
+  Database,
+  Headphones,
+  Info,
+  LogOut,
+  Palette,
+  RefreshCw,
+  User,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { usePageTitle } from "@/app/layout/PageTitleContext";
 import { useLoginDialog } from "@/features/auth/login-dialog-store";
@@ -137,11 +146,17 @@ export default function Settings() {
   }, [update]);
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-8 py-8 animate-content-enter">
-      <div className="space-y-6">
-        <SectionCard>
-          <SectionTitle>外观</SectionTitle>
-          <div className="space-y-0.5">
+    <div className="mx-auto w-full max-w-2xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-8 py-6 sm:py-8 animate-content-enter">
+      {/* Page heading */}
+      <div className="mb-6 sm:mb-8 flex items-center gap-3">
+        <div className="h-7 w-1 rounded-full bg-primary" />
+        <h1 className="text-xl font-semibold tracking-tight">设置</h1>
+      </div>
+
+      <div className="space-y-5 sm:space-y-6">
+        <SectionCard style={{ animationDelay: "0ms" }}>
+          <SectionTitle icon={Palette}>外观</SectionTitle>
+          <div className="divide-y divide-border/10">
             <Row label="主题">
               <Select.Root
                 onValueChange={(v) => setTheme(v as Theme)}
@@ -211,9 +226,9 @@ export default function Settings() {
           </div>
         </SectionCard>
 
-        <SectionCard>
-          <SectionTitle>账户</SectionTitle>
-          <div className="space-y-0.5">
+        <SectionCard style={{ animationDelay: "80ms" }}>
+          <SectionTitle icon={User}>账户</SectionTitle>
+          <div className="divide-y divide-border/10">
             {isLoggedIn ? (
               <>
                 <Row label="用户">
@@ -261,9 +276,9 @@ export default function Settings() {
           </div>
         </SectionCard>
 
-        <SectionCard>
-          <SectionTitle>播放</SectionTitle>
-          <div className="space-y-0.5">
+        <SectionCard style={{ animationDelay: "160ms" }}>
+          <SectionTitle icon={Headphones}>播放</SectionTitle>
+          <div className="divide-y divide-border/10">
             <Row description="新播放队列的默认模式" label="默认播放模式">
               <span className="text-sm text-muted-foreground">顺序播放</span>
             </Row>
@@ -273,9 +288,9 @@ export default function Settings() {
           </div>
         </SectionCard>
 
-        <SectionCard>
-          <SectionTitle>缓存</SectionTitle>
-          <div className="space-y-0.5">
+        <SectionCard style={{ animationDelay: "240ms" }}>
+          <SectionTitle icon={Database}>缓存</SectionTitle>
+          <div className="divide-y divide-border/10">
             <Row description="本地缓存占用空间" label="缓存大小">
               <span className="text-sm text-muted-foreground">
                 {cacheBytes === null
@@ -300,9 +315,9 @@ export default function Settings() {
           </div>
         </SectionCard>
 
-        <SectionCard>
-          <SectionTitle>关于</SectionTitle>
-          <div className="space-y-0.5">
+        <SectionCard style={{ animationDelay: "320ms" }}>
+          <SectionTitle icon={Info}>关于</SectionTitle>
+          <div className="divide-y divide-border/10">
             <Row label="版本号">
               <span className="text-sm text-muted-foreground">
                 {appVersion}
@@ -345,7 +360,7 @@ export default function Settings() {
               )}
               {updateStatus === "error" && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-red-500">检查失败</span>
+                  <span className="text-sm text-destructive">检查失败</span>
                   <Button
                     onClick={handleCheckUpdate}
                     size="xs"
@@ -363,19 +378,35 @@ export default function Settings() {
   );
 }
 
-function SectionCard({ children }: { children: React.ReactNode }) {
+function SectionCard({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
   return (
-    <div className="rounded-lg border border-border/40 bg-card px-5 py-4">
+    <div
+      className="rounded-lg border border-border/40 bg-card px-5 py-4 animate-content-enter"
+      style={style}
+    >
       {children}
     </div>
   );
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+function SectionTitle({
+  children,
+  icon: Icon,
+}: {
+  children: React.ReactNode;
+  icon?: React.ComponentType<{ className?: string }>;
+}) {
   return (
     <div className="mb-4 flex items-center gap-2">
-      <span className="h-5 w-0.5 rounded-full bg-primary/70" />
-      <h2 className="text-base font-semibold">{children}</h2>
+      <span className="h-5 w-1 rounded-full bg-primary/70" />
+      {Icon && <Icon className="size-4 text-primary/70" />}
+      <h2 className="text-sm font-semibold">{children}</h2>
     </div>
   );
 }
@@ -390,14 +421,16 @@ const Row = ({
   children: React.ReactNode;
 }) => {
   return (
-    <div className="flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-150 hover:bg-surface-hover">
-      <div>
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg px-3 py-2.5 gap-1 sm:gap-4 transition-all duration-150 hover:bg-surface-hover">
+      <div className="min-w-0">
         <span className="text-sm">{label}</span>
         {description && (
           <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
         )}
       </div>
-      {children}
+      <div className="flex items-center gap-2 self-start sm:self-auto">
+        {children}
+      </div>
     </div>
   );
 };
