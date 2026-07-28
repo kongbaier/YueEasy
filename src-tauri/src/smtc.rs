@@ -27,7 +27,7 @@ enum SmtcEvent {
     },
 }
 
-pub fn setup(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+pub fn setup_smtc_handler<R: tauri::Runtime>(handle: &tauri::AppHandle<R>) -> Result<(), Box<dyn std::error::Error>> {
     let h = handle.clone();
     handle.media().set_event_handler(move |event| {
         let payload = match event.event_type {

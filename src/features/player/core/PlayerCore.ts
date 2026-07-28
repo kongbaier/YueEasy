@@ -2,7 +2,7 @@ import { EventEmitter } from "@/shared/lib/EventEmitter";
 import { AudioEngine } from "./AudioEngine";
 import type { PlayerEvents } from "./EventBus";
 import { PlayQueue } from "./PlayQueue";
-import { StateMachine } from "./StateMachine";
+import { SequenceStrategy } from "./strategy/SequenceStrategy";
 import type { PlayModeStrategy } from "./strategy/Strategy";
 import type { PlayerState } from "./types";
 
@@ -10,14 +10,13 @@ export class PlayerCore<T extends { id: number }> {
   #queue: PlayQueue<T>;
   #engine: AudioEngine;
   #strategy: PlayModeStrategy<T>;
-  #stateMachine: StateMachine;
+  #state: PlayerState = "idle";
   #eventBus: EventEmitter<PlayerEvents<T>>;
 
-  constructor(mode: PlayModeStrategy<T>) {
+  constructor() {
     this.#queue = new PlayQueue();
     this.#engine = new AudioEngine();
-    this.#stateMachine = new StateMachine();
-    this.#strategy = mode;
+    this.#strategy = new SequenceStrategy<T>();
     this.#eventBus = new EventEmitter();
 
     this.#bindEvents();
@@ -34,15 +33,12 @@ export class PlayerCore<T extends { id: number }> {
   }
 
   get state(): PlayerState {
-    return this.#stateMachine.state;
+    return this.#state;
   }
 
-  get stateMachine() {
-    return this.#stateMachine;
-  }
-
-  #transition(to: PlayerState): boolean {
-    return this.#stateMachine.transition(to);
+  #setState(next: PlayerState) {
+    this.#state = next;
+    this.#eventBus.emit("stateChange", next);
   }
 
   #emitTrackChange() {
@@ -62,7 +58,7 @@ export class PlayerCore<T extends { id: number }> {
   #bindEvents() {
     this.#engine.on("ended", () => {
       this.#queue.activeIndex = this.#strategy.ended(this.#queue.context);
-      if (!this.#transition("ended")) return;
+      this.#setState("ended");
       this.#emitTrackChange();
     });
 
@@ -73,14 +69,10 @@ export class PlayerCore<T extends { id: number }> {
     this.#engine.on("loadedmetadata", (duration) => {
       this.#eventBus.emit("durationChange", duration);
     });
-
-    this.#stateMachine.onTransition = (state) => {
-      this.#eventBus.emit("stateChange", state);
-    };
   }
 
   async load(url: string) {
-    this.#transition("loading");
+    this.#setState("loading");
     this.#engine.load(url);
 
     await new Promise<void>((resolve) => {
@@ -89,30 +81,34 @@ export class PlayerCore<T extends { id: number }> {
         resolve();
       });
     });
-    this.#transition("ready");
+    this.#setState("ready");
   }
 
   async play() {
     const track = this.currentTrack;
-    if (!track) return;
-    if (this.state === "playing" || this.state === "loading") return;
+    if (!track) {
+      return;
+    }
+    if (this.state === "playing" || this.state === "loading") {
+      return;
+    }
 
-    this.#transition("playing");
+    this.#setState("playing");
     try {
       await this.#engine.play();
-    } catch {
-      this.#transition("error");
+    } catch (e) {
+      this.#setState("error");
     }
   }
 
   pause() {
     this.#engine.pause();
-    this.#transition("paused");
+    this.#setState("paused");
   }
 
   stop() {
     this.#engine.pause();
-    this.#transition("idle");
+    this.#setState("idle");
   }
 
   next() {

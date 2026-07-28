@@ -26,9 +26,11 @@ export const useMediaSession = () => {
 
   useEffect(() => {
     const unlisteners: (() => void)[] = [];
+    let cancelled = false;
 
     // 初始化 SMTC
-    initSmtc().catch(console.error);
+    initSmtc()
+      .catch((e) => console.error("initSmtc() failed:", e));
 
     // 监听系统媒体键事件
     listen<SmtcEvent>("smtc-event", (event) => {
@@ -48,10 +50,10 @@ export const useMediaSession = () => {
           }
           break;
         case "next":
-          store.next();
+          store.next().catch((e) => console.error("store.next() threw:", e));
           break;
         case "previous":
-          store.prev();
+          store.prev().catch((e) => console.error("store.prev() threw:", e));
           break;
         case "stop":
           store.pause();
@@ -62,7 +64,11 @@ export const useMediaSession = () => {
           break;
       }
     }).then((unlisten) => {
-      unlisteners.push(unlisten);
+      if (!cancelled) {
+        unlisteners.push(unlisten);
+      } else {
+        unlisten(); // immediately unsubscribe leaked listener
+      }
     });
 
     // 推送元数据到 SMTC
@@ -132,6 +138,7 @@ export const useMediaSession = () => {
     }
 
     return () => {
+      cancelled = true;
       unsubTrack();
       unsubPlayback();
       unsubPlaying();

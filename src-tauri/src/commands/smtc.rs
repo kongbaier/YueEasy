@@ -20,7 +20,8 @@ pub(crate) async fn init_smtc<R: Runtime>(app: AppHandle<R>) -> Result<(), Strin
             app_id: "com.kongbai.yueeasy".into(),
             app_name: "乐易".into(),
         })
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    crate::smtc::setup_smtc_handler(&app).map_err(|e| e.to_string())
 }
 
 #[tauri::command]

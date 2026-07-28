@@ -95,7 +95,6 @@ pub fn run() {
             }
 
             tray::setup(h)?;
-            let _ = smtc::setup(h);
             commands::accent_color::watch_accent_color(h.clone());
             Ok(())
         })

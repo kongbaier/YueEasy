@@ -9,7 +9,7 @@ export const usePlayerAction = () => {
       next: state.next,
       prev: state.prev,
       playing: state.playing,
-      isLoading: state.core.state === "loading",
+      isLoading: state.playerState === "loading",
     })),
   );
 

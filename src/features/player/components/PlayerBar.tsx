@@ -94,7 +94,7 @@ const PlayIcon = ({ state }: { state: PlayerState }) => {
 
 const PlayerControls = () => {
   const { handlePlay, handleNext, handlePrev } = usePlayerAction();
-  const state = usePlayerStore((s) => s.core.state);
+  const state = usePlayerStore((s) => s.playerState);
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const hasTrack = !!currentTrack;
   return (

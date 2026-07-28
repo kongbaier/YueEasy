@@ -2,19 +2,44 @@ import { create } from "zustand";
 import {
   createPlayModeStrategy,
   PlayerCore,
-  SequenceStrategy,
 } from "@/features/player/core";
-import type { PlayMode, Track } from "@/features/player/core/types";
+import type { PlayMode, PlayerState, Track } from "@/features/player/core/types";
 import { resolveUrl } from "@/shared/services/track";
 import { getStoreValue, setStoreValue } from "@/shared/services/store";
 
-const player = new PlayerCore<Track>(new SequenceStrategy());
+const player = new PlayerCore<Track>();
 
 let urlFetchedAt = 0;
 
+let isSkipping = false;
+
+async function addOrPlayNext(track: Track, position: "append" | "afterCurrent") {
+  const { currentTrack, queue } = usePlayerStore.getState();
+  if (queue.some((item) => item.id === track.id)) return;
+
+  if (!currentTrack) {
+    player.setQueue([track], 0);
+    usePlayerStore.setState({
+      queue: player.queue,
+      currentTrack: player.currentTrack ?? null,
+    });
+    await playCurrent();
+    return;
+  }
+
+  if (position === "afterCurrent") {
+    player.insert(track, player.index + 1);
+  } else {
+    player.add(track);
+  }
+  usePlayerStore.setState({ queue: player.queue });
+}
+
 async function playCurrent() {
   const track = player.currentTrack;
-  if (!track) return;
+  if (!track) {
+    return;
+  }
   const url = await resolveUrl(track.id);
   urlFetchedAt = Date.now();
   await player.load(url);
@@ -22,10 +47,10 @@ async function playCurrent() {
 }
 
 interface PlayerStore {
-  core: PlayerCore<Track>;
   currentTrack: Track | null;
   queue: Track[];
   playing: boolean;
+  playerState: PlayerState;
   playMode: PlayMode;
   currentTime: number;
   duration: number;
@@ -53,7 +78,7 @@ interface PlayerStore {
 export const usePlayerStore = create<PlayerStore>((set, get) => {
   player.on("stateChange", (state) => {
     const wasEnded = state === "ended";
-    set({ playing: state === "playing" });
+    set({ playing: state === "playing", playerState: state });
     if (wasEnded) {
       playCurrent().catch(() => player.stop());
     }
@@ -72,10 +97,10 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
   });
 
   return {
-    core: player,
     currentTrack: player.currentTrack ?? null,
     queue: player.queue,
     playing: false,
+    playerState: player.state,
     playMode: "sequential",
     currentTime: 0,
     duration: 0,
@@ -126,13 +151,25 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     },
 
     next: async () => {
-      player.next();
-      await playCurrent();
+      if (isSkipping) return;
+      isSkipping = true;
+      try {
+        player.next();
+        await playCurrent();
+      } finally {
+        isSkipping = false;
+      }
     },
 
     prev: async () => {
-      player.prev();
-      await playCurrent();
+      if (isSkipping) return;
+      isSkipping = true;
+      try {
+        player.prev();
+        await playCurrent();
+      } finally {
+        isSkipping = false;
+      }
     },
 
     seek: (time) => {
@@ -158,38 +195,11 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     },
 
     addToQueue: async (track) => {
-      const { currentTrack, queue } = get();
-      if (queue.some((item) => item.id === track.id)) return;
-      if (!currentTrack) {
-        player.setQueue([track], 0);
-        set({
-          queue: player.queue,
-          currentTrack: player.currentTrack ?? null,
-        });
-        await playCurrent();
-      } else {
-        player.add(track);
-        set({ queue: player.queue });
-      }
+      await addOrPlayNext(track, "append");
     },
 
     playNext: async (track) => {
-      const { queue, currentTrack } = get();
-      if (queue.some((item) => item.id === track.id)) return;
-
-      if (!currentTrack) {
-        player.setQueue([track], 0);
-        set({
-          queue: player.queue,
-          currentTrack: player.currentTrack ?? null,
-        });
-        await playCurrent();
-        return;
-      }
-
-      const idx = player.index + 1;
-      player.insert(track, idx);
-      set({ queue: player.queue });
+      await addOrPlayNext(track, "afterCurrent");
     },
 
     playFromIndex: async (index) => {
@@ -232,13 +242,13 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     },
 
     setVolume: (v: number) => {
-      get().core.volume = v;
+      player.volume = v;
       set({ volume: v, muted: false });
       setStoreValue("volume", v);
     },
 
     setMuted: (m: boolean) => {
-      get().core.muted = m;
+      player.muted = m;
       set({ muted: m });
       setStoreValue("muted", m);
     },
@@ -306,7 +316,7 @@ async function persistQueue() {
       album: { id: t.album.id, name: t.album.name, picUrl: t.album.picUrl },
       duration: t.duration,
     })),
-    index: data.core.index,
+    index: player.index,
     currentTime: data.currentTime,
     playMode: data.playMode,
   };
@@ -314,14 +324,18 @@ async function persistQueue() {
   await setStoreValue("player_state", payload);
 }
 
+let lastPersistedIndex = -1;
+
 function initQueuePersistence() {
   usePlayerStore.subscribe((state, prevState) => {
+    const currentIndex = player.index;
     if (
       state.queue === prevState.queue &&
-      state.core.index === prevState.core.index &&
+      currentIndex === lastPersistedIndex &&
       state.playMode === prevState.playMode
     )
       return;
+    lastPersistedIndex = currentIndex;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(persistQueue, 2000);
   });

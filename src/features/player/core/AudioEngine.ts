@@ -75,9 +75,6 @@ export class AudioEngine {
   }
 
   load(src: string) {
-    if (this.#src === src && this.#howl) {
-      return;
-    }
     this.#cleanup();
     this.#src = src;
     this.#howl = new Howl({
