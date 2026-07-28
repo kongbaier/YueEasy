@@ -1,14 +1,15 @@
 name: Release
-run-name: Release ${{ inputs.tag || github.ref_name }}
+run-name: Release ${{ github.ref_name }}
 
 on:
   push:
     tags:
-      - "v*"
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (e.g. v0.1.4)"
+        description: "Tag to release (e.g. v0.1.7)"
         required: true
         type: string
 
@@ -16,38 +17,51 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  release:
+    name: Build & Publish
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.tag || github.ref_name }}
 
-      - name: Resolve short commit SHA
-        shell: pwsh
-        run: |
-          $shortSha = "${{ github.sha }}".Substring(0, 7)
-          echo "short_sha=$shortSha" >> $env:GITHUB_ENV
-
-      - uses: pnpm/action-setup@v4
+      - name: install pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: latest
 
-      - uses: actions/setup-node@v4
+      - name: setup node
+        uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      - name: install packages
+        run: pnpm install --frozen-lockfile
 
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - uses: tauri-apps/tauri-action@v0
+      - name: extract tag message
+        id: tagmsg
+        shell: pwsh
+        run: |
+          $tag = "${{ inputs.tag || github.ref_name }}"
+          $msg = $(git tag -l --format='%(contents)' $tag)
+          if (-not $msg) {
+            $msg = "安装包见下方 Assets"
+          }
+          # encode newlines so GitHub Actions expressions can pass them through
+          $escaped = $msg -replace '%', '%25' -replace "`n", '%0A' -replace "`r", '%0D'
+          echo "body=$escaped" >> $env:GITHUB_OUTPUT
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         with:
           tagName: ${{ inputs.tag || github.ref_name }}
-          releaseName: "YueEasy ${{ inputs.tag || github.ref_name }} (${{ env.short_sha }})"
+          releaseName: YueEasy ${{ inputs.tag || github.ref_name }}
+          releaseBody: ${{ steps.tagmsg.outputs.body }}
           updaterJsonPreferNsis: true
