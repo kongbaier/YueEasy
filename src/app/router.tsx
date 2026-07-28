@@ -6,14 +6,12 @@ import { AppLayout } from "./layout";
 
 const Home = lazy(() => import("@/features/home"));
 const Search = lazy(() => import("@/features/search"));
-const Playlist = lazy(() => import("@/features/playlist/Playlist"));
-const Album = lazy(() => import("@/features/album/Album"));
-const DailyRecommend = lazy(
-  () => import("@/features/daily-recommend/DailyRecommend"),
-);
-const LikedSongs = lazy(() => import("@/features/liked-songs/LikedSongs"));
-const RecentPlays = lazy(() => import("@/features/recent-plays/RecentPlays"));
-const Settings = lazy(() => import("@/features/settings/Settings"));
+const Playlist = lazy(() => import("@/pages/Playlist"));
+const Album = lazy(() => import("@/pages/Album"));
+const DailyRecommend = lazy(() => import("@/pages/DailyRecommend"));
+const LikedSongs = lazy(() => import("@/pages/LikedSongs"));
+const RecentPlays = lazy(() => import("@/pages/RecentPlays"));
+const Settings = lazy(() => import("@/pages/Settings"));
 const PlayerPage = lazy(() => import("@/features/player/pages/PlayerPage"));
 
 const PageFallback = (

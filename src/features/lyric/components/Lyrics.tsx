@@ -10,7 +10,6 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchLyrics } from "../lyrics-service";
 
 export const Lyrics = ({ className }: { className?: string }) => {
-  console.log("render");
   const trackId = usePlayerStore((s) => s.currentTrack?.id);
   const { data, isLoading } = useQuery({
     queryKey: ["lyrics", trackId],

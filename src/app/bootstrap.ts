@@ -1,24 +1,13 @@
-import { initAuth, initLikes } from "@/features/auth/init";
-import { initPlayer, initQueuePersistence } from "@/features/player/init";
-import { setWindowEffect } from "@/shared/services/effect";
 import { useAppSettings } from "@/stores/settings";
+import { initAuth } from "@/stores/auth";
 
 /**
- * Pre-React initialization. Calls feature-owned init functions in order.
- * No React dependency, no DOM manipulation.
+ * Application-level initialization that must complete before React mounts.
+ *
+ * Only includes genuinely blocking infrastructure (theme, window effect, auth session).
+ * Feature-level initialization lives in each module's store (self-subscribing pattern).
  */
 export async function bootstrap() {
-  // Settings must load first (other inits may read from store)
   await useAppSettings.getState().init();
-
-  // Apply window effect from persisted settings
-  await setWindowEffect(useAppSettings.getState().settings.window_effect);
-
-  // Auth must resolve before likes (likes depends on userId)
   await initAuth();
-  initLikes();
-
-  // Player restore + queue persistence (independent of auth)
-  initPlayer();
-  initQueuePersistence();
 }

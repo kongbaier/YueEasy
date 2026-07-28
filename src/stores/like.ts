@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { ncm } from "@/shared/services/ncm";
+import { useAuthStore } from "./auth";
 
 interface LikeStore {
   likedIds: Set<number>;
@@ -44,3 +46,17 @@ export const useLikeStore = create<LikeStore>((set, get) => ({
 
   clear: () => set({ likedIds: new Set(), isLoaded: false }),
 }));
+
+// ── self-init: auto-load likes when auth state changes ──
+
+useAuthStore.subscribe((state, prev) => {
+  if (state.isLoggedIn && state.userId && !useLikeStore.getState().isLoaded) {
+    ncm
+      .likeList(state.userId)
+      .then((res) => useLikeStore.getState().init(res.ids))
+      .catch(() => {});
+  }
+  if (!state.isLoggedIn && prev.isLoggedIn) {
+    useLikeStore.getState().clear();
+  }
+});

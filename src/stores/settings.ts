@@ -1,5 +1,6 @@
 import { Effect } from "@tauri-apps/api/window";
 import { create } from "zustand";
+import { setWindowEffect } from "@/shared/services/effect";
 import { loadAllEntries, setStoreValue } from "@/shared/services/store";
 import type {
   AppearanceSettings,
@@ -37,6 +38,7 @@ export const useAppSettings = create<SettingStore>((set) => ({
   init: async () => {
     const settings = await loadSettings();
     set({ settings, ready: true });
+    await setWindowEffect(settings.window_effect);
   },
 
   mergeSetting: (partial) => {

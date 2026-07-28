@@ -44,7 +44,7 @@ export const PlaylistCard = ({
             zIndex: -1,
           }}
         />
-        <div className="absolute inset-0 overflow-hidden rounded-t-lg z-[1]">
+        <div className="absolute inset-0 overflow-hidden rounded-t-lg z-1">
           <ImageWithFade
             alt={playlist.name}
             className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -52,7 +52,7 @@ export const PlaylistCard = ({
             src={playlist.coverUrl}
           />
         </div>
-        <div className="absolute inset-x-0 bottom-0 z-[1] h-1/2 bg-linear-to-t from-black/60 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 z-1 h-1/2 bg-linear-to-t from-black/60 to-transparent pointer-events-none" />
         {showPlayCount && (
           <div
             className="absolute left-2 bottom-2 flex items-center gap-1 text-xs text-white/80"

@@ -6,7 +6,7 @@ import {
 } from "@/features/player/core";
 import type { PlayMode, Track } from "@/features/player/core/types";
 import { resolveUrl } from "@/shared/services/track";
-import { setStoreValue } from "@/shared/services/store";
+import { getStoreValue, setStoreValue } from "@/shared/services/store";
 
 const player = new PlayerCore<Track>(new SequenceStrategy());
 
@@ -244,3 +244,93 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     },
   };
 });
+
+// activate queue persistence listeners (must run after store is created)
+initQueuePersistence();
+
+// ── self-init: restore saved player state ──
+
+let playerInitRan = false;
+
+export async function initPlayerStore() {
+  if (playerInitRan) return;
+  playerInitRan = true;
+
+  const raw = await getStoreValue("player_state");
+  if (!raw) return;
+
+  const data = (typeof raw === "string" ? JSON.parse(raw) : raw) as {
+    queue: Track[];
+    index: number;
+    currentTime: number;
+    playMode: PlayMode;
+  };
+  if (!data.queue?.length) return;
+
+  const tracks: Track[] = data.queue as Track[];
+  const index = Math.min(Math.max(data.index, 0), tracks.length - 1);
+
+  const savedVolume = (await getStoreValue<number>("volume")) ?? 1;
+  const savedMuted = (await getStoreValue<boolean>("muted")) ?? false;
+  usePlayerStore.setState({ volume: savedVolume, muted: savedMuted });
+
+  player.initialize({
+    volume: savedVolume,
+    muted: savedMuted,
+    mode: createPlayModeStrategy(data.playMode ?? "sequential"),
+  });
+  player.setQueue(tracks, index);
+
+  usePlayerStore.setState({
+    queue: player.queue,
+    currentTrack: player.currentTrack ?? null,
+    playMode: data.playMode ?? "sequential",
+    currentTime: data.currentTime ?? 0,
+    duration: player.duration,
+  });
+}
+
+// ── queue persistence ──
+
+let saveTimer: ReturnType<typeof setTimeout> | undefined;
+
+async function persistQueue() {
+  const data = usePlayerStore.getState();
+  if (data.queue.length === 0 && !data.currentTrack) return;
+
+  const payload = {
+    queue: data.queue.map((t: Track) => ({
+      id: t.id,
+      name: t.name,
+      artists: t.artists.map((a) => ({ id: a.id, name: a.name })),
+      album: { id: t.album.id, name: t.album.name, picUrl: t.album.picUrl },
+      duration: t.duration,
+    })),
+    index: data.core.index,
+    currentTime: data.currentTime,
+    playMode: data.playMode,
+  };
+
+  await setStoreValue("player_state", payload);
+}
+
+function initQueuePersistence() {
+  usePlayerStore.subscribe((state, prevState) => {
+    if (
+      state.queue === prevState.queue &&
+      state.core.index === prevState.core.index &&
+      state.playMode === prevState.playMode
+    )
+      return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(persistQueue, 2000);
+  });
+
+  window.addEventListener("beforeunload", () => {
+    clearTimeout(saveTimer);
+    persistQueue();
+  });
+}
+
+// fire module-level init — non-blocking, idempotent
+initPlayerStore().catch(() => {});

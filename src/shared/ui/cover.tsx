@@ -14,7 +14,7 @@ export const Cover = ({
   className,
   foregroundClassName,
 }: CoverProps) => (
-  <div className={cn("isolate relative", className)}>
+  <div className={cn("isolat relative", className)}>
     {src && (
       <img
         alt=""
