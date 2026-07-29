@@ -7,7 +7,7 @@ import { LyricLine } from "./LyricLine";
 import { useLyricScroll } from "../hooks/useLyricScroll";
 import { useLyrics } from "../hooks/useLyrics";
 import { useQuery } from "@tanstack/react-query";
-import { fetchLyrics } from "../lyrics-service";
+import { fetchLyrics } from "../lyricsService";
 
 export const Lyrics = ({ className }: { className?: string }) => {
   const trackId = usePlayerStore((s) => s.currentTrack?.id);

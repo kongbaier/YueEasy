@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { LyricLine } from "@/features/lyric/parser";
-import type { LyricsResult } from "@/features/lyric/lyrics-service";
+import type { LyricsResult } from "@/features/lyric/lyricsService";
 import { usePlayerStore } from "@/stores";
 
 interface LyricsState {

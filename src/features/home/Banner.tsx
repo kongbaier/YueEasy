@@ -1,6 +1,7 @@
 import { useMediaQuery } from "@base-ui/react/unstable-use-media-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import React, { Suspense, useEffect, useState } from "react";
+import { BlurBackground } from "@/shared/ui/blur-background";
 import { ParallaxCarousel } from "@/shared/ui/carousel";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { BannerType, ncm } from "@/shared/services/ncm";
@@ -42,10 +43,8 @@ export const Banner = () => {
       <div className="grid grid-rows-2 grid-cols-5 w-full aspect-9/5 lg:aspect-3/1 gap-2 md:gap-3 lg:gap-4">
         <div className="row-span-2 col-span-5 lg:col-span-3 relative">
           {currentBanner && (
-            <img
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 top-3 object-cover blur-lg scale-95 -z-1"
+            <BlurBackground
+              className="absolute inset-0 top-3 blur-lg scale-95 -z-1"
               src={currentBanner.bigImageUrl}
             />
           )}
@@ -62,6 +61,8 @@ export const Banner = () => {
                     alt={banner.typeTitle}
                     className="absolute inset-0 w-full h-full object-cover"
                     src={banner.bigImageUrl}
+                    decoding="async"
+                    loading="eager"
                   />
                   <div className="absolute right-3 top-3 drop-shadow-2xl text-xs bg-background rounded-sm px-1 py-0.5">
                     {banner.typeTitle}

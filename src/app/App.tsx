@@ -1,10 +1,10 @@
-import { AppRouter } from "@/app/router";
+import { AppRouter } from "@/app/Router";
 import { useAccentColor } from "@/shared/hooks/useAccentColor";
 import { useThemeSync } from "@/shared/hooks/useThemeSync";
 import { useWindowDrag } from "@/shared/hooks/useWindowDrag";
 import "../styles/index.css";
 import { Toaster } from "sonner";
-import { Providers } from "./providers";
+import { Providers } from "./Providers";
 
 export default function App() {
   useThemeSync();

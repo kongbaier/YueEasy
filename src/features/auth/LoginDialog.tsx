@@ -13,7 +13,7 @@ import {
 import { ImageWithFade } from "@/shared/ui/image";
 import { Input } from "@/shared/ui/input";
 import { useAuthStore } from "@/stores";
-import { useLoginDialog } from "@/features/auth/login-dialog-store";
+import { useLoginDialog } from "@/features/auth/loginDialogStore";
 
 type LoginTab = "password" | "sms" | "qr";
 

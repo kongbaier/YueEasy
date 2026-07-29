@@ -6,6 +6,8 @@ type ImgStatus = "loading" | "loaded" | "error";
 export interface ImageWithFadeProps extends React.ComponentProps<"img"> {
   fallback?: React.ReactNode;
   fill?: boolean;
+  loading?: React.ComponentProps<"img">["loading"];
+  decoding?: React.ComponentProps<"img">["decoding"];
 }
 
 /**
@@ -24,6 +26,8 @@ export const ImageWithFade = ({
   alt,
   fallback,
   fill,
+  loading = "lazy",
+  decoding = "async",
   ...rest
 }: ImageWithFadeProps) => {
   const [currStatus, setCurrStatus] = useState<ImgStatus>("loading");
@@ -138,6 +142,8 @@ export const ImageWithFade = ({
             currStatus === "loaded" ? "opacity-100" : "opacity-0",
           )}
           {...rest}
+          decoding={decoding}
+          loading={loading}
           onLoad={handleLoad}
           onError={handleError}
           src={src}

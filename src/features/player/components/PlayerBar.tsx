@@ -11,7 +11,7 @@ import {
 import { useCallback } from "react";
 import { useShallow } from "zustand/shallow";
 import { Button } from "@/shared/ui/button";
-import { FollowTooltip } from "@/features/player/components/follow-tooltip";
+import { FollowTooltip } from "@/features/player/components/FollowTooltip";
 import { ImageWithFade } from "@/shared/ui/image";
 import { useMediaSession } from "@/features/player/hooks/useMediaSession";
 import { usePlayerAction } from "@/features/player/hooks/usePlayerAction";
@@ -27,8 +27,8 @@ import {
   usePlayerPageStore,
   usePlayerStore,
 } from "@/stores";
-import { useLoginDialog } from "@/features/auth/login-dialog-store";
-import { useQueuePanelStore } from "@/features/player/queue-panel-store";
+import { useLoginDialog } from "@/features/auth/loginDialogStore";
+import { useQueuePanelStore } from "@/features/player/queuePanelStore";
 import { PlayModeControl } from "./PlayModeControl";
 import { SeekBar } from "./SeekBar";
 import { VolumeControl } from "./VolumeControl";

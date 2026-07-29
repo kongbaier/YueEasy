@@ -3,7 +3,7 @@ import { Disc, Music, Play } from "lucide-react";
 import { Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { Cover } from "@/shared/ui/cover";
-import { ExpandableText } from "@/shared/ui/ExpandableText";
+import { ExpandableText } from "@/shared/ui/expandable-text";
 import { usePageTitle } from "@/app/layout/PageTitleContext";
 import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
 import { Button } from "@/shared/ui/button";

@@ -1,3 +1,4 @@
+import { BlurBackground } from "@/shared/ui/blur-background";
 import { ImageWithFade } from "@/shared/ui/image";
 import { cn } from "@/shared/lib/utils";
 
@@ -15,14 +16,10 @@ export const Cover = ({
   foregroundClassName,
 }: CoverProps) => (
   <div className={cn("isolat relative", className)}>
-    {src && (
-      <img
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 object-cover blur-lg opacity-80 scale-96 -z-1"
-        src={src}
-      />
-    )}
+    <BlurBackground
+      className="absolute w-full h-full blur-lg opacity-80 scale-95 -z-1"
+      src={src}
+    />
     <ImageWithFade
       alt={alt}
       className={cn(

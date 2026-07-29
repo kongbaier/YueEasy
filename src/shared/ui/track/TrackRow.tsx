@@ -15,7 +15,7 @@ import { toast } from "@/shared/lib/toast";
 import { getNcmImageUrl } from "@/shared/lib/utils";
 import { ncm } from "@/shared/services/ncm";
 import { useAuthStore, useLikeStore, usePlayerStore } from "@/stores";
-import { useLoginDialog } from "@/features/auth/login-dialog-store";
+import { useLoginDialog } from "@/features/auth/loginDialogStore";
 
 interface TrackRowProps {
   track: SongRef;

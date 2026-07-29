@@ -29,7 +29,7 @@ import {
   usePlayerPageStore,
   usePlayerStore,
 } from '@/stores';
-import { useLoginDialog } from '@/features/auth/login-dialog-store';
+import { useLoginDialog } from '@/features/auth/loginDialogStore';
 import { Lyrics } from '@/features/lyric/components/Lyrics';
 import { PlayerPageComments } from './PlayerPageComments';
 import { PlayerPageControls } from './PlayerPageControls';

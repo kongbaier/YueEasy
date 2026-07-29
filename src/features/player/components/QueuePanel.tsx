@@ -19,7 +19,7 @@ import type { Track } from "@/features/player/core/types";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
 import { usePlayerStore } from "@/stores";
-import { useQueuePanelStore } from "@/features/player/queue-panel-store";
+import { useQueuePanelStore } from "@/features/player/queuePanelStore";
 
 const QueueItem = ({
   track,

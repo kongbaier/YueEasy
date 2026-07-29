@@ -9,7 +9,7 @@ import type { SongRef } from "@/shared/types/playlist";
 import { Button } from "@/shared/ui/button";
 import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
 import { useAuthStore, usePlayerStore } from "@/stores";
-import { useLoginDialog } from "@/features/auth/login-dialog-store";
+import { useLoginDialog } from "@/features/auth/loginDialogStore";
 
 const RecentPlaysSkeleton = () => (
   <div className="p-6">

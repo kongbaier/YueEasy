@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { useLoginDialog } from "@/features/auth/login-dialog-store";
+import { useLoginDialog } from "@/features/auth/loginDialogStore";
 import { useAppearanceSetting } from "@/shared/hooks/useSetting";
 import { toast } from "@/shared/lib/toast";
 import { cacheClearAll, cacheSize } from "@/shared/services/cache";

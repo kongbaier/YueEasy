@@ -1,5 +1,6 @@
 import { ListMusic, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { BlurBackground } from "@/shared/ui/blur-background";
 import { ImageWithFade } from "@/shared/ui/image";
 import { formatCount } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
@@ -30,18 +31,15 @@ export const PlaylistCard = ({
       type="button"
     >
       <div className="relative aspect-square rounded-t-lg">
-        <div
-          aria-hidden="true"
+        <BlurBackground
           className="absolute"
+          src={playlist.coverUrl}
           style={{
-            backgroundImage: `url(${playlist.coverUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            filter: "blur(12px) opacity(0.4)",
             height: "100%",
             width: "100%",
             transform: "scale(0.94) translateY(2%)",
             zIndex: -1,
+            filter: "blur(12px) opacity(0.4)",
           }}
         />
         <div className="absolute inset-0 overflow-hidden rounded-t-lg z-1">
