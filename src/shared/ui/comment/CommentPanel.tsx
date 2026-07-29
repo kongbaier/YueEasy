@@ -1,6 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { MessageCircle, ThumbsUp } from "lucide-react";
-import { ImageWithFade } from "@/shared/ui/image";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { formatCount } from "@/shared/lib/format";
 import { cn, getNcmImageUrl } from "@/shared/lib/utils";
@@ -11,9 +10,10 @@ import type { NcmComment } from "@/shared/services/ncm/types/comment.response";
 /*  工具                                                               */
 /* ------------------------------------------------------------------ */
 
+const pad = (n: number) => String(n).padStart(2, "0");
+
 const formatTime = (ts: number) => {
   const d = new Date(ts);
-  const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
@@ -30,7 +30,7 @@ const CommentItem = ({ comment }: { comment: NcmComment }) => (
   >
     {/* 用户行 */}
     <div className="flex items-center gap-2">
-      <ImageWithFade
+      <img
         alt={comment.user.nickname}
         className="h-7 w-7 shrink-0 rounded-full object-cover"
         src={getNcmImageUrl(comment.user.avatarUrl, 50)}

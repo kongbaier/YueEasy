@@ -7,37 +7,38 @@ import {
   MessageCircleMore,
   Minimize,
   Share2,
-} from 'lucide-react';
+} from "lucide-react";
 import React, {
   Activity,
   useCallback,
   useEffect,
   useRef,
   useState,
-} from 'react';
-import { WindowControls } from '@/shared/ui/system';
-import { useWindowState } from '@/shared/hooks/useWindowState';
-import { Button } from '@/shared/ui/button';
-import { Cover } from '@/shared/ui/cover';
-import type { Track } from '@/features/player/core/types';
-import { toast } from '@/shared/lib/toast';
-import { cn } from '@/shared/lib/utils';
-import { ncm } from '@/shared/services/ncm';
+} from "react";
+import { WindowControls } from "@/shared/ui/system";
+import { useWindowState } from "@/shared/hooks/useWindowState";
+import { Button } from "@/shared/ui/button";
+import { Cover } from "@/shared/ui/image";
+import type { Track } from "@/features/player/core/types";
+import { toast } from "@/shared/lib/toast";
+import { cn } from "@/shared/lib/utils";
+import { ncm } from "@/shared/services/ncm";
 import {
   useAuthStore,
   useLikeStore,
   usePlayerPageStore,
   usePlayerStore,
-} from '@/stores';
-import { useLoginDialog } from '@/features/auth/loginDialogStore';
-import { Lyrics } from '@/features/lyric/components/Lyrics';
-import { PlayerPageComments } from './PlayerPageComments';
-import { PlayerPageControls } from './PlayerPageControls';
-import { PlayerPageProgress } from './PlayerPageProgress';
-import { PlayerPageQueue } from './PlayerPageQueue';
-import { PlayerPageVolume } from './PlayerPageVolume';
-import { AnimatePresence, motion } from 'motion/react';
-import { useShallow } from 'zustand/shallow';
+} from "@/stores";
+import { useLoginDialog } from "@/features/auth/loginDialogStore";
+import { Lyrics } from "@/features/lyric/components/Lyrics";
+import { PlayerPageComments } from "./PlayerPageComments";
+import { PlayerPageControls } from "./PlayerPageControls";
+import { PlayerPageProgress } from "./PlayerPageProgress";
+import { PlayerPageQueue } from "./PlayerPageQueue";
+import { PlayerPageVolume } from "./PlayerPageVolume";
+import { AnimatePresence, motion } from "motion/react";
+import { useShallow } from "zustand/shallow";
+import { AspectFit } from "@/shared/ui/aspect-fit";
 
 export default function PlayerPage() {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
@@ -67,19 +68,19 @@ export default function PlayerPage() {
         <motion.div
           animate={{ y: 0 }}
           className="fixed inset-0 z-50 bg-[#fafafa] dark:bg-[#0a0a0a]"
-          exit={{ y: '100%' }}
-          initial={{ y: '100%' }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          exit={{ y: "100%" }}
+          initial={{ y: "100%" }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
         >
           <PlayerHeader handleBack={handleBack} />
 
           <div className="relative h-[calc(100vh-40px)] grid grid-cols-[1fr_1fr] overflow-auto">
             <div
               className={cn(
-                'col-span-1 justify-self-center min-h-0',
-                'pb-4 gap-2 px-4',
-                'flex flex-col justify-around',
-                'w-4/5 max-w-md',
+                "col-span-1 justify-self-center min-h-0",
+                "pb-4 gap-2 px-4",
+                "flex flex-col justify-around",
+                "w-4/5 max-w-md",
               )}
             >
               {currentTrack && (
@@ -108,18 +109,18 @@ export default function PlayerPage() {
             </div>
 
             <div className="col-span-1 min-h-0">
-              <Activity mode={showComments ? 'visible' : 'hidden'}>
+              <Activity mode={showComments ? "visible" : "hidden"}>
                 {currentTrack && (
                   <PlayerPageComments key="comments" songId={currentTrack.id} />
                 )}
               </Activity>
               <Activity
-                mode={!showComments && showQueue ? 'visible' : 'hidden'}
+                mode={!showComments && showQueue ? "visible" : "hidden"}
               >
                 <PlayerPageQueue key="queue" onBack={handleBack} />
               </Activity>
               <Activity
-                mode={!showComments && !showQueue ? 'visible' : 'hidden'}
+                mode={!showComments && !showQueue ? "visible" : "hidden"}
               >
                 <Lyrics />
               </Activity>
@@ -148,15 +149,15 @@ const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
           className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-gray-500/20"
           onClick={toggleFullscreen}
           type="button"
-          title={state === 'fullscreen' ? '退出全屏' : '全屏'}
+          title={state === "fullscreen" ? "退出全屏" : "全屏"}
         >
-          {state === 'fullscreen' ? (
+          {state === "fullscreen" ? (
             <Minimize className="size-4" />
           ) : (
             <Maximize className="size-4" />
           )}
         </button>
-        {state !== 'fullscreen' && <WindowControls />}
+        {state !== "fullscreen" && <WindowControls />}
       </div>
     </header>
   );
@@ -169,7 +170,7 @@ const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
         {currentTrack.name}
       </h1>
       <p className="text-sm text-muted-foreground mt-1 truncate">
-        {currentTrack.artists?.map((a) => a.name).join(' / ')}
+        {currentTrack.artists?.map((a) => a.name).join(" / ")}
       </p>
     </div>
   );
@@ -179,14 +180,14 @@ const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
   const picUrl = currentTrack?.album?.picUrl;
 
   return (
-    <div className="flex-1 min-h-0 my-2 lg:my-4 flex items-center justify-center">
+    <AspectFit ratio={1}>
       <Cover
         alt={currentTrack.album.name}
-        className="aspect-square max-h-full max-w-full"
+        className="size-full"
         foregroundClassName="rounded-lg border-[0.5px]"
         src={picUrl}
       />
-    </div>
+    </AspectFit>
   );
 };
 
@@ -208,7 +209,7 @@ const PlayerMenu = ({
 
   const handleLike = useCallback(() => {
     if (!isLoggedIn) {
-      toast.error('请先登录');
+      toast.error("请先登录");
       setLoginDialogOpen(true);
       return;
     }
@@ -225,7 +226,7 @@ const PlayerMenu = ({
       })
       .catch(() => {
         toggleLike(currentTrack.id);
-        toast.error('操作失败，请重试');
+        toast.error("操作失败，请重试");
       });
   }, [
     isLoggedIn,
@@ -243,8 +244,8 @@ const PlayerMenu = ({
         setMoreOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, [moreOpen]);
 
   return (
@@ -252,8 +253,8 @@ const PlayerMenu = ({
       <Button onClick={handleLike} size="icon-lg" variant="ghost">
         <Heart
           className={cn(
-            'size-5',
-            isLiked ? 'text-red-500 fill-red-500' : 'hover:text-primary',
+            "size-5",
+            isLiked ? "text-red-500 fill-red-500" : "hover:text-primary",
           )}
           strokeWidth={1.5}
         />
@@ -261,12 +262,12 @@ const PlayerMenu = ({
       <Button
         className={cn(
           showComments
-            ? 'text-primary hover:text-primary'
-            : 'text-foreground hover:bg-transparent hover:text-primary',
+            ? "text-primary hover:text-primary"
+            : "text-foreground hover:bg-transparent hover:text-primary",
         )}
         onClick={onToggleComments}
         size="icon-lg"
-        variant={showComments ? 'secondary' : 'ghost'}
+        variant={showComments ? "secondary" : "ghost"}
       >
         <MessageCircleMore className="size-5" strokeWidth={1.5} />
       </Button>
@@ -277,7 +278,7 @@ const PlayerMenu = ({
         <Button
           onClick={() => setMoreOpen((v) => !v)}
           size="icon-lg"
-          variant={moreOpen ? 'secondary' : 'ghost'}
+          variant={moreOpen ? "secondary" : "ghost"}
         >
           <Ellipsis className="size-5" strokeWidth={1.5} />
         </Button>

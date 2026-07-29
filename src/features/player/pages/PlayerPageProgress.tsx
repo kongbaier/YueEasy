@@ -1,5 +1,5 @@
 import { SeekBar } from "@/features/player/components";
-import { FollowTooltip } from "@/features/player/components/follow-tooltip";
+import { FollowTooltip } from "@/features/player/components/FollowTooltip";
 import { useProgress } from "@/features/player/hooks/useProgress";
 import { formatDuration } from "@/shared/lib/format";
 import { usePlayerStore } from "@/stores";

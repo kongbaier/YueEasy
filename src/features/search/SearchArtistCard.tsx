@@ -1,5 +1,4 @@
 import { Mic } from "lucide-react";
-import { ImageWithFade } from "@/shared/ui/image";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { getNcmImageUrl } from "@/shared/lib/utils";
 import type { NcmSearchArtist } from "@/shared/services/ncm";
@@ -12,9 +11,9 @@ interface SearchArtistCardProps {
 export function SearchArtistCard({ item }: SearchArtistCardProps) {
   return (
     <div className="group cursor-pointer rounded-lg p-3 transition-colors hover:bg-accent text-center">
-      <div className="relative mx-auto mb-2 w-full max-w-[160px] aspect-square overflow-hidden rounded-full">
+      <div className="relative mx-auto mb-2 w-full max-w-40 aspect-square overflow-hidden rounded-full">
         {item.picUrl ? (
-          <ImageWithFade
+          <img
             alt={item.name}
             className="h-full w-full object-cover"
             src={getNcmImageUrl(item.picUrl, 150)}
@@ -50,7 +49,7 @@ export function SearchArtistCardSkeleton() {
   return (
     <div className="rounded-lg p-3 flex flex-col items-center">
       <Skeleton
-        className="w-full max-w-[160px] aspect-square rounded-full"
+        className="w-full max-w-40 aspect-square rounded-full"
         shimmer
       />
       <Skeleton className="h-4 w-2/3 mt-2 rounded" shimmer />

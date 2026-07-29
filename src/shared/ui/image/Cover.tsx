@@ -1,5 +1,5 @@
 import { BlurBackground } from "@/shared/ui/blur-background";
-import { ImageWithFade } from "@/shared/ui/image";
+import { ImageTransition } from "./ImageTransition";
 import { cn } from "@/shared/lib/utils";
 
 interface CoverProps {
@@ -15,19 +15,17 @@ export const Cover = ({
   className,
   foregroundClassName,
 }: CoverProps) => (
-  <div className={cn("isolat relative", className)}>
+  <div className={cn("isolate relative", className)}>
     <BlurBackground
-      className="absolute w-full h-full blur-lg opacity-80 scale-95 -z-1"
+      className="absolute w-full h-full blur-lg opacity-80 scale-95 -z-10"
       src={src}
     />
-    <ImageWithFade
-      alt={alt}
-      className={cn(
-        "object-cover relative overflow-hidden",
-        foregroundClassName,
-      )}
-      fill
-      src={src}
-    />
+    {src && (
+      <ImageTransition
+        alt={alt}
+        containerClassName={cn("size-full", foregroundClassName)}
+        src={src}
+      />
+    )}
   </div>
 );

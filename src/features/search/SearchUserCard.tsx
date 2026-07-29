@@ -1,5 +1,4 @@
 import { User } from "lucide-react";
-import { ImageWithFade } from "@/shared/ui/image";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { formatCount } from "@/shared/lib/format";
 import { getNcmImageUrl } from "@/shared/lib/utils";
@@ -13,9 +12,9 @@ interface SearchUserCardProps {
 export function SearchUserCard({ item }: SearchUserCardProps) {
   return (
     <div className="group cursor-pointer rounded-lg p-3 transition-colors hover:bg-accent text-center">
-      <div className="relative mx-auto mb-2 w-full max-w-[160px] aspect-square overflow-hidden rounded-full">
+      <div className="relative mx-auto mb-2 w-full max-w-40 aspect-square overflow-hidden rounded-full">
         {item.avatarUrl ? (
-          <ImageWithFade
+          <img
             alt={item.nickname}
             className="h-full w-full object-cover"
             src={getNcmImageUrl(item.avatarUrl, 150)}
@@ -44,7 +43,7 @@ export function SearchUserCardSkeleton() {
   return (
     <div className="rounded-lg p-3 flex flex-col items-center">
       <Skeleton
-        className="w-full max-w-[160px] aspect-square rounded-full"
+        className="w-full max-w-40 aspect-square rounded-full"
         shimmer
       />
       <Skeleton className="h-4 w-2/3 mt-2 rounded" shimmer />

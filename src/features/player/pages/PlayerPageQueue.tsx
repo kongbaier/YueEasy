@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
-import { ImageWithFade } from "@/shared/ui/image";
 import { VirtuosoScroller } from "@/shared/ui/virtuoso";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
@@ -43,10 +42,9 @@ const QueueItem = ({
     >
       <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
         {track.album?.picUrl ? (
-          <ImageWithFade
+          <img
             alt={track.album.name}
             className="object-cover"
-            fill
             src={track.album.picUrl}
           />
         ) : (

@@ -3,7 +3,7 @@ import { ListMusic, MessageCircle, Play, Users } from "lucide-react";
 import { Suspense, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CommentPanel, CommentSkeleton } from "@/shared/ui/comment";
-import { Cover } from "@/shared/ui/cover";
+import { Cover } from "@/shared/ui/image";
 import { ExpandableText } from "@/shared/ui/expandable-text";
 import { usePageTitle } from "@/app/layout/PageTitleContext";
 import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";

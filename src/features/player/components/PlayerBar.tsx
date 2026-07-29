@@ -12,7 +12,6 @@ import { useCallback } from "react";
 import { useShallow } from "zustand/shallow";
 import { Button } from "@/shared/ui/button";
 import { FollowTooltip } from "@/features/player/components/FollowTooltip";
-import { ImageWithFade } from "@/shared/ui/image";
 import { useMediaSession } from "@/features/player/hooks/useMediaSession";
 import { usePlayerAction } from "@/features/player/hooks/usePlayerAction";
 import { usePlayerKeyboard } from "@/features/player/hooks/usePlayerKeyboard";
@@ -33,6 +32,7 @@ import { PlayModeControl } from "./PlayModeControl";
 import { SeekBar } from "./SeekBar";
 import { VolumeControl } from "./VolumeControl";
 import type { PlayerState } from "../core";
+import { Cover } from "@/shared/ui/image";
 
 const PlayerProgress = () => {
   const { percentage, formatted } = useProgress();
@@ -179,17 +179,16 @@ const PlayerInfo = () => {
       >
         <button
           className={cn(
-            "rounded-md overflow-hidden shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 h-10 w-10 shrink-0 transition-colors",
+            "rounded-md overflow-hidden shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 size-10 shrink-0 transition-colors",
             "transition-transform duration-100 origin-bottom-left hover:brightness-95 hover:scale-110",
           )}
           onClick={openPlayerPage}
           type="button"
         >
           {currentTrack?.album.picUrl ? (
-            <ImageWithFade
+            <Cover
+              className="size-full"
               alt={currentTrack.album.name}
-              className="object-cover"
-              fill
               src={currentTrack.album.picUrl}
             />
           ) : (

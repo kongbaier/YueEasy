@@ -25,7 +25,6 @@ import {
 } from "@/shared/services/updater";
 import type { Theme, WindowsEffect } from "@/shared/types/settings";
 import { Button } from "@/shared/ui/button";
-import { ImageWithFade } from "@/shared/ui/image";
 import { Select } from "@/shared/ui/select";
 import { Switch } from "@/shared/ui/switch";
 import { useAuthStore } from "@/stores";
@@ -234,7 +233,7 @@ export default function Settings() {
                 <Row label="用户">
                   <div className="flex items-center gap-2">
                     {avatarUrl ? (
-                      <ImageWithFade
+                      <img
                         alt={nickname}
                         className="size-6 rounded-full object-cover"
                         src={avatarUrl}

@@ -1,6 +1,5 @@
 import { Heart, MessageSquare } from "lucide-react";
 import { Virtuoso } from "react-virtuoso";
-import { ImageWithFade } from "@/shared/ui/image";
 import { VirtuosoScroller } from "@/shared/ui/virtuoso";
 import { formatCount } from "@/shared/lib/format";
 import { toast } from "@/shared/lib/toast";
@@ -35,10 +34,9 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
     <div className="group flex gap-3 px-2 py-3 w-full text-left rounded-md">
       <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
         {comment.user.avatarUrl ? (
-          <ImageWithFade
+          <img
             alt={comment.user.nickname}
             className="object-cover"
-            fill
             src={comment.user.avatarUrl}
           />
         ) : (

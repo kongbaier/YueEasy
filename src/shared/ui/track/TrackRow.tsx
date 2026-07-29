@@ -7,7 +7,6 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/shared/ui/context-menu";
-import { ImageWithFade } from "@/shared/ui/image";
 import { Skeleton } from "@/shared/ui/skeleton";
 import type { SongRef } from "@/shared/types/playlist";
 import { formatDuration } from "@/shared/lib/format";
@@ -84,7 +83,7 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
           {String(index + 1).padStart(2, "0")}
         </span>
         {track.album.picUrl && (
-          <ImageWithFade
+          <img
             alt={track.album.name}
             className="h-9 w-9 shrink-0 rounded object-cover"
             src={getNcmImageUrl(track.album.picUrl, 50)}

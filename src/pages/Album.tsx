@@ -2,7 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Disc, Music, Play } from "lucide-react";
 import { Suspense } from "react";
 import { useParams } from "react-router-dom";
-import { Cover } from "@/shared/ui/cover";
+import { Cover } from "@/shared/ui/image";
 import { ExpandableText } from "@/shared/ui/expandable-text";
 import { usePageTitle } from "@/app/layout/PageTitleContext";
 import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";

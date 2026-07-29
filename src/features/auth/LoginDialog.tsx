@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
-import { ImageWithFade } from "@/shared/ui/image";
+import { ImageTransition } from "@/shared/ui/image";
 import { Input } from "@/shared/ui/input";
 import { useAuthStore } from "@/stores";
 import { useLoginDialog } from "@/features/auth/loginDialogStore";
@@ -371,7 +371,7 @@ export const LoginDialog = () => {
               {qrLoading ? (
                 <div className="h-full w-full animate-pulse rounded-lg bg-muted-foreground/10" />
               ) : qrImg ? (
-                <ImageWithFade
+                <ImageTransition
                   alt="QR code"
                   className="h-48 w-48 rounded-lg"
                   src={qrImg}

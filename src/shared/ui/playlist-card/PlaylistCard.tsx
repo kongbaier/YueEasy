@@ -1,10 +1,9 @@
 import { ListMusic, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { BlurBackground } from "@/shared/ui/blur-background";
-import { ImageWithFade } from "@/shared/ui/image";
 import { formatCount } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import type { PlaylistDisplay } from "./PlaylistDisplay";
+import { AspectRatio } from "../aspect-ratio";
 
 interface PlaylistCardProps {
   playlist: PlaylistDisplay;
@@ -30,37 +29,23 @@ export const PlaylistCard = ({
       onClick={() => navigate(`/playlist/${playlist.id}`)}
       type="button"
     >
-      <div className="relative aspect-square rounded-t-lg">
-        <BlurBackground
-          className="absolute"
+      <AspectRatio className="overflow-hidden rounded-t-lg" ratio={1}>
+        <img
+          alt={playlist.name}
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
           src={playlist.coverUrl}
-          style={{
-            height: "100%",
-            width: "100%",
-            transform: "scale(0.94) translateY(2%)",
-            zIndex: -1,
-            filter: "blur(12px) opacity(0.4)",
-          }}
         />
-        <div className="absolute inset-0 overflow-hidden rounded-t-lg z-1">
-          <ImageWithFade
-            alt={playlist.name}
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            fill
-            src={playlist.coverUrl}
-          />
-        </div>
-        <div className="absolute inset-x-0 bottom-0 z-1 h-1/2 bg-linear-to-t from-black/60 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 z-10 h-1/2 bg-linear-to-t from-black/60 to-transparent pointer-events-none" />
         {showPlayCount && (
           <div
-            className="absolute left-2 bottom-2 flex items-center gap-1 text-xs text-white/80"
+            className="absolute left-2 bottom-2 flex items-center gap-1 text-xs text-white z-20"
             style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }}
           >
-            <Play className="size-3 fill-white/80" />
+            <Play className="size-3" />
             {formatCount(playlist.playCount)}
           </div>
         )}
-      </div>
+      </AspectRatio>
       <div className="p-2.5 space-y-1">
         <p className="truncate text-sm font-medium leading-tight">
           {playlist.name}
