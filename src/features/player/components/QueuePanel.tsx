@@ -17,8 +17,8 @@ import { VirtuosoScroller } from "@/shared/ui/virtuoso";
 import type { Track } from "@/features/player/core/types";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
-import { usePlayerStore } from "@/stores";
-import { useQueuePanelStore } from "@/features/player/queuePanelStore";
+import { useQueueStore } from "@/stores";
+import { formatQueueCount } from "@/features/player/stores/queue";
 
 const QueueItem = ({
   track,
@@ -81,27 +81,22 @@ const QueueItem = ({
   </div>
 );
 
-export const QueuePanel = () => {
-  const { queue, currentTrack, playFromIndex, removeFromQueue, clearQueue } =
-    usePlayerStore(
+export const QueuePanel = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
+  const { queue, queueLength, currentTrack, playFromIndex, removeFromQueue, clearQueue } =
+    useQueueStore(
       useShallow((s) => ({
         queue: s.queue,
+        queueLength: s.queueLength,
         currentTrack: s.currentTrack,
         playFromIndex: s.playFromIndex,
         removeFromQueue: s.removeFromQueue,
         clearQueue: s.clearQueue,
       })),
     );
-  const { opened, close } = useQueuePanelStore(
-    useShallow((s) => ({
-      opened: s.opened,
-      close: s.close,
-    })),
-  );
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
-  const handleClose = () => close();
+  const handleClose = () => onClose();
 
   const handlePlayTrack = (index: number) => {
     playFromIndex(index);
@@ -134,7 +129,7 @@ export const QueuePanel = () => {
 
   return (
     <AnimatePresence>
-      {opened && (
+      {open && (
         <div className="isolate fixed inset-0 z-50 flex justify-end">
           <button
             aria-label="关闭播放列表"
@@ -153,9 +148,9 @@ export const QueuePanel = () => {
             <header className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
               <h2 className="text-sm font-medium">
                 播放列表
-                {queue.length > 0 && (
+                {queueLength > 0 && (
                   <span className="ml-1.5 text-xs text-text-muted">
-                    ({queue.length})
+                    ({formatQueueCount(queueLength)})
                   </span>
                 )}
               </h2>

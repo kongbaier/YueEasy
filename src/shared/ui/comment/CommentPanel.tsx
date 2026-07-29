@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { MessageCircle, ThumbsUp } from "lucide-react";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { formatCount } from "@/shared/lib/format";
+import { formatCount } from "@/shared/utils/format";
 import { cn, getNcmImageUrl } from "@/shared/lib/utils";
 import { ncm } from "@/shared/services/ncm";
 import type { NcmComment } from "@/shared/services/ncm/types/comment.response";

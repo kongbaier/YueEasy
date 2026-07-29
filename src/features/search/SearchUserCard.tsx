@@ -1,6 +1,6 @@
 import { User } from "lucide-react";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { formatCount } from "@/shared/lib/format";
+import { formatCount } from "@/shared/utils/format";
 import { getNcmImageUrl } from "@/shared/lib/utils";
 import type { NcmSearchUser } from "@/shared/services/ncm";
 

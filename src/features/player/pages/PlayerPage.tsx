@@ -26,10 +26,10 @@ import { ncm } from "@/shared/services/ncm";
 import {
   useAuthStore,
   useLikeStore,
-  usePlayerPageStore,
-  usePlayerStore,
+  useQueueStore,
 } from "@/stores";
 import { useLoginDialog } from "@/features/auth/loginDialogStore";
+import { usePlayerPage } from "@/features/player/contexts/PlayerPageContext";
 import { Lyrics } from "@/features/lyric/components/Lyrics";
 import { PlayerPageComments } from "./PlayerPageComments";
 import { PlayerPageControls } from "./PlayerPageControls";
@@ -37,20 +37,17 @@ import { PlayerPageProgress } from "./PlayerPageProgress";
 import { PlayerPageQueue } from "./PlayerPageQueue";
 import { PlayerPageVolume } from "./PlayerPageVolume";
 import { AnimatePresence, motion } from "motion/react";
-import { useShallow } from "zustand/shallow";
 import { AspectFit } from "@/shared/ui/aspect-fit";
 
 export default function PlayerPage() {
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
-  const { close, isOpen } = usePlayerPageStore(
-    useShallow((s) => ({ isOpen: s.isOpen, close: s.close })),
-  );
+  const currentTrack = useQueueStore((s) => s.currentTrack);
+  const { close, isOpen } = usePlayerPage();
   const [showQueue, setShowQueue] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
   useEffect(() => {
     if (!currentTrack) return;
-    const { queue } = usePlayerStore.getState();
+    const { queue } = useQueueStore.getState();
     const idx = queue.findIndex((t) => t.id === currentTrack.id);
     const next = queue[idx + 1];
     if (next?.album?.picUrl) {

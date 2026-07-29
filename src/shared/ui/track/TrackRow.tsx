@@ -9,11 +9,11 @@ import {
 } from "@/shared/ui/context-menu";
 import { Skeleton } from "@/shared/ui/skeleton";
 import type { SongRef } from "@/shared/types/playlist";
-import { formatDuration } from "@/shared/lib/format";
+import { formatDuration } from "@/shared/utils/format";
 import { toast } from "@/shared/lib/toast";
 import { getNcmImageUrl } from "@/shared/lib/utils";
 import { ncm } from "@/shared/services/ncm";
-import { useAuthStore, useLikeStore, usePlayerStore } from "@/stores";
+import { useAuthStore, useLikeStore, useQueueStore } from "@/stores";
 import { useLoginDialog } from "@/features/auth/loginDialogStore";
 
 interface TrackRowProps {
@@ -23,8 +23,8 @@ interface TrackRowProps {
 }
 
 export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
-  const playNext = usePlayerStore((s) => s.playNext);
-  const addToQueue = usePlayerStore((s) => s.addToQueue);
+  const playNext = useQueueStore((s) => s.playNext);
+  const addToQueue = useQueueStore((s) => s.addToQueue);
   const isLiked = useLikeStore((s) => s.isLiked(track.id));
   const toggleLike = useLikeStore((s) => s.toggle);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);

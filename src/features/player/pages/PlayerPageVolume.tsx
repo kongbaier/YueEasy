@@ -50,11 +50,11 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
     setVolume(ratio);
     setScrubVolume(ratio);
 
-    const handleDragMove = () => {
+    const handleDragMove = (moveEvent: PointerEvent) => {
       const dragRect = bar.getBoundingClientRect();
       const dragX = Math.max(
         0,
-        Math.min(e.clientX - dragRect.left, dragRect.width),
+        Math.min(moveEvent.clientX - dragRect.left, dragRect.width),
       );
       const dragRatio = dragX / dragRect.width;
       setVolume(dragRatio);

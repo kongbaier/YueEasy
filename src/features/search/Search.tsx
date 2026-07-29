@@ -7,7 +7,7 @@ import { useLoadMore } from "@/shared/hooks/useLoadMore";
 import { ScrollContainerContext } from "@/shared/hooks/useLoadMore";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
-import { usePlayerStore } from "@/stores";
+import { useQueueStore } from "@/stores";
 import { SEARCH_TABS } from "./constants";
 import { HotDropdown } from "./HotDropdown";
 import { SearchResults } from "./SearchResults";
@@ -142,7 +142,7 @@ export function SearchResultsDisplay() {
   const searchType = useSearchStore((s) => s.searchType);
   const searchKeyword = useSearchStore((s) => s.searchKeyword);
   const show = useSearchStore((s) => s.show);
-  const play = usePlayerStore((s) => s.play);
+  const play = useQueueStore((s) => s.play);
 
   const hasSearched = searchKeyword.trim().length > 0;
 

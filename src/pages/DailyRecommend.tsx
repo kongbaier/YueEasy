@@ -9,7 +9,7 @@ import { ncm, toSongRef } from "@/shared/services/ncm";
 import type { SongRef } from "@/shared/types/playlist";
 import { Button } from "@/shared/ui/button";
 import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
-import { useAuthStore, usePlayerStore } from "@/stores";
+import { useAuthStore, useQueueStore } from "@/stores";
 import { useLoginDialog } from "@/features/auth/loginDialogStore";
 
 const DailyRecommendSkeleton = () => (
@@ -24,8 +24,8 @@ const DailyRecommendSkeleton = () => (
 );
 
 const DailyRecommendContent = () => {
-  const play = usePlayerStore((s) => s.play);
-  const replaceAndPlay = usePlayerStore((s) => s.replaceAndPlay);
+  const play = useQueueStore((s) => s.play);
+  const replaceAndPlay = useQueueStore((s) => s.replaceAndPlay);
 
   const today = new Date().toISOString().slice(0, 10);
 

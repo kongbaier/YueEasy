@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { usePlayerStore } from "@/stores";
+import { usePlayerStore, useQueueStore } from "@/stores";
 
 export const usePlayerKeyboard = () => {
   useEffect(() => {
@@ -17,36 +17,37 @@ export const usePlayerKeyboard = () => {
         return;
       }
 
-      const state = usePlayerStore.getState();
+      const playerState = usePlayerStore.getState();
+      const queueState = useQueueStore.getState();
 
       if (e.code === "Space") {
         e.preventDefault();
-        if (state.playing) {
-          state.pause();
+        if (playerState.playing) {
+          playerState.pause();
         } else {
-          state.resume();
+          playerState.resume();
         }
         return;
       }
 
       if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
         e.preventDefault();
-        const { currentTime, duration } = state;
+        const { currentTime, duration } = playerState;
         if (duration <= 0) return;
         const step = e.code === "ArrowRight" ? 5 : -5;
-        state.seek(Math.max(0, Math.min(currentTime + step, duration)));
+        playerState.seek(Math.max(0, Math.min(currentTime + step, duration)));
         return;
       }
 
       if (e.code === "PageUp") {
         e.preventDefault();
-        state.prev();
+        queueState.prev();
         return;
       }
 
       if (e.code === "PageDown") {
         e.preventDefault();
-        state.next();
+        queueState.next();
       }
     };
 

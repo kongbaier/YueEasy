@@ -1,14 +1,6 @@
-export { AudioEngine } from "./AudioEngine";
-export type { PlayerEvents } from "./EventBus";
-export { PlayerCore } from "./PlayerCore";
-export { PlayQueue } from "./PlayQueue";
-export { RepeatOneStrategy } from "./strategy/RepeatOneStrategy";
-export { SequenceStrategy } from "./strategy/SequenceStrategy";
-export { ShuffleStrategy } from "./strategy/ShuffleStrategy";
-export type { PlayContext, PlayModeStrategy } from "./strategy/Strategy";
-export { createPlayModeStrategy } from "./strategyFactory";
+export { AudioCore } from "./audio/AudioCore";
+export { QueueManager } from "./queue/QueueManager";
 export type {
-  PlayerState,
   PlayMode,
   Track,
   TrackAlbum,

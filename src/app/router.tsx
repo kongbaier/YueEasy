@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { LoginDialog } from "@/features/auth/LoginDialog";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { PlayerPageProvider } from "@/features/player/contexts/PlayerPageContext";
 import { AppLayout } from "./layout";
 
 const Home = lazy(() => import("@/features/home"));
@@ -29,20 +30,22 @@ const Page = ({ element }: { element: React.ReactNode }) => (
 export function AppRouter() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element=<AppLayout />>
-          <Route element=<Page element=<Home /> /> index />
-          <Route element=<Page element=<Search /> /> path="search" />
-          <Route element=<Page element=<Album /> /> path="album/:id" />
-          <Route element=<Page element=<Playlist /> /> path="playlist/:id" />
-          <Route element=<Page element=<DailyRecommend /> /> path="daily" />
-          <Route element=<Page element=<LikedSongs /> /> path="my/liked" />
-          <Route element=<Page element=<RecentPlays /> /> path="my/recent" />
-          <Route element=<Page element=<Settings /> /> path="settings" />
-        </Route>
-      </Routes>
-      <PlayerPage />
-      <LoginDialog />
+      <PlayerPageProvider>
+        <Routes>
+          <Route element=<AppLayout />>
+            <Route element=<Page element=<Home /> /> index />
+            <Route element=<Page element=<Search /> /> path="search" />
+            <Route element=<Page element=<Album /> /> path="album/:id" />
+            <Route element=<Page element=<Playlist /> /> path="playlist/:id" />
+            <Route element=<Page element=<DailyRecommend /> /> path="daily" />
+            <Route element=<Page element=<LikedSongs /> /> path="my/liked" />
+            <Route element=<Page element=<RecentPlays /> /> path="my/recent" />
+            <Route element=<Page element=<Settings /> /> path="settings" />
+          </Route>
+        </Routes>
+        <PlayerPage />
+        <LoginDialog />
+      </PlayerPageProvider>
     </BrowserRouter>
   );
 }

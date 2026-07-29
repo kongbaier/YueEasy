@@ -89,7 +89,6 @@ export const useLyrics = (
   );
 
   // Subscribe to currentTime via Zustand — only setState when line or word index changes.
-  // Module-level import is stable, empty deps is intentional.
   useEffect(() => {
     let prevLine = active[0];
     let prevWord = active[1];
@@ -97,7 +96,6 @@ export const useLyrics = (
 
     const unsub = usePlayerStore.subscribe((state) => {
       const { currentTime } = state;
-      // Skip if currentTime hasn't changed (avoids recomputation on unrelated state updates)
       if (currentTime === prevTime) return;
       prevTime = currentTime;
 
@@ -107,7 +105,6 @@ export const useLyrics = (
         hasYrcRef.current,
       );
 
-      // Only trigger React re-render on meaningful changes
       if (lineIndex !== prevLine || wordIndex !== prevWord) {
         prevLine = lineIndex;
         prevWord = wordIndex;

@@ -31,8 +31,8 @@ const CurrentWord = ({
     const el = spanRef.current;
     if (!el) return;
 
-    const currentTime = usePlayerStore.getState().currentTime;
-    const elapsed = currentTime * 1000 - absoluteStartMs;
+    const currentTimeHigh = usePlayerStore.getState().currentTimeHigh;
+    const elapsed = currentTimeHigh * 1000 - absoluteStartMs;
     const progress = Math.min(Math.max(elapsed / durationMs, 0), 1);
     el.style.backgroundImage = `linear-gradient(to right, var(--primary) ${progress * 100}%, var(--muted-foreground) ${progress * 100}%)`;
   }, [absoluteStartMs, durationMs]);
@@ -45,11 +45,11 @@ const CurrentWord = ({
     let prevTime = -1;
 
     const unsub = usePlayerStore.subscribe((state) => {
-      const { currentTime } = state;
-      if (currentTime === prevTime) return;
-      prevTime = currentTime;
+      const { currentTimeHigh } = state;
+      if (currentTimeHigh === prevTime) return;
+      prevTime = currentTimeHigh;
 
-      const elapsed = currentTime * 1000 - absoluteStartMs;
+      const elapsed = currentTimeHigh * 1000 - absoluteStartMs;
       const progress = Math.min(Math.max(elapsed / durationMs, 0), 1);
       el.style.backgroundImage = `linear-gradient(to right, var(--primary) ${progress * 100}%, var(--muted-foreground) ${progress * 100}%)`;
     });

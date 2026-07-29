@@ -1,4 +1,4 @@
 export { useAuthStore } from "./auth";
 export { useLikeStore } from "./like";
-export { usePlayerPageStore } from "@/features/player/playerPageStore";
-export { usePlayerStore } from "@/features/player/store";
+export { usePlayerStore } from "@/features/player/stores/player";
+export { useQueueStore } from "@/features/player/stores/queue";

@@ -9,29 +9,28 @@ import {
   Play,
 } from "lucide-react";
 import { useCallback } from "react";
-import { useShallow } from "zustand/shallow";
 import { Button } from "@/shared/ui/button";
 import { FollowTooltip } from "@/features/player/components/FollowTooltip";
 import { useMediaSession } from "@/features/player/hooks/useMediaSession";
 import { usePlayerAction } from "@/features/player/hooks/usePlayerAction";
 import { usePlayerKeyboard } from "@/features/player/hooks/usePlayerKeyboard";
 import { useProgress } from "@/features/player/hooks/useProgress";
-import { formatDuration } from "@/shared/lib/format";
+import { formatDuration } from "@/shared/utils/format";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
 import { ncm } from "@/shared/services/ncm";
 import {
   useAuthStore,
   useLikeStore,
-  usePlayerPageStore,
   usePlayerStore,
+  useQueueStore,
 } from "@/stores";
+import { formatQueueCount } from "@/features/player/stores/queue";
 import { useLoginDialog } from "@/features/auth/loginDialogStore";
-import { useQueuePanelStore } from "@/features/player/queuePanelStore";
+import { usePlayerPage } from "@/features/player/contexts/PlayerPageContext";
 import { PlayModeControl } from "./PlayModeControl";
 import { SeekBar } from "./SeekBar";
 import { VolumeControl } from "./VolumeControl";
-import type { PlayerState } from "../core";
 import { Cover } from "@/shared/ui/image";
 
 const PlayerProgress = () => {
@@ -79,23 +78,21 @@ const PlayerProgress = () => {
   );
 };
 
-const PlayIcon = ({ state }: { state: PlayerState }) => {
-  switch (state) {
-    case "loading":
-      return (
-        <Loader2 className="size-4 animate-spin text-primary-foreground" />
-      );
-    case "playing":
-      return <Pause className="size-4 text-primary-foreground" />;
-    default:
-      return <Play className="size-4 text-primary-foreground" />;
+const PlayIcon = ({ loading, playing }: { loading: boolean; playing: boolean }) => {
+  if (loading) {
+    return <Loader2 className="size-4 animate-spin text-primary-foreground" />;
   }
+  if (playing) {
+    return <Pause className="size-4 text-primary-foreground" />;
+  }
+  return <Play className="size-4 text-primary-foreground" />;
 };
 
 const PlayerControls = () => {
   const { handlePlay, handleNext, handlePrev } = usePlayerAction();
-  const state = usePlayerStore((s) => s.playerState);
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const loading = usePlayerStore((s) => s.loading);
+  const playing = usePlayerStore((s) => s.playing);
+  const currentTrack = useQueueStore((s) => s.currentTrack);
   const hasTrack = !!currentTrack;
   return (
     <article className="flex items-center gap-x-6">
@@ -119,11 +116,11 @@ const PlayerControls = () => {
 
         <Button
           className="relative w-12 h-8 bg-primary rounded-2xl flex justify-center items-center cursor-pointer focus:outline-none"
-          disabled={state === "loading"}
+          disabled={loading}
           onClick={handlePlay}
           type="button"
         >
-          <PlayIcon state={state} />
+          <PlayIcon loading={loading} playing={playing} />
         </Button>
 
         <Button
@@ -143,8 +140,8 @@ const PlayerControls = () => {
 };
 
 const PlayerInfo = () => {
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
-  const openPlayerPage = usePlayerPageStore((s) => s.open);
+  const currentTrack = useQueueStore((s) => s.currentTrack);
+  const { open: openPlayerPage } = usePlayerPage();
 
   return (
     <div className="flex-1 min-w-0 relative flex items-center">
@@ -210,10 +207,9 @@ const PlayerInfo = () => {
   );
 };
 
-const PlayerMenu = () => {
-  const { open } = useQueuePanelStore(useShallow((s) => ({ open: s.open })));
-  const queue = usePlayerStore((s) => s.queue);
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
+const PlayerMenu = ({ onToggleQueuePanel }: { onToggleQueuePanel: () => void }) => {
+  const queueLength = useQueueStore((s) => s.queueLength);
+  const currentTrack = useQueueStore((s) => s.currentTrack);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
   const isLiked = useLikeStore((s) =>
@@ -259,15 +255,15 @@ const PlayerMenu = () => {
       )}
       <Button
         className="text-foreground hover:bg-transparent hover:text-primary"
-        onClick={open}
+        onClick={onToggleQueuePanel}
         size="icon"
         variant="ghost"
       >
         <span className="relative">
           <ListMusic className="size-4" />
-          {queue.length > 0 && (
+          {queueLength > 0 && (
             <span className="absolute -top-1 -right-1.5 text-[9px] font-medium tabular-nums">
-              {queue.length}
+              {formatQueueCount(queueLength)}
             </span>
           )}
         </span>
@@ -276,7 +272,7 @@ const PlayerMenu = () => {
   );
 };
 
-export const PlayerBar = ({ className }: { className?: string }) => {
+export const PlayerBar = ({ className, onToggleQueuePanel }: { className?: string; onToggleQueuePanel: () => void }) => {
   usePlayerKeyboard();
   useMediaSession();
   return (
@@ -292,7 +288,7 @@ export const PlayerBar = ({ className }: { className?: string }) => {
 
       <PlayerControls />
 
-      <PlayerMenu />
+      <PlayerMenu onToggleQueuePanel={onToggleQueuePanel} />
     </div>
   );
 };

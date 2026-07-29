@@ -1,39 +1,33 @@
 /* oxlint-disable typescript/no-explicit-any */
 
-export class EventEmitter<
-  Events extends Record<string, (...args: any[]) => any>,
-> {
-  private listeners: Map<keyof Events, Set<(...args: any[]) => any>>;
+export class EventEmitter<Events extends Record<string, unknown[]>> {
+  private listeners: Map<keyof Events, Set<(...args: any[]) => void>>;
 
   constructor() {
     this.listeners = new Map();
     this.on = this.on.bind(this);
     this.off = this.off.bind(this);
     this.emit = this.emit.bind(this);
-    this.offAll = this.offAll.bind(this);
   }
 
-  on<K extends keyof Events>(eventName: K, listener: Events[K]) {
-    if (!this.listeners.has(eventName)) {
-      this.listeners.set(eventName, new Set());
+  on<K extends keyof Events>(event: K, listener: (...args: Events[K]) => void) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, new Set());
     }
-    this.listeners.get(eventName)?.add(listener);
-    return () => this.off(eventName, listener);
+    this.listeners.get(event)?.add(listener);
+
+    return () => this.listeners.get(event)?.delete(listener);
   }
 
-  off<K extends keyof Events>(eventName: K, listener: Events[K]) {
-    this.listeners.get(eventName)?.delete(listener);
-  }
-
-  emit<K extends keyof Events>(eventName: K, ...args: Parameters<Events[K]>) {
-    const targetListeners = this.listeners.get(eventName);
+  emit<K extends keyof Events>(event: K, ...args: Events[K]) {
+    const targetListeners = this.listeners.get(event);
     if (!targetListeners) return;
     for (const fn of targetListeners) {
       fn(...args);
     }
   }
 
-  offAll(eventName: keyof Events) {
-    this.listeners.delete(eventName);
+  off(event: keyof Events) {
+    this.listeners.delete(event);
   }
 }

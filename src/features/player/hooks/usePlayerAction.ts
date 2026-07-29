@@ -1,15 +1,19 @@
 import { useShallow } from "zustand/shallow";
-import { usePlayerStore } from "@/stores";
+import { usePlayerStore, useQueueStore } from "@/stores";
 
 export const usePlayerAction = () => {
-  const { next, pause, resume, prev, playing, isLoading } = usePlayerStore(
+  const { pause, resume, playing, isLoading } = usePlayerStore(
     useShallow((state) => ({
       pause: state.pause,
       resume: state.resume,
+      playing: state.playing,
+      isLoading: state.loading,
+    })),
+  );
+  const { next, prev } = useQueueStore(
+    useShallow((state) => ({
       next: state.next,
       prev: state.prev,
-      playing: state.playing,
-      isLoading: state.playerState === "loading",
     })),
   );
 

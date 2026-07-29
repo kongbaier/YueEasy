@@ -1,7 +1,7 @@
 import { SeekBar } from "@/features/player/components";
 import { FollowTooltip } from "@/features/player/components/FollowTooltip";
 import { useProgress } from "@/features/player/hooks/useProgress";
-import { formatDuration } from "@/shared/lib/format";
+import { formatDuration } from "@/shared/utils/format";
 import { usePlayerStore } from "@/stores";
 
 export const PlayerPageProgress = ({ className }: { className?: string }) => {

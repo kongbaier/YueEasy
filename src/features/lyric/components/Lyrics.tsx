@@ -2,7 +2,7 @@ import { Loader2, Music } from "lucide-react";
 import type { ReactNode } from "react";
 import { createContext, use } from "react";
 import { cn } from "@/shared/lib/utils";
-import { usePlayerStore } from "@/stores";
+import { useQueueStore } from "@/stores";
 import { LyricLine } from "./LyricLine";
 import { useLyricScroll } from "../hooks/useLyricScroll";
 import { useLyrics } from "../hooks/useLyrics";
@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchLyrics } from "../lyricsService";
 
 export const Lyrics = ({ className }: { className?: string }) => {
-  const trackId = usePlayerStore((s) => s.currentTrack?.id);
+  const trackId = useQueueStore((s) => s.currentTrack?.id);
   const { data, isLoading } = useQuery({
     queryKey: ["lyrics", trackId],
     queryFn: () => {

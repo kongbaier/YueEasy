@@ -13,7 +13,7 @@ import { useLoadMore } from "@/shared/hooks/useLoadMore";
 import { toast } from "@/shared/lib/toast";
 import { getNcmImageUrl } from "@/shared/lib/utils";
 import { ncm, toSongRef } from "@/shared/services/ncm";
-import { usePlayerStore } from "@/stores";
+import { useQueueStore } from "@/stores";
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */
@@ -61,8 +61,8 @@ const AlbumSkeleton = () => (
 
 const AlbumContent = () => {
   const { id } = useParams<{ id: string }>();
-  const play = usePlayerStore((s) => s.play);
-  const replaceAndPlay = usePlayerStore((s) => s.replaceAndPlay);
+  const play = useQueueStore((s) => s.play);
+  const replaceAndPlay = useQueueStore((s) => s.replaceAndPlay);
 
   if (!id) throw new Error("无效的专辑 ID");
 

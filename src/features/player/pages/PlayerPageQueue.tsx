@@ -14,7 +14,8 @@ import {
 import { VirtuosoScroller } from "@/shared/ui/virtuoso";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
-import { usePlayerStore } from "@/stores";
+import { useQueueStore } from "@/stores";
+import { formatQueueCount } from "@/features/player/stores/queue";
 
 const QueueItem = ({
   track,
@@ -23,7 +24,7 @@ const QueueItem = ({
   onPlay,
   onRemove,
 }: {
-  track: ReturnType<typeof usePlayerStore.getState>["queue"][number];
+  track: ReturnType<typeof useQueueStore.getState>["queue"][number];
   index: number;
   isCurrent: boolean;
   onPlay: (index: number) => void;
@@ -76,11 +77,12 @@ const QueueItem = ({
 };
 
 export const PlayerPageQueue = ({ onBack }: { onBack: () => void }) => {
-  const queue = usePlayerStore((s) => s.queue);
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
-  const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
-  const playFromIndex = usePlayerStore((s) => s.playFromIndex);
-  const clearQueue = usePlayerStore((s) => s.clearQueue);
+  const queue = useQueueStore((s) => s.queue);
+  const queueLength = useQueueStore((s) => s.queueLength);
+  const currentTrack = useQueueStore((s) => s.currentTrack);
+  const removeFromQueue = useQueueStore((s) => s.removeFromQueue);
+  const playFromIndex = useQueueStore((s) => s.playFromIndex);
+  const clearQueue = useQueueStore((s) => s.clearQueue);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
@@ -111,9 +113,9 @@ export const PlayerPageQueue = ({ onBack }: { onBack: () => void }) => {
       <header className="flex items-center justify-between px-2 py-3 shrink-0">
         <h2 className="text-sm font-medium">
           播放列表
-          {queue.length > 0 && (
+          {queueLength > 0 && (
             <span className="ml-1.5 text-xs text-muted-foreground">
-              ({queue.length})
+              ({formatQueueCount(queueLength)})
             </span>
           )}
         </h2>

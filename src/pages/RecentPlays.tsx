@@ -8,7 +8,7 @@ import { ncm, toSongRef } from "@/shared/services/ncm";
 import type { SongRef } from "@/shared/types/playlist";
 import { Button } from "@/shared/ui/button";
 import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
-import { useAuthStore, usePlayerStore } from "@/stores";
+import { useAuthStore, useQueueStore } from "@/stores";
 import { useLoginDialog } from "@/features/auth/loginDialogStore";
 
 const RecentPlaysSkeleton = () => (
@@ -24,7 +24,7 @@ const RecentPlaysSkeleton = () => (
 
 const RecentPlaysContent = () => {
   const userId = useAuthStore((s) => s.userId);
-  const play = usePlayerStore((s) => s.play);
+  const play = useQueueStore((s) => s.play);
 
   if (!userId) throw new Error("未登录");
 

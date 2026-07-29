@@ -6,7 +6,7 @@ import {
   updateSmtcPosition,
   updateSmtcStatus,
 } from "@/shared/services/smtc";
-import { usePlayerStore } from "@/stores";
+import { usePlayerStore, useQueueStore } from "@/stores";
 
 type SmtcEvent =
   | { event: "play" }
@@ -32,33 +32,34 @@ export const useMediaSession = () => {
 
     // 监听系统媒体键事件
     listen<SmtcEvent>("smtc-event", (event) => {
-      const store = usePlayerStore.getState();
+      const playerStore = usePlayerStore.getState();
+      const queueStore = useQueueStore.getState();
       switch (event.payload.event) {
         case "play":
-          store.resume();
+          playerStore.resume();
           break;
         case "pause":
-          store.pause();
+          playerStore.pause();
           break;
         case "toggle":
-          if (store.playing) {
-            store.pause();
+          if (playerStore.playing) {
+            playerStore.pause();
           } else {
-            store.resume();
+            playerStore.resume();
           }
           break;
         case "next":
-          store.next().catch((e) => console.error("store.next() threw:", e));
+          queueStore.next().catch((e) => console.error("store.next() threw:", e));
           break;
         case "previous":
-          store.prev().catch((e) => console.error("store.prev() threw:", e));
+          queueStore.prev().catch((e) => console.error("store.prev() threw:", e));
           break;
         case "stop":
-          store.pause();
+          playerStore.pause();
           break;
         case "setPosition":
         case "seekTo":
-          store.seek(event.payload.position);
+          playerStore.seek(event.payload.position);
           break;
       }
     }).then((unlisten) => {
@@ -71,7 +72,7 @@ export const useMediaSession = () => {
 
     // 推送元数据到 SMTC
     const pushMetadata = () => {
-      const track = usePlayerStore.getState().currentTrack;
+      const track = useQueueStore.getState().currentTrack;
       if (!track) return;
 
       const artistNames = track.artists?.map((a) => a.name).join("、") ?? "";
@@ -87,7 +88,7 @@ export const useMediaSession = () => {
     };
 
     // 曲目变化 → 更新元数据
-    const unsubTrack = usePlayerStore.subscribe((state, prevState) => {
+    const unsubTrack = useQueueStore.subscribe((state, prevState) => {
       if (state.currentTrack?.id !== prevState.currentTrack?.id) {
         pushMetadata();
       }
@@ -101,7 +102,7 @@ export const useMediaSession = () => {
     });
 
     // 同步初始状态
-    const init = usePlayerStore.getState();
+    const init = useQueueStore.getState();
     if (init.currentTrack) {
       pushMetadata();
     }

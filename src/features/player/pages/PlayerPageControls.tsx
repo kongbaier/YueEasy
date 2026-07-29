@@ -10,7 +10,8 @@ import { PlayModeControl } from "@/features/player/components";
 import { Button } from "@/shared/ui/button";
 import { usePlayerAction } from "@/features/player/hooks/usePlayerAction";
 import { cn } from "@/shared/lib/utils";
-import { usePlayerStore } from "@/stores";
+import { useQueueStore } from "@/stores";
+import { formatQueueCount } from "@/features/player/stores/queue";
 
 interface PlayerPageControlsProps {
   className?: string;
@@ -25,7 +26,7 @@ export const PlayerPageControls = ({
 }: PlayerPageControlsProps) => {
   const { handlePlay, handleNext, handlePrev, isPlaying, isLoading } =
     usePlayerAction();
-  const queue = usePlayerStore((s) => s.queue);
+  const queueLength = useQueueStore((s) => s.queueLength);
 
   return (
     <div
@@ -79,9 +80,9 @@ export const PlayerPageControls = ({
       >
         <span className="relative">
           <ListMusic className="size-4" />
-          {queue.length > 0 && (
+          {queueLength > 0 && (
             <span className="absolute -top-1 -right-1.5 text-[9px] font-medium tabular-nums">
-              {queue.length}
+              {formatQueueCount(queueLength)}
             </span>
           )}
         </span>

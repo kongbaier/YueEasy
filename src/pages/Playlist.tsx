@@ -11,11 +11,11 @@ import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import type { SongRef } from "@/shared/types/playlist";
 import { useLoadMore } from "@/shared/hooks/useLoadMore";
-import { formatCount } from "@/shared/lib/format";
+import { formatCount } from "@/shared/utils/format";
 import { toast } from "@/shared/lib/toast";
 import { cn, getNcmImageUrl } from "@/shared/lib/utils";
 import { getPlaylistDetail } from "@/shared/services/playlist";
-import { usePlayerStore } from "@/stores";
+import { useQueueStore } from "@/stores";
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */
@@ -125,8 +125,8 @@ const PlaylistSkeleton = () => (
 
 const PlaylistContent = () => {
   const { id } = useParams<{ id: string }>();
-  const play = usePlayerStore((s) => s.play);
-  const replaceAndPlay = usePlayerStore((s) => s.replaceAndPlay);
+  const play = useQueueStore((s) => s.play);
+  const replaceAndPlay = useQueueStore((s) => s.replaceAndPlay);
   const [activeTab, setActiveTab] = useState<TabKey>("songs");
 
   if (!id) throw new Error("无效的歌单 ID");

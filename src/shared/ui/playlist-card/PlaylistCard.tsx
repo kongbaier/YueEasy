@@ -1,6 +1,6 @@
 import { ListMusic, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { formatCount } from "@/shared/lib/format";
+import { formatCount } from "@/shared/utils/format";
 import { cn } from "@/shared/lib/utils";
 import type { PlaylistDisplay } from "./PlaylistDisplay";
 import { AspectRatio } from "../aspect-ratio";

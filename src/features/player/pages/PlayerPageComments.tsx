@@ -1,7 +1,7 @@
 import { Heart, MessageSquare } from "lucide-react";
 import { Virtuoso } from "react-virtuoso";
 import { VirtuosoScroller } from "@/shared/ui/virtuoso";
-import { formatCount } from "@/shared/lib/format";
+import { formatCount } from "@/shared/utils/format";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
 import { ncm } from "@/shared/services/ncm";

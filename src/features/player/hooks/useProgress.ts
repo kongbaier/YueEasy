@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useShallow } from "zustand/shallow";
-import { formatDuration } from "@/shared/lib/format";
+import { formatDuration } from "@/shared/utils/format";
 import { usePlayerStore } from "@/stores";
 
 export const useProgress = () => {
