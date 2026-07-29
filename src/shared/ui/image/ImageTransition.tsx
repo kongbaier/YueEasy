@@ -77,12 +77,10 @@ export const ImageTransition = ({
 
     let cancelled = false;
 
-    outAnim.finished
-      .then(() => {
-        if (cancelled) return;
-        setPrevious(undefined);
-      })
-      .catch(() => {}); // AbortError：被下一轮切换 cancel 掉，忽略
+    outAnim.finished.then(() => {
+      if (cancelled) return;
+      setPrevious(undefined);
+    });
 
     const fallback = setTimeout(() => {
       if (!cancelled) setPrevious(undefined);

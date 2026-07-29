@@ -26,8 +26,10 @@ pub fn setup(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>
                 ..
             } = event
             {
-                if let Some(window) = tray.app_handle().get_webview_window("main") {
+                let h = tray.app_handle();
+                if let Some(window) = h.get_webview_window("main") {
                     let _ = window.show();
+                    let _ = window.as_ref().show();
                     let _ = window.set_focus();
                 }
             }
@@ -36,6 +38,7 @@ pub fn setup(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>
             "show" => {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.show();
+                    let _ = window.as_ref().show();
                     let _ = window.set_focus();
                 }
             }

@@ -65,6 +65,7 @@ pub fn run() {
                             api.prevent_close();
                             if let Some(w) = handle.get_webview_window("main") {
                                 let _ = w.hide();
+                                let _ = w.as_ref().hide();
                             }
                         }
                     }

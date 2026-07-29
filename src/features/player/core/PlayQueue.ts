@@ -21,7 +21,7 @@ export class PlayQueue<T extends { id: number | string }> {
   }
 
   get tracks() {
-    return [...this.#queue];
+    return this.#queue;
   }
 
   clear() {

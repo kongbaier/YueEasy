@@ -1,5 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import {
   initSmtc,
   updateSmtcMetadata,
@@ -22,8 +22,6 @@ type SmtcEvent =
   | { event: "setPlaybackRate"; rate: number };
 
 export const useMediaSession = () => {
-  const positionTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-
   useEffect(() => {
     const unlisteners: (() => void)[] = [];
     let cancelled = false;
@@ -95,37 +93,11 @@ export const useMediaSession = () => {
       }
     });
 
-    // 播放状态变化 → 更新状态
+    // 播放状态变化 → 更新状态 & 位置
     const unsubPlayback = usePlayerStore.subscribe((state, prevState) => {
       if (state.playing === prevState.playing) return;
       void updateSmtcStatus(state.playing);
-    });
-
-    // 每秒更新位置
-    const startPositionTimer = () => {
-      if (positionTimer.current) return;
-      positionTimer.current = setInterval(() => {
-        const { playing, currentTime } = usePlayerStore.getState();
-        if (playing) {
-          void updateSmtcPosition(currentTime);
-        }
-      }, 1000);
-    };
-
-    const stopPositionTimer = () => {
-      if (positionTimer.current) {
-        clearInterval(positionTimer.current);
-        positionTimer.current = null;
-      }
-    };
-
-    const unsubPlaying = usePlayerStore.subscribe((state, prevState) => {
-      if (state.playing === prevState.playing) return;
-      if (state.playing) {
-        startPositionTimer();
-      } else {
-        stopPositionTimer();
-      }
+      void updateSmtcPosition(state.currentTime);
     });
 
     // 同步初始状态
@@ -133,16 +105,11 @@ export const useMediaSession = () => {
     if (init.currentTrack) {
       pushMetadata();
     }
-    if (init.playing) {
-      startPositionTimer();
-    }
 
     return () => {
       cancelled = true;
       unsubTrack();
       unsubPlayback();
-      unsubPlaying();
-      stopPositionTimer();
       for (const unlisten of unlisteners) {
         unlisten();
       }
