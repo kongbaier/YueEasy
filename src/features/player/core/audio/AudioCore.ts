@@ -23,7 +23,7 @@ export class AudioCore {
   #gain: GainNode;
   #state: AudioState = "idle";
   #events: EventEmitter<AudioEvents>;
-  #rafId = 0;
+  #tickCleanup: (() => void) | null = null;
 
   constructor() {
     this.#events = new EventEmitter();
@@ -55,6 +55,8 @@ export class AudioCore {
 
     this.#audio.addEventListener("loadedmetadata", () => {
       this.#events.emit("durationchange", this.#audio.duration);
+      this.#events.emit("timeupdate", 0);
+      this.#events.emit("timetick", 0);
     });
 
     this.#audio.addEventListener("timeupdate", () => {
@@ -69,19 +71,19 @@ export class AudioCore {
     this.#audio.addEventListener("play", () => {
       this.#state = "playing";
       this.#events.emit("play");
-      this.#startTimeTick();
+      this.#tickCleanup = this.#startTick();
     });
 
     this.#audio.addEventListener("pause", () => {
       this.#state = "paused";
       this.#events.emit("pause");
-      this.#stopTimeTick();
+      this.#tickCleanup?.();
     });
 
     this.#audio.addEventListener("ended", () => {
       this.#state = "ended";
       this.#events.emit("ended");
-      this.#stopTimeTick();
+      this.#tickCleanup?.();
     });
 
     this.#audio.addEventListener("waiting", () => {
@@ -100,22 +102,17 @@ export class AudioCore {
     });
   }
 
-  // ── High‑frequency timer via requestAnimationFrame ──
-
-  #startTimeTick() {
-    if (this.#rafId) return;
+  #startTick(): () => void {
+    let rafId = 0;
     const tick = () => {
       this.#events.emit("timetick", this.#audio.currentTime);
-      this.#rafId = requestAnimationFrame(tick);
+      rafId = requestAnimationFrame(tick);
     };
-    this.#rafId = requestAnimationFrame(tick);
-  }
-
-  #stopTimeTick() {
-    if (this.#rafId) {
-      cancelAnimationFrame(this.#rafId);
-      this.#rafId = 0;
-    }
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(rafId);
+      this.#tickCleanup = null;
+    };
   }
 
   // ── Public API ──
@@ -141,7 +138,7 @@ export class AudioCore {
 
   unload(): void {
     this.#audio.pause();
-    this.#stopTimeTick();
+    this.#tickCleanup?.();
     this.#audio.removeAttribute("src");
     this.#state = "idle";
   }
@@ -168,7 +165,7 @@ export class AudioCore {
   stop(): void {
     this.#audio.pause();
     this.#audio.currentTime = 0;
-    this.#stopTimeTick();
+    this.#tickCleanup?.();
     this.#state = "idle";
   }
 
@@ -182,7 +179,7 @@ export class AudioCore {
 
   destroy(): void {
     this.#audio.pause();
-    this.#stopTimeTick();
+    this.#tickCleanup?.();
     this.#audio.removeAttribute("src");
 
     this.#source.disconnect();

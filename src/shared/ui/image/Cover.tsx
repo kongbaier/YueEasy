@@ -17,7 +17,7 @@ export const Cover = ({
 }: CoverProps) => (
   <div className={cn("isolate relative", className)}>
     <BlurBackground
-      className="absolute w-full h-full blur-lg opacity-80 scale-95 -z-10"
+      className="absolute w-full h-full blur-lg scale-96 -z-10"
       src={src}
     />
     {src && (

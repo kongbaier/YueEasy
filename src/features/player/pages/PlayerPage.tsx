@@ -23,11 +23,7 @@ import type { Track } from "@/features/player/core/types";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
 import { ncm } from "@/shared/services/ncm";
-import {
-  useAuthStore,
-  useLikeStore,
-  useQueueStore,
-} from "@/stores";
+import { useAuthStore, useLikeStore, useQueueStore } from "@/stores";
 import { useLoginDialog } from "@/features/auth/loginDialogStore";
 import { usePlayerPage } from "@/features/player/contexts/PlayerPageContext";
 import { Lyrics } from "@/features/lyric/components/Lyrics";
@@ -181,7 +177,7 @@ const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
       <Cover
         alt={currentTrack.album.name}
         className="size-full"
-        foregroundClassName="rounded-lg border-[0.5px]"
+        foregroundClassName="rounded-lg border-[0.5px]  border-border"
         src={picUrl}
       />
     </AspectFit>

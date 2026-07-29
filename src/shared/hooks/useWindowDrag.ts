@@ -3,6 +3,8 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect } from "react";
 
 type UseWindowDragOptions = {
+  /** 是否禁用拖拽，常用于全屏等场景，默认 false */
+  disabled?: boolean;
   /** 是否启用双击最大化/还原，默认 true */
   doubleClick?: boolean;
   /** 触发拖拽前的鼠标移动阈值（像素），默认 3 */
@@ -37,13 +39,14 @@ const INTERACTIVE_SELECTOR =
  */
 export function useWindowDrag(
   dragAttr: string,
-  { doubleClick = true, threshold = 3, appWindow }: UseWindowDragOptions = {},
+  { disabled = false, doubleClick = true, threshold = 3, appWindow }: UseWindowDragOptions = {},
 ) {
   useEffect(() => {
     const attr = `data-${dragAttr}`;
     const currentWindow = appWindow ?? getCurrentWindow();
 
     const onMouseDown = (e: MouseEvent) => {
+      if (disabled) return;
       if (e.button !== 0) return;
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -92,5 +95,5 @@ export function useWindowDrag(
     return () => {
       window.removeEventListener("mousedown", onMouseDown);
     };
-  }, [dragAttr, doubleClick, threshold, appWindow]);
+  }, [dragAttr, disabled, doubleClick, threshold, appWindow]);
 }

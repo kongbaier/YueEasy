@@ -2,6 +2,7 @@ import { AppRouter } from "@/app/Router";
 import { useAccentColor } from "@/shared/hooks/useAccentColor";
 import { useThemeSync } from "@/shared/hooks/useThemeSync";
 import { useWindowDrag } from "@/shared/hooks/useWindowDrag";
+import { useWindowState } from "@/shared/hooks/useWindowState";
 import "../styles/index.css";
 import { Toaster } from "sonner";
 import { Providers } from "./Providers";
@@ -9,7 +10,8 @@ import { Providers } from "./Providers";
 export default function App() {
   useThemeSync();
   useAccentColor();
-  useWindowDrag("drag-region");
+  const { state } = useWindowState();
+  useWindowDrag("drag-region", { disabled: state === "fullscreen" });
   return (
     <Providers>
       <AppRouter />
