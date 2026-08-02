@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { ncm } from "@/shared/services/ncm";
+import { ncm } from "@/tauri/ncm";
 import { useAuthStore } from "./auth";
 
 interface LikeStore {

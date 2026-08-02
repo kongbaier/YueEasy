@@ -1,50 +1,44 @@
-import { Effect } from "@tauri-apps/api/window";
-import { create } from "zustand";
-import { setWindowEffect } from "@/shared/services/effect";
-import { loadAllEntries, setStoreValue } from "@/shared/services/store";
+import {
+  DEFAULTS_APPEARANCE,
+  DEFAULTS_PLAYER,
+} from '@/shared/constants/settings';
 import type {
   AppearanceSettings,
+  PlayerSettings,
   Settings,
-} from "@/shared/types/settings";
+} from '@/shared/types/settings';
+import { create } from 'zustand';
 
-export const APPEARANCE_DEFAULTS: AppearanceSettings = {
-  theme: "system",
-  window_effect: Effect.Mica,
-  close_behavior: "quit",
+type SettingsActions = {
+  loadAll: (settings: Partial<Settings>) => void;
+  updateAppearance: (settings: Partial<AppearanceSettings>) => void;
+  updatePlayer: (settings: Partial<PlayerSettings>) => void;
+  resetAll: () => void;
 };
 
-const DEFAULTS: Settings = { ...APPEARANCE_DEFAULTS };
+export const useSettingsStore = create<Settings & SettingsActions>((set) => ({
+  appearance: DEFAULTS_APPEARANCE,
+  player: DEFAULTS_PLAYER,
 
-async function loadSettings(): Promise<Settings> {
-  const settings = await loadAllEntries<Settings>();
-  return {
-    ...DEFAULTS,
-    ...settings,
-  };
-}
+  loadAll: (settings) =>
+    set((state) => ({
+      appearance: { ...state.appearance, ...settings.appearance },
+      player: { ...state.player, ...settings.player },
+    })),
 
-interface SettingStore {
-  settings: Settings;
-  ready: boolean;
+  updateAppearance: (settings) =>
+    set((state) => ({
+      appearance: { ...state.appearance, ...settings },
+    })),
 
-  init: () => Promise<void>;
-  mergeSetting: (partial: Partial<Settings>) => void;
-}
+  updatePlayer: (settings) =>
+    set((state) => ({
+      player: { ...state.player, ...settings },
+    })),
 
-export const useAppSettings = create<SettingStore>((set) => ({
-  settings: { ...DEFAULTS },
-  ready: false,
-
-  init: async () => {
-    const settings = await loadSettings();
-    set({ settings, ready: true });
-    await setWindowEffect(settings.window_effect);
-  },
-
-  mergeSetting: (partial) => {
-    set((store) => ({ settings: { ...store.settings, ...partial } }));
-    for (const [key, value] of Object.entries(partial)) {
-      setStoreValue(key, value);
-    }
-  },
+  resetAll: () =>
+    set({
+      appearance: DEFAULTS_APPEARANCE,
+      player: DEFAULTS_PLAYER,
+    }),
 }));

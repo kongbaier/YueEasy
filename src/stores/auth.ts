@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { clearNcmCookie, getNcmCookie, ncm } from "@/shared/services/ncm";
+import { clearNcmCookie, getNcmCookie, ncm } from "@/tauri/ncm";
 
 interface AuthState {
   isLoggedIn: boolean;

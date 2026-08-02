@@ -1,6 +1,6 @@
 import type { Playlist } from "@/shared/types/playlist";
-import { CacheKeys, cacheGet, cacheSet } from "./cache";
-import { ncm, toPlaylist, toSongRef } from "./ncm";
+import { CacheKeys, cacheGet, cacheSet } from "@/tauri/cache";
+import { ncm, toPlaylist, toSongRef } from "@/tauri/ncm";
 
 export async function getPlaylistDetail(
   id: number,

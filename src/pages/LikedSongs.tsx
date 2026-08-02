@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { usePageTitle } from "@/app/layout/PageTitleContext";
 import { useLoadMore } from "@/shared/hooks/useLoadMore";
 import { toast } from "@/shared/lib/toast";
-import { ncm, toSongRef } from "@/shared/services/ncm";
+import { ncm, toSongRef } from "@/tauri/ncm";
 import type { SongRef } from "@/shared/types/playlist";
 import { Button } from "@/shared/ui/button";
 import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";

@@ -12,7 +12,7 @@ import type { SongRef } from "@/shared/types/playlist";
 import { useLoadMore } from "@/shared/hooks/useLoadMore";
 import { toast } from "@/shared/lib/toast";
 import { getNcmImageUrl } from "@/shared/lib/utils";
-import { ncm, toSongRef } from "@/shared/services/ncm";
+import { ncm, toSongRef } from "@/tauri/ncm";
 import { useQueueStore } from "@/modules/player/stores/queue";
 
 /* ------------------------------------------------------------------ */

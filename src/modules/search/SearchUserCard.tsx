@@ -2,7 +2,7 @@ import { User } from "lucide-react";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { formatCount } from "@/shared/utils/format";
 import { getNcmImageUrl } from "@/shared/lib/utils";
-import type { NcmSearchUser } from "@/shared/services/ncm";
+import type { NcmSearchUser } from "@/tauri/ncm";
 
 interface SearchUserCardProps {
   /** 用户搜索结果项 */

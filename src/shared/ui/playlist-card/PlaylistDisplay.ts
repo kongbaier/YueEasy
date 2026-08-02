@@ -2,7 +2,7 @@ import type { Playlist } from "@/shared/types/playlist";
 import type {
   PersonalizedPlaylist,
   TopPlaylist,
-} from "@/shared/services/ncm/types/playlist.response";
+} from "@/tauri/ncm/types/playlist.response";
 
 /** 歌单卡片展示值对象 —— 纯展示关注点，与业务模型解耦 */
 export interface PlaylistDisplay {

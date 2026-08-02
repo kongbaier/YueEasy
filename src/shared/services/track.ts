@@ -1,4 +1,4 @@
-import { ncm } from "./ncm";
+import { ncm } from "@/tauri/ncm";
 
 export async function resolveUrl(id: number): Promise<string> {
   const result = await ncm.songUrl(id);

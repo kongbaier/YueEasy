@@ -1,5 +1,5 @@
-import { getVersion } from "@tauri-apps/api/app";
-import { Effect } from "@tauri-apps/api/window";
+import { getVersion } from '@tauri-apps/api/app';
+import { Effect } from '@tauri-apps/api/window';
 import {
   Check,
   Database,
@@ -9,47 +9,47 @@ import {
   Palette,
   RefreshCw,
   User,
-} from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { useAppearanceSetting } from "@/shared/hooks/useSetting";
-import { toast } from "@/shared/lib/toast";
-import { cacheClearAll, cacheSize } from "@/shared/services/cache";
-import { setWindowEffect } from "@/shared/services/effect";
-import type { Update } from "@/shared/services/updater";
+} from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { usePageTitle } from '@/app/layout/PageTitleContext';
+import { useAppearanceSetting } from '@/shared/hooks/useSetting';
+import { toast } from '@/shared/lib/toast';
+import { cacheClearAll, cacheSize } from '@/tauri/cache';
+import { setWindowEffect } from '@/tauri/effect';
+import type { Update } from '@/tauri/updater';
 import {
   checkForUpdate,
   downloadAndInstall,
   installAndRelaunch,
-} from "@/shared/services/updater";
-import type { Theme, WindowsEffect } from "@/shared/types/settings";
-import { Button } from "@/shared/ui/button";
-import { Select } from "@/shared/ui/select";
-import { Switch } from "@/shared/ui/switch";
-import { useAuthStore } from "@/stores/auth";
-import { useLoginDialog } from "@/modules/auth/loginDialogStore";
+} from '@/tauri/updater';
+import type { Theme, WindowsEffect } from '@/shared/types/settings';
+import { Button } from '@/shared/ui/button';
+import { Select } from '@/shared/ui/select';
+import { Switch } from '@/shared/ui/switch';
+import { useAuthStore } from '@/stores/auth';
+import { useLoginDialog } from '@/modules/auth/loginDialogStore';
 
 const labels: Record<Theme, string> = {
-  system: "系统",
-  light: "浅色",
-  dark: "深色",
+  system: '系统',
+  light: '浅色',
+  dark: '深色',
 };
 
 const windowEffectLabels: Record<WindowsEffect, string> = {
-  [Effect.Mica]: "Mica",
-  [Effect.Tabbed]: "Mica Alt",
-  [Effect.Acrylic]: "Acrylic",
-  [Effect.Blur]: "Acrylic Thin",
+  [Effect.Mica]: 'Mica',
+  [Effect.Tabbed]: 'Mica Alt',
+  [Effect.Acrylic]: 'Acrylic',
+  [Effect.Blur]: 'Acrylic Thin',
 };
 
 export default function Settings() {
-  usePageTitle("设置", { root: true });
-  const [theme, setTheme] = useAppearanceSetting("theme");
+  usePageTitle('设置', { root: true });
+  const [theme, setTheme] = useAppearanceSetting('theme');
   const [windowEffect, setWindowEffectState] =
-    useAppearanceSetting("window_effect");
+    useAppearanceSetting('window_effect');
   const [closeBehavior, setCloseBehavior] =
-    useAppearanceSetting("close_behavior");
-  const closeToTray = closeBehavior === "hide";
+    useAppearanceSetting('close_behavior');
+  const closeToTray = closeBehavior === 'hide';
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const nickname = useAuthStore((s) => s.nickname);
   const avatarUrl = useAuthStore((s) => s.avatarUrl);
@@ -72,63 +72,63 @@ export default function Settings() {
     cacheClearAll()
       .then(() => {
         setCacheBytes(0);
-        toast.success("缓存已清除");
+        toast.success('缓存已清除');
       })
-      .catch(() => toast.error("清除缓存失败"));
+      .catch(() => toast.error('清除缓存失败'));
   };
 
   // --- 检查更新状态 ---
   type UpdateStatus =
-    | "idle"
-    | "checking"
-    | "up-to-date"
-    | "available"
-    | "downloading"
-    | "installing"
-    | "error";
+    | 'idle'
+    | 'checking'
+    | 'up-to-date'
+    | 'available'
+    | 'downloading'
+    | 'installing'
+    | 'error';
 
-  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle');
   const [update, setUpdate] = useState<Update | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
-  const [appVersion, setAppVersion] = useState("...");
+  const [appVersion, setAppVersion] = useState('...');
 
   useEffect(() => {
     getVersion()
       .then(setAppVersion)
-      .catch(() => setAppVersion("0.0.0"));
+      .catch(() => setAppVersion('0.0.0'));
   }, []);
 
   const handleEffectChange = (effect: WindowsEffect) => {
     setWindowEffectState(effect);
     setWindowEffect(effect).catch(() => {
       setWindowEffectState(Effect.Mica);
-      toast.error("该效果不可用，已恢复为 Mica");
+      toast.error('该效果不可用，已恢复为 Mica');
     });
   };
 
   const handleCloseToTrayChange = (checked: boolean) => {
-    setCloseBehavior(checked ? "hide" : "quit");
+    setCloseBehavior(checked ? 'hide' : 'quit');
   };
 
   const handleCheckUpdate = useCallback(async () => {
-    setUpdateStatus("checking");
+    setUpdateStatus('checking');
     try {
       const u = await checkForUpdate();
       if (u) {
         setUpdate(u);
-        setUpdateStatus("available");
+        setUpdateStatus('available');
       } else {
-        setUpdateStatus("up-to-date");
+        setUpdateStatus('up-to-date');
       }
     } catch {
-      setUpdateStatus("error");
-      toast.error("检查更新失败，请检查网络连接");
+      setUpdateStatus('error');
+      toast.error('检查更新失败，请检查网络连接');
     }
   }, []);
 
   const handleDownload = useCallback(async () => {
     if (!update) return;
-    setUpdateStatus("downloading");
+    setUpdateStatus('downloading');
     setDownloadProgress(0);
     try {
       await downloadAndInstall(update, (downloaded, total) => {
@@ -136,11 +136,11 @@ export default function Settings() {
           setDownloadProgress(Math.round((downloaded / total) * 100));
         }
       });
-      setUpdateStatus("installing");
+      setUpdateStatus('installing');
       await installAndRelaunch();
     } catch {
-      setUpdateStatus("available");
-      toast.error("下载失败，请重试");
+      setUpdateStatus('available');
+      toast.error('下载失败，请重试');
     }
   }, [update]);
 
@@ -153,7 +153,7 @@ export default function Settings() {
       </div>
 
       <div className="space-y-5 sm:space-y-6">
-        <SectionCard style={{ animationDelay: "0ms" }}>
+        <SectionCard style={{ animationDelay: '0ms' }}>
           <SectionTitle icon={Palette}>外观</SectionTitle>
           <div className="divide-y divide-border/10">
             <Row label="主题">
@@ -225,7 +225,7 @@ export default function Settings() {
           </div>
         </SectionCard>
 
-        <SectionCard style={{ animationDelay: "80ms" }}>
+        <SectionCard style={{ animationDelay: '80ms' }}>
           <SectionTitle icon={User}>账户</SectionTitle>
           <div className="divide-y divide-border/10">
             {isLoggedIn ? (
@@ -255,7 +255,7 @@ export default function Settings() {
                   <Button
                     onClick={() => {
                       logout();
-                      toast.success("已退出登录");
+                      toast.success('已退出登录');
                     }}
                     size="xs"
                     variant="outline"
@@ -275,7 +275,7 @@ export default function Settings() {
           </div>
         </SectionCard>
 
-        <SectionCard style={{ animationDelay: "160ms" }}>
+        <SectionCard style={{ animationDelay: '160ms' }}>
           <SectionTitle icon={Headphones}>播放</SectionTitle>
           <div className="divide-y divide-border/10">
             <Row description="新播放队列的默认模式" label="默认播放模式">
@@ -287,13 +287,13 @@ export default function Settings() {
           </div>
         </SectionCard>
 
-        <SectionCard style={{ animationDelay: "240ms" }}>
+        <SectionCard style={{ animationDelay: '240ms' }}>
           <SectionTitle icon={Database}>缓存</SectionTitle>
           <div className="divide-y divide-border/10">
             <Row description="本地缓存占用空间" label="缓存大小">
               <span className="text-sm text-muted-foreground">
                 {cacheBytes === null
-                  ? "--"
+                  ? '--'
                   : cacheBytes < 1024
                     ? `${cacheBytes} B`
                     : cacheBytes < 1024 * 1024
@@ -314,7 +314,7 @@ export default function Settings() {
           </div>
         </SectionCard>
 
-        <SectionCard style={{ animationDelay: "320ms" }}>
+        <SectionCard style={{ animationDelay: '320ms' }}>
           <SectionTitle icon={Info}>关于</SectionTitle>
           <div className="divide-y divide-border/10">
             <Row label="版本号">
@@ -323,21 +323,21 @@ export default function Settings() {
               </span>
             </Row>
             <Row label="检查更新">
-              {updateStatus === "idle" && (
+              {updateStatus === 'idle' && (
                 <Button onClick={handleCheckUpdate} size="xs" variant="outline">
                   检查更新
                 </Button>
               )}
-              {updateStatus === "checking" && (
+              {updateStatus === 'checking' && (
                 <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                   <RefreshCw className="size-3 animate-spin" />
                   正在检查...
                 </span>
               )}
-              {updateStatus === "up-to-date" && (
+              {updateStatus === 'up-to-date' && (
                 <span className="text-sm text-muted-foreground">已是最新</span>
               )}
-              {updateStatus === "available" && (
+              {updateStatus === 'available' && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">
                     {update?.version}
@@ -347,17 +347,17 @@ export default function Settings() {
                   </Button>
                 </div>
               )}
-              {updateStatus === "downloading" && (
+              {updateStatus === 'downloading' && (
                 <span className="text-sm text-muted-foreground">
                   下载中 {downloadProgress}%
                 </span>
               )}
-              {updateStatus === "installing" && (
+              {updateStatus === 'installing' && (
                 <span className="text-sm text-muted-foreground">
                   正在安装...
                 </span>
               )}
-              {updateStatus === "error" && (
+              {updateStatus === 'error' && (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-destructive">检查失败</span>
                   <Button

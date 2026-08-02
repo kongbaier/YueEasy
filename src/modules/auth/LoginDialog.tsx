@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
-import { ncm, setNcmCookie } from "@/shared/services/ncm";
+import { ncm, setNcmCookie } from "@/tauri/ncm";
 import { Button } from "@/shared/ui/button";
 import {
   Dialog,

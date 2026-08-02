@@ -4,8 +4,8 @@ import React, { Suspense, useEffect, useState } from "react";
 import { BlurBackground } from "@/shared/ui/blur-background";
 import { ParallaxCarousel } from "@/shared/ui/carousel";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { BannerType, ncm } from "@/shared/services/ncm";
-import { CacheKeys, cachedFetch } from "@/shared/services/cache";
+import { BannerType, ncm } from "@/tauri/ncm";
+import { CacheKeys, cachedFetch } from "@/tauri/cache";
 
 export const Banner = () => {
   const { data: banners } = useSuspenseQuery({

@@ -4,7 +4,7 @@ use tauri_plugin_media::{MediaExt, MediaMetadata, PlaybackStatus};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SmtcMetadata {
+pub struct MediaSessionMetadata {
     pub title: String,
     pub artist: String,
     pub album: String,
@@ -13,21 +13,9 @@ pub struct SmtcMetadata {
 }
 
 #[tauri::command]
-pub(crate) async fn init_smtc<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
-    use tauri_plugin_media::InitializeMediaSessionRequest;
-    app.media()
-        .initialize_session(InitializeMediaSessionRequest {
-            app_id: "com.kongbai.yueeasy".into(),
-            app_name: "乐易".into(),
-        })
-        .map_err(|e| e.to_string())?;
-    crate::smtc::setup_smtc_handler(&app).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-pub(crate) async fn update_smtc_metadata<R: Runtime>(
+pub(crate) async fn update_media_session_metadata<R: Runtime>(
     app: AppHandle<R>,
-    meta: SmtcMetadata,
+    meta: MediaSessionMetadata,
 ) -> Result<(), String> {
     let metadata = MediaMetadata {
         title: meta.title,
@@ -53,7 +41,7 @@ pub(crate) async fn update_smtc_metadata<R: Runtime>(
 }
 
 #[tauri::command]
-pub(crate) async fn update_smtc_status<R: Runtime>(
+pub(crate) async fn update_media_session_status<R: Runtime>(
     app: AppHandle<R>,
     playing: bool,
 ) -> Result<(), String> {
@@ -68,7 +56,7 @@ pub(crate) async fn update_smtc_status<R: Runtime>(
 }
 
 #[tauri::command]
-pub(crate) async fn update_smtc_position<R: Runtime>(
+pub(crate) async fn update_media_session_position<R: Runtime>(
     app: AppHandle<R>,
     position_secs: f64,
 ) -> Result<(), String> {

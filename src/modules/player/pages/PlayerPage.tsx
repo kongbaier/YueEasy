@@ -22,7 +22,7 @@ import { Cover } from '@/shared/ui/image';
 import type { Track } from '@/core/types';
 import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/lib/utils';
-import { ncm } from '@/shared/services/ncm';
+import { ncm } from '@/tauri/ncm';
 import { useLoginDialog } from '@/modules/auth/loginDialogStore';
 import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
 import { Lyrics } from '@/modules/lyric/components/Lyrics';

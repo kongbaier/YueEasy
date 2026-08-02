@@ -2,7 +2,7 @@ import { Disc } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { getNcmImageUrl } from "@/shared/lib/utils";
-import type { NcmSearchAlbum } from "@/shared/services/ncm";
+import type { NcmSearchAlbum } from "@/tauri/ncm";
 
 interface SearchAlbumCardProps {
   /** 专辑搜索结果项 */

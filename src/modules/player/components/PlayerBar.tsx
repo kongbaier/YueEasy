@@ -18,7 +18,7 @@ import { useProgress } from "@/modules/player/hooks/useProgress";
 import { formatDuration } from "@/shared/utils/format";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
-import { ncm } from "@/shared/services/ncm";
+import { ncm } from "@/tauri/ncm";
 import { formatQueueCount, useQueueStore } from "@/modules/player/stores/queue";
 import { useLoginDialog } from "@/modules/auth/loginDialogStore";
 import { usePlayerPage } from "@/modules/player/contexts/PlayerPageContext";

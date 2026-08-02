@@ -1,8 +1,8 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { HorizontalCarousel } from "@/shared/ui/carousel";
 import { PlaylistCard, toPlaylistDisplay } from "@/shared/ui/playlist-card";
-import { ncm } from "@/shared/services/ncm";
-import { CacheKeys, cachedFetch } from "@/shared/services/cache";
+import { ncm } from "@/tauri/ncm";
+import { CacheKeys, cachedFetch } from "@/tauri/cache";
 
 export const PersonalizedPlaylists = () => {
   const { data: playlists } = useSuspenseQuery({

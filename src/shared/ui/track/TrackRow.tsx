@@ -12,7 +12,7 @@ import type { SongRef } from "@/shared/types/playlist";
 import { formatDuration } from "@/shared/utils/format";
 import { toast } from "@/shared/lib/toast";
 import { getNcmImageUrl } from "@/shared/lib/utils";
-import { ncm } from "@/shared/services/ncm";
+import { ncm } from "@/tauri/ncm";
 import { useAuthStore, useLikeStore, useQueueStore } from "@/stores";
 import { useLoginDialog } from "@/features/auth/loginDialogStore";
 

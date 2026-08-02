@@ -4,7 +4,7 @@ import type {
   NcmSearchAlbum,
   NcmSearchArtist,
   NcmSearchUser,
-} from "@/shared/services/ncm";
+} from "@/tauri/ncm";
 import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
 import { SearchAlbumCard, SearchAlbumCardSkeleton } from "./SearchAlbumCard";
 import { SearchArtistCard, SearchArtistCardSkeleton } from "./SearchArtistCard";

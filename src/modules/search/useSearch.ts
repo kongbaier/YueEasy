@@ -1,8 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import type { SearchSuggestResponse } from "@/shared/services/ncm";
-import { ncm, toSongRef } from "@/shared/services/ncm";
-import { CacheKeys, cachedFetch } from "@/shared/services/cache";
+import type { SearchSuggestResponse } from "@/tauri/ncm";
+import { ncm, toSongRef } from "@/tauri/ncm";
+import { CacheKeys, cachedFetch } from "@/tauri/cache";
 import { SearchType } from "./constants";
 import { useSearchStore } from "./store";
 import type { SuggestionItem } from "./SuggestDropdown";

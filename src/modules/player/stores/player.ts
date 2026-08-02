@@ -1,29 +1,15 @@
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { resolveUrl } from "@/shared/services/track";
-import { getStoreValue, setStoreValue } from "@/shared/services/store";
+import { resolveUrl } from '@/shared/services/track';
+
 import {
   audioCore,
   queueManager,
   getUrlFetchedAt,
   setUrlFetchedAt,
-} from "./queue";
-
-// ── Tauri storage adapter ──
-
-const tauriStorage = {
-  getItem: async (name: string): Promise<string | null> => {
-    const v = await getStoreValue<string>(name);
-    return v ?? null;
-  },
-  setItem: async (name: string, value: string): Promise<void> => {
-    await setStoreValue(name, value);
-  },
-  removeItem: async (name: string): Promise<void> => {
-    await setStoreValue(name, null);
-  },
-};
+} from './queue';
+import { TauriStorage } from '@/tauri/storage';
 
 // ── Store ──
 
@@ -37,6 +23,7 @@ export interface PlayerStore {
   muted: boolean;
 
   pause: () => void;
+  toggle: () => void;
   resume: () => Promise<void>;
   seek: (time: number) => void;
   setVolume: (v: number) => void;
@@ -48,22 +35,22 @@ export const usePlayerStore = create<PlayerStore>()(
     (set, get) => {
       // ── Wire audioCore playback events ──
 
-      audioCore.on("play", () => set({ playing: true }));
-      audioCore.on("pause", () => set({ playing: false }));
-      audioCore.on("ended", () => set({ playing: false }));
-      audioCore.on("loading", () => set({ loading: true }));
-      audioCore.on("ready", () => set({ loading: false }));
-      audioCore.on("error", () => set({ loading: false, playing: false }));
+      audioCore.on('play', () => set({ playing: true }));
+      audioCore.on('pause', () => set({ playing: false }));
+      audioCore.on('ended', () => set({ playing: false }));
+      audioCore.on('loading', () => set({ loading: true }));
+      audioCore.on('ready', () => set({ loading: false }));
+      audioCore.on('error', () => set({ loading: false, playing: false }));
 
-      audioCore.on("timeupdate", (currentTime) => {
+      audioCore.on('timeupdate', (currentTime) => {
         set({ currentTime });
       });
 
-      audioCore.on("timetick", (currentTimeHigh) => {
+      audioCore.on('timetick', (currentTimeHigh) => {
         set({ currentTimeHigh });
       });
 
-      audioCore.on("durationchange", (duration) => {
+      audioCore.on('durationchange', (duration) => {
         set({ duration });
       });
 
@@ -79,6 +66,14 @@ export const usePlayerStore = create<PlayerStore>()(
         pause: () => {
           audioCore.pause();
           set({ playing: false });
+        },
+
+        toggle: () => {
+          if (get().playing) {
+            get().pause();
+          } else {
+            void get().resume();
+          }
         },
 
         resume: async () => {
@@ -115,8 +110,8 @@ export const usePlayerStore = create<PlayerStore>()(
       };
     },
     {
-      name: "player",
-      storage: createJSONStorage(() => tauriStorage),
+      name: 'player',
+      storage: createJSONStorage(() => TauriStorage),
       partialize: (state) => ({
         volume: state.volume,
         muted: state.muted,

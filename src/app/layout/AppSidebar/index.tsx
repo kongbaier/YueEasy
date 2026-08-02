@@ -15,8 +15,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
-import type { TopPlaylist } from "@/shared/services/ncm";
-import { ncm } from "@/shared/services/ncm";
+import type { TopPlaylist } from "@/tauri/ncm";
+import { ncm } from "@/tauri/ncm";
 import {
   Sidebar,
   SidebarContent,

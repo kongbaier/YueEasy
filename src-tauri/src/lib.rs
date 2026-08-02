@@ -1,7 +1,7 @@
 mod commands;
 mod db;
 mod ncm;
-mod smtc;
+mod media_session;
 mod tray;
 mod utils;
 
@@ -41,15 +41,21 @@ pub fn run() {
         .manage(CacheState::default())
         .manage(NcmState::default())
         .setup(|app| {
-            let h = app.handle();
-            if let Some(w) = h.get_webview_window("main") {
+            let handle = app.handle();
+
+            if let Some(w) = handle.get_webview_window("main") {
                 let _ = w.show();
             }
 
-            app.state::<NcmState>().restore_cookie(h);
+            // 初始化系统媒体会话（媒体键 + 系统媒体控制）
+            if let Err(e) = crate::media_session::setup(&handle) {
+                eprintln!("Failed to setup media session handler: {}", e);
+            }
 
-            if let Some(w) = h.get_webview_window("main") {
-                let handle = h.clone();
+            app.state::<NcmState>().restore_cookie(handle);
+
+            if let Some(w) = handle.get_webview_window("main") {
+                let handle = handle.clone();
                 w.on_window_event(move |event| {
                     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                         if handle
@@ -72,7 +78,7 @@ pub fn run() {
                 });
             }
 
-            if let Ok(store) = h.store("settings.json") {
+            if let Ok(store) = handle.store("settings.json") {
                 let effect = match store
                     .get("window_effect")
                     .and_then(|v| v.as_str().map(|s| s.to_string()))
@@ -84,7 +90,7 @@ pub fn run() {
                     "blur" => Effect::Blur,
                     _ => Effect::Mica,
                 };
-                if let Some(w) = h.get_webview_window("main") {
+                if let Some(w) = handle.get_webview_window("main") {
                     w.set_effects(WindowEffectsConfig {
                         effects: vec![effect],
                         color: None,
@@ -95,8 +101,8 @@ pub fn run() {
                 }
             }
 
-            tray::setup(h)?;
-            commands::accent_color::watch_accent_color(h.clone());
+            tray::setup(handle)?;
+            commands::accent_color::watch_accent_color(handle.clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -114,10 +120,9 @@ pub fn run() {
             commands::history::history_get,
             commands::history::history_mark_synced,
             commands::download::download_song,
-            commands::smtc::init_smtc,
-            commands::smtc::update_smtc_metadata,
-            commands::smtc::update_smtc_status,
-            commands::smtc::update_smtc_position,
+            commands::media_session::update_media_session_metadata,
+            commands::media_session::update_media_session_status,
+            commands::media_session::update_media_session_position,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

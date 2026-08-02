@@ -1,9 +1,9 @@
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import type { PlayMode, Track } from "../../../core/types";
-import { AudioCore, QueueManager } from "../../../core";
-import { resolveUrl } from "@/shared/services/track";
-import { getStoreValue, setStoreValue } from "@/shared/services/store";
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import type { PlayMode, Track } from '@/core/types';
+import { AudioCore, QueueManager } from '@/core';
+import { resolveUrl } from '@/shared/services/track';
+import { TauriStorage } from '@/tauri/storage';
 
 // ── Singletons ──
 
@@ -19,26 +19,11 @@ export function setUrlFetchedAt(v: number): void {
   urlFetchedAt = v;
 }
 
-// ── Tauri storage adapter for Zustand persist ──
-
-const tauriStorage = {
-  getItem: async (name: string): Promise<string | null> => {
-    const v = await getStoreValue<string>(name);
-    return v ?? null;
-  },
-  setItem: async (name: string, value: string): Promise<void> => {
-    await setStoreValue(name, value);
-  },
-  removeItem: async (name: string): Promise<void> => {
-    await setStoreValue(name, null);
-  },
-};
-
 // ── Helpers ──
 
 /** Format queue count for display: raw number when ≤99, "99+" otherwise. */
 export function formatQueueCount(count: number): string {
-  return count > 99 ? "99+" : String(count);
+  return count > 99 ? '99+' : String(count);
 }
 
 /** Push QueueManager state into the Zustand store. */
@@ -85,7 +70,7 @@ export const useQueueStore = create<QueueStore>()(
   persist(
     (_set, _get) => {
       // Wire ended → auto-advance
-      audioCore.on("ended", () => {
+      audioCore.on('ended', () => {
         queueManager.advanceOnEnd();
         syncQueueDerived();
         playCurrent().catch(() => audioCore.stop());
@@ -95,7 +80,7 @@ export const useQueueStore = create<QueueStore>()(
         queue: [],
         currentTrack: null,
         queueLength: 0,
-        playMode: "sequential",
+        playMode: 'sequential',
 
         play: async (track) => {
           queueManager.play(track);
@@ -171,8 +156,8 @@ export const useQueueStore = create<QueueStore>()(
       };
     },
     {
-      name: "player-queue",
-      storage: createJSONStorage(() => tauriStorage),
+      name: 'player-queue',
+      storage: createJSONStorage(() => TauriStorage),
       partialize: (state) => ({
         queue: state.queue,
         playMode: state.playMode,
@@ -180,7 +165,9 @@ export const useQueueStore = create<QueueStore>()(
         currentTime: 0, // placeholder — currentTime lives in player store
       }),
       onRehydrateStorage: () => (state) => {
-        const data = state as { queue?: Track[]; playMode?: PlayMode; index?: number } | undefined;
+        const data = state as
+          | { queue?: Track[]; playMode?: PlayMode; index?: number }
+          | undefined;
         if (data?.queue?.length) {
           queueManager.replace(data.queue, data.index ?? 0);
           if (data.playMode) queueManager.setMode(data.playMode);

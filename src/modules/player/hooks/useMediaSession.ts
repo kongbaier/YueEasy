@@ -1,68 +1,58 @@
-import { listen } from "@tauri-apps/api/event";
-import { useEffect } from "react";
+import { listen } from '@tauri-apps/api/event';
+import { useEffect } from 'react';
 import {
-  initSmtc,
-  updateSmtcMetadata,
-  updateSmtcPosition,
-  updateSmtcStatus,
-} from "@/shared/services/smtc";
-import { usePlayerStore } from "../stores/player";
-import { useQueueStore } from "../stores/queue";
+  updateMediaSessionMetadata,
+  updateMediaSessionPosition,
+  updateMediaSessionStatus,
+} from '@/tauri/mediaSession';
+import { usePlayerStore } from '../stores/player';
+import { useQueueStore } from '../stores/queue';
 
-type SmtcEvent =
-  | { event: "play" }
-  | { event: "pause" }
-  | { event: "toggle" }
-  | { event: "next" }
-  | { event: "previous" }
-  | { event: "stop" }
-  | { event: "fastForward" }
-  | { event: "rewind" }
-  | { event: "setPosition"; position: number }
-  | { event: "seekTo"; position: number }
-  | { event: "setPlaybackRate"; rate: number };
+type MediaSessionEvent =
+  | { event: 'play' }
+  | { event: 'pause' }
+  | { event: 'toggle' }
+  | { event: 'next' }
+  | { event: 'previous' }
+  | { event: 'stop' }
+  | { event: 'fastForward' }
+  | { event: 'rewind' }
+  | { event: 'seekTo'; position: number }
+  | { event: 'setPlaybackRate'; rate: number };
 
 export const useMediaSession = () => {
   useEffect(() => {
     const unlisteners: (() => void)[] = [];
     let cancelled = false;
 
-    // 初始化 SMTC
-    initSmtc().catch((e) => console.error("initSmtc() failed:", e));
-
     // 监听系统媒体键事件
-    listen<SmtcEvent>("smtc-event", (event) => {
+    listen<MediaSessionEvent>('media-session-event', (event) => {
       const playerStore = usePlayerStore.getState();
       const queueStore = useQueueStore.getState();
       switch (event.payload.event) {
-        case "play":
+        case 'play':
           playerStore.resume();
           break;
-        case "pause":
+        case 'pause':
           playerStore.pause();
           break;
-        case "toggle":
-          if (playerStore.playing) {
-            playerStore.pause();
-          } else {
-            playerStore.resume();
-          }
+        case 'toggle':
+          playerStore.toggle();
           break;
-        case "next":
+        case 'next':
           queueStore
             .next()
-            .catch((e) => console.error("store.next() threw:", e));
+            .catch((e) => console.error('store.next() threw:', e));
           break;
-        case "previous":
+        case 'previous':
           queueStore
             .prev()
-            .catch((e) => console.error("store.prev() threw:", e));
+            .catch((e) => console.error('store.prev() threw:', e));
           break;
-        case "stop":
+        case 'stop':
           playerStore.pause();
           break;
-        case "setPosition":
-        case "seekTo":
+        case 'seekTo':
           playerStore.seek(event.payload.position);
           break;
       }
@@ -74,15 +64,15 @@ export const useMediaSession = () => {
       }
     });
 
-    // 推送元数据到 SMTC
+    // 推送元数据到系统媒体会话
     const pushMetadata = () => {
       const track = useQueueStore.getState().currentTrack;
       if (!track) return;
 
-      const artistNames = track.artists?.map((a) => a.name).join("、") ?? "";
-      const albumName = track.album?.name ?? "";
+      const artistNames = track.artists?.map((a) => a.name).join('、') ?? '';
+      const albumName = track.album?.name ?? '';
 
-      void updateSmtcMetadata({
+      void updateMediaSessionMetadata({
         title: track.name,
         artist: artistNames,
         album: albumName,
@@ -101,9 +91,24 @@ export const useMediaSession = () => {
     // 播放状态变化 → 更新状态 & 位置
     const unsubPlayback = usePlayerStore.subscribe((state, prevState) => {
       if (state.playing === prevState.playing) return;
-      void updateSmtcStatus(state.playing);
-      void updateSmtcPosition(state.currentTime);
+      void updateMediaSessionStatus(state.playing);
+      void updateMediaSessionPosition(state.currentTime);
     });
+
+    // 时长从 0 变为已知 → 补推元数据（让系统端时间轴准确）
+    const unsubDuration = usePlayerStore.subscribe((state, prevState) => {
+      if (state.duration > 0 && prevState.duration === 0) {
+        pushMetadata();
+      }
+    });
+
+    // 播放中周期性同步进度
+    const timer = window.setInterval(() => {
+      const state = usePlayerStore.getState();
+      if (state.playing) {
+        void updateMediaSessionPosition(state.currentTime);
+      }
+    }, 5000);
 
     // 同步初始状态
     const init = useQueueStore.getState();
@@ -113,8 +118,10 @@ export const useMediaSession = () => {
 
     return () => {
       cancelled = true;
+      window.clearInterval(timer);
       unsubTrack();
       unsubPlayback();
+      unsubDuration();
       for (const unlisten of unlisteners) {
         unlisten();
       }

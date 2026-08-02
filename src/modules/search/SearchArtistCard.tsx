@@ -1,7 +1,7 @@
 import { Mic } from "lucide-react";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { getNcmImageUrl } from "@/shared/lib/utils";
-import type { NcmSearchArtist } from "@/shared/services/ncm";
+import type { NcmSearchArtist } from "@/tauri/ncm";
 
 interface SearchArtistCardProps {
   /** 歌手搜索结果项 */
