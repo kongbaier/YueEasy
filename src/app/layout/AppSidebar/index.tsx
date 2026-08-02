@@ -34,8 +34,8 @@ import {
   useSidebar,
 } from "@/shared/ui/sidebar";
 import { useLocalStorageState } from "@/shared/hooks/useLocalStorageState";
-import { useAuthStore } from "@/stores";
-import { useLoginDialog } from "@/features/auth/loginDialogStore";
+import { useAuthStore } from "@/stores/auth";
+import { useLoginDialog } from "@/modules/auth/loginDialogStore";
 
 const items = [
   { to: "/", icon: Home, label: "发现" },

@@ -15,7 +15,7 @@ import { formatCount } from "@/shared/utils/format";
 import { toast } from "@/shared/lib/toast";
 import { cn, getNcmImageUrl } from "@/shared/lib/utils";
 import { getPlaylistDetail } from "@/shared/services/playlist";
-import { useQueueStore } from "@/stores";
+import { useQueueStore } from "@/modules/player/stores/queue";
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */

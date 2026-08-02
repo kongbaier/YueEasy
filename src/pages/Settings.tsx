@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { useLoginDialog } from "@/features/auth/loginDialogStore";
 import { useAppearanceSetting } from "@/shared/hooks/useSetting";
 import { toast } from "@/shared/lib/toast";
 import { cacheClearAll, cacheSize } from "@/shared/services/cache";
@@ -27,7 +26,8 @@ import type { Theme, WindowsEffect } from "@/shared/types/settings";
 import { Button } from "@/shared/ui/button";
 import { Select } from "@/shared/ui/select";
 import { Switch } from "@/shared/ui/switch";
-import { useAuthStore } from "@/stores";
+import { useAuthStore } from "@/stores/auth";
+import { useLoginDialog } from "@/modules/auth/loginDialogStore";
 
 const labels: Record<Theme, string> = {
   system: "系统",

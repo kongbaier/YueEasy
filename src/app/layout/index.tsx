@@ -1,6 +1,6 @@
 import { useState } from "react";
 import KeepAliveRouteOutlet from "keepalive-for-react-router";
-import { PlayerBar, QueuePanel } from "@/features/player/components";
+import { PlayerBar, QueuePanel } from "@/modules/player/components";
 import { SidebarProvider } from "@/shared/ui/sidebar";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
@@ -30,7 +30,10 @@ export function AppLayout() {
             onToggleQueuePanel={() => setQueuePanelOpen((v) => !v)}
           />
 
-          <QueuePanel open={queuePanelOpen} onClose={() => setQueuePanelOpen(false)} />
+          <QueuePanel
+            open={queuePanelOpen}
+            onClose={() => setQueuePanelOpen(false)}
+          />
         </div>
       </SidebarProvider>
     </PageTitleProvider>

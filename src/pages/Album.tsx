@@ -13,7 +13,7 @@ import { useLoadMore } from "@/shared/hooks/useLoadMore";
 import { toast } from "@/shared/lib/toast";
 import { getNcmImageUrl } from "@/shared/lib/utils";
 import { ncm, toSongRef } from "@/shared/services/ncm";
-import { useQueueStore } from "@/stores";
+import { useQueueStore } from "@/modules/player/stores/queue";
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */

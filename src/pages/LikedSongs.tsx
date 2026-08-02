@@ -8,8 +8,9 @@ import { ncm, toSongRef } from "@/shared/services/ncm";
 import type { SongRef } from "@/shared/types/playlist";
 import { Button } from "@/shared/ui/button";
 import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
-import { useAuthStore, useQueueStore } from "@/stores";
-import { useLoginDialog } from "@/features/auth/loginDialogStore";
+import { useQueueStore } from "@/modules/player/stores/queue";
+import { useLoginDialog } from "@/modules/auth/loginDialogStore";
+import { useAuthStore } from "@/stores/auth";
 
 const LikedSongsSkeleton = () => (
   <div className="p-6">
