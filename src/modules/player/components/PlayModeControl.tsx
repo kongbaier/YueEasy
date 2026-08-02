@@ -2,7 +2,7 @@ import { Repeat, Repeat1, Shuffle } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import type { PlayMode } from '@/core/types';
 import { cn } from '@/shared/lib/utils';
-import { useQueueStore } from '../stores/queue';
+import { useSettingsStore } from '@/stores/settings';
 
 const modeIcon: Record<PlayMode, typeof Repeat> = {
   sequential: Repeat,
@@ -11,8 +11,8 @@ const modeIcon: Record<PlayMode, typeof Repeat> = {
 };
 
 export const PlayModeControl = ({ className }: { className?: string }) => {
-  const playMode = useQueueStore((s) => s.playMode);
-  const cyclePlayMode = useQueueStore((s) => s.cycleMode);
+  const playMode = useSettingsStore((s) => s.player.playMode);
+  const cyclePlayMode = useSettingsStore((s) => s.cyclePlayMode);
 
   const Icon = modeIcon[playMode];
 

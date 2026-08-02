@@ -14,7 +14,7 @@ import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { formatCount } from '@/shared/utils/format';
 import { toast } from '@/shared/lib/toast';
 import { cn, getNcmImageUrl } from '@/shared/lib/utils';
-import { getPlaylistDetail } from '@/shared/services/playlist';
+import { getPlaylistDetail } from '@/modules/playlist/services/PlaylistService';
 import { useQueueStore } from '@/modules/player/stores/queue';
 
 /* ------------------------------------------------------------------ */

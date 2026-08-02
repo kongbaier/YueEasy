@@ -1,6 +1,6 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useCallback, useEffect, useRef } from 'react';
-import { useAppSettings } from '@/stores/settings';
+import { useSettingsStore } from '@/stores/settings';
 
 function getSystemTheme(): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -9,7 +9,7 @@ function getSystemTheme(): 'light' | 'dark' {
 }
 
 export const useThemeSync = () => {
-  const theme = useAppSettings((s) => s.settings.theme);
+  const theme = useSettingsStore((s) => s.appearance.theme);
   const transitionTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const syncThemeClass = useCallback((resolved: 'light' | 'dark') => {

@@ -1,4 +1,5 @@
 import { Effect } from '@tauri-apps/api/window';
+import type { PlayMode } from '@/core/types';
 
 export type Theme = 'light' | 'dark' | 'system';
 export type CloseBehavior = 'quit' | 'hide';
@@ -7,6 +8,7 @@ export enum WindowsEffect {
   mica = Effect.Mica,
   tabbed = Effect.Tabbed,
   acrylic = Effect.Acrylic,
+  blur = Effect.Blur,
 }
 
 export interface AppearanceSettings {
@@ -14,8 +16,6 @@ export interface AppearanceSettings {
   window_effect: WindowsEffect;
   close_behavior: CloseBehavior;
 }
-
-type PlayMode = 'order' | 'loop' | 'shuffle';
 
 export interface PlayerSettings {
   volume: number;

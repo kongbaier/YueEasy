@@ -22,7 +22,8 @@ import {
   downloadAndInstall,
   installAndRelaunch,
 } from '@/tauri/updater';
-import type { Theme, WindowsEffect } from '@/shared/types/settings';
+import type { Theme } from '@/shared/types/settings';
+import { WindowsEffect } from '@/shared/types/settings';
 import { Button } from '@/shared/ui/button';
 import { Select } from '@/shared/ui/select';
 import { Switch } from '@/shared/ui/switch';
@@ -100,8 +101,8 @@ export default function Settings() {
 
   const handleEffectChange = (effect: WindowsEffect) => {
     setWindowEffectState(effect);
-    setWindowEffect(effect).catch(() => {
-      setWindowEffectState(Effect.Mica);
+    setWindowEffect(effect as unknown as Effect).catch(() => {
+      setWindowEffectState(WindowsEffect.mica);
       toast.error('该效果不可用，已恢复为 Mica');
     });
   };

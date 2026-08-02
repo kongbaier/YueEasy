@@ -1,15 +1,5 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-
-import { resolveUrl } from '@/shared/services/track';
-
-import {
-  audioCore,
-  queueManager,
-  getUrlFetchedAt,
-  setUrlFetchedAt,
-} from './queue';
-import { TauriStorage } from '@/tauri/storage';
+import { playerService } from '../services/PlayerService';
 
 // ── Store ──
 
@@ -19,109 +9,57 @@ export interface PlayerStore {
   currentTime: number;
   currentTimeHigh: number;
   duration: number;
-  volume: number;
-  muted: boolean;
 
   pause: () => void;
   toggle: () => void;
   resume: () => Promise<void>;
   seek: (time: number) => void;
-  setVolume: (v: number) => void;
-  setMuted: (m: boolean) => void;
 }
 
-export const usePlayerStore = create<PlayerStore>()(
-  persist(
-    (set, get) => {
-      // ── Wire audioCore playback events ──
+export const usePlayerStore = create<PlayerStore>((set, get) => {
+  // ── Mirror playback state from the service (single source of truth) ──
 
-      audioCore.on('play', () => set({ playing: true }));
-      audioCore.on('pause', () => set({ playing: false }));
-      audioCore.on('ended', () => set({ playing: false }));
-      audioCore.on('loading', () => set({ loading: true }));
-      audioCore.on('ready', () => set({ loading: false }));
-      audioCore.on('error', () => set({ loading: false, playing: false }));
+  playerService.on('play', () => set({ playing: true }));
+  playerService.on('pause', () => set({ playing: false }));
+  playerService.on('ended', () => set({ playing: false }));
+  playerService.on('loading', () => set({ loading: true }));
+  playerService.on('ready', () => set({ loading: false }));
+  playerService.on('error', () => set({ loading: false, playing: false }));
+  playerService.on('timeupdate', (currentTime) => set({ currentTime }));
+  playerService.on('timetick', (currentTimeHigh) =>
+    set({ currentTimeHigh }),
+  );
+  playerService.on('durationchange', (duration) => set({ duration }));
 
-      audioCore.on('timeupdate', (currentTime) => {
-        set({ currentTime });
-      });
+  return {
+    playing: false,
+    loading: false,
+    currentTime: 0,
+    currentTimeHigh: 0,
+    duration: 0,
 
-      audioCore.on('timetick', (currentTimeHigh) => {
-        set({ currentTimeHigh });
-      });
-
-      audioCore.on('durationchange', (duration) => {
-        set({ duration });
-      });
-
-      return {
-        playing: false,
-        loading: false,
-        currentTime: 0,
-        currentTimeHigh: 0,
-        duration: 0,
-        volume: 1,
-        muted: false,
-
-        pause: () => {
-          audioCore.pause();
-          set({ playing: false });
-        },
-
-        toggle: () => {
-          if (get().playing) {
-            get().pause();
-          } else {
-            void get().resume();
-          }
-        },
-
-        resume: async () => {
-          if (Date.now() - getUrlFetchedAt() > 15 * 60 * 1000) {
-            const { currentTime } = get();
-            const track = queueManager.currentTrack;
-            if (!track) return;
-            const url = await resolveUrl(track.id);
-            setUrlFetchedAt(Date.now());
-            await audioCore.load(url);
-            audioCore.seek(currentTime);
-            await audioCore.play();
-          } else {
-            await audioCore.play();
-          }
-          // Defensive set() guards against rehydration timing races.
-          set({ playing: true });
-        },
-
-        seek: (time) => {
-          set({ currentTime: time });
-          audioCore.seek(time);
-        },
-
-        setVolume: (v) => {
-          audioCore.volume = v;
-          set({ volume: v, muted: false });
-        },
-
-        setMuted: (m) => {
-          audioCore.muted = m;
-          set({ muted: m });
-        },
-      };
+    pause: () => {
+      playerService.pause();
+      set({ playing: false });
     },
-    {
-      name: 'player',
-      storage: createJSONStorage(() => TauriStorage),
-      partialize: (state) => ({
-        volume: state.volume,
-        muted: state.muted,
-      }),
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          audioCore.volume = (state as { volume?: number }).volume ?? 1;
-          audioCore.muted = (state as { muted?: boolean }).muted ?? false;
-        }
-      },
+
+    toggle: () => {
+      if (get().playing) {
+        get().pause();
+      } else {
+        void get().resume();
+      }
     },
-  ),
-);
+
+    resume: async () => {
+      await playerService.resume();
+      // Defensive set() guards against rehydration timing races.
+      set({ playing: true });
+    },
+
+    seek: (time) => {
+      set({ currentTime: time });
+      playerService.seek(time);
+    },
+  };
+});

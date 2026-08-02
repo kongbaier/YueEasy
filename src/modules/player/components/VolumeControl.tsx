@@ -2,20 +2,19 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/utils';
-import { usePlayerStore } from '../stores/player';
+import { useSettingsStore } from '@/stores/settings';
 
 export const VolumeControl = () => {
-  const volume = usePlayerStore((s) => s.volume);
-  const muted = usePlayerStore((s) => s.muted);
-  const setVolume = usePlayerStore((s) => s.setVolume);
-  const setMuted = usePlayerStore((s) => s.setMuted);
+  const volume = useSettingsStore((s) => s.player.volume);
+  const isMuted = useSettingsStore((s) => s.player.isMuted);
+  const updatePlayer = useSettingsStore((s) => s.updatePlayer);
 
   const applyVolume = (v: number) => {
-    setVolume(v);
+    updatePlayer({ volume: v, isMuted: false });
   };
 
   const applyMuted = (m: boolean) => {
-    setMuted(m);
+    updatePlayer({ isMuted: m });
   };
 
   const [open, setOpen] = useState(false);
@@ -48,7 +47,7 @@ export const VolumeControl = () => {
     bar.addEventListener('pointerup', handlePointerUp);
   };
 
-  const toggleMute = () => applyMuted(!muted);
+  const toggleMute = () => applyMuted(!isMuted);
 
   const handleControlEnter = () => {
     clearTimeout(closeTimerRef.current);
@@ -65,7 +64,7 @@ export const VolumeControl = () => {
     closeTimerRef.current = setTimeout(() => setOpen(false), 150);
   };
 
-  const displayVolume = muted ? 0 : volume;
+  const displayVolume = isMuted ? 0 : volume;
 
   return (
     <div className="relative flex items-center">

@@ -10,6 +10,6 @@ export const DEFAULTS_APPEARANCE: AppearanceSettings = {
 export const DEFAULTS_PLAYER: PlayerSettings = {
   volume: 0.5,
   isMuted: false,
-  playMode: 'order',
+  playMode: 'sequential',
   playbackRate: 1,
 };

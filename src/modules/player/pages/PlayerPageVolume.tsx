@@ -2,20 +2,22 @@ import { Volume1, Volume2 } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { FollowTooltip } from '../components/FollowTooltip';
-import { usePlayerStore } from '../stores/player';
+import { useSettingsStore } from '@/stores/settings';
 
 const STEP = 0.1;
 
 export const PlayerPageVolume = ({ className }: { className?: string }) => {
-  const volume = usePlayerStore((s) => s.volume);
-  const muted = usePlayerStore((s) => s.muted);
-  const setVolume = usePlayerStore((s) => s.setVolume);
+  const volume = useSettingsStore((s) => s.player.volume);
+  const isMuted = useSettingsStore((s) => s.player.isMuted);
+  const updatePlayer = useSettingsStore((s) => s.updatePlayer);
+
+  const applyVolume = (v: number) => updatePlayer({ volume: v, isMuted: false });
 
   const barRef = useRef<HTMLDivElement>(null);
   const [scrubVolume, setScrubVolume] = useState<number | null>(null);
   const [hoverVolume, setHoverVolume] = useState(0);
 
-  const displayVolume = muted ? 0 : (scrubVolume ?? volume);
+  const displayVolume = isMuted ? 0 : (scrubVolume ?? volume);
 
   const [hoverBarX, setHoverBarX] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
@@ -47,7 +49,7 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
     const rect = bar.getBoundingClientRect();
     const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
     const ratio = x / rect.width;
-    setVolume(ratio);
+    applyVolume(ratio);
     setScrubVolume(ratio);
 
     const handleDragMove = (moveEvent: PointerEvent) => {
@@ -57,7 +59,7 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
         Math.min(moveEvent.clientX - dragRect.left, dragRect.width),
       );
       const dragRatio = dragX / dragRect.width;
-      setVolume(dragRatio);
+      applyVolume(dragRatio);
       setScrubVolume(dragRatio);
     };
 
@@ -75,7 +77,7 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
 
   const adjustVolume = (delta: number) => {
     const next = Math.max(0, Math.min(1, volume + delta));
-    setVolume(next);
+    applyVolume(next);
   };
 
   return (

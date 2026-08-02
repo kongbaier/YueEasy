@@ -1,4 +1,4 @@
-import { useAppSettings } from '@/stores/settings';
+import { useSettingsStore } from '@/stores/settings';
 import { initAuth } from '@/stores/auth';
 
 /**
@@ -8,6 +8,6 @@ import { initAuth } from '@/stores/auth';
  * Feature-level initialization lives in each module's store (self-subscribing pattern).
  */
 export async function bootstrap() {
-  await useAppSettings.getState().init();
+  await useSettingsStore.persist.rehydrate();
   await initAuth();
 }
