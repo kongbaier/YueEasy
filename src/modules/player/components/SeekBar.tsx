@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface SeekBarContext {
   displayPercentage: number;
@@ -80,13 +80,13 @@ export const SeekBar = ({
       onSeek(scrubRatioRef.current * duration);
       setScrubPercentage(null);
       bar.releasePointerCapture(e.pointerId);
-      bar.removeEventListener("pointermove", handlePointerMove);
-      bar.removeEventListener("pointerup", handlePointerUp);
+      bar.removeEventListener('pointermove', handlePointerMove);
+      bar.removeEventListener('pointerup', handlePointerUp);
     };
 
     bar.setPointerCapture(e.pointerId);
-    bar.addEventListener("pointermove", handlePointerMove);
-    bar.addEventListener("pointerup", handlePointerUp);
+    bar.addEventListener('pointermove', handlePointerMove);
+    bar.addEventListener('pointerup', handlePointerUp);
   };
 
   return (
@@ -99,7 +99,7 @@ export const SeekBar = ({
       <div
         className={barClassName}
         ref={barRef}
-        style={{ touchAction: "none" }}
+        style={{ touchAction: 'none' }}
       >
         {children({
           displayPercentage,

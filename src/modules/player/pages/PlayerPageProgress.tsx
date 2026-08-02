@@ -1,8 +1,8 @@
-import { SeekBar } from "@/modules/player/components";
-import { FollowTooltip } from "@/modules/player/components/FollowTooltip";
-import { useProgress } from "@/modules/player/hooks/useProgress";
-import { formatDuration } from "@/shared/utils/format";
-import { usePlayerStore } from "../stores/player";
+import { SeekBar } from '@/modules/player/components';
+import { FollowTooltip } from '@/modules/player/components/FollowTooltip';
+import { useProgress } from '@/modules/player/hooks/useProgress';
+import { formatDuration } from '@/shared/utils/format';
+import { usePlayerStore } from '../stores/player';
 
 export const PlayerPageProgress = ({ className }: { className?: string }) => {
   const { percentage, formatted } = useProgress();

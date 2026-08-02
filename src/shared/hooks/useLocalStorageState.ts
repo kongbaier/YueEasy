@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 export function useLocalStorageState(
   key: string,
@@ -6,7 +6,7 @@ export function useLocalStorageState(
 ): [boolean, (value: boolean) => void] {
   const [value, setValue] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(key) === "true";
+      return localStorage.getItem(key) === 'true';
     } catch {
       return defaultValue;
     }

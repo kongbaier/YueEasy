@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
+import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip';
 
-import { cn } from "@/shared/lib/utils";
+import { cn } from '@/shared/lib/utils';
 
 function TooltipProvider({
   delay = 400,
@@ -27,16 +27,16 @@ function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
 
 function TooltipContent({
   className,
-  side = "top",
+  side = 'top',
   sideOffset = 4,
-  align = "center",
+  align = 'center',
   alignOffset = 0,
   children,
   ...props
 }: TooltipPrimitive.Popup.Props &
   Pick<
     TooltipPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset"
+    'align' | 'alignOffset' | 'side' | 'sideOffset'
   >) {
   return (
     <TooltipPrimitive.Portal>
@@ -49,7 +49,7 @@ function TooltipContent({
       >
         <TooltipPrimitive.Popup
           className={cn(
-            "z-50 inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1.5 rounded-md border border-border/20 bg-[#2b2b2b] px-3 py-1.5 text-xs text-white has-data-[slot=kbd]:pr-1.5 transition duration-150 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0",
+            'z-50 inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1.5 rounded-md border border-border/20 bg-[#2b2b2b] px-3 py-1.5 text-xs text-white has-data-[slot=kbd]:pr-1.5 transition duration-150 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0',
             className,
           )}
           data-slot="tooltip-content"

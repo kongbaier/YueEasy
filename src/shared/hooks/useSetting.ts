@@ -1,7 +1,5 @@
-import type {
-  AppearanceSettings,
-} from "@/shared/types/settings";
-import { useAppSettings } from "@/stores/settings";
+import type { AppearanceSettings } from '@/shared/types/settings';
+import { useAppSettings } from '@/stores/settings';
 
 /**
  * 统一设置读写。组件层唯一入口。

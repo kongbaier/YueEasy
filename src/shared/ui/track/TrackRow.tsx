@@ -1,20 +1,20 @@
-import { Crown, Heart, ListPlus, Play, SkipForward } from "lucide-react";
-import { useCallback } from "react";
+import { Crown, Heart, ListPlus, Play, SkipForward } from 'lucide-react';
+import { useCallback } from 'react';
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from "@/shared/ui/context-menu";
-import { Skeleton } from "@/shared/ui/skeleton";
-import type { SongRef } from "@/shared/types/playlist";
-import { formatDuration } from "@/shared/utils/format";
-import { toast } from "@/shared/lib/toast";
-import { getNcmImageUrl } from "@/shared/lib/utils";
-import { ncm } from "@/tauri/ncm";
-import { useAuthStore, useLikeStore, useQueueStore } from "@/stores";
-import { useLoginDialog } from "@/features/auth/loginDialogStore";
+} from '@/shared/ui/context-menu';
+import { Skeleton } from '@/shared/ui/skeleton';
+import type { SongRef } from '@/shared/types/playlist';
+import { formatDuration } from '@/shared/utils/format';
+import { toast } from '@/shared/lib/toast';
+import { getNcmImageUrl } from '@/shared/lib/utils';
+import { ncm } from '@/tauri/ncm';
+import { useAuthStore, useLikeStore, useQueueStore } from '@/stores';
+import { useLoginDialog } from '@/features/auth/loginDialogStore';
 
 interface TrackRowProps {
   track: SongRef;
@@ -41,7 +41,7 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
 
   const handleFavorite = useCallback(() => {
     if (!isLoggedIn) {
-      toast.error("请先登录");
+      toast.error('请先登录');
       setLoginDialogOpen(true);
       return;
     }
@@ -56,7 +56,7 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
       })
       .catch(() => {
         toggleLike(track.id);
-        toast.error("操作失败，请重试");
+        toast.error('操作失败，请重试');
       });
   }, [
     track.id,
@@ -73,14 +73,14 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
         className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent w-full text-left content-visibility-auto"
         onDoubleClick={() => onPlay(track)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") onPlay(track);
+          if (e.key === 'Enter') onPlay(track);
         }}
         role="button"
-        style={{ containIntrinsicSize: "auto 52px" }}
+        style={{ containIntrinsicSize: 'auto 52px' }}
         tabIndex={0}
       >
         <span className="w-8 text-center text-xs text-muted-foreground">
-          {String(index + 1).padStart(2, "0")}
+          {String(index + 1).padStart(2, '0')}
         </span>
         {track.album.picUrl && (
           <img
@@ -97,11 +97,11 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
             )}
           </p>
           <p className="truncate text-xs text-muted-foreground">
-            {track.artists.map((a) => a.name).join("/") || "未知歌手"}
+            {track.artists.map((a) => a.name).join('/') || '未知歌手'}
           </p>
         </div>
         <span className="flex-1 min-w-0 truncate text-xs text-muted-foreground">
-          {track.album.name || "-"}
+          {track.album.name || '-'}
         </span>
         <button
           className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-red-500"
@@ -109,10 +109,10 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
             e.stopPropagation();
             handleFavorite();
           }}
-          title={isLiked ? "取消收藏" : "收藏"}
+          title={isLiked ? '取消收藏' : '收藏'}
           type="button"
         >
-          <Heart className="h-4 w-4" fill={isLiked ? "#ef4444" : "none"} />
+          <Heart className="h-4 w-4" fill={isLiked ? '#ef4444' : 'none'} />
         </button>
         <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
           {formatDuration(track.duration / 1000)}
@@ -133,8 +133,8 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={handleFavorite}>
-          <Heart className="h-4 w-4" fill={isLiked ? "#ef4444" : "none"} />
-          {isLiked ? "取消收藏" : "收藏"}
+          <Heart className="h-4 w-4" fill={isLiked ? '#ef4444' : 'none'} />
+          {isLiked ? '取消收藏' : '收藏'}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
@@ -145,7 +145,7 @@ export const TrackRowSkeleton = ({ index }: { index: number }) => {
   return (
     <div className="flex items-center gap-3 rounded-lg px-3 py-2">
       <span className="w-8 text-center text-xs text-muted-foreground">
-        {String(index + 1).padStart(2, "0")}
+        {String(index + 1).padStart(2, '0')}
       </span>
       <Skeleton className="h-9 w-9 shrink-0 rounded" shimmer />
       <div className="flex-1 min-w-0 space-y-1.5">

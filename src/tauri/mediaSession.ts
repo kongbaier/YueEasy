@@ -8,14 +8,20 @@ export interface MediaSessionMetadata {
   artworkUrl?: string;
 }
 
-export async function updateMediaSessionMetadata(meta: MediaSessionMetadata): Promise<void> {
+export async function updateMediaSessionMetadata(
+  meta: MediaSessionMetadata,
+): Promise<void> {
   return invoke('update_media_session_metadata', { meta });
 }
 
-export async function updateMediaSessionStatus(playing: boolean): Promise<void> {
+export async function updateMediaSessionStatus(
+  playing: boolean,
+): Promise<void> {
   return invoke('update_media_session_status', { playing });
 }
 
-export async function updateMediaSessionPosition(positionSecs: number): Promise<void> {
+export async function updateMediaSessionPosition(
+  positionSecs: number,
+): Promise<void> {
   return invoke('update_media_session_position', { positionSecs });
 }

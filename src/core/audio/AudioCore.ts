@@ -1,7 +1,13 @@
-import { EventEmitter } from "@/shared/lib/EventEmitter";
+import { EventEmitter } from '@/shared/lib/EventEmitter';
 
 type AudioState =
-  "idle" | "loading" | "ready" | "playing" | "paused" | "ended" | "error";
+  | 'idle'
+  | 'loading'
+  | 'ready'
+  | 'playing'
+  | 'paused'
+  | 'ended'
+  | 'error';
 
 type AudioEvents = {
   play: [];
@@ -21,7 +27,7 @@ export class AudioCore {
   #source: MediaElementAudioSourceNode;
   #analyser: AnalyserNode;
   #gain: GainNode;
-  #state: AudioState = "idle";
+  #state: AudioState = 'idle';
   #events: EventEmitter<AudioEvents>;
   #tickCleanup: (() => void) | null = null;
 
@@ -29,7 +35,7 @@ export class AudioCore {
     this.#events = new EventEmitter();
 
     this.#audio = new Audio();
-    this.#audio.crossOrigin = "anonymous";
+    this.#audio.crossOrigin = 'anonymous';
 
     this.#context = new AudioContext();
 
@@ -48,56 +54,56 @@ export class AudioCore {
   // ── HTMLAudioElement event wiring ──
 
   #bindAudioEvents() {
-    this.#audio.addEventListener("loadstart", () => {
-      this.#state = "loading";
-      this.#events.emit("loading");
+    this.#audio.addEventListener('loadstart', () => {
+      this.#state = 'loading';
+      this.#events.emit('loading');
     });
 
-    this.#audio.addEventListener("loadedmetadata", () => {
-      this.#events.emit("durationchange", this.#audio.duration);
-      this.#events.emit("timeupdate", 0);
-      this.#events.emit("timetick", 0);
+    this.#audio.addEventListener('loadedmetadata', () => {
+      this.#events.emit('durationchange', this.#audio.duration);
+      this.#events.emit('timeupdate', 0);
+      this.#events.emit('timetick', 0);
     });
 
-    this.#audio.addEventListener("timeupdate", () => {
-      this.#events.emit("timeupdate", this.#audio.currentTime);
+    this.#audio.addEventListener('timeupdate', () => {
+      this.#events.emit('timeupdate', this.#audio.currentTime);
     });
 
-    this.#audio.addEventListener("canplay", () => {
-      this.#state = "ready";
-      this.#events.emit("ready");
+    this.#audio.addEventListener('canplay', () => {
+      this.#state = 'ready';
+      this.#events.emit('ready');
     });
 
-    this.#audio.addEventListener("play", () => {
-      this.#state = "playing";
-      this.#events.emit("play");
+    this.#audio.addEventListener('play', () => {
+      this.#state = 'playing';
+      this.#events.emit('play');
       this.#tickCleanup = this.#startTick();
     });
 
-    this.#audio.addEventListener("pause", () => {
-      this.#state = "paused";
-      this.#events.emit("pause");
+    this.#audio.addEventListener('pause', () => {
+      this.#state = 'paused';
+      this.#events.emit('pause');
       this.#tickCleanup?.();
     });
 
-    this.#audio.addEventListener("ended", () => {
-      this.#state = "ended";
-      this.#events.emit("ended");
+    this.#audio.addEventListener('ended', () => {
+      this.#state = 'ended';
+      this.#events.emit('ended');
       this.#tickCleanup?.();
     });
 
-    this.#audio.addEventListener("waiting", () => {
-      if (this.#state === "playing") {
-        this.#state = "loading";
-        this.#events.emit("loading");
+    this.#audio.addEventListener('waiting', () => {
+      if (this.#state === 'playing') {
+        this.#state = 'loading';
+        this.#events.emit('loading');
       }
     });
 
-    this.#audio.addEventListener("error", () => {
-      this.#state = "error";
+    this.#audio.addEventListener('error', () => {
+      this.#state = 'error';
       this.#events.emit(
-        "error",
-        new Error(this.#audio.error?.message ?? "Unknown audio error"),
+        'error',
+        new Error(this.#audio.error?.message ?? 'Unknown audio error'),
       );
     });
   }
@@ -105,7 +111,7 @@ export class AudioCore {
   #startTick(): () => void {
     let rafId = 0;
     const tick = () => {
-      this.#events.emit("timetick", this.#audio.currentTime);
+      this.#events.emit('timetick', this.#audio.currentTime);
       rafId = requestAnimationFrame(tick);
     };
     rafId = requestAnimationFrame(tick);
@@ -118,8 +124,8 @@ export class AudioCore {
   // ── Public API ──
 
   async load(src: string): Promise<void> {
-    this.#state = "loading";
-    this.#events.emit("loading");
+    this.#state = 'loading';
+    this.#events.emit('loading');
     this.#audio.src = src;
     this.#audio.load();
 
@@ -129,22 +135,22 @@ export class AudioCore {
     }
     await new Promise<void>((resolve) => {
       const onCanPlay = () => {
-        this.#audio.removeEventListener("canplay", onCanPlay);
+        this.#audio.removeEventListener('canplay', onCanPlay);
         resolve();
       };
-      this.#audio.addEventListener("canplay", onCanPlay);
+      this.#audio.addEventListener('canplay', onCanPlay);
     });
   }
 
   unload(): void {
     this.#audio.pause();
     this.#tickCleanup?.();
-    this.#audio.removeAttribute("src");
-    this.#state = "idle";
+    this.#audio.removeAttribute('src');
+    this.#state = 'idle';
   }
 
   async play(): Promise<void> {
-    if (this.#context.state === "suspended") {
+    if (this.#context.state === 'suspended') {
       await this.#context.resume();
     }
     await this.#audio.play();
@@ -155,7 +161,7 @@ export class AudioCore {
   }
 
   async toggle(): Promise<void> {
-    if (this.#state === "playing") {
+    if (this.#state === 'playing') {
       this.pause();
     } else {
       await this.play();
@@ -166,7 +172,7 @@ export class AudioCore {
     this.#audio.pause();
     this.#audio.currentTime = 0;
     this.#tickCleanup?.();
-    this.#state = "idle";
+    this.#state = 'idle';
   }
 
   seek(seconds: number): void {
@@ -180,7 +186,7 @@ export class AudioCore {
   destroy(): void {
     this.#audio.pause();
     this.#tickCleanup?.();
-    this.#audio.removeAttribute("src");
+    this.#audio.removeAttribute('src');
 
     this.#source.disconnect();
     this.#analyser.disconnect();
@@ -207,7 +213,7 @@ export class AudioCore {
   }
 
   get playing(): boolean {
-    return this.#state === "playing";
+    return this.#state === 'playing';
   }
 
   get volume(): number {
@@ -216,7 +222,7 @@ export class AudioCore {
 
   set volume(value: number) {
     if (value < 0 || value > 1) {
-      throw new RangeError("Volume must be between 0 and 1");
+      throw new RangeError('Volume must be between 0 and 1');
     }
     this.#audio.volume = value;
   }

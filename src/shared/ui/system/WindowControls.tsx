@@ -1,7 +1,7 @@
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Copy, Minus, Square, X } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { useWindowState } from "@/shared/hooks/useWindowState";
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { Copy, Minus, Square, X } from 'lucide-react';
+import { Button } from '@/shared/ui/button';
+import { useWindowState } from '@/shared/hooks/useWindowState';
 
 export const WindowControls = ({ className }: { className?: string }) => {
   const appWindow = getCurrentWindow();
@@ -12,7 +12,7 @@ export const WindowControls = ({ className }: { className?: string }) => {
   const handleMaximize = async () => await toggleMaximize();
 
   // Hide all controls when in fullscreen to avoid Tauri maximize/fullscreen conflict.
-  if (state === "fullscreen") return null;
+  if (state === 'fullscreen') return null;
 
   return (
     <div
@@ -34,7 +34,7 @@ export const WindowControls = ({ className }: { className?: string }) => {
         type="button"
         variant="ghost"
       >
-        {state === "maximized" ? (
+        {state === 'maximized' ? (
           <Copy className="size-3" />
         ) : (
           <Square className="size-3" />

@@ -1,4 +1,4 @@
-import type { NcmSong } from "./song.response";
+import type { NcmSong } from './song.response';
 
 // NCM API Response: /personalized
 export interface PersonalizedPlaylist {

@@ -4,7 +4,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-} from "react";
+} from 'react';
 
 const USER_IDLE_MS = 3000;
 
@@ -76,10 +76,10 @@ export function useLyricScroll(
       }, USER_IDLE_MS);
     };
 
-    container.addEventListener("wheel", handleWheel, { passive: false });
+    container.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
-      container.removeEventListener("wheel", handleWheel);
+      container.removeEventListener('wheel', handleWheel);
       clearIdleTimer();
       if (resumeRafRef.current) {
         cancelAnimationFrame(resumeRafRef.current);
@@ -181,7 +181,7 @@ export function useLyricScroll(
     contentStyle: {
       transform: `translateY(${translateY}px)`,
       transition:
-        !hasPositioned || isUserOperate ? "none" : "transform 0.3s ease-in-out",
+        !hasPositioned || isUserOperate ? 'none' : 'transform 0.3s ease-in-out',
     },
   };
 }

@@ -1,19 +1,19 @@
-import { lazy, Suspense } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { AppLayout } from "./layout";
-import { PlayerPageProvider } from "@/modules/player/contexts/PlayerPageContext";
-import { LoginDialog } from "@/modules/auth/LoginDialog";
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { AppLayout } from './layout';
+import { PlayerPageProvider } from '@/modules/player/contexts/PlayerPageContext';
+import { LoginDialog } from '@/modules/auth/LoginDialog';
 
-const Home = lazy(() => import("@/modules/home"));
-const Search = lazy(() => import("@/modules/search"));
-const Playlist = lazy(() => import("@/pages/Playlist"));
-const Album = lazy(() => import("@/pages/Album"));
-const DailyRecommend = lazy(() => import("@/pages/DailyRecommend"));
-const LikedSongs = lazy(() => import("@/pages/LikedSongs"));
-const RecentPlays = lazy(() => import("@/pages/RecentPlays"));
-const Settings = lazy(() => import("@/pages/Settings"));
-const PlayerPage = lazy(() => import("@/modules/player/pages/PlayerPage"));
+const Home = lazy(() => import('@/modules/home'));
+const Search = lazy(() => import('@/modules/search'));
+const Playlist = lazy(() => import('@/pages/Playlist'));
+const Album = lazy(() => import('@/pages/Album'));
+const DailyRecommend = lazy(() => import('@/pages/DailyRecommend'));
+const LikedSongs = lazy(() => import('@/pages/LikedSongs'));
+const RecentPlays = lazy(() => import('@/pages/RecentPlays'));
+const Settings = lazy(() => import('@/pages/Settings'));
+const PlayerPage = lazy(() => import('@/modules/player/pages/PlayerPage'));
 
 const PageFallback = (
   <div className="p-6 space-y-4">

@@ -1,1 +1,1 @@
-export { WindowControls } from "./WindowControls";
+export { WindowControls } from './WindowControls';

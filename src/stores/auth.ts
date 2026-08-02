@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { clearNcmCookie, getNcmCookie, ncm } from "@/tauri/ncm";
+import { create } from 'zustand';
+import { clearNcmCookie, getNcmCookie, ncm } from '@/tauri/ncm';
 
 interface AuthState {
   isLoggedIn: boolean;
@@ -16,20 +16,20 @@ interface AuthStore extends AuthState {
 
 export const useAuthStore = create<AuthStore>((set) => ({
   isLoggedIn: false,
-  cookie: "",
+  cookie: '',
   userId: null,
-  nickname: "",
-  avatarUrl: "",
+  nickname: '',
+  avatarUrl: '',
 
   setAuth: (state) => set(state),
   logout: () => {
     clearNcmCookie();
     set({
       isLoggedIn: false,
-      cookie: "",
+      cookie: '',
       userId: null,
-      nickname: "",
-      avatarUrl: "",
+      nickname: '',
+      avatarUrl: '',
     });
   },
 }));
@@ -57,8 +57,8 @@ export async function initAuth() {
         isLoggedIn: true,
         cookie,
         userId: profile.userId,
-        nickname: profile.nickname ?? "",
-        avatarUrl: profile.avatarUrl ?? "",
+        nickname: profile.nickname ?? '',
+        avatarUrl: profile.avatarUrl ?? '',
       });
     } else {
       await clearNcmCookie();

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { ContextMenu as ContextMenuPrimitive } from "@base-ui/react/context-menu";
+import { ContextMenu as ContextMenuPrimitive } from '@base-ui/react/context-menu';
 
-import { cn } from "@/shared/lib/utils";
+import { cn } from '@/shared/lib/utils';
 
 function ContextMenu({ ...props }: ContextMenuPrimitive.Root.Props) {
   return <ContextMenuPrimitive.Root {...props} />;
@@ -15,7 +15,7 @@ function ContextMenuTrigger({
   return (
     <ContextMenuPrimitive.Trigger
       className={cn(
-        "data-[open]:bg-accent data-[open]:text-accent-foreground",
+        'data-[open]:bg-accent data-[open]:text-accent-foreground',
         className,
       )}
       {...props}
@@ -32,7 +32,7 @@ function ContextMenuContent({
 }: ContextMenuPrimitive.Popup.Props &
   Pick<
     ContextMenuPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset"
+    'align' | 'alignOffset' | 'side' | 'sideOffset'
   >) {
   return (
     <ContextMenuPrimitive.Portal>
@@ -43,7 +43,7 @@ function ContextMenuContent({
       >
         <ContextMenuPrimitive.Popup
           className={cn(
-            "z-50 min-w-[8rem] origin-(--transform-origin) overflow-hidden rounded-lg bg-popover p-1 shadow-lg ring-1 ring-border/40 transition duration-150 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0",
+            'z-50 min-w-[8rem] origin-(--transform-origin) overflow-hidden rounded-lg bg-popover p-1 shadow-lg ring-1 ring-border/40 transition duration-150 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0',
             className,
           )}
           {...props}
@@ -62,7 +62,7 @@ function ContextMenuItem({
   return (
     <ContextMenuPrimitive.Item
       className={cn(
-        "relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-popover-foreground outline-hidden transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+        'relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-popover-foreground outline-hidden transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground',
         className,
       )}
       {...props}
@@ -73,7 +73,7 @@ function ContextMenuItem({
 function ContextMenuSeparator({ className }: { className?: string }) {
   return (
     <ContextMenuPrimitive.Separator
-      className={cn("-mx-1 my-1 h-px bg-border", className)}
+      className={cn('-mx-1 my-1 h-px bg-border', className)}
     />
   );
 }

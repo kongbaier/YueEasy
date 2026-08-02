@@ -1,2 +1,2 @@
-export { HorizontalCarousel } from "./HorizontalCarousel";
-export { ParallaxCarousel } from "./ParallaxCarousel";
+export { HorizontalCarousel } from './HorizontalCarousel';
+export { ParallaxCarousel } from './ParallaxCarousel';

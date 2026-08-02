@@ -9,14 +9,14 @@ import {
   Search,
   Settings,
   Sparkles,
-} from "lucide-react";
-import { useEffect, useLayoutEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "motion/react";
-import { toast } from "@/shared/lib/toast";
-import { cn } from "@/shared/lib/utils";
-import type { TopPlaylist } from "@/tauri/ncm";
-import { ncm } from "@/tauri/ncm";
+} from 'lucide-react';
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
+import { toast } from '@/shared/lib/toast';
+import { cn } from '@/shared/lib/utils';
+import type { TopPlaylist } from '@/tauri/ncm';
+import { ncm } from '@/tauri/ncm';
 import {
   Sidebar,
   SidebarContent,
@@ -32,23 +32,23 @@ import {
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
-} from "@/shared/ui/sidebar";
-import { useLocalStorageState } from "@/shared/hooks/useLocalStorageState";
-import { useAuthStore } from "@/stores/auth";
-import { useLoginDialog } from "@/modules/auth/loginDialogStore";
+} from '@/shared/ui/sidebar';
+import { useLocalStorageState } from '@/shared/hooks/useLocalStorageState';
+import { useAuthStore } from '@/stores/auth';
+import { useLoginDialog } from '@/modules/auth/loginDialogStore';
 
 const items = [
-  { to: "/", icon: Home, label: "发现" },
-  { to: "/search", icon: Search, label: "搜索" },
-  { to: "/daily", icon: Sparkles, label: "每日推荐" },
+  { to: '/', icon: Home, label: '发现' },
+  { to: '/search', icon: Search, label: '搜索' },
+  { to: '/daily', icon: Sparkles, label: '每日推荐' },
 ];
 
 const myItems = [
-  { to: "/my/liked", icon: Heart, label: "我的喜欢" },
-  { to: "/my/recent", icon: Clock, label: "最近播放" },
+  { to: '/my/liked', icon: Heart, label: '我的喜欢' },
+  { to: '/my/recent', icon: Clock, label: '最近播放' },
 ];
 
-const footerItems = [{ to: "/settings", icon: Settings, label: "设置" }];
+const footerItems = [{ to: '/settings', icon: Settings, label: '设置' }];
 
 const useNavIndicator = (): React.CSSProperties => {
   const location = useLocation();
@@ -63,7 +63,7 @@ const useNavIndicator = (): React.CSSProperties => {
   } | null>(null);
 
   useLayoutEffect(() => {
-    if (state === "collapsed") return;
+    if (state === 'collapsed') return;
 
     const raf = requestAnimationFrame(() => {
       const sidebar = document.querySelector(
@@ -71,7 +71,7 @@ const useNavIndicator = (): React.CSSProperties => {
       ) as HTMLElement;
       if (!sidebar) return;
 
-      const activeBtn = sidebar.querySelector("[data-active]") as HTMLElement;
+      const activeBtn = sidebar.querySelector('[data-active]') as HTMLElement;
       if (!activeBtn) return;
 
       const sidebarRect = sidebar.getBoundingClientRect();
@@ -89,7 +89,7 @@ const useNavIndicator = (): React.CSSProperties => {
   }, [locationPathname, state]);
 
   // Derive indicator style during render to avoid setState in effect
-  if (state === "collapsed" || !position) {
+  if (state === 'collapsed' || !position) {
     return { opacity: 0 };
   }
 
@@ -115,7 +115,7 @@ const SidebarBrand = ({ expanded }: { expanded: boolean }) => (
   <AnimatePresence>
     {expanded && (
       <motion.div
-        animate={{ maxWidth: "10rem", opacity: 1 }}
+        animate={{ maxWidth: '10rem', opacity: 1 }}
         className="flex items-center gap-2 shrink-0 overflow-hidden whitespace-nowrap"
         exit={{ maxWidth: 0, opacity: 0 }}
         initial={{ maxWidth: 0, opacity: 0 }}
@@ -140,11 +140,11 @@ export const AppSidebar = () => {
 
   const [userPlaylists, setUserPlaylists] = useState<TopPlaylist[]>([]);
   const [createdCollapsed, setCreatedCollapsed] = useLocalStorageState(
-    "sidebar_created_collapsed",
+    'sidebar_created_collapsed',
     false,
   );
   const [favoritedCollapsed, setFavoritedCollapsed] = useLocalStorageState(
-    "sidebar_favorited_collapsed",
+    'sidebar_favorited_collapsed',
     false,
   );
 
@@ -160,7 +160,7 @@ export const AppSidebar = () => {
           setUserPlaylists(res.playlist.filter((p) => p.specialType !== 5));
       })
       .catch(() => {
-        toast.error("加载歌单失败，请检查网络");
+        toast.error('加载歌单失败，请检查网络');
       });
 
     return () => {
@@ -181,7 +181,7 @@ export const AppSidebar = () => {
         className="h-10 flex-row items-center shrink-0 justify-between overflow-hidden"
         data-drag-region
       >
-        <SidebarBrand expanded={state === "expanded"} />
+        <SidebarBrand expanded={state === 'expanded'} />
 
         <SidebarTrigger />
       </SidebarHeader>
@@ -202,7 +202,7 @@ export const AppSidebar = () => {
                       <item.icon
                         className={cn(
                           isActive &&
-                            "fill-primary text-primary-darkest dark:text-primary-lightest",
+                            'fill-primary text-primary-darkest dark:text-primary-lightest',
                         )}
                       />
                       <span>{item.label}</span>
@@ -232,7 +232,7 @@ export const AppSidebar = () => {
                       <item.icon
                         className={cn(
                           isActive &&
-                            "fill-primary text-primary-darkest dark:text-primary-lightest",
+                            'fill-primary text-primary-darkest dark:text-primary-lightest',
                         )}
                       />
                       <span>{item.label}</span>
@@ -258,12 +258,12 @@ export const AppSidebar = () => {
               <span>创建的歌单</span>
               <ChevronDown
                 className={cn(
-                  "ml-auto h-4 w-4 shrink-0 transition-transform",
-                  createdCollapsed && "-rotate-90",
+                  'ml-auto h-4 w-4 shrink-0 transition-transform',
+                  createdCollapsed && '-rotate-90',
                 )}
               />
             </SidebarGroupLabel>
-            {(state === "collapsed" || !createdCollapsed) && (
+            {(state === 'collapsed' || !createdCollapsed) && (
               <SidebarGroupContent className="max-h-48 overflow-y-auto overflow-x-hidden">
                 <SidebarMenu className="space-y-0.5">
                   {createdPlaylists.map((p) => {
@@ -304,12 +304,12 @@ export const AppSidebar = () => {
               <span>收藏的歌单</span>
               <ChevronDown
                 className={cn(
-                  "ml-auto h-4 w-4 shrink-0 transition-transform",
-                  favoritedCollapsed && "-rotate-90",
+                  'ml-auto h-4 w-4 shrink-0 transition-transform',
+                  favoritedCollapsed && '-rotate-90',
                 )}
               />
             </SidebarGroupLabel>
-            {(state === "collapsed" || !favoritedCollapsed) && (
+            {(state === 'collapsed' || !favoritedCollapsed) && (
               <SidebarGroupContent className="max-h-48 overflow-y-auto overflow-x-hidden">
                 <SidebarMenu className="space-y-0.5">
                   {favoritedPlaylists.map((p) => {
@@ -367,7 +367,7 @@ export const AppSidebar = () => {
                   <item.icon
                     className={cn(
                       isActive &&
-                        "fill-primary text-primary-darkest dark:text-primary-lightest",
+                        'fill-primary text-primary-darkest dark:text-primary-lightest',
                     )}
                   />
                   <span>{item.label}</span>
@@ -378,7 +378,7 @@ export const AppSidebar = () => {
         </SidebarMenu>
       </SidebarFooter>
 
-      {state !== "collapsed" && <SidebarRail />}
+      {state !== 'collapsed' && <SidebarRail />}
       <NavIndicator />
     </Sidebar>
   );

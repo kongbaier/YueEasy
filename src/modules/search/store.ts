@@ -1,8 +1,8 @@
-import { create } from "zustand";
-import type { SuggestionItem } from "./SuggestDropdown";
-import { SearchType } from "./constants";
+import { create } from 'zustand';
+import type { SuggestionItem } from './SuggestDropdown';
+import { SearchType } from './constants';
 
-export type ShowDropdown = "hot" | "suggest" | null;
+export type ShowDropdown = 'hot' | 'suggest' | null;
 
 interface SearchState {
   input: string;
@@ -18,14 +18,14 @@ interface SearchState {
 }
 
 export const useSearchStore = create<SearchState>(() => ({
-  input: "",
+  input: '',
   show: null,
   searchType: SearchType.SONG,
-  searchKeyword: "",
+  searchKeyword: '',
   hots: [],
   suggestions: [],
   results: [],
   total: 0,
   loading: false,
-  error: "",
+  error: '',
 }));

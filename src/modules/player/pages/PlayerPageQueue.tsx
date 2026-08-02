@@ -1,8 +1,8 @@
-import { Music, Trash2 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
-import type { VirtuosoHandle } from "react-virtuoso";
-import { Virtuoso } from "react-virtuoso";
-import { Button } from "@/shared/ui/button";
+import { Music, Trash2 } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
+import type { VirtuosoHandle } from 'react-virtuoso';
+import { Virtuoso } from 'react-virtuoso';
+import { Button } from '@/shared/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -10,11 +10,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/dialog";
-import { VirtuosoScroller } from "@/shared/ui/virtuoso";
-import { toast } from "@/shared/lib/toast";
-import { cn } from "@/shared/lib/utils";
-import { formatQueueCount, useQueueStore } from "@/modules/player/stores/queue";
+} from '@/shared/ui/dialog';
+import { VirtuosoScroller } from '@/shared/ui/virtuoso';
+import { toast } from '@/shared/lib/toast';
+import { cn } from '@/shared/lib/utils';
+import { formatQueueCount, useQueueStore } from '@/modules/player/stores/queue';
 
 const QueueItem = ({
   track,
@@ -23,7 +23,7 @@ const QueueItem = ({
   onPlay,
   onRemove,
 }: {
-  track: ReturnType<typeof useQueueStore.getState>["queue"][number];
+  track: ReturnType<typeof useQueueStore.getState>['queue'][number];
   index: number;
   isCurrent: boolean;
   onPlay: (index: number) => void;
@@ -32,8 +32,8 @@ const QueueItem = ({
   return (
     <div
       className={cn(
-        "group flex items-center gap-3 px-2 py-2 w-full text-left cursor-pointer transition-colors hover:bg-accent rounded-md",
-        isCurrent && "bg-primary/10",
+        'group flex items-center gap-3 px-2 py-2 w-full text-left cursor-pointer transition-colors hover:bg-accent rounded-md',
+        isCurrent && 'bg-primary/10',
       )}
       onDoubleClick={() => onPlay(index)}
       onKeyDown={() => onPlay(index)}
@@ -53,11 +53,11 @@ const QueueItem = ({
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className={cn("text-sm truncate", isCurrent && "text-primary")}>
+        <p className={cn('text-sm truncate', isCurrent && 'text-primary')}>
           {track.name}
         </p>
         <p className="text-xs text-muted-foreground truncate">
-          {track.artists?.map((a) => a.name).join(" / ") || " "}
+          {track.artists?.map((a) => a.name).join(' / ') || ' '}
         </p>
       </div>
 
@@ -94,7 +94,7 @@ export const PlayerPageQueue = ({ onBack }: { onBack: () => void }) => {
       setTimeout(() => {
         virtuosoRef.current?.scrollToIndex({
           index: currentIndex,
-          align: "center",
+          align: 'center',
         });
       }, 50);
     }
@@ -103,7 +103,7 @@ export const PlayerPageQueue = ({ onBack }: { onBack: () => void }) => {
   const handleClear = () => {
     clearQueue();
     setClearConfirmOpen(false);
-    toast.success("播放列表已清空");
+    toast.success('播放列表已清空');
     onBack();
   };
 
@@ -133,10 +133,10 @@ export const PlayerPageQueue = ({ onBack }: { onBack: () => void }) => {
       <div className="flex-1 relative">
         <div
           className={cn(
-            "absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300",
+            'absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300',
             queue.length === 0
-              ? "opacity-100 scale-100"
-              : "opacity-0 scale-95 pointer-events-none",
+              ? 'opacity-100 scale-100'
+              : 'opacity-0 scale-95 pointer-events-none',
           )}
         >
           <Music className="size-10 opacity-30" />
@@ -145,10 +145,10 @@ export const PlayerPageQueue = ({ onBack }: { onBack: () => void }) => {
         </div>
         <div
           className={cn(
-            "h-full transition-all duration-300 px-2 py-1 mr-4",
+            'h-full transition-all duration-300 px-2 py-1 mr-4',
             queue.length > 0
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-2 pointer-events-none",
+              ? 'opacity-100 translate-y-0'
+              : 'opacity-0 translate-y-2 pointer-events-none',
           )}
         >
           <Virtuoso
@@ -169,7 +169,7 @@ export const PlayerPageQueue = ({ onBack }: { onBack: () => void }) => {
               virtuosoRef.current = ref;
               if (ref && currentIndex >= 0) scrollToCurrent();
             }}
-            style={{ height: "100%" }}
+            style={{ height: '100%' }}
             totalCount={queue.length}
           />
         </div>

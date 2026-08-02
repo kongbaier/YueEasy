@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useState } from 'react';
 
 interface PlayerPageContextValue {
   isOpen: boolean;
@@ -27,6 +27,6 @@ export function PlayerPageProvider({
 export function usePlayerPage(): PlayerPageContextValue {
   const ctx = useContext(PlayerPageContext);
   if (!ctx)
-    throw new Error("usePlayerPage must be used within PlayerPageProvider");
+    throw new Error('usePlayerPage must be used within PlayerPageProvider');
   return ctx;
 }

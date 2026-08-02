@@ -1,12 +1,12 @@
-import { Suspense } from "react";
-import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { HorizontalCarousel } from "@/shared/ui/carousel";
-import { Banner, BannerFallback } from "./Banner";
-import { PersonalizedPlaylists } from "./PersonalizedPlaylists";
-import { TopPlaylists } from "./TopPlaylists";
+import { Suspense } from 'react';
+import { usePageTitle } from '@/app/layout/PageTitleContext';
+import { HorizontalCarousel } from '@/shared/ui/carousel';
+import { Banner, BannerFallback } from './Banner';
+import { PersonalizedPlaylists } from './PersonalizedPlaylists';
+import { TopPlaylists } from './TopPlaylists';
 
 export default function Home() {
-  usePageTitle("发现", { root: true });
+  usePageTitle('发现', { root: true });
   return (
     <div className="space-y-8 px-6 py-3">
       <Suspense fallback={<BannerFallback />}>

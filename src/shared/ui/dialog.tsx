@@ -1,8 +1,8 @@
-import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
-import { XIcon } from "lucide-react";
-import type * as React from "react";
-import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
+import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
+import { XIcon } from 'lucide-react';
+import type * as React from 'react';
+import { Button } from '@/shared/ui/button';
+import { cn } from '@/shared/lib/utils';
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -27,7 +27,7 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Backdrop
       className={cn(
-        "fixed inset-0 z-50 bg-black/20 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0",
+        'fixed inset-0 z-50 bg-black/20 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0',
         className,
       )}
       data-slot="dialog-overlay"
@@ -46,7 +46,7 @@ function DialogContent({
       <DialogOverlay />
       <DialogPrimitive.Popup
         className={cn(
-          "fixed inset-0 z-50 m-auto flex h-fit max-h-[85vh] w-full max-w-sm flex-col gap-4 rounded-lg border border-border/60 bg-popover p-6 shadow-lg transition duration-150 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0",
+          'fixed inset-0 z-50 m-auto flex h-fit max-h-[85vh] w-full max-w-sm flex-col gap-4 rounded-lg border border-border/60 bg-popover p-6 shadow-lg transition duration-150 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0',
           className,
         )}
         data-slot="dialog-content"
@@ -71,21 +71,21 @@ function DialogContent({
   );
 }
 
-function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
+function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      className={cn("flex flex-col gap-1 text-center sm:text-left", className)}
+      className={cn('flex flex-col gap-1 text-center sm:text-left', className)}
       data-slot="dialog-header"
       {...props}
     />
   );
 }
 
-function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
+function DialogFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end',
         className,
       )}
       data-slot="dialog-footer"
@@ -98,7 +98,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       className={cn(
-        "font-heading text-lg font-semibold text-foreground",
+        'font-heading text-lg font-semibold text-foreground',
         className,
       )}
       data-slot="dialog-title"
@@ -113,7 +113,7 @@ function DialogDescription({
 }: DialogPrimitive.Description.Props) {
   return (
     <DialogPrimitive.Description
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn('text-sm text-muted-foreground', className)}
       data-slot="dialog-description"
       {...props}
     />

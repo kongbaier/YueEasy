@@ -34,7 +34,11 @@
   },
   "overrides": [
     {
-      "files": ["src/features/**/*.tsx", "src/pages/**/*.tsx", "src/app/**/*.tsx"],
+      "files": [
+        "src/features/**/*.tsx",
+        "src/pages/**/*.tsx",
+        "src/app/**/*.tsx"
+      ],
       "rules": {
         "unicorn/filename-case": ["warn", { "cases": { "pascalCase": true } }]
       }
@@ -56,7 +60,10 @@
       "files": ["src/**/*.ts"],
       "excludeFiles": ["*.d.ts"],
       "rules": {
-        "unicorn/filename-case": ["warn", { "cases": { "camelCase": true, "pascalCase": true } }]
+        "unicorn/filename-case": [
+          "warn",
+          { "cases": { "camelCase": true, "pascalCase": true } }
+        ]
       }
     }
   ],

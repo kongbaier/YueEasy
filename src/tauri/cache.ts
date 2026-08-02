@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from '@tauri-apps/api/core';
 
 export interface CacheEntry<T> {
   value: T;
@@ -6,7 +6,7 @@ export interface CacheEntry<T> {
 }
 
 export async function cacheGet<T>(key: string): Promise<CacheEntry<T> | null> {
-  const raw = await invoke<string | null>("cache_get", { key });
+  const raw = await invoke<string | null>('cache_get', { key });
   if (!raw) return null;
   try {
     return JSON.parse(raw) as CacheEntry<T>;
@@ -17,23 +17,23 @@ export async function cacheGet<T>(key: string): Promise<CacheEntry<T> | null> {
 
 export async function cacheSet<T>(key: string, value: T): Promise<void> {
   const raw = JSON.stringify({ value, updatedAt: new Date().toISOString() });
-  await invoke("cache_set", { key, value: raw });
+  await invoke('cache_set', { key, value: raw });
 }
 
 export async function cacheDelete(key: string): Promise<void> {
-  await invoke("cache_delete", { key });
+  await invoke('cache_delete', { key });
 }
 
 export async function cacheClearPrefix(prefix: string): Promise<void> {
-  await invoke("cache_clear", { prefix });
+  await invoke('cache_clear', { prefix });
 }
 
 export async function cacheSize(): Promise<number> {
-  return invoke<number>("cache_size");
+  return invoke<number>('cache_size');
 }
 
 export async function cacheClearAll(): Promise<void> {
-  await invoke("cache_clear", { prefix: "" });
+  await invoke('cache_clear', { prefix: '' });
 }
 
 /** 读取缓存 → 网络更新 → 网络失败则回退缓存 */
@@ -51,7 +51,7 @@ export async function cachedFetch<T>(
     return { data: fresh, fromCache: false };
   } catch {
     if (cached) return { data: cached.value, fromCache: true };
-    throw new Error("加载失败");
+    throw new Error('加载失败');
   }
 }
 
@@ -59,8 +59,8 @@ export const CacheKeys = {
   playlist: (id: number) => `playlist:${id}`,
   userPlaylists: (uid: number) => `user_pl:${uid}`,
   dailyRecommend: (date: string) => `daily:${date}`,
-  personalized: "home:personalized",
+  personalized: 'home:personalized',
   topPlaylists: (cat: string) => `top_pl:${cat}`,
-  banner: "home:banner",
-  searchHot: "search:hot",
+  banner: 'home:banner',
+  searchHot: 'search:hot',
 } as const;

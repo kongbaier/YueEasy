@@ -86,7 +86,7 @@ export interface NcmSuggestArtist {
   name: string;
 }
 
-type NcmSuggestType = "song" | "album" | "artist";
+type NcmSuggestType = 'song' | 'album' | 'artist';
 
 export interface SearchSuggestResponse {
   result: {

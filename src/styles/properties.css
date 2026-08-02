@@ -1,60 +1,60 @@
 @property --background {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: #ffffff;
 }
 @property --card {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: #fdfdfd;
 }
 @property --popover {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: #fdfdfd;
 }
 @property --sidebar {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: #f8f8f8;
 }
 @property --secondary {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: #e5e7eb;
 }
 @property --muted {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: #f3f3f3;
 }
 @property --accent {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: #000000;
 }
 @property --border {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: #d4d4d8;
 }
 @property --input {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: #e5e7eb;
 }
 @property --surface-hover {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: transparent;
 }
 @property --surface-active {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: transparent;
 }
 @property --sidebar-border {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: #e5e7eb;
 }

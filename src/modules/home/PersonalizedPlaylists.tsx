@@ -1,12 +1,12 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { HorizontalCarousel } from "@/shared/ui/carousel";
-import { PlaylistCard, toPlaylistDisplay } from "@/shared/ui/playlist-card";
-import { ncm } from "@/tauri/ncm";
-import { CacheKeys, cachedFetch } from "@/tauri/cache";
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { HorizontalCarousel } from '@/shared/ui/carousel';
+import { PlaylistCard, toPlaylistDisplay } from '@/shared/ui/playlist-card';
+import { ncm } from '@/tauri/ncm';
+import { CacheKeys, cachedFetch } from '@/tauri/cache';
 
 export const PersonalizedPlaylists = () => {
   const { data: playlists } = useSuspenseQuery({
-    queryKey: ["personalizedPlaylist"],
+    queryKey: ['personalizedPlaylist'],
     queryFn: () =>
       cachedFetch(CacheKeys.personalized, () => ncm.personalizedPlaylist(20))
         .then((r) => r.data.result.map(toPlaylistDisplay))

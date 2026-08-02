@@ -1,15 +1,15 @@
-import { useMediaQuery } from "@base-ui/react/unstable-use-media-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import React, { Suspense, useEffect, useState } from "react";
-import { BlurBackground } from "@/shared/ui/blur-background";
-import { ParallaxCarousel } from "@/shared/ui/carousel";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { BannerType, ncm } from "@/tauri/ncm";
-import { CacheKeys, cachedFetch } from "@/tauri/cache";
+import { useMediaQuery } from '@base-ui/react/unstable-use-media-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import React, { Suspense, useEffect, useState } from 'react';
+import { BlurBackground } from '@/shared/ui/blur-background';
+import { ParallaxCarousel } from '@/shared/ui/carousel';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { BannerType, ncm } from '@/tauri/ncm';
+import { CacheKeys, cachedFetch } from '@/tauri/cache';
 
 export const Banner = () => {
   const { data: banners } = useSuspenseQuery({
-    queryKey: ["banner"],
+    queryKey: ['banner'],
     queryFn: () =>
       cachedFetch(CacheKeys.banner, () => ncm.banner())
         .then((r) =>
@@ -20,7 +20,7 @@ export const Banner = () => {
         .catch(() => []),
   });
 
-  const isWide = useMediaQuery("(min-width: 1024px)", {});
+  const isWide = useMediaQuery('(min-width: 1024px)', {});
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {

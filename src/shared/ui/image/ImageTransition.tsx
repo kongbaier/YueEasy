@@ -1,13 +1,13 @@
-import { cn } from "@/shared/lib/utils";
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { cn } from '@/shared/lib/utils';
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 function subscribe(callback: () => void) {
-  const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-  mql.addEventListener("change", callback);
-  return () => mql.removeEventListener("change", callback);
+  const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+  mql.addEventListener('change', callback);
+  return () => mql.removeEventListener('change', callback);
 }
 function getSnapshot() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 function getServerSnapshot() {
   return false;
@@ -38,7 +38,7 @@ export const ImageTransition = ({
   containerClassName,
   className,
   duration = 200,
-  easing = "ease-out",
+  easing = 'ease-out',
   animateOut = defaultAnimateOut,
   animateIn = defaultAnimateIn,
   ...props
@@ -69,7 +69,7 @@ export const ImageTransition = ({
     const opts: KeyframeAnimationOptions = {
       duration,
       easing,
-      fill: "forwards",
+      fill: 'forwards',
     };
 
     const outAnim = animateOut(prevNode, opts);
@@ -96,7 +96,7 @@ export const ImageTransition = ({
 
   return (
     <div
-      className={cn("relative overflow-hidden size-full", containerClassName)}
+      className={cn('relative overflow-hidden size-full', containerClassName)}
     >
       {previous && (
         <img
@@ -104,7 +104,7 @@ export const ImageTransition = ({
           ref={previousRef}
           src={previous}
           {...props}
-          className={cn("absolute inset-0 object-cover", className)}
+          className={cn('absolute inset-0 object-cover', className)}
         />
       )}
       <img
@@ -112,7 +112,7 @@ export const ImageTransition = ({
         ref={currentRef}
         src={current}
         {...props}
-        className={cn("absolute inset-0 object-cover", className)}
+        className={cn('absolute inset-0 object-cover', className)}
       />
     </div>
   );

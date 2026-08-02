@@ -1,6 +1,6 @@
-import { create } from "zustand";
-import { ncm } from "@/tauri/ncm";
-import { useAuthStore } from "./auth";
+import { create } from 'zustand';
+import { ncm } from '@/tauri/ncm';
+import { useAuthStore } from './auth';
 
 interface LikeStore {
   likedIds: Set<number>;

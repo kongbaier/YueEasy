@@ -1,8 +1,8 @@
-import type { Playlist } from "@/shared/types/playlist";
+import type { Playlist } from '@/shared/types/playlist';
 import type {
   PersonalizedPlaylist,
   TopPlaylist,
-} from "@/tauri/ncm/types/playlist.response";
+} from '@/tauri/ncm/types/playlist.response';
 
 /** 歌单卡片展示值对象 —— 纯展示关注点，与业务模型解耦 */
 export interface PlaylistDisplay {
@@ -32,11 +32,11 @@ export function toPlaylistDisplay(item: {
   return {
     id: item.id,
     name: item.name,
-    coverUrl: item.coverUrl ?? item.coverImgUrl ?? item.picUrl ?? "",
+    coverUrl: item.coverUrl ?? item.coverImgUrl ?? item.picUrl ?? '',
     playCount: item.playCount,
     trackCount: (item as { trackCount?: number }).trackCount ?? 0,
     creator:
-      (item as { creator?: { nickname: string } }).creator?.nickname ?? "",
-    description: (item as { description?: string }).description ?? "",
+      (item as { creator?: { nickname: string } }).creator?.nickname ?? '',
+    description: (item as { description?: string }).description ?? '',
   };
 }

@@ -1,8 +1,8 @@
-import type { LayoutLinesResult } from "@chenglou/pretext";
-import { layoutWithLines, prepareWithSegments } from "@chenglou/pretext";
-import { useEffect, useState } from "react";
+import type { LayoutLinesResult } from '@chenglou/pretext';
+import { layoutWithLines, prepareWithSegments } from '@chenglou/pretext';
+import { useEffect, useState } from 'react';
 
-const ACTIVE_FONT = "18px system-ui";
+const ACTIVE_FONT = '18px system-ui';
 const LINE_HEIGHT = 24;
 
 export function useLineLayout(

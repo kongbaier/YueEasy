@@ -1,8 +1,8 @@
-import { User } from "lucide-react";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { formatCount } from "@/shared/utils/format";
-import { getNcmImageUrl } from "@/shared/lib/utils";
-import type { NcmSearchUser } from "@/tauri/ncm";
+import { User } from 'lucide-react';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { formatCount } from '@/shared/utils/format';
+import { getNcmImageUrl } from '@/shared/lib/utils';
+import type { NcmSearchUser } from '@/tauri/ncm';
 
 interface SearchUserCardProps {
   /** 用户搜索结果项 */
@@ -32,7 +32,7 @@ export function SearchUserCard({ item }: SearchUserCardProps) {
         </p>
       ) : (
         <p className="text-xs text-muted-foreground tabular-nums">
-          {item.followeds > 0 ? `${formatCount(item.followeds)} 粉丝` : ""}
+          {item.followeds > 0 ? `${formatCount(item.followeds)} 粉丝` : ''}
         </p>
       )}
     </div>

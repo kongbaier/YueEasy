@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { cn } from "@/shared/lib/utils";
+import { useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { cn } from '@/shared/lib/utils';
 
 interface FollowTooltipProps {
   open: boolean;
@@ -60,15 +60,15 @@ export function FollowTooltip({
   return createPortal(
     <div
       className={cn(
-        "pointer-events-none px-1.5 py-2 rounded-md text-xs tabular-nums z-9999",
-        "bg-popover text-popover-foreground border border-border shadow-md",
+        'pointer-events-none px-1.5 py-2 rounded-md text-xs tabular-nums z-9999',
+        'bg-popover text-popover-foreground border border-border shadow-md',
         className,
       )}
       ref={tooltipRef}
       style={
         pos
-          ? { position: "fixed", top: pos.top, left: pos.left }
-          : { position: "fixed", top: 0, left: 0, visibility: "hidden" }
+          ? { position: 'fixed', top: pos.top, left: pos.left }
+          : { position: 'fixed', top: 0, left: 0, visibility: 'hidden' }
       }
     >
       {children}

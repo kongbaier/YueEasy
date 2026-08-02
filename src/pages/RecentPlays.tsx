@@ -1,16 +1,16 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Clock } from "lucide-react";
-import { Suspense } from "react";
-import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { useLoadMore } from "@/shared/hooks/useLoadMore";
-import { toast } from "@/shared/lib/toast";
-import { ncm, toSongRef } from "@/tauri/ncm";
-import type { SongRef } from "@/shared/types/playlist";
-import { Button } from "@/shared/ui/button";
-import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
-import { useAuthStore } from "@/stores/auth";
-import { useQueueStore } from "@/modules/player/stores/queue";
-import { useLoginDialog } from "@/modules/auth/loginDialogStore";
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { Clock } from 'lucide-react';
+import { Suspense } from 'react';
+import { usePageTitle } from '@/app/layout/PageTitleContext';
+import { useLoadMore } from '@/shared/hooks/useLoadMore';
+import { toast } from '@/shared/lib/toast';
+import { ncm, toSongRef } from '@/tauri/ncm';
+import type { SongRef } from '@/shared/types/playlist';
+import { Button } from '@/shared/ui/button';
+import { TrackRow, TrackRowSkeleton } from '@/shared/ui/track';
+import { useAuthStore } from '@/stores/auth';
+import { useQueueStore } from '@/modules/player/stores/queue';
+import { useLoginDialog } from '@/modules/auth/loginDialogStore';
 
 const RecentPlaysSkeleton = () => (
   <div className="p-6">
@@ -27,10 +27,10 @@ const RecentPlaysContent = () => {
   const userId = useAuthStore((s) => s.userId);
   const play = useQueueStore((s) => s.play);
 
-  if (!userId) throw new Error("未登录");
+  if (!userId) throw new Error('未登录');
 
   const { data: tracks } = useSuspenseQuery({
-    queryKey: ["recentSongs", userId],
+    queryKey: ['recentSongs', userId],
     queryFn: () =>
       ncm
         .recentSong(userId)
@@ -43,7 +43,7 @@ const RecentPlaysContent = () => {
     try {
       await play(track);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "播放失败");
+      toast.error(e instanceof Error ? e.message : '播放失败');
     }
   };
 
@@ -71,7 +71,7 @@ const RecentPlaysContent = () => {
 };
 
 export default function RecentPlays() {
-  usePageTitle("最近播放", { root: true });
+  usePageTitle('最近播放', { root: true });
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
 

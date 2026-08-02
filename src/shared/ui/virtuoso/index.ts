@@ -1,1 +1,1 @@
-export { VirtuosoScroller } from "./VirtuosoScroller";
+export { VirtuosoScroller } from './VirtuosoScroller';

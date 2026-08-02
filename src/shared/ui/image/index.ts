@@ -1,2 +1,2 @@
-export { ImageTransition } from "./ImageTransition";
-export { Cover } from "./Cover";
+export { ImageTransition } from './ImageTransition';
+export { Cover } from './Cover';

@@ -1,12 +1,12 @@
-import { useEffectOnActive } from "keepalive-for-react";
+import { useEffectOnActive } from 'keepalive-for-react';
 import {
   createContext,
   useCallback,
   useContext,
   useMemo,
   useState,
-} from "react";
-import { useLocation } from "react-router-dom";
+} from 'react';
+import { useLocation } from 'react-router-dom';
 
 interface BreadcrumbEntry {
   pathname: string;

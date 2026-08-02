@@ -103,5 +103,12 @@ export function useWindowState() {
     }
   };
 
-  return { state, toMaximize, toFullscreen, toNormal, toggleMaximize, toggleFullscreen };
+  return {
+    state,
+    toMaximize,
+    toFullscreen,
+    toNormal,
+    toggleMaximize,
+    toggleFullscreen,
+  };
 }

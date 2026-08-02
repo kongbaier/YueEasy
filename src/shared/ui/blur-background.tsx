@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
 interface BlurBackgroundProps {
   src: string | undefined;
@@ -15,10 +15,10 @@ export function BlurBackground({ src, className, style }: BlurBackgroundProps) {
 
     let cancelled = false;
     const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.addEventListener("load", () => {
+    img.crossOrigin = 'anonymous';
+    img.addEventListener('load', () => {
       if (cancelled) return;
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext('2d');
       if (!ctx) return;
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     });
@@ -36,7 +36,7 @@ export function BlurBackground({ src, className, style }: BlurBackgroundProps) {
       ref={canvasRef}
       aria-hidden="true"
       className={className}
-      style={{ imageRendering: "auto", ...style }}
+      style={{ imageRendering: 'auto', ...style }}
     />
   );
 }

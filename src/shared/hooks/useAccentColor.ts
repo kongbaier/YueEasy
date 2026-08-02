@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 interface SystemAccentColors {
   accent: string;
@@ -11,13 +11,13 @@ interface SystemAccentColors {
 }
 
 const mappings: Record<keyof SystemAccentColors, string> = {
-  accent: "--primary",
-  accent_dark1: "--primary-dark",
-  accent_dark2: "--primary-darker",
-  accent_dark3: "--primary-darkest",
-  accent_light1: "--primary-light",
-  accent_light2: "--primary-lighter",
-  accent_light3: "--primary-lightest",
+  accent: '--primary',
+  accent_dark1: '--primary-dark',
+  accent_dark2: '--primary-darker',
+  accent_dark3: '--primary-darkest',
+  accent_light1: '--primary-light',
+  accent_light2: '--primary-lighter',
+  accent_light3: '--primary-lightest',
 };
 
 function apply(colors: SystemAccentColors) {
@@ -34,16 +34,16 @@ export const useAccentColor = () => {
     let unlisten: (() => void) | undefined;
 
     Promise.all([
-      import("@tauri-apps/api/core"),
-      import("@tauri-apps/api/event"),
+      import('@tauri-apps/api/core'),
+      import('@tauri-apps/api/event'),
     ]).then(([{ invoke }, { listen }]) => {
-      invoke<SystemAccentColors>("get_accent_color")
+      invoke<SystemAccentColors>('get_accent_color')
         .then(apply)
         .catch(() => {
           // Non-Windows or API failure — keep defaults
         });
 
-      listen<SystemAccentColors>("accent-color-changed", (event) => {
+      listen<SystemAccentColors>('accent-color-changed', (event) => {
         apply(event.payload);
       }).then((fn) => {
         unlisten = fn;

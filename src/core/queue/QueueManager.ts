@@ -1,5 +1,5 @@
-import type { Track } from "../types";
-import type { PlayMode } from "../types";
+import type { Track } from '../types';
+import type { PlayMode } from '../types';
 
 // ── Internal strategy interface ──
 
@@ -86,14 +86,14 @@ export class QueueManager {
   constructor(tracks?: Track[], startIndex?: number, mode?: PlayMode) {
     this.#tracks = [];
     this.#currentIndex = -1;
-    this.#mode = "sequential";
+    this.#mode = 'sequential';
     this.#strategy = new SequentialStrategy();
 
     if (tracks && tracks.length > 0) {
       this.#tracks = [...tracks];
       const idx = startIndex ?? 0;
       this.#currentIndex = Math.max(0, Math.min(idx, this.#tracks.length - 1));
-      this.#mode = mode ?? "sequential";
+      this.#mode = mode ?? 'sequential';
       this.#strategy = this.#createStrategy(
         this.#mode,
         this.#currentIndex,
@@ -278,31 +278,43 @@ export class QueueManager {
   /** Set play mode. Re-initializes the internal strategy. */
   setMode(mode: PlayMode): void {
     this.#mode = mode;
-    this.#strategy = this.#createStrategy(mode, this.#currentIndex, this.#tracks.length);
+    this.#strategy = this.#createStrategy(
+      mode,
+      this.#currentIndex,
+      this.#tracks.length,
+    );
   }
 
   /** Cycle sequential → shuffle → repeatOne → sequential. Returns the new mode. */
   cycleMode(): PlayMode {
     const next: PlayMode =
-      this.#mode === "sequential"
-        ? "shuffle"
-        : this.#mode === "shuffle"
-          ? "repeatOne"
-          : "sequential";
+      this.#mode === 'sequential'
+        ? 'shuffle'
+        : this.#mode === 'shuffle'
+          ? 'repeatOne'
+          : 'sequential';
     this.#mode = next;
-    this.#strategy = this.#createStrategy(next, this.#currentIndex, this.#tracks.length);
+    this.#strategy = this.#createStrategy(
+      next,
+      this.#currentIndex,
+      this.#tracks.length,
+    );
     return next;
   }
 
   // ── Internal helpers ──
 
-  #createStrategy(mode: PlayMode, current: number, length: number): QueueStrategy {
+  #createStrategy(
+    mode: PlayMode,
+    current: number,
+    length: number,
+  ): QueueStrategy {
     switch (mode) {
-      case "shuffle":
+      case 'shuffle':
         return new ShuffleStrategy(current, length);
-      case "repeatOne":
+      case 'repeatOne':
         return new RepeatOneStrategy();
-      case "sequential":
+      case 'sequential':
       default:
         return new SequentialStrategy();
     }

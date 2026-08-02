@@ -1,5 +1,5 @@
-import type { HTMLAttributes } from "react";
-import { forwardRef } from "react";
+import type { HTMLAttributes } from 'react';
+import { forwardRef } from 'react';
 
 export const VirtuosoScroller = forwardRef<
   HTMLDivElement,
@@ -8,8 +8,8 @@ export const VirtuosoScroller = forwardRef<
   <div
     {...props}
     ref={ref}
-    style={{ ...props.style, height: "100%", overflow: "auto" }}
+    style={{ ...props.style, height: '100%', overflow: 'auto' }}
   />
 ));
 
-VirtuosoScroller.displayName = "VirtuosoScroller";
+VirtuosoScroller.displayName = 'VirtuosoScroller';

@@ -1,6 +1,6 @@
-import { BlurBackground } from "@/shared/ui/blur-background";
-import { ImageTransition } from "./ImageTransition";
-import { cn } from "@/shared/lib/utils";
+import { BlurBackground } from '@/shared/ui/blur-background';
+import { ImageTransition } from './ImageTransition';
+import { cn } from '@/shared/lib/utils';
 
 interface CoverProps {
   src: string | undefined;
@@ -15,7 +15,7 @@ export const Cover = ({
   className,
   foregroundClassName,
 }: CoverProps) => (
-  <div className={cn("isolate relative", className)}>
+  <div className={cn('isolate relative', className)}>
     <BlurBackground
       className="absolute w-full h-full blur-lg scale-96 -z-10"
       src={src}
@@ -23,7 +23,7 @@ export const Cover = ({
     {src && (
       <ImageTransition
         alt={alt}
-        containerClassName={cn("size-full", foregroundClassName)}
+        containerClassName={cn('size-full', foregroundClassName)}
         src={src}
       />
     )}

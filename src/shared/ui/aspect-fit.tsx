@@ -1,7 +1,7 @@
-import React from "react";
-import { cn } from "../lib/utils";
+import React from 'react';
+import { cn } from '../lib/utils';
 
-interface AspectFitProps extends React.ComponentProps<"div"> {
+interface AspectFitProps extends React.ComponentProps<'div'> {
   ratio: number;
 }
 
@@ -14,7 +14,7 @@ export const AspectFit = ({
   return (
     <div
       className={cn(
-        "size-full flex items-center justify-center @container-size",
+        'size-full flex items-center justify-center @container-size',
         className,
       )}
       {...props}

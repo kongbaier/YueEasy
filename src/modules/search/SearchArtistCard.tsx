@@ -1,7 +1,7 @@
-import { Mic } from "lucide-react";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { getNcmImageUrl } from "@/shared/lib/utils";
-import type { NcmSearchArtist } from "@/tauri/ncm";
+import { Mic } from 'lucide-react';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { getNcmImageUrl } from '@/shared/lib/utils';
+import type { NcmSearchArtist } from '@/tauri/ncm';
 
 interface SearchArtistCardProps {
   /** 歌手搜索结果项 */
@@ -28,18 +28,18 @@ export function SearchArtistCard({ item }: SearchArtistCardProps) {
         {item.name}
         {item.alias?.length > 0 && (
           <span className="text-muted-foreground font-normal">
-            {" "}
-            ({item.alias.join(" / ")})
+            {' '}
+            ({item.alias.join(' / ')})
           </span>
         )}
       </p>
       <p className="truncate text-xs text-muted-foreground">
         {[
-          item.musicSize > 0 ? `${item.musicSize} 首` : "",
-          item.albumSize > 0 ? `${item.albumSize} 张专辑` : "",
+          item.musicSize > 0 ? `${item.musicSize} 首` : '',
+          item.albumSize > 0 ? `${item.albumSize} 张专辑` : '',
         ]
           .filter(Boolean)
-          .join(" · ")}
+          .join(' · ')}
       </p>
     </div>
   );

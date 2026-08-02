@@ -1,10 +1,14 @@
-import { usePlayerStore } from "@/modules/player/stores/player";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { usePlayerStore } from '@/modules/player/stores/player';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 
 interface WordProps {
   text: string;
   status:
-    "past-line" | "past-word" | "current-word" | "future-word" | "future-line";
+    | 'past-line'
+    | 'past-word'
+    | 'current-word'
+    | 'future-word'
+    | 'future-line';
   absoluteStartMs: number;
   durationMs: number;
 }
@@ -71,19 +75,19 @@ export const Word = ({
   absoluteStartMs,
   durationMs,
 }: WordProps) => {
-  if (status === "past-line") {
+  if (status === 'past-line') {
     return <span>{text}</span>;
   }
 
-  if (status === "future-line" || status === "future-word") {
+  if (status === 'future-line' || status === 'future-word') {
     return <span className="text-muted-foreground">{text}</span>;
   }
 
-  if (status === "past-word") {
+  if (status === 'past-word') {
     return <span className="text-primary">{text}</span>;
   }
 
-  if (status === "current-word") {
+  if (status === 'current-word') {
     return (
       <CurrentWord
         text={text}

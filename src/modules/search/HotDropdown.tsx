@@ -1,5 +1,5 @@
-import { TrendingUp } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { TrendingUp } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 interface HotDropdownProps {
   /** 热门搜索词列表 */
@@ -20,8 +20,8 @@ export function HotDropdown({ hots, onPick, onClose }: HotDropdownProps) {
         onClose();
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [onClose]);
 
   return (
@@ -45,7 +45,7 @@ export function HotDropdown({ hots, onPick, onClose }: HotDropdownProps) {
           >
             <span
               className={`w-5 text-center text-xs font-bold tabular-nums shrink-0 ${
-                i < 3 ? "text-orange-500" : "text-muted-foreground"
+                i < 3 ? 'text-orange-500' : 'text-muted-foreground'
               }`}
             >
               {i + 1}

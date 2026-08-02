@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { usePlayerStore } from "../stores/player";
-import { useQueueStore } from "../stores/queue";
+import { useEffect } from 'react';
+import { usePlayerStore } from '../stores/player';
+import { useQueueStore } from '../stores/queue';
 
 export const usePlayerKeyboard = () => {
   useEffect(() => {
@@ -10,9 +10,9 @@ export const usePlayerKeyboard = () => {
 
       const tagName = target.tagName;
       if (
-        tagName === "INPUT" ||
-        tagName === "TEXTAREA" ||
-        tagName === "SELECT" ||
+        tagName === 'INPUT' ||
+        tagName === 'TEXTAREA' ||
+        tagName === 'SELECT' ||
         target.isContentEditable
       ) {
         return;
@@ -21,7 +21,7 @@ export const usePlayerKeyboard = () => {
       const playerState = usePlayerStore.getState();
       const queueState = useQueueStore.getState();
 
-      if (e.code === "Space") {
+      if (e.code === 'Space') {
         e.preventDefault();
         if (playerState.playing) {
           playerState.pause();
@@ -31,28 +31,28 @@ export const usePlayerKeyboard = () => {
         return;
       }
 
-      if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+      if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
         e.preventDefault();
         const { currentTime, duration } = playerState;
         if (duration <= 0) return;
-        const step = e.code === "ArrowRight" ? 5 : -5;
+        const step = e.code === 'ArrowRight' ? 5 : -5;
         playerState.seek(Math.max(0, Math.min(currentTime + step, duration)));
         return;
       }
 
-      if (e.code === "PageUp") {
+      if (e.code === 'PageUp') {
         e.preventDefault();
         queueState.prev();
         return;
       }
 
-      if (e.code === "PageDown") {
+      if (e.code === 'PageDown') {
         e.preventDefault();
         queueState.next();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 };

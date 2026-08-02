@@ -1,5 +1,5 @@
-import { useAppSettings } from "@/stores/settings";
-import { initAuth } from "@/stores/auth";
+import { useAppSettings } from '@/stores/settings';
+import { initAuth } from '@/stores/auth';
 
 /**
  * Application-level initialization that must complete before React mounts.

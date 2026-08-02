@@ -1,14 +1,14 @@
 // Album responses
-export * from "./album.response";
+export * from './album.response';
 // Auth responses
-export * from "./auth.response";
+export * from './auth.response';
 // Banner responses
-export * from "./banner.response";
+export * from './banner.response';
 // Comment responses
-export * from "./comment.response";
+export * from './comment.response';
 // Discover responses
-export * from "./discover.response";
+export * from './discover.response';
 // Playlist responses
-export * from "./playlist.response";
-export * from "./search.response";
-export * from "./song.response";
+export * from './playlist.response';
+export * from './search.response';
+export * from './song.response';

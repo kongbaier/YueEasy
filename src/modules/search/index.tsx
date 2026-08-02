@@ -1,5 +1,5 @@
-import { useCallback } from "react";
-import { usePageTitle } from "@/app/layout/PageTitleContext";
+import { useCallback } from 'react';
+import { usePageTitle } from '@/app/layout/PageTitleContext';
 import {
   Search,
   SearchDropdown,
@@ -7,16 +7,16 @@ import {
   SearchInput,
   SearchResultsDisplay,
   SearchTabs,
-} from "./Search";
-import { useSearchStore } from "./store";
+} from './Search';
+import { useSearchStore } from './store';
 import {
   useSearchExecution,
   useSearchHot,
   useSearchSuggest,
-} from "./useSearch";
+} from './useSearch';
 
 export default function SearchPage() {
-  usePageTitle("搜索", { root: true });
+  usePageTitle('搜索', { root: true });
   // Data hooks — write results to store, return refetch methods
   const searchHot = useSearchHot();
   const searchSuggest = useSearchSuggest();
@@ -30,10 +30,10 @@ export default function SearchPage() {
     const input = useSearchStore.getState().input;
     if (!input.trim()) {
       searchHot.refetch();
-      useSearchStore.setState({ show: "hot" });
+      useSearchStore.setState({ show: 'hot' });
     } else {
       searchSuggest.refetch();
-      useSearchStore.setState({ show: "suggest" });
+      useSearchStore.setState({ show: 'suggest' });
     }
   }, [searchHot, searchSuggest]);
 

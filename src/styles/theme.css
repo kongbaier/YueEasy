@@ -1,6 +1,6 @@
 :root {
   --font-family:
-    "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+    'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --background: color-mix(in oklch, #ffffff 45%, transparent);
   --foreground: #171717;
   --primary: #e74c3c;
@@ -42,7 +42,7 @@
 
 :root.dark {
   --font-family:
-    "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+    'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --background: color-mix(in oklch, #121212 38%, transparent);
   --foreground: #f6f6f6;
   --primary: #e74c3c;
@@ -132,7 +132,7 @@
   }
 
   button:not(:disabled),
-  [role="button"]:not(:disabled) {
+  [role='button']:not(:disabled) {
     cursor: pointer;
   }
 

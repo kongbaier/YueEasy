@@ -1,41 +1,41 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "@/shared/lib/toast";
-import { cn } from "@/shared/lib/utils";
-import { ncm, setNcmCookie } from "@/tauri/ncm";
-import { Button } from "@/shared/ui/button";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from '@/shared/lib/toast';
+import { cn } from '@/shared/lib/utils';
+import { ncm, setNcmCookie } from '@/tauri/ncm';
+import { Button } from '@/shared/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/dialog";
-import { ImageTransition } from "@/shared/ui/image";
-import { Input } from "@/shared/ui/input";
-import { useLoginDialog } from "@/modules/auth/loginDialogStore";
-import { useAuthStore } from "@/stores/auth";
+} from '@/shared/ui/dialog';
+import { ImageTransition } from '@/shared/ui/image';
+import { Input } from '@/shared/ui/input';
+import { useLoginDialog } from '@/modules/auth/loginDialogStore';
+import { useAuthStore } from '@/stores/auth';
 
-type LoginTab = "password" | "sms" | "qr";
+type LoginTab = 'password' | 'sms' | 'qr';
 
 const tabs: { key: LoginTab; label: string }[] = [
-  { key: "password", label: "密码登录" },
-  { key: "sms", label: "短信登录" },
-  { key: "qr", label: "扫码登录" },
+  { key: 'password', label: '密码登录' },
+  { key: 'sms', label: '短信登录' },
+  { key: 'qr', label: '扫码登录' },
 ];
 
 export const LoginDialog = () => {
-  const [tab, setTab] = useState<LoginTab>("password");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
+  const [tab, setTab] = useState<LoginTab>('password');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [qrImg, setQrImg] = useState("");
-  const [qrStatus, setQrStatus] = useState("");
+  const [qrImg, setQrImg] = useState('');
+  const [qrStatus, setQrStatus] = useState('');
   const [qrLoading, setQrLoading] = useState(false);
-  const qrKeyRef = useRef("");
+  const qrKeyRef = useRef('');
   const qrTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(
     undefined,
   );
@@ -61,12 +61,12 @@ export const LoginDialog = () => {
         isLoggedIn: true,
         cookie,
         userId: profile?.userId ?? null,
-        nickname: profile?.nickname ?? "",
-        avatarUrl: profile?.avatarUrl ?? "",
+        nickname: profile?.nickname ?? '',
+        avatarUrl: profile?.avatarUrl ?? '',
       });
       setOpen(false);
-      toast.success(`登录成功，欢迎 ${profile?.nickname || "回来"}`);
-      navigate("/");
+      toast.success(`登录成功，欢迎 ${profile?.nickname || '回来'}`);
+      navigate('/');
 
       // 扫码登录等场景不会返回 profile，后台补全用户信息
       if (!profile?.userId) {
@@ -83,8 +83,8 @@ export const LoginDialog = () => {
                 isLoggedIn: true,
                 cookie,
                 userId: p.userId,
-                nickname: p.nickname ?? "",
-                avatarUrl: p.avatarUrl ?? "",
+                nickname: p.nickname ?? '',
+                avatarUrl: p.avatarUrl ?? '',
               });
             }
           })
@@ -97,19 +97,19 @@ export const LoginDialog = () => {
   );
 
   const resetState = () => {
-    setPhone("");
-    setPassword("");
-    setCode("");
+    setPhone('');
+    setPassword('');
+    setCode('');
     setLoading(false);
-    setError("");
+    setError('');
     setSending(false);
     setCountdown(0);
-    setQrImg("");
-    setQrStatus("");
+    setQrImg('');
+    setQrStatus('');
     setQrLoading(false);
-    qrKeyRef.current = "";
+    qrKeyRef.current = '';
     clearQrTimer();
-    setTab("password");
+    setTab('password');
   };
 
   const handleOpenChange = (o: boolean) => {
@@ -119,8 +119,8 @@ export const LoginDialog = () => {
 
   const handleTabChange = (newTab: LoginTab) => {
     setTab(newTab);
-    setError("");
-    if (newTab !== "qr") {
+    setError('');
+    if (newTab !== 'qr') {
       clearQrTimer();
     }
   };
@@ -129,7 +129,7 @@ export const LoginDialog = () => {
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError('');
     try {
       const res = await ncm.loginCellphone({ phone, password });
       if (res.code === 200) {
@@ -138,7 +138,7 @@ export const LoginDialog = () => {
         setError(`登录失败 (${res.code})`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "登录失败");
+      setError(err instanceof Error ? err.message : '登录失败');
     } finally {
       setLoading(false);
     }
@@ -148,7 +148,7 @@ export const LoginDialog = () => {
   const handleSendCode = async () => {
     if (!phone || sending || countdown > 0) return;
     setSending(true);
-    setError("");
+    setError('');
     try {
       const res = await ncm.captchaSent(phone);
       if (res.code === 200) {
@@ -157,7 +157,7 @@ export const LoginDialog = () => {
         setError(res.message || `发送失败 (${res.code})`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "发送验证码失败");
+      setError(err instanceof Error ? err.message : '发送验证码失败');
     } finally {
       setSending(false);
     }
@@ -167,7 +167,7 @@ export const LoginDialog = () => {
     e.preventDefault();
     if (!code) return;
     setLoading(true);
-    setError("");
+    setError('');
     try {
       const res = await ncm.loginCellphone({ phone, captcha: code });
       console.log(res);
@@ -177,7 +177,7 @@ export const LoginDialog = () => {
         setError(`登录失败 (${res.code})`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "登录失败");
+      setError(err instanceof Error ? err.message : '登录失败');
     } finally {
       setLoading(false);
     }
@@ -188,14 +188,14 @@ export const LoginDialog = () => {
     clearQrTimer();
     queueMicrotask(() => {
       setQrLoading(true);
-      setQrStatus("");
-      setError("");
+      setQrStatus('');
+      setError('');
     });
     try {
       const keyRes = await ncm.qrKey();
       const key = keyRes.unikey;
       if (!key) {
-        setError("获取二维码密钥失败");
+        setError('获取二维码密钥失败');
         setQrLoading(false);
         return;
       }
@@ -207,7 +207,7 @@ export const LoginDialog = () => {
         qrRes.data.qrimg ||
           `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrurl)}`,
       );
-      setQrStatus("请使用网易云音乐 App 扫码");
+      setQrStatus('请使用网易云音乐 App 扫码');
       setQrLoading(false);
 
       qrTimerRef.current = setInterval(async () => {
@@ -219,15 +219,15 @@ export const LoginDialog = () => {
               onAuthSuccess(checkRes.cookie);
               break;
             case 802:
-              setQrStatus("已扫码，请在手机上确认登录");
+              setQrStatus('已扫码，请在手机上确认登录');
               break;
             case 801:
-              setQrStatus("请使用网易云音乐 App 扫码");
+              setQrStatus('请使用网易云音乐 App 扫码');
               break;
             case 800:
               clearQrTimer();
-              setQrImg("");
-              setQrStatus("二维码已过期，点击刷新");
+              setQrImg('');
+              setQrStatus('二维码已过期，点击刷新');
               break;
           }
         } catch {
@@ -236,14 +236,14 @@ export const LoginDialog = () => {
       }, 3000);
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : "获取二维码失败");
+      setError(err instanceof Error ? err.message : '获取二维码失败');
       setQrLoading(false);
     }
   }, [clearQrTimer, onAuthSuccess]);
 
   // Start QR flow when tab becomes "qr" and dialog is open
   useEffect(() => {
-    if (tab === "qr" && open) {
+    if (tab === 'qr' && open) {
       queueMicrotask(() => startQrFlow());
     }
     return () => {
@@ -274,10 +274,10 @@ export const LoginDialog = () => {
           {tabs.map((t) => (
             <button
               className={cn(
-                "flex-1 cursor-pointer rounded-md py-1.5 text-sm font-medium transition-colors",
+                'flex-1 cursor-pointer rounded-md py-1.5 text-sm font-medium transition-colors',
                 tab === t.key
-                  ? "bg-background text-foreground shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10"
-                  : "text-muted-foreground hover:text-foreground",
+                  ? 'bg-background text-foreground shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
               key={t.key}
               onClick={() => handleTabChange(t.key)}
@@ -290,7 +290,7 @@ export const LoginDialog = () => {
 
         {error && <p className="text-center text-sm text-red-500">{error}</p>}
 
-        {tab === "password" && (
+        {tab === 'password' && (
           <form
             autoComplete="off"
             className="space-y-4"
@@ -315,12 +315,12 @@ export const LoginDialog = () => {
               disabled={loading || !phone || !password}
               type="submit"
             >
-              {loading ? "登录中..." : "登录"}
+              {loading ? '登录中...' : '登录'}
             </Button>
           </form>
         )}
 
-        {tab === "sms" && (
+        {tab === 'sms' && (
           <form
             autoComplete="off"
             className="space-y-4"
@@ -342,10 +342,10 @@ export const LoginDialog = () => {
                 variant="outline"
               >
                 {sending
-                  ? "发送中..."
+                  ? '发送中...'
                   : countdown > 0
                     ? `${countdown}s`
-                    : "发送验证码"}
+                    : '发送验证码'}
               </Button>
             </div>
             <Input
@@ -360,12 +360,12 @@ export const LoginDialog = () => {
               disabled={loading || !phone || !code}
               type="submit"
             >
-              {loading ? "登录中..." : "登录"}
+              {loading ? '登录中...' : '登录'}
             </Button>
           </form>
         )}
 
-        {tab === "qr" && (
+        {tab === 'qr' && (
           <div className="flex flex-col items-center gap-3 py-2">
             <div className="flex h-48 w-48 items-center justify-center rounded-lg bg-muted">
               {qrLoading ? (
@@ -383,7 +383,7 @@ export const LoginDialog = () => {
             {qrStatus && (
               <p className="text-sm text-muted-foreground">{qrStatus}</p>
             )}
-            {qrStatus === "二维码已过期，点击刷新" && (
+            {qrStatus === '二维码已过期，点击刷新' && (
               <Button onClick={startQrFlow} size="sm" variant="outline">
                 刷新二维码
               </Button>

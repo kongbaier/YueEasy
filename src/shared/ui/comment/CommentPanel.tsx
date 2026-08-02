@@ -1,16 +1,16 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { MessageCircle, ThumbsUp } from "lucide-react";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { formatCount } from "@/shared/utils/format";
-import { cn, getNcmImageUrl } from "@/shared/lib/utils";
-import { ncm } from "@/tauri/ncm";
-import type { NcmComment } from "@/tauri/ncm/types/comment.response";
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { MessageCircle, ThumbsUp } from 'lucide-react';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { formatCount } from '@/shared/utils/format';
+import { cn, getNcmImageUrl } from '@/shared/lib/utils';
+import { ncm } from '@/tauri/ncm';
+import type { NcmComment } from '@/tauri/ncm/types/comment.response';
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */
 /* ------------------------------------------------------------------ */
 
-const pad = (n: number) => String(n).padStart(2, "0");
+const pad = (n: number) => String(n).padStart(2, '0');
 
 const formatTime = (ts: number) => {
   const d = new Date(ts);
@@ -24,8 +24,8 @@ const formatTime = (ts: number) => {
 const CommentItem = ({ comment }: { comment: NcmComment }) => (
   <div
     className={cn(
-      "rounded-lg px-3 py-2.5",
-      "hover:bg-accent/50 transition-colors",
+      'rounded-lg px-3 py-2.5',
+      'hover:bg-accent/50 transition-colors',
     )}
   >
     {/* 用户行 */}
@@ -56,7 +56,7 @@ const CommentItem = ({ comment }: { comment: NcmComment }) => (
             className="text-[11px] text-muted-foreground leading-relaxed"
             key={reply.beRepliedCommentId}
           >
-            <span className="text-primary/80">@{reply.user.nickname}</span>{" "}
+            <span className="text-primary/80">@{reply.user.nickname}</span>{' '}
             {reply.content}
           </p>
         ))}
@@ -67,7 +67,7 @@ const CommentItem = ({ comment }: { comment: NcmComment }) => (
     <div className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground">
       <ThumbsUp className="h-3 w-3" />
       <span>
-        {comment.likedCount > 0 ? formatCount(comment.likedCount) : ""}
+        {comment.likedCount > 0 ? formatCount(comment.likedCount) : ''}
       </span>
     </div>
   </div>
@@ -106,7 +106,7 @@ interface CommentPanelContentProps {
 
 const CommentPanelContent = ({ playlistId }: CommentPanelContentProps) => {
   const { data } = useSuspenseQuery({
-    queryKey: ["playlistComments", playlistId],
+    queryKey: ['playlistComments', playlistId],
     queryFn: () =>
       ncm.commentPlaylist(playlistId, 30).then((res) => ({
         comments: res.comments ?? [],

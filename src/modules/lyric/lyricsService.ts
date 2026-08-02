@@ -1,6 +1,6 @@
-import type { LyricLine } from "@/modules/lyric/parser";
-import { parseLrc, parseYrc } from "@/modules/lyric/parser";
-import { ncm } from "@/tauri/ncm";
+import type { LyricLine } from '@/modules/lyric/parser';
+import { parseLrc, parseYrc } from '@/modules/lyric/parser';
+import { ncm } from '@/tauri/ncm';
 
 export interface LyricsResult {
   lyric: LyricLine[];

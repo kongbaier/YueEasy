@@ -1,6 +1,6 @@
-import type { Playlist } from "@/shared/types/playlist";
-import { CacheKeys, cacheGet, cacheSet } from "@/tauri/cache";
-import { ncm, toPlaylist, toSongRef } from "@/tauri/ncm";
+import type { Playlist } from '@/shared/types/playlist';
+import { CacheKeys, cacheGet, cacheSet } from '@/tauri/cache';
+import { ncm, toPlaylist, toSongRef } from '@/tauri/ncm';
 
 export async function getPlaylistDetail(
   id: number,
@@ -25,6 +25,6 @@ export async function getPlaylistDetail(
     if (cached) {
       return { playlist: cached.value, fromCache: true };
     }
-    throw new Error("加载歌单失败");
+    throw new Error('加载歌单失败');
   }
 }

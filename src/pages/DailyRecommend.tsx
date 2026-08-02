@@ -1,17 +1,17 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Play, Sparkles } from "lucide-react";
-import { Suspense } from "react";
-import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { useLoadMore } from "@/shared/hooks/useLoadMore";
-import { toast } from "@/shared/lib/toast";
-import { CacheKeys, cachedFetch } from "@/tauri/cache";
-import { ncm, toSongRef } from "@/tauri/ncm";
-import type { SongRef } from "@/shared/types/playlist";
-import { Button } from "@/shared/ui/button";
-import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
-import { useQueueStore } from "@/modules/player/stores/queue";
-import { useAuthStore } from "@/stores/auth";
-import { useLoginDialog } from "@/modules/auth/loginDialogStore";
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { Play, Sparkles } from 'lucide-react';
+import { Suspense } from 'react';
+import { usePageTitle } from '@/app/layout/PageTitleContext';
+import { useLoadMore } from '@/shared/hooks/useLoadMore';
+import { toast } from '@/shared/lib/toast';
+import { CacheKeys, cachedFetch } from '@/tauri/cache';
+import { ncm, toSongRef } from '@/tauri/ncm';
+import type { SongRef } from '@/shared/types/playlist';
+import { Button } from '@/shared/ui/button';
+import { TrackRow, TrackRowSkeleton } from '@/shared/ui/track';
+import { useQueueStore } from '@/modules/player/stores/queue';
+import { useAuthStore } from '@/stores/auth';
+import { useLoginDialog } from '@/modules/auth/loginDialogStore';
 
 const DailyRecommendSkeleton = () => (
   <div className="p-6">
@@ -31,7 +31,7 @@ const DailyRecommendContent = () => {
   const today = new Date().toISOString().slice(0, 10);
 
   const { data: songs } = useSuspenseQuery({
-    queryKey: ["dailyRecommend"],
+    queryKey: ['dailyRecommend'],
     queryFn: () =>
       cachedFetch(CacheKeys.dailyRecommend(today), () =>
         ncm.recommendSongs(),
@@ -45,7 +45,7 @@ const DailyRecommendContent = () => {
     try {
       await play(track);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "播放失败");
+      toast.error(e instanceof Error ? e.message : '播放失败');
     }
   };
 
@@ -54,7 +54,7 @@ const DailyRecommendContent = () => {
     try {
       await replaceAndPlay(songs);
     } catch {
-      toast.error("没有可播放的歌曲");
+      toast.error('没有可播放的歌曲');
     }
   };
 
@@ -91,7 +91,7 @@ const DailyRecommendContent = () => {
 };
 
 export default function DailyRecommend() {
-  usePageTitle("每日推荐", { root: true });
+  usePageTitle('每日推荐', { root: true });
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
 

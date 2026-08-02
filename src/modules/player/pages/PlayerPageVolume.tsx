@@ -1,8 +1,8 @@
-import { Volume1, Volume2 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { FollowTooltip } from "../components/FollowTooltip";
-import { usePlayerStore } from "../stores/player";
+import { Volume1, Volume2 } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
+import { Button } from '@/shared/ui/button';
+import { FollowTooltip } from '../components/FollowTooltip';
+import { usePlayerStore } from '../stores/player';
 
 const STEP = 0.1;
 
@@ -64,13 +64,13 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
     const handlePointerUp = () => {
       setScrubVolume(null);
       bar.releasePointerCapture(e.pointerId);
-      bar.removeEventListener("pointermove", handleDragMove);
-      bar.removeEventListener("pointerup", handlePointerUp);
+      bar.removeEventListener('pointermove', handleDragMove);
+      bar.removeEventListener('pointerup', handlePointerUp);
     };
 
     bar.setPointerCapture(e.pointerId);
-    bar.addEventListener("pointermove", handleDragMove);
-    bar.addEventListener("pointerup", handlePointerUp);
+    bar.addEventListener('pointermove', handleDragMove);
+    bar.addEventListener('pointerup', handlePointerUp);
   };
 
   const adjustVolume = (delta: number) => {
@@ -79,7 +79,7 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
   };
 
   return (
-    <div className={`flex items-center gap-1 ${className ?? ""}`}>
+    <div className={`flex items-center gap-1 ${className ?? ''}`}>
       <Button
         className="text-foreground hover:bg-transparent hover:text-primary"
         onClick={() => adjustVolume(-STEP)}
@@ -97,7 +97,7 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
         <div
           className="w-full h-1 bg-secondary rounded-full relative select-none"
           ref={barRef}
-          style={{ touchAction: "none" }}
+          style={{ touchAction: 'none' }}
         >
           <div
             className="h-full bg-primary rounded-full"

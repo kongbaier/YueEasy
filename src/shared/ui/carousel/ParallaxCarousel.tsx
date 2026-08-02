@@ -1,13 +1,13 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@/shared/ui/button";
-import type { CarouselApi } from "@/shared/ui/carousel-base";
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button } from '@/shared/ui/button';
+import type { CarouselApi } from '@/shared/ui/carousel-base';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-} from "@/shared/ui/carousel-base";
-import { cn } from "@/shared/lib/utils";
+} from '@/shared/ui/carousel-base';
+import { cn } from '@/shared/lib/utils';
 
 interface ParallaxCarouselProps<T> {
   className?: string;
@@ -43,9 +43,9 @@ export const ParallaxCarousel = <T,>({
 
   useEffect(() => {
     if (!api) return;
-    api.on("scroll", handleScroll);
+    api.on('scroll', handleScroll);
     return () => {
-      api.off("scroll", handleScroll);
+      api.off('scroll', handleScroll);
     };
   }, [api, handleScroll]);
 
@@ -57,7 +57,7 @@ export const ParallaxCarousel = <T,>({
 
   return (
     <Carousel
-      className={cn("relative h-full w-full group overflow-hidden", className)}
+      className={cn('relative h-full w-full group overflow-hidden', className)}
       opts={{ loop: true }}
       setApi={setApi}
     >
@@ -79,7 +79,7 @@ export const ParallaxCarousel = <T,>({
                   transform: `translateX(${parallaxOffset * 100}%)`,
                 }}
               >
-                {typeof children === "function" ? children(item) : children}
+                {typeof children === 'function' ? children(item) : children}
               </div>
             </CarouselItem>
           );
@@ -91,8 +91,8 @@ export const ParallaxCarousel = <T,>({
           <div className="absolute left-2 top-1/2 z-10 -translate-y-1/2">
             <Button
               className={cn(
-                "transition-all duration-150 ease-out",
-                "rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90",
+                'transition-all duration-150 ease-out',
+                'rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90',
               )}
               onClick={() => api?.scrollPrev()}
               type="button"
@@ -103,8 +103,8 @@ export const ParallaxCarousel = <T,>({
           <div className="absolute right-2 top-1/2 z-10 -translate-y-1/2">
             <Button
               className={cn(
-                "transition-all duration-150 ease-out",
-                "rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90",
+                'transition-all duration-150 ease-out',
+                'rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90',
               )}
               onClick={() => api?.scrollNext()}
               type="button"
@@ -124,10 +124,10 @@ export const ParallaxCarousel = <T,>({
               >
                 <div
                   className={cn(
-                    "h-1.5 w-1.5 rounded-full drop-shadow-2xl transition-[colors,scale] origin-center",
+                    'h-1.5 w-1.5 rounded-full drop-shadow-2xl transition-[colors,scale] origin-center',
                     i === displayIndex
-                      ? "bg-white scale-110"
-                      : "bg-white/50 group-hover/btn:bg-white/70 group-hover/btn:scale-110",
+                      ? 'bg-white scale-110'
+                      : 'bg-white/50 group-hover/btn:bg-white/70 group-hover/btn:scale-110',
                   )}
                 />
               </Button>

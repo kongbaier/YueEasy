@@ -7,28 +7,28 @@ import {
   Music,
   Pause,
   Play,
-} from "lucide-react";
-import { useCallback } from "react";
-import { Button } from "@/shared/ui/button";
-import { FollowTooltip } from "@/modules/player/components/FollowTooltip";
-import { useMediaSession } from "@/modules/player/hooks/useMediaSession";
-import { usePlayerAction } from "@/modules/player/hooks/usePlayerAction";
-import { usePlayerKeyboard } from "@/modules/player/hooks/usePlayerKeyboard";
-import { useProgress } from "@/modules/player/hooks/useProgress";
-import { formatDuration } from "@/shared/utils/format";
-import { toast } from "@/shared/lib/toast";
-import { cn } from "@/shared/lib/utils";
-import { ncm } from "@/tauri/ncm";
-import { formatQueueCount, useQueueStore } from "@/modules/player/stores/queue";
-import { useLoginDialog } from "@/modules/auth/loginDialogStore";
-import { usePlayerPage } from "@/modules/player/contexts/PlayerPageContext";
-import { PlayModeControl } from "./PlayModeControl";
-import { SeekBar } from "./SeekBar";
-import { VolumeControl } from "./VolumeControl";
-import { Cover } from "@/shared/ui/image";
-import { usePlayerStore } from "../stores/player";
-import { useAuthStore } from "@/stores/auth";
-import { useLikeStore } from "@/stores/like";
+} from 'lucide-react';
+import { useCallback } from 'react';
+import { Button } from '@/shared/ui/button';
+import { FollowTooltip } from '@/modules/player/components/FollowTooltip';
+import { useMediaSession } from '@/modules/player/hooks/useMediaSession';
+import { usePlayerAction } from '@/modules/player/hooks/usePlayerAction';
+import { usePlayerKeyboard } from '@/modules/player/hooks/usePlayerKeyboard';
+import { useProgress } from '@/modules/player/hooks/useProgress';
+import { formatDuration } from '@/shared/utils/format';
+import { toast } from '@/shared/lib/toast';
+import { cn } from '@/shared/lib/utils';
+import { ncm } from '@/tauri/ncm';
+import { formatQueueCount, useQueueStore } from '@/modules/player/stores/queue';
+import { useLoginDialog } from '@/modules/auth/loginDialogStore';
+import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
+import { PlayModeControl } from './PlayModeControl';
+import { SeekBar } from './SeekBar';
+import { VolumeControl } from './VolumeControl';
+import { Cover } from '@/shared/ui/image';
+import { usePlayerStore } from '../stores/player';
+import { useAuthStore } from '@/stores/auth';
+import { useLikeStore } from '@/stores/like';
 
 const PlayerProgress = () => {
   const { percentage, formatted } = useProgress();
@@ -104,8 +104,8 @@ const PlayerControls = () => {
       </section>
       <section
         className={cn(
-          "flex text-4xl gap-x-3 justify-center items-center-safe transition-opacity duration-300",
-          !hasTrack && "opacity-30 pointer-events-none",
+          'flex text-4xl gap-x-3 justify-center items-center-safe transition-opacity duration-300',
+          !hasTrack && 'opacity-30 pointer-events-none',
         )}
       >
         <Button
@@ -150,10 +150,10 @@ const PlayerInfo = () => {
     <div className="flex-1 min-w-0 relative flex items-center">
       <div
         className={cn(
-          "flex items-center gap-3 transition-all duration-300",
+          'flex items-center gap-3 transition-all duration-300',
           !currentTrack
-            ? "opacity-100"
-            : "opacity-0 pointer-events-none absolute inset-0",
+            ? 'opacity-100'
+            : 'opacity-0 pointer-events-none absolute inset-0',
         )}
       >
         <div className="flex items-center justify-center size-10 shrink-0 rounded-md bg-accent/40 ring-1 ring-border/40">
@@ -171,16 +171,16 @@ const PlayerInfo = () => {
 
       <div
         className={cn(
-          "flex items-center gap-3 min-w-0 transition-all duration-300",
+          'flex items-center gap-3 min-w-0 transition-all duration-300',
           currentTrack
-            ? "opacity-100"
-            : "opacity-0 pointer-events-none absolute inset-0",
+            ? 'opacity-100'
+            : 'opacity-0 pointer-events-none absolute inset-0',
         )}
       >
         <button
           className={cn(
-            "rounded-md overflow-hidden shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 size-10 shrink-0 transition-colors",
-            "transition-transform duration-100 origin-bottom-left hover:brightness-95 hover:scale-110",
+            'rounded-md overflow-hidden shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 size-10 shrink-0 transition-colors',
+            'transition-transform duration-100 origin-bottom-left hover:brightness-95 hover:scale-110',
           )}
           onClick={openPlayerPage}
           type="button"
@@ -199,10 +199,10 @@ const PlayerInfo = () => {
         </button>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">
-            {currentTrack?.name ?? ""}
+            {currentTrack?.name ?? ''}
           </p>
           <p className="truncate text-xs text-muted-foreground">
-            {currentTrack?.artists?.map((a) => a.name).join("/") || " "}
+            {currentTrack?.artists?.map((a) => a.name).join('/') || ' '}
           </p>
         </div>
       </div>
@@ -227,7 +227,7 @@ const PlayerMenu = ({
   const handleLike = useCallback(() => {
     if (!currentTrack) return;
     if (!isLoggedIn) {
-      toast.error("请先登录");
+      toast.error('请先登录');
       setLoginDialogOpen(true);
       return;
     }
@@ -244,7 +244,7 @@ const PlayerMenu = ({
       })
       .catch(() => {
         toggleLike(currentTrack.id);
-        toast.error("操作失败，请重试");
+        toast.error('操作失败，请重试');
       });
   }, [isLoggedIn, isLiked, currentTrack, toggleLike, setLoginDialogOpen]);
 
@@ -257,7 +257,7 @@ const PlayerMenu = ({
           size="icon"
           variant="ghost"
         >
-          <Heart className="size-4" fill={isLiked ? "#ef4444" : "none"} />
+          <Heart className="size-4" fill={isLiked ? '#ef4444' : 'none'} />
         </Button>
       )}
       <Button
@@ -291,7 +291,7 @@ export const PlayerBar = ({
   return (
     <div
       className={cn(
-        "relative bg-card px-4 flex items-center justify-between",
+        'relative bg-card px-4 flex items-center justify-between',
         className,
       )}
     >

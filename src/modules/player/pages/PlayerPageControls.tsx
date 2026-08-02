@@ -5,12 +5,12 @@ import {
   Loader2,
   Pause,
   Play,
-} from "lucide-react";
-import { PlayModeControl } from "@/modules/player/components";
-import { Button } from "@/shared/ui/button";
-import { usePlayerAction } from "@/modules/player/hooks/usePlayerAction";
-import { cn } from "@/shared/lib/utils";
-import { formatQueueCount, useQueueStore } from "@/modules/player/stores/queue";
+} from 'lucide-react';
+import { PlayModeControl } from '@/modules/player/components';
+import { Button } from '@/shared/ui/button';
+import { usePlayerAction } from '@/modules/player/hooks/usePlayerAction';
+import { cn } from '@/shared/lib/utils';
+import { formatQueueCount, useQueueStore } from '@/modules/player/stores/queue';
 
 interface PlayerPageControlsProps {
   className?: string;
@@ -29,7 +29,7 @@ export const PlayerPageControls = ({
 
   return (
     <div
-      className={`grid grid-cols-[auto_4fr_auto_3fr_auto_3fr_auto_4fr_auto] items-center ${className ?? ""}`}
+      className={`grid grid-cols-[auto_4fr_auto_3fr_auto_3fr_auto_4fr_auto] items-center ${className ?? ''}`}
     >
       <PlayModeControl className="col-start-1" />
 
@@ -67,15 +67,15 @@ export const PlayerPageControls = ({
 
       <Button
         className={cn(
-          "col-start-9",
+          'col-start-9',
           showQueue
-            ? "text-primary hover:text-primary"
-            : "text-foreground hover:bg-transparent hover:text-primary",
+            ? 'text-primary hover:text-primary'
+            : 'text-foreground hover:bg-transparent hover:text-primary',
         )}
         onClick={onToggleQueue}
         size="icon"
         title="播放列表"
-        variant={showQueue ? "secondary" : "ghost"}
+        variant={showQueue ? 'secondary' : 'ghost'}
       >
         <span className="relative">
           <ListMusic className="size-4" />

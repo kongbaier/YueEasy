@@ -1,1 +1,1 @@
-export { CommentPanel, CommentSkeleton } from "./CommentPanel";
+export { CommentPanel, CommentSkeleton } from './CommentPanel';

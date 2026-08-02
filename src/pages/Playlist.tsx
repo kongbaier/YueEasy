@@ -1,21 +1,21 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { ListMusic, MessageCircle, Play, Users } from "lucide-react";
-import { Suspense, useState } from "react";
-import { useParams } from "react-router-dom";
-import { CommentPanel, CommentSkeleton } from "@/shared/ui/comment";
-import { Cover } from "@/shared/ui/image";
-import { ExpandableText } from "@/shared/ui/expandable-text";
-import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
-import { Button } from "@/shared/ui/button";
-import { Skeleton } from "@/shared/ui/skeleton";
-import type { SongRef } from "@/shared/types/playlist";
-import { useLoadMore } from "@/shared/hooks/useLoadMore";
-import { formatCount } from "@/shared/utils/format";
-import { toast } from "@/shared/lib/toast";
-import { cn, getNcmImageUrl } from "@/shared/lib/utils";
-import { getPlaylistDetail } from "@/shared/services/playlist";
-import { useQueueStore } from "@/modules/player/stores/queue";
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { ListMusic, MessageCircle, Play, Users } from 'lucide-react';
+import { Suspense, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { CommentPanel, CommentSkeleton } from '@/shared/ui/comment';
+import { Cover } from '@/shared/ui/image';
+import { ExpandableText } from '@/shared/ui/expandable-text';
+import { usePageTitle } from '@/app/layout/PageTitleContext';
+import { TrackRow, TrackRowSkeleton } from '@/shared/ui/track';
+import { Button } from '@/shared/ui/button';
+import { Skeleton } from '@/shared/ui/skeleton';
+import type { SongRef } from '@/shared/types/playlist';
+import { useLoadMore } from '@/shared/hooks/useLoadMore';
+import { formatCount } from '@/shared/utils/format';
+import { toast } from '@/shared/lib/toast';
+import { cn, getNcmImageUrl } from '@/shared/lib/utils';
+import { getPlaylistDetail } from '@/shared/services/playlist';
+import { useQueueStore } from '@/modules/player/stores/queue';
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */
@@ -30,11 +30,11 @@ const formatDate = (ts: number) => {
 /*  Tab 切换                                                            */
 /* ------------------------------------------------------------------ */
 
-type TabKey = "songs" | "comments";
+type TabKey = 'songs' | 'comments';
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: "songs", label: "歌曲" },
-  { key: "comments", label: "评论" },
+  { key: 'songs', label: '歌曲' },
+  { key: 'comments', label: '评论' },
 ];
 
 interface TabBarProps {
@@ -47,10 +47,10 @@ const TabBar = ({ active, onChange }: TabBarProps) => (
     {TABS.map((tab) => (
       <button
         className={cn(
-          "relative px-5 py-3 text-sm font-medium transition-colors",
+          'relative px-5 py-3 text-sm font-medium transition-colors',
           active === tab.key
-            ? "text-foreground"
-            : "text-muted-foreground hover:text-foreground/80",
+            ? 'text-foreground'
+            : 'text-muted-foreground hover:text-foreground/80',
         )}
         key={tab.key}
         onClick={() => onChange(tab.key)}
@@ -127,12 +127,12 @@ const PlaylistContent = () => {
   const { id } = useParams<{ id: string }>();
   const play = useQueueStore((s) => s.play);
   const replaceAndPlay = useQueueStore((s) => s.replaceAndPlay);
-  const [activeTab, setActiveTab] = useState<TabKey>("songs");
+  const [activeTab, setActiveTab] = useState<TabKey>('songs');
 
-  if (!id) throw new Error("无效的歌单 ID");
+  if (!id) throw new Error('无效的歌单 ID');
 
   const { data } = useSuspenseQuery({
-    queryKey: ["playlist", id],
+    queryKey: ['playlist', id],
     queryFn: () => getPlaylistDetail(Number(id)),
   });
 
@@ -144,7 +144,7 @@ const PlaylistContent = () => {
     try {
       await play(track);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "播放失败");
+      toast.error(e instanceof Error ? e.message : '播放失败');
     }
   };
 
@@ -154,7 +154,7 @@ const PlaylistContent = () => {
     try {
       await replaceAndPlay(tracks);
     } catch {
-      toast.error("没有可播放的歌曲");
+      toast.error('没有可播放的歌曲');
     }
   };
 
@@ -163,25 +163,25 @@ const PlaylistContent = () => {
   stats.push({
     icon: Play,
     value: formatCount(playlist.playCount),
-    label: "次播放",
+    label: '次播放',
   });
   stats.push({
     icon: ListMusic,
     value: String(playlist.trackCount),
-    label: "首",
+    label: '首',
   });
   if (playlist.subscribedCount != null && playlist.subscribedCount > 0) {
     stats.push({
       icon: Users,
       value: formatCount(playlist.subscribedCount),
-      label: "收藏",
+      label: '收藏',
     });
   }
   if (playlist.commentCount != null && playlist.commentCount > 0) {
     stats.push({
       icon: MessageCircle,
       value: formatCount(playlist.commentCount),
-      label: "评论",
+      label: '评论',
     });
   }
 
@@ -215,7 +215,7 @@ const PlaylistContent = () => {
           {/* 创建者 + 时间 */}
           {metaParts.length > 0 && (
             <p className="text-sm text-muted-foreground/80">
-              {metaParts.join("  ·  ")}
+              {metaParts.join('  ·  ')}
             </p>
           )}
 
@@ -275,7 +275,7 @@ const PlaylistContent = () => {
       <TabBar active={activeTab} onChange={setActiveTab} />
 
       {/* ═══ Tab 内容 ═══ */}
-      {activeTab === "songs" ? (
+      {activeTab === 'songs' ? (
         /* 歌曲列表 */
         playlist.tracks &&
         playlist.tracks.length > 0 && (

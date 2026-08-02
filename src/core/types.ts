@@ -1,6 +1,6 @@
 // ── Play mode ──
 
-export const PlayModes = ["sequential", "shuffle", "repeatOne"] as const;
+export const PlayModes = ['sequential', 'shuffle', 'repeatOne'] as const;
 export type PlayMode = (typeof PlayModes)[number];
 
 // ── Track model ──

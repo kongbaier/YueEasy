@@ -53,7 +53,7 @@ export function parseLrc(content: string): LyricLine[] {
 
     if (timestamps.length === 0) continue;
 
-    const text = trimmed.replace(TIMESTAMP_RE, "").trim();
+    const text = trimmed.replace(TIMESTAMP_RE, '').trim();
 
     for (const startMs of timestamps) {
       lines.push({ startMs, durationMs: 0, text });
@@ -78,7 +78,7 @@ export function parseYrc(content: string): LyricLine[] {
 
   for (const raw of content.split(/\r?\n/)) {
     const trimmed = raw.trim();
-    if (!trimmed || trimmed.startsWith("{")) continue;
+    if (!trimmed || trimmed.startsWith('{')) continue;
 
     const lineMatch = LINE_RE.exec(trimmed);
     if (!lineMatch) continue;
@@ -118,7 +118,7 @@ export function parseYrc(content: string): LyricLine[] {
     }
 
     const fullText =
-      words.length > 0 ? words.map((w) => w.text).join("") : afterHeader;
+      words.length > 0 ? words.map((w) => w.text).join('') : afterHeader;
 
     lines.push({
       startMs: lineStartMs,

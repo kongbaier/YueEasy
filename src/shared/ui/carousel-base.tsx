@@ -1,10 +1,10 @@
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
-} from "embla-carousel-react";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import * as React from "react";
-import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
+} from 'embla-carousel-react';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import * as React from 'react';
+import { Button } from '@/shared/ui/button';
+import { cn } from '@/shared/lib/utils';
 
 type CarouselApi = UseEmblaCarouselType[1];
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
@@ -14,7 +14,7 @@ type CarouselPlugin = UseCarouselParameters[1];
 type CarouselProps = {
   opts?: CarouselOptions;
   plugins?: CarouselPlugin;
-  orientation?: "horizontal" | "vertical";
+  orientation?: 'horizontal' | 'vertical';
   setApi?: (api: CarouselApi) => void;
 };
 
@@ -33,25 +33,25 @@ function useCarousel() {
   const context = React.useContext(CarouselContext);
 
   if (!context) {
-    throw new Error("useCarousel must be used within a <Carousel />");
+    throw new Error('useCarousel must be used within a <Carousel />');
   }
 
   return context;
 }
 
 function Carousel({
-  orientation = "horizontal",
+  orientation = 'horizontal',
   opts,
   setApi,
   plugins,
   className,
   children,
   ...props
-}: React.ComponentProps<"div"> & CarouselProps) {
+}: React.ComponentProps<'div'> & CarouselProps) {
   const [carouselRef, api] = useEmblaCarousel(
     {
       ...opts,
-      axis: orientation === "horizontal" ? "x" : "y",
+      axis: orientation === 'horizontal' ? 'x' : 'y',
     },
     plugins,
   );
@@ -59,11 +59,11 @@ function Carousel({
   const subscribe = React.useCallback(
     (onChange: () => void) => {
       if (!api) return () => {};
-      api.on("select", onChange);
-      api.on("reInit", onChange);
+      api.on('select', onChange);
+      api.on('reInit', onChange);
       return () => {
-        api.off("select", onChange);
-        api.off("reInit", onChange);
+        api.off('select', onChange);
+        api.off('reInit', onChange);
       };
     },
     [api],
@@ -89,10 +89,10 @@ function Carousel({
 
   const handleKeyDown = React.useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (event.key === "ArrowLeft") {
+      if (event.key === 'ArrowLeft') {
         event.preventDefault();
         scrollPrev();
-      } else if (event.key === "ArrowRight") {
+      } else if (event.key === 'ArrowRight') {
         event.preventDefault();
         scrollNext();
       }
@@ -111,7 +111,7 @@ function Carousel({
       api,
       opts,
       orientation:
-        orientation || (opts?.axis === "y" ? "vertical" : "horizontal"),
+        orientation || (opts?.axis === 'y' ? 'vertical' : 'horizontal'),
       scrollPrev,
       scrollNext,
       canScrollPrev,
@@ -133,7 +133,7 @@ function Carousel({
     <CarouselContext.Provider value={contextValue}>
       <section
         aria-roledescription="carousel"
-        className={cn("relative", className)}
+        className={cn('relative', className)}
         data-slot="carousel"
         onKeyDownCapture={handleKeyDown}
         role="region"
@@ -145,7 +145,7 @@ function Carousel({
   );
 }
 
-function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
+function CarouselContent({ className, ...props }: React.ComponentProps<'div'>) {
   const { carouselRef, orientation } = useCarousel();
 
   return (
@@ -156,8 +156,8 @@ function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
     >
       <div
         className={cn(
-          "flex",
-          orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col",
+          'flex',
+          orientation === 'horizontal' ? '-ml-4' : '-mt-4 flex-col',
           className,
         )}
         {...props}
@@ -169,15 +169,15 @@ function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
 function CarouselItem({
   className,
   ...props
-}: React.ComponentProps<"fieldset">) {
+}: React.ComponentProps<'fieldset'>) {
   const { orientation } = useCarousel();
 
   return (
     <fieldset
       aria-roledescription="slide"
       className={cn(
-        "min-w-0 shrink-0 grow-0 basis-full",
-        orientation === "horizontal" ? "pl-4" : "pt-4",
+        'min-w-0 shrink-0 grow-0 basis-full',
+        orientation === 'horizontal' ? 'pl-4' : 'pt-4',
         className,
       )}
       data-slot="carousel-item"
@@ -188,8 +188,8 @@ function CarouselItem({
 
 function CarouselPrevious({
   className,
-  variant = "outline",
-  size = "icon-sm",
+  variant = 'outline',
+  size = 'icon-sm',
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel();
@@ -197,10 +197,10 @@ function CarouselPrevious({
   return (
     <Button
       className={cn(
-        "absolute touch-manipulation rounded-full",
-        orientation === "horizontal"
-          ? "top-1/2 -left-12 -translate-y-1/2"
-          : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
+        'absolute touch-manipulation rounded-full',
+        orientation === 'horizontal'
+          ? 'top-1/2 -left-12 -translate-y-1/2'
+          : '-top-12 left-1/2 -translate-x-1/2 rotate-90',
         className,
       )}
       data-slot="carousel-previous"
@@ -218,8 +218,8 @@ function CarouselPrevious({
 
 function CarouselNext({
   className,
-  variant = "outline",
-  size = "icon-sm",
+  variant = 'outline',
+  size = 'icon-sm',
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { orientation, scrollNext, canScrollNext } = useCarousel();
@@ -227,10 +227,10 @@ function CarouselNext({
   return (
     <Button
       className={cn(
-        "absolute touch-manipulation rounded-full",
-        orientation === "horizontal"
-          ? "top-1/2 -right-12 -translate-y-1/2"
-          : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
+        'absolute touch-manipulation rounded-full',
+        orientation === 'horizontal'
+          ? 'top-1/2 -right-12 -translate-y-1/2'
+          : '-bottom-12 left-1/2 -translate-x-1/2 rotate-90',
         className,
       )}
       data-slot="carousel-next"

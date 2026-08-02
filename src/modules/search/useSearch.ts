@@ -1,11 +1,11 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
-import type { SearchSuggestResponse } from "@/tauri/ncm";
-import { ncm, toSongRef } from "@/tauri/ncm";
-import { CacheKeys, cachedFetch } from "@/tauri/cache";
-import { SearchType } from "./constants";
-import { useSearchStore } from "./store";
-import type { SuggestionItem } from "./SuggestDropdown";
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
+import type { SearchSuggestResponse } from '@/tauri/ncm';
+import { ncm, toSongRef } from '@/tauri/ncm';
+import { CacheKeys, cachedFetch } from '@/tauri/cache';
+import { SearchType } from './constants';
+import { useSearchStore } from './store';
+import type { SuggestionItem } from './SuggestDropdown';
 
 function extractSuggestions(res: SearchSuggestResponse): SuggestionItem[] {
   const items: SuggestionItem[] = [];
@@ -13,11 +13,11 @@ function extractSuggestions(res: SearchSuggestResponse): SuggestionItem[] {
 
   if (songs) {
     for (const song of songs.slice(0, 4)) {
-      const artist = song.artists?.map((a) => a.name).join("/") || "";
+      const artist = song.artists?.map((a) => a.name).join('/') || '';
       items.push({
         label: artist ? `${song.name} — ${artist}` : song.name,
         keyword: song.name,
-        kind: "song",
+        kind: 'song',
       });
     }
   }
@@ -26,7 +26,7 @@ function extractSuggestions(res: SearchSuggestResponse): SuggestionItem[] {
       items.push({
         label: `${album.name} (专辑)`,
         keyword: album.name,
-        kind: "album",
+        kind: 'album',
       });
     }
   }
@@ -35,7 +35,7 @@ function extractSuggestions(res: SearchSuggestResponse): SuggestionItem[] {
       items.push({
         label: `${artist.name} (歌手)`,
         keyword: artist.name,
-        kind: "artist",
+        kind: 'artist',
       });
     }
   }
@@ -89,7 +89,7 @@ export function useSearchSuggest() {
 
 export function useSearchHot() {
   const query = useQuery({
-    queryKey: ["searchHot"],
+    queryKey: ['searchHot'],
     queryFn: () =>
       cachedFetch(CacheKeys.searchHot, () => ncm.searchHot()).then((r) =>
         r.data.result.hots.map((h) => h.first),
@@ -112,7 +112,7 @@ export function useSearchExecution(keyword: string, type: SearchType) {
     if (!keyword.trim()) return;
 
     cancelledRef.current = false;
-    useSearchStore.setState({ loading: true, error: "" });
+    useSearchStore.setState({ loading: true, error: '' });
 
     SEARCH_FETCHERS[type](keyword)
       .then(({ results, total }) => {
@@ -122,7 +122,7 @@ export function useSearchExecution(keyword: string, type: SearchType) {
       .catch((e) => {
         if (!cancelledRef.current)
           useSearchStore.setState({
-            error: e instanceof Error ? e.message : "搜索失败",
+            error: e instanceof Error ? e.message : '搜索失败',
             loading: false,
           });
       });

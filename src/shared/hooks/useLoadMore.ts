@@ -1,4 +1,4 @@
-import { createContext, use, useEffect, useRef, useState } from "react";
+import { createContext, use, useEffect, useRef, useState } from 'react';
 
 export const ScrollContainerContext = createContext<HTMLElement | null>(null);
 
@@ -26,9 +26,9 @@ export const useLoadMore = (total: number) => {
       });
     };
 
-    container.addEventListener("scroll", onScroll, { passive: true });
+    container.addEventListener('scroll', onScroll, { passive: true });
     return () => {
-      container.removeEventListener("scroll", onScroll);
+      container.removeEventListener('scroll', onScroll);
       cancelAnimationFrame(rafRef.current);
     };
   }, [container, count, total]);

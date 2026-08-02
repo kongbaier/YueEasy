@@ -1,16 +1,16 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Heart } from "lucide-react";
-import { Suspense } from "react";
-import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { useLoadMore } from "@/shared/hooks/useLoadMore";
-import { toast } from "@/shared/lib/toast";
-import { ncm, toSongRef } from "@/tauri/ncm";
-import type { SongRef } from "@/shared/types/playlist";
-import { Button } from "@/shared/ui/button";
-import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
-import { useQueueStore } from "@/modules/player/stores/queue";
-import { useLoginDialog } from "@/modules/auth/loginDialogStore";
-import { useAuthStore } from "@/stores/auth";
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { Heart } from 'lucide-react';
+import { Suspense } from 'react';
+import { usePageTitle } from '@/app/layout/PageTitleContext';
+import { useLoadMore } from '@/shared/hooks/useLoadMore';
+import { toast } from '@/shared/lib/toast';
+import { ncm, toSongRef } from '@/tauri/ncm';
+import type { SongRef } from '@/shared/types/playlist';
+import { Button } from '@/shared/ui/button';
+import { TrackRow, TrackRowSkeleton } from '@/shared/ui/track';
+import { useQueueStore } from '@/modules/player/stores/queue';
+import { useLoginDialog } from '@/modules/auth/loginDialogStore';
+import { useAuthStore } from '@/stores/auth';
 
 const LikedSongsSkeleton = () => (
   <div className="p-6">
@@ -27,10 +27,10 @@ const LikedSongsContent = () => {
   const userId = useAuthStore((s) => s.userId);
   const play = useQueueStore((s) => s.play);
 
-  if (!userId) throw new Error("未登录");
+  if (!userId) throw new Error('未登录');
 
   const { data: tracks } = useSuspenseQuery({
-    queryKey: ["likedSongs", userId],
+    queryKey: ['likedSongs', userId],
     queryFn: () =>
       ncm.likeList(userId).then((res) => {
         if (!res.ids.length) return [] as SongRef[];
@@ -46,7 +46,7 @@ const LikedSongsContent = () => {
     try {
       await play(track);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "播放失败");
+      toast.error(e instanceof Error ? e.message : '播放失败');
     }
   };
 
@@ -74,7 +74,7 @@ const LikedSongsContent = () => {
 };
 
 export default function LikedSongs() {
-  usePageTitle("我的喜欢", { root: true });
+  usePageTitle('我的喜欢', { root: true });
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
 

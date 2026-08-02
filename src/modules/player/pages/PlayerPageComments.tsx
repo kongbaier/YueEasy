@@ -1,18 +1,18 @@
-import { Heart, MessageSquare } from "lucide-react";
-import { Virtuoso } from "react-virtuoso";
-import { VirtuosoScroller } from "@/shared/ui/virtuoso";
-import { formatCount } from "@/shared/utils/format";
-import { toast } from "@/shared/lib/toast";
-import { cn } from "@/shared/lib/utils";
-import { ncm } from "@/tauri/ncm";
-import type { NcmComment } from "@/tauri/ncm/types/comment.response";
-import { useQuery } from "@tanstack/react-query";
+import { Heart, MessageSquare } from 'lucide-react';
+import { Virtuoso } from 'react-virtuoso';
+import { VirtuosoScroller } from '@/shared/ui/virtuoso';
+import { formatCount } from '@/shared/utils/format';
+import { toast } from '@/shared/lib/toast';
+import { cn } from '@/shared/lib/utils';
+import { ncm } from '@/tauri/ncm';
+import type { NcmComment } from '@/tauri/ncm/types/comment.response';
+import { useQuery } from '@tanstack/react-query';
 
 function relativeTime(timestamp: number): string {
   const now = Date.now();
   const diff = now - timestamp;
   const seconds = Math.floor(diff / 1000);
-  if (seconds < 60) return "刚刚";
+  if (seconds < 60) return '刚刚';
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}分钟前`;
   const hours = Math.floor(minutes / 60);
@@ -79,7 +79,7 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
           </span>
           <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground/60">
             <Heart className="size-2.5" />
-            {comment.likedCount > 0 ? formatCount(comment.likedCount) : ""}
+            {comment.likedCount > 0 ? formatCount(comment.likedCount) : ''}
           </span>
         </div>
       </div>
@@ -89,7 +89,7 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
 
 export const PlayerPageComments = ({ songId }: { songId: number }) => {
   const { isLoading, data } = useQuery({
-    queryKey: ["comments", songId],
+    queryKey: ['comments', songId],
     queryFn: () =>
       ncm
         .commentMusic(songId, 40, 0)
@@ -97,7 +97,7 @@ export const PlayerPageComments = ({ songId }: { songId: number }) => {
           return data;
         })
         .catch(() => {
-          toast.error("加载评论失败");
+          toast.error('加载评论失败');
         }),
   });
 
@@ -129,10 +129,10 @@ export const PlayerPageComments = ({ songId }: { songId: number }) => {
       <div className="flex-1 relative">
         <div
           className={cn(
-            "absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300",
+            'absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300',
             allComments.length === 0
-              ? "opacity-100 scale-100"
-              : "opacity-0 scale-95 pointer-events-none",
+              ? 'opacity-100 scale-100'
+              : 'opacity-0 scale-95 pointer-events-none',
           )}
         >
           <MessageSquare className="size-10 opacity-30" />
@@ -141,10 +141,10 @@ export const PlayerPageComments = ({ songId }: { songId: number }) => {
 
         <div
           className={cn(
-            "h-full transition-all duration-300 px-2 mr-4",
+            'h-full transition-all duration-300 px-2 mr-4',
             allComments.length > 0
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-2 pointer-events-none",
+              ? 'opacity-100 translate-y-0'
+              : 'opacity-0 translate-y-2 pointer-events-none',
           )}
         >
           <Virtuoso
@@ -157,7 +157,7 @@ export const PlayerPageComments = ({ songId }: { songId: number }) => {
               />
             )}
             overscan={20}
-            style={{ height: "100%" }}
+            style={{ height: '100%' }}
             totalCount={allComments.length}
           />
         </div>

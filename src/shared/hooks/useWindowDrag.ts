@@ -1,6 +1,6 @@
-import type { Window } from "@tauri-apps/api/window";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { useEffect } from "react";
+import type { Window } from '@tauri-apps/api/window';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { useEffect } from 'react';
 
 type UseWindowDragOptions = {
   /** 是否禁用拖拽，常用于全屏等场景，默认 false */
@@ -39,7 +39,12 @@ const INTERACTIVE_SELECTOR =
  */
 export function useWindowDrag(
   dragAttr: string,
-  { disabled = false, doubleClick = true, threshold = 3, appWindow }: UseWindowDragOptions = {},
+  {
+    disabled = false,
+    doubleClick = true,
+    threshold = 3,
+    appWindow,
+  }: UseWindowDragOptions = {},
 ) {
   useEffect(() => {
     const attr = `data-${dragAttr}`;
@@ -69,8 +74,8 @@ export function useWindowDrag(
         const startY = e.screenY;
 
         const cleanup = () => {
-          window.removeEventListener("mousemove", onMouseMove);
-          window.removeEventListener("mouseup", onMouseUp);
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onMouseUp);
         };
 
         const onMouseMove = (moveEvent: MouseEvent) => {
@@ -85,15 +90,15 @@ export function useWindowDrag(
 
         const onMouseUp = () => cleanup();
 
-        window.addEventListener("mousemove", onMouseMove);
-        window.addEventListener("mouseup", onMouseUp);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
       }
     };
 
-    window.addEventListener("mousedown", onMouseDown);
+    window.addEventListener('mousedown', onMouseDown);
 
     return () => {
-      window.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener('mousedown', onMouseDown);
     };
   }, [dragAttr, disabled, doubleClick, threshold, appWindow]);
 }

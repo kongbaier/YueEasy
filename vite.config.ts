@@ -1,9 +1,9 @@
-import { resolve } from "node:path";
-import babel from "@rolldown/plugin-babel";
-import tailwindcss from "@tailwindcss/vite";
-import react, { reactCompilerPreset } from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
-import svgr from "vite-plugin-svgr";
+import { resolve } from 'node:path';
+import babel from '@rolldown/plugin-babel';
+import tailwindcss from '@tailwindcss/vite';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import svgr from 'vite-plugin-svgr';
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -23,7 +23,7 @@ export default defineConfig(async () => ({
 
   resolve: {
     alias: {
-      "@": resolve(__dirname, "src"),
+      '@': resolve(__dirname, 'src'),
     },
   },
   // 2. tauri expects a fixed port, fail if that port is not available
@@ -33,14 +33,14 @@ export default defineConfig(async () => ({
     host: host || false,
     hmr: host
       ? {
-          protocol: "ws",
+          protocol: 'ws',
           host,
           port: 1421,
         }
       : undefined,
     watch: {
       // 3. tell Vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
+      ignored: ['**/src-tauri/**'],
     },
   },
 }));

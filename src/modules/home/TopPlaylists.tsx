@@ -1,15 +1,15 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { HorizontalCarousel } from "@/shared/ui/carousel";
-import { PlaylistCard, toPlaylistDisplay } from "@/shared/ui/playlist-card";
-import { ncm } from "@/tauri/ncm";
-import { CacheKeys, cachedFetch } from "@/tauri/cache";
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { HorizontalCarousel } from '@/shared/ui/carousel';
+import { PlaylistCard, toPlaylistDisplay } from '@/shared/ui/playlist-card';
+import { ncm } from '@/tauri/ncm';
+import { CacheKeys, cachedFetch } from '@/tauri/cache';
 
 export const TopPlaylists = () => {
   const { data: topPlaylists } = useSuspenseQuery({
-    queryKey: ["topPlaylist", "全部"],
+    queryKey: ['topPlaylist', '全部'],
     queryFn: () =>
-      cachedFetch(CacheKeys.topPlaylists("全部"), () =>
-        ncm.topPlaylist("全部", 20),
+      cachedFetch(CacheKeys.topPlaylists('全部'), () =>
+        ncm.topPlaylist('全部', 20),
       )
         .then((r) => r.data.playlists.map(toPlaylistDisplay))
         .catch(() => []),

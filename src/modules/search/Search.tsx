@@ -1,18 +1,18 @@
-import { Search as SearchIcon, X } from "lucide-react";
-import { useCallback, useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import type { SongRef } from "@/shared/types/playlist";
-import { useLoadMore } from "@/shared/hooks/useLoadMore";
-import { ScrollContainerContext } from "@/shared/hooks/useLoadMore";
-import { toast } from "@/shared/lib/toast";
-import { cn } from "@/shared/lib/utils";
-import { SEARCH_TABS } from "./constants";
-import { HotDropdown } from "./HotDropdown";
-import { SearchResults } from "./SearchResults";
-import { useSearchStore } from "./store";
-import { SuggestDropdown } from "./SuggestDropdown";
-import { useQueueStore } from "../player/stores/queue";
+import { Search as SearchIcon, X } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import type { SongRef } from '@/shared/types/playlist';
+import { useLoadMore } from '@/shared/hooks/useLoadMore';
+import { ScrollContainerContext } from '@/shared/hooks/useLoadMore';
+import { toast } from '@/shared/lib/toast';
+import { cn } from '@/shared/lib/utils';
+import { SEARCH_TABS } from './constants';
+import { HotDropdown } from './HotDropdown';
+import { SearchResults } from './SearchResults';
+import { useSearchStore } from './store';
+import { SuggestDropdown } from './SuggestDropdown';
+import { useQueueStore } from '../player/stores/queue';
 
 // ---- layout ----
 
@@ -62,7 +62,7 @@ export function SearchInput({
         {input && (
           <button
             className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            onClick={() => useSearchStore.setState({ input: "" })}
+            onClick={() => useSearchStore.setState({ input: '' })}
             type="button"
           >
             <X className="size-3.5" />
@@ -87,10 +87,10 @@ export function SearchTabs() {
       {SEARCH_TABS.map((tab) => (
         <button
           className={cn(
-            "px-3 py-1 text-sm rounded-md transition-colors",
+            'px-3 py-1 text-sm rounded-md transition-colors',
             searchType === tab.type
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground hover:bg-accent",
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent',
           )}
           key={tab.type}
           onClick={() => useSearchStore.setState({ searchType: tab.type })}
@@ -113,14 +113,14 @@ export function SearchDropdown() {
 
   return (
     <>
-      {show === "hot" && !input.trim() && hots.length > 0 && (
+      {show === 'hot' && !input.trim() && hots.length > 0 && (
         <HotDropdown
           hots={hots}
           onClose={() => useSearchStore.setState({ show: null })}
           onPick={(keyword) => useSearchStore.setState({ input: keyword })}
         />
       )}
-      {show === "suggest" && suggestions.length > 0 && (
+      {show === 'suggest' && suggestions.length > 0 && (
         <SuggestDropdown
           items={suggestions}
           onClose={() => useSearchStore.setState({ show: null })}
@@ -158,7 +158,7 @@ export function SearchResultsDisplay() {
       try {
         await play(track);
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "播放失败");
+        toast.error(e instanceof Error ? e.message : '播放失败');
       }
     },
     [play],

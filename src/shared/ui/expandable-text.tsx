@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { cn } from "@/shared/lib/utils";
+import { useEffect, useRef, useState } from 'react';
+import { cn } from '@/shared/lib/utils';
 
 interface ExpandableTextProps {
   text: string;
@@ -27,8 +27,8 @@ export const ExpandableText = ({ text, className }: ExpandableTextProps) => {
       <p
         ref={ref}
         className={cn(
-          "text-sm text-muted-foreground leading-relaxed",
-          !expanded && "line-clamp-3",
+          'text-sm text-muted-foreground leading-relaxed',
+          !expanded && 'line-clamp-3',
           className,
         )}
       >
@@ -40,7 +40,7 @@ export const ExpandableText = ({ text, className }: ExpandableTextProps) => {
           onClick={() => setExpanded((v) => !v)}
           type="button"
         >
-          {expanded ? "收起" : "展开"}
+          {expanded ? '收起' : '展开'}
         </button>
       )}
     </div>

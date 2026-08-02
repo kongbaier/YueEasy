@@ -1,19 +1,19 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Disc, Music, Play } from "lucide-react";
-import { Suspense } from "react";
-import { useParams } from "react-router-dom";
-import { Cover } from "@/shared/ui/image";
-import { ExpandableText } from "@/shared/ui/expandable-text";
-import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
-import { Button } from "@/shared/ui/button";
-import { Skeleton } from "@/shared/ui/skeleton";
-import type { SongRef } from "@/shared/types/playlist";
-import { useLoadMore } from "@/shared/hooks/useLoadMore";
-import { toast } from "@/shared/lib/toast";
-import { getNcmImageUrl } from "@/shared/lib/utils";
-import { ncm, toSongRef } from "@/tauri/ncm";
-import { useQueueStore } from "@/modules/player/stores/queue";
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { Disc, Music, Play } from 'lucide-react';
+import { Suspense } from 'react';
+import { useParams } from 'react-router-dom';
+import { Cover } from '@/shared/ui/image';
+import { ExpandableText } from '@/shared/ui/expandable-text';
+import { usePageTitle } from '@/app/layout/PageTitleContext';
+import { TrackRow, TrackRowSkeleton } from '@/shared/ui/track';
+import { Button } from '@/shared/ui/button';
+import { Skeleton } from '@/shared/ui/skeleton';
+import type { SongRef } from '@/shared/types/playlist';
+import { useLoadMore } from '@/shared/hooks/useLoadMore';
+import { toast } from '@/shared/lib/toast';
+import { getNcmImageUrl } from '@/shared/lib/utils';
+import { ncm, toSongRef } from '@/tauri/ncm';
+import { useQueueStore } from '@/modules/player/stores/queue';
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */
@@ -64,10 +64,10 @@ const AlbumContent = () => {
   const play = useQueueStore((s) => s.play);
   const replaceAndPlay = useQueueStore((s) => s.replaceAndPlay);
 
-  if (!id) throw new Error("无效的专辑 ID");
+  if (!id) throw new Error('无效的专辑 ID');
 
   const { data } = useSuspenseQuery({
-    queryKey: ["album", id],
+    queryKey: ['album', id],
     queryFn: () => ncm.albumDetail(Number(id)),
   });
 
@@ -80,7 +80,7 @@ const AlbumContent = () => {
     try {
       await play(track);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "播放失败");
+      toast.error(e instanceof Error ? e.message : '播放失败');
     }
   };
 
@@ -89,7 +89,7 @@ const AlbumContent = () => {
     try {
       await replaceAndPlay(tracks);
     } catch {
-      toast.error("没有可播放的歌曲");
+      toast.error('没有可播放的歌曲');
     }
   };
 
@@ -120,7 +120,7 @@ const AlbumContent = () => {
 
           {metaParts.length > 0 && (
             <p className="text-sm text-muted-foreground/80">
-              {metaParts.join("  ·  ")}
+              {metaParts.join('  ·  ')}
             </p>
           )}
 

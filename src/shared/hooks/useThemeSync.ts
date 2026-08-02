@@ -1,26 +1,26 @@
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { useCallback, useEffect, useRef } from "react";
-import { useAppSettings } from "@/stores/settings";
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { useCallback, useEffect, useRef } from 'react';
+import { useAppSettings } from '@/stores/settings';
 
-function getSystemTheme(): "light" | "dark" {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+function getSystemTheme(): 'light' | 'dark' {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
 }
 
 export const useThemeSync = () => {
   const theme = useAppSettings((s) => s.settings.theme);
   const transitionTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const syncThemeClass = useCallback((resolved: "light" | "dark") => {
+  const syncThemeClass = useCallback((resolved: 'light' | 'dark') => {
     const root = document.documentElement;
     clearTimeout(transitionTimer.current);
-    root.classList.add("theme-transition");
+    root.classList.add('theme-transition');
     requestAnimationFrame(() => {
-      root.classList.toggle("dark", resolved === "dark");
+      root.classList.toggle('dark', resolved === 'dark');
     });
     transitionTimer.current = setTimeout(() => {
-      root.classList.remove("theme-transition");
+      root.classList.remove('theme-transition');
     }, 500);
   }, []);
 
@@ -28,7 +28,7 @@ export const useThemeSync = () => {
     let unlisten: (() => void) | undefined;
 
     const sync = async () => {
-      if (theme === "system") {
+      if (theme === 'system') {
         await getCurrentWindow().setTheme(null);
         syncThemeClass(getSystemTheme());
         unlisten = await getCurrentWindow().onThemeChanged(({ payload }) => {
@@ -49,6 +49,6 @@ export const useThemeSync = () => {
 
   // Keep localStorage in sync for theme-init.js preload script
   useEffect(() => {
-    localStorage.setItem("theme", theme);
+    localStorage.setItem('theme', theme);
   }, [theme]);
 };

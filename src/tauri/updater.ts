@@ -1,5 +1,5 @@
-import { check, type Update } from "@tauri-apps/plugin-updater";
-import { relaunch } from "@tauri-apps/plugin-process";
+import { check, type Update } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
 
 export { type Update };
 
@@ -18,10 +18,10 @@ export async function downloadAndInstall(
 
   await update.downloadAndInstall((event) => {
     switch (event.event) {
-      case "Started":
+      case 'Started':
         contentLength = event.data.contentLength ?? null;
         break;
-      case "Progress":
+      case 'Progress':
         downloaded += event.data.chunkLength;
         onProgress?.(downloaded, contentLength);
         break;
