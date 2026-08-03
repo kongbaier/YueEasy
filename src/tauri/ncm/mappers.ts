@@ -1,9 +1,11 @@
 import type { Playlist, SongRef } from '@/shared/types/playlist';
+import type { Track } from '@/core/types';
 import type {
   PersonalizedPlaylist,
   TopPlaylist,
 } from './types/playlist.response';
 import type { NcmSong } from './types/song.response';
+import type { FmSong } from './types/discover.response';
 
 export function toPlaylist(p: PersonalizedPlaylist): Playlist;
 export function toPlaylist(p: TopPlaylist): Playlist;
@@ -41,5 +43,16 @@ export function toSongRef(s: NcmSong): SongRef {
     album: s.al ?? { id: 0, name: '', picUrl: '' },
     duration: s.dt,
     fee: s.fee,
+  };
+}
+
+/** 把 FM 接口条目（artists/album/duration 字段）映射为 Track。 */
+export function toFmSong(s: FmSong): Track {
+  return {
+    id: s.id,
+    name: s.name,
+    artists: s.artists ?? [],
+    album: s.album ?? { id: 0, name: '', picUrl: '' },
+    duration: s.duration,
   };
 }

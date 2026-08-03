@@ -1,16 +1,19 @@
 import {
   ChevronFirst,
   ChevronLast,
+  HeartOff,
   ListMusic,
   Loader2,
   Pause,
   Play,
 } from 'lucide-react';
+import { useState } from 'react';
 import { PlayModeControl } from '@/modules/player/components';
 import { Button } from '@/shared/ui/button';
-import { usePlayerAction } from '@/modules/player/hooks/usePlayerAction';
 import { cn } from '@/shared/lib/utils';
-import { formatQueueCount, useQueueStore } from '@/modules/player/stores/queue';
+import { toast } from '@/shared/lib/toast';
+import { formatQueueCount } from '@/shared/utils/format';
+import { usePlayer } from '@/modules/player/hooks/usePlayer';
 
 interface PlayerPageControlsProps {
   className?: string;
@@ -23,9 +26,31 @@ export const PlayerPageControls = ({
   showQueue = false,
   onToggleQueue,
 }: PlayerPageControlsProps) => {
-  const { handlePlay, handleNext, handlePrev, isPlaying, isLoading } =
-    usePlayerAction();
-  const queueLength = useQueueStore((s) => s.queueLength);
+  const {
+    togglePlay,
+    next,
+    prev,
+    queueLength,
+    canPrev,
+    isFm,
+    fmTrash,
+    playing: isPlaying,
+    loading: isLoading,
+  } = usePlayer();
+  const [trashPending, setTrashPending] = useState(false);
+
+  const handleFmTrash = async () => {
+    if (trashPending) return;
+    setTrashPending(true);
+    try {
+      await fmTrash();
+      toast.success('已减少此类推荐');
+    } catch {
+      toast.error('操作失败，请重试');
+    } finally {
+      setTrashPending(false);
+    }
+  };
 
   return (
     <div
@@ -35,7 +60,8 @@ export const PlayerPageControls = ({
 
       <Button
         className="col-start-3 text-foreground hover:bg-transparent hover:text-primary"
-        onClick={handlePrev}
+        disabled={!canPrev}
+        onClick={prev}
         size="icon"
         variant="ghost"
       >
@@ -44,7 +70,7 @@ export const PlayerPageControls = ({
       <Button
         className="col-start-5 flex h-12 w-12 items-center justify-center rounded-full bg-primary hover:bg-primary/90 transition-transform hover:scale-105 active:scale-95"
         disabled={isLoading}
-        onClick={handlePlay}
+        onClick={togglePlay}
         type="button"
       >
         {isLoading ? (
@@ -58,7 +84,7 @@ export const PlayerPageControls = ({
 
       <Button
         className="col-start-7 text-foreground hover:bg-transparent hover:text-primary"
-        onClick={handleNext}
+        onClick={next}
         size="icon"
         variant="ghost"
       >
@@ -68,23 +94,34 @@ export const PlayerPageControls = ({
       <Button
         className={cn(
           'col-start-9',
-          showQueue
-            ? 'text-primary hover:text-primary'
-            : 'text-foreground hover:bg-transparent hover:text-primary',
+          !isFm &&
+            (showQueue
+              ? 'text-primary hover:text-primary'
+              : 'text-foreground hover:bg-transparent hover:text-primary'),
+          isFm && 'text-foreground hover:bg-transparent hover:text-primary',
         )}
-        onClick={onToggleQueue}
+        disabled={trashPending}
+        onClick={isFm ? handleFmTrash : onToggleQueue}
         size="icon"
-        title="播放列表"
-        variant={showQueue ? 'secondary' : 'ghost'}
+        title={isFm ? '不感兴趣' : '播放列表'}
+        variant={showQueue && !isFm ? 'secondary' : 'ghost'}
       >
-        <span className="relative">
-          <ListMusic className="size-4" />
-          {queueLength > 0 && (
-            <span className="absolute -top-1 -right-1.5 text-[9px] font-medium tabular-nums">
-              {formatQueueCount(queueLength)}
-            </span>
-          )}
-        </span>
+        {isFm ? (
+          trashPending ? (
+            <Loader2 className="size-5 animate-spin" />
+          ) : (
+            <HeartOff className="size-5" />
+          )
+        ) : (
+          <span className="relative">
+            <ListMusic className="size-5" />
+            {queueLength > 0 && (
+              <span className="absolute -top-1 -right-1.5 text-[9px] font-medium tabular-nums">
+                {formatQueueCount(queueLength)}
+              </span>
+            )}
+          </span>
+        )}
       </Button>
     </div>
   );

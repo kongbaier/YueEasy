@@ -2,6 +2,7 @@ import { ListMusic, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatCount } from '@/shared/utils/format';
 import { cn } from '@/shared/lib/utils';
+import { SmartImage } from '@/shared/ui/image';
 import type { PlaylistDisplay } from './PlaylistDisplay';
 import { AspectRatio } from '../aspect-ratio';
 
@@ -30,9 +31,10 @@ export const PlaylistCard = ({
       type="button"
     >
       <AspectRatio className="overflow-hidden rounded-t-lg" ratio={1}>
-        <img
+        <SmartImage
           alt={playlist.name}
           className="object-cover transition-transform duration-300 group-hover:scale-105"
+          containerClassName="h-full w-full"
           src={playlist.coverUrl}
         />
         <div className="absolute inset-x-0 bottom-0 z-10 h-1/2 bg-linear-to-t from-black/60 to-transparent pointer-events-none" />

@@ -2,16 +2,17 @@ import { Volume1, Volume2 } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { FollowTooltip } from '../components/FollowTooltip';
-import { useSettingsStore } from '@/stores/settings';
+import { usePlayer } from '@/modules/player/hooks/usePlayer';
 
 const STEP = 0.1;
 
 export const PlayerPageVolume = ({ className }: { className?: string }) => {
-  const volume = useSettingsStore((s) => s.player.volume);
-  const isMuted = useSettingsStore((s) => s.player.isMuted);
-  const updatePlayer = useSettingsStore((s) => s.updatePlayer);
+  const { volume, isMuted, setVolume, setMuted } = usePlayer();
 
-  const applyVolume = (v: number) => updatePlayer({ volume: v, isMuted: false });
+  const applyVolume = (v: number) => {
+    setVolume(v);
+    setMuted(false);
+  };
 
   const barRef = useRef<HTMLDivElement>(null);
   const [scrubVolume, setScrubVolume] = useState<number | null>(null);
@@ -88,7 +89,7 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
         size="icon"
         variant="ghost"
       >
-        <Volume1 className="size-4" />
+        <Volume1 className="size-5" />
       </Button>
       <div
         className="flex-1 h-5 cursor-pointer flex items-center"
@@ -113,7 +114,7 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
         size="icon"
         variant="ghost"
       >
-        <Volume2 className="size-4" />
+        <Volume2 className="size-5" />
       </Button>
 
       <FollowTooltip anchorRef={barRef} open={isHovering} x={hoverBarX}>

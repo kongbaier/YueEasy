@@ -21,3 +21,12 @@ export const TYPE_LABEL: Record<SearchType, string> = {
   [SearchType.ARTIST]: '歌手',
   [SearchType.USER]: '用户',
 };
+
+export interface SuggestionItem {
+  /** 展示文本（含副标题，如 "七里香 — 周杰伦"） */
+  label: string;
+  /** 点击后填入搜索框的关键词 */
+  keyword: string;
+  /** 类型：歌曲 / 专辑 / 歌手 */
+  kind: 'song' | 'album' | 'artist';
+}

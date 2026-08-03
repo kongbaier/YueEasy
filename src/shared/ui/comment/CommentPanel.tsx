@@ -1,9 +1,9 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
 import { MessageCircle, ThumbsUp } from 'lucide-react';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { SmartImage } from '@/shared/ui/image';
 import { formatCount } from '@/shared/utils/format';
 import { cn, getNcmImageUrl } from '@/shared/lib/utils';
-import { ncm } from '@/tauri/ncm';
+import { useComments } from '@/shared/hooks/useComments';
 import type { NcmComment } from '@/tauri/ncm/types/comment.response';
 
 /* ------------------------------------------------------------------ */
@@ -30,9 +30,10 @@ const CommentItem = ({ comment }: { comment: NcmComment }) => (
   >
     {/* 用户行 */}
     <div className="flex items-center gap-2">
-      <img
+      <SmartImage
         alt={comment.user.nickname}
-        className="h-7 w-7 shrink-0 rounded-full object-cover"
+        className="size-full object-cover"
+        containerClassName="h-7 w-7 shrink-0 rounded-full"
         src={getNcmImageUrl(comment.user.avatarUrl, 50)}
       />
       <span className="text-xs font-medium truncate">
@@ -105,17 +106,13 @@ interface CommentPanelContentProps {
 }
 
 const CommentPanelContent = ({ playlistId }: CommentPanelContentProps) => {
-  const { data } = useSuspenseQuery({
-    queryKey: ['playlistComments', playlistId],
-    queryFn: () =>
-      ncm.commentPlaylist(playlistId, 30).then((res) => ({
-        comments: res.comments ?? [],
-        hotComments: res.hotComments ?? [],
-        totalCount: res.total ?? 0,
-      })),
-  });
+  const { data, isLoading } = useComments({ type: 'playlist', id: playlistId });
 
-  const { comments, hotComments, totalCount } = data;
+  if (isLoading) return <CommentSkeleton />;
+
+  const comments = data?.comments ?? [];
+  const hotComments = data?.hotComments ?? [];
+  const totalCount = data?.total ?? 0;
 
   return (
     <div className="space-y-4">

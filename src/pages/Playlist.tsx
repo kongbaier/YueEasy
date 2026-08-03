@@ -1,4 +1,3 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
 import { ListMusic, MessageCircle, Play, Users } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -9,13 +8,9 @@ import { usePageTitle } from '@/app/layout/PageTitleContext';
 import { TrackRow, TrackRowSkeleton } from '@/shared/ui/track';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
-import type { SongRef } from '@/shared/types/playlist';
-import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { formatCount } from '@/shared/utils/format';
-import { toast } from '@/shared/lib/toast';
 import { cn, getNcmImageUrl } from '@/shared/lib/utils';
-import { getPlaylistDetail } from '@/modules/playlist/services/PlaylistService';
-import { useQueueStore } from '@/modules/player/stores/queue';
+import { usePlaylistViewModel } from './hooks/usePlaylistViewModel';
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */
@@ -125,38 +120,13 @@ const PlaylistSkeleton = () => (
 
 const PlaylistContent = () => {
   const { id } = useParams<{ id: string }>();
-  const play = useQueueStore((s) => s.play);
-  const replaceAndPlay = useQueueStore((s) => s.replaceAndPlay);
   const [activeTab, setActiveTab] = useState<TabKey>('songs');
 
   if (!id) throw new Error('无效的歌单 ID');
 
-  const { data } = useSuspenseQuery({
-    queryKey: ['playlist', id],
-    queryFn: () => getPlaylistDetail(Number(id)),
-  });
-
-  const playlist = data.playlist;
+  const { playlist, fromCache, visibleCount, handlePlay, handlePlayAll } =
+    usePlaylistViewModel(Number(id));
   usePageTitle(playlist.name);
-  const visibleCount = useLoadMore(playlist.tracks?.length ?? 0);
-
-  const handlePlay = async (track: SongRef) => {
-    try {
-      await play(track);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : '播放失败');
-    }
-  };
-
-  const handlePlayAll = async () => {
-    const tracks = playlist.tracks;
-    if (!tracks?.length) return;
-    try {
-      await replaceAndPlay(tracks);
-    } catch {
-      toast.error('没有可播放的歌曲');
-    }
-  };
 
   /* 构建统计数据 */
   const stats: { icon: typeof Play; value: string; label: string }[] = [];
@@ -252,7 +222,7 @@ const PlaylistContent = () => {
               <Play className="h-4 w-4" />
               播放全部
             </Button>
-            {data.fromCache && (
+            {fromCache && (
               <span className="text-xs text-muted-foreground/70 bg-muted px-2 py-0.5 rounded">
                 缓存数据
               </span>

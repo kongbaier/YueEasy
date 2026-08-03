@@ -1,17 +1,9 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
 import { HorizontalCarousel } from '@/shared/ui/carousel';
-import { PlaylistCard, toPlaylistDisplay } from '@/shared/ui/playlist-card';
-import { ncm } from '@/tauri/ncm';
-import { CacheKeys, cachedFetch } from '@/tauri/cache';
+import { PlaylistCard } from '@/shared/ui/playlist-card';
+import { usePersonalizedPlaylistsViewModel } from './hooks/usePersonalizedPlaylistsViewModel';
 
 export const PersonalizedPlaylists = () => {
-  const { data: playlists } = useSuspenseQuery({
-    queryKey: ['personalizedPlaylist'],
-    queryFn: () =>
-      cachedFetch(CacheKeys.personalized, () => ncm.personalizedPlaylist(20))
-        .then((r) => r.data.result.map(toPlaylistDisplay))
-        .catch(() => []),
-  });
+  const { playlists } = usePersonalizedPlaylistsViewModel();
 
   return (
     <HorizontalCarousel title="推荐歌单" titleLink="/discover/personalized">

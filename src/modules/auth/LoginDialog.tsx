@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/lib/utils';
-import { ncm, setNcmCookie } from '@/tauri/ncm';
 import { Button } from '@/shared/ui/button';
 import {
   Dialog,
@@ -13,7 +12,7 @@ import {
 import { ImageTransition } from '@/shared/ui/image';
 import { Input } from '@/shared/ui/input';
 import { useLoginDialog } from '@/modules/auth/loginDialogStore';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthViewModel } from '@/shared/hooks/useAuthViewModel';
 
 type LoginTab = 'password' | 'sms' | 'qr';
 
@@ -40,9 +39,17 @@ export const LoginDialog = () => {
     undefined,
   );
   const navigate = useNavigate();
-  const setAuth = useAuthStore((s) => s.setAuth);
   const open = useLoginDialog((s) => s.open);
   const setOpen = useLoginDialog((s) => s.setOpen);
+  const {
+    loginWithPassword,
+    sendSmsCode,
+    loginWithSms,
+    getQrKey,
+    createQr,
+    checkQr,
+    fetchProfile,
+  } = useAuthViewModel();
   const clearQrTimer = useCallback(() => {
     if (qrTimerRef.current !== undefined) {
       clearInterval(qrTimerRef.current);
@@ -51,49 +58,27 @@ export const LoginDialog = () => {
   }, []);
 
   const onAuthSuccess = useCallback(
-    (
-      cookie: string,
-      profile?: { userId: number; nickname: string; avatarUrl: string },
-    ) => {
-      setNcmCookie(cookie);
-
-      setAuth({
-        isLoggedIn: true,
-        cookie,
-        userId: profile?.userId ?? null,
-        nickname: profile?.nickname ?? '',
-        avatarUrl: profile?.avatarUrl ?? '',
-      });
+    (profile?: { nickname?: string } | null) => {
       setOpen(false);
       toast.success(`登录成功，欢迎 ${profile?.nickname || '回来'}`);
       navigate('/');
-
-      // 扫码登录等场景不会返回 profile，后台补全用户信息
-      if (!profile?.userId) {
-        ncm
-          .loginStatus()
-          .then((statusRes) => {
-            const p =
-              statusRes.data?.profile ??
-              ((statusRes as unknown as Record<string, unknown>).profile as
-                | { userId: number; nickname: string; avatarUrl: string }
-                | undefined);
-            if (p?.userId) {
-              setAuth({
-                isLoggedIn: true,
-                cookie,
-                userId: p.userId,
-                nickname: p.nickname ?? '',
-                avatarUrl: p.avatarUrl ?? '',
-              });
-            }
-          })
-          .catch(() => {
-            // 后台获取 profile 失败，不影响已完成的登录流程
-          });
-      }
     },
-    [setAuth, setOpen, navigate],
+    [setOpen, navigate],
+  );
+
+  // QR 扫码成功：后台补全 profile（cookie + 用户信息已由 authService 落盘），
+  // 失败不影响已完成登录流程
+  const handleQrSuccess = useCallback(
+    async (cookie: string) => {
+      let profile: { nickname?: string } | null = null;
+      try {
+        profile = await fetchProfile(cookie);
+      } catch {
+        // 后台获取 profile 失败，不影响已完成的登录流程
+      }
+      onAuthSuccess(profile);
+    },
+    [fetchProfile, onAuthSuccess],
   );
 
   const resetState = () => {
@@ -131,12 +116,8 @@ export const LoginDialog = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await ncm.loginCellphone({ phone, password });
-      if (res.code === 200) {
-        onAuthSuccess(res.cookie, res.profile);
-      } else {
-        setError(`登录失败 (${res.code})`);
-      }
+      const profile = await loginWithPassword(phone, password);
+      onAuthSuccess(profile);
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
     } finally {
@@ -150,7 +131,7 @@ export const LoginDialog = () => {
     setSending(true);
     setError('');
     try {
-      const res = await ncm.captchaSent(phone);
+      const res = await sendSmsCode(phone);
       if (res.code === 200) {
         setCountdown(60);
       } else {
@@ -169,13 +150,8 @@ export const LoginDialog = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await ncm.loginCellphone({ phone, captcha: code });
-      console.log(res);
-      if (res.code === 200) {
-        onAuthSuccess(res.cookie, res.profile);
-      } else {
-        setError(`登录失败 (${res.code})`);
-      }
+      const profile = await loginWithSms(phone, code);
+      onAuthSuccess(profile);
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
     } finally {
@@ -192,7 +168,7 @@ export const LoginDialog = () => {
       setError('');
     });
     try {
-      const keyRes = await ncm.qrKey();
+      const keyRes = await getQrKey();
       const key = keyRes.unikey;
       if (!key) {
         setError('获取二维码密钥失败');
@@ -201,7 +177,7 @@ export const LoginDialog = () => {
       }
       qrKeyRef.current = key;
 
-      const qrRes = await ncm.qrCreate(key);
+      const qrRes = await createQr(key);
       const qrurl = qrRes.data.qrurl;
       setQrImg(
         qrRes.data.qrimg ||
@@ -212,11 +188,11 @@ export const LoginDialog = () => {
 
       qrTimerRef.current = setInterval(async () => {
         try {
-          const checkRes = await ncm.qrCheck(qrKeyRef.current);
+          const checkRes = await checkQr(qrKeyRef.current);
           switch (checkRes.code) {
             case 803:
               clearQrTimer();
-              onAuthSuccess(checkRes.cookie);
+              handleQrSuccess(checkRes.cookie);
               break;
             case 802:
               setQrStatus('已扫码，请在手机上确认登录');
@@ -239,7 +215,7 @@ export const LoginDialog = () => {
       setError(err instanceof Error ? err.message : '获取二维码失败');
       setQrLoading(false);
     }
-  }, [clearQrTimer, onAuthSuccess]);
+  }, [clearQrTimer, handleQrSuccess, getQrKey, createQr, checkQr]);
 
   // Start QR flow when tab becomes "qr" and dialog is open
   useEffect(() => {

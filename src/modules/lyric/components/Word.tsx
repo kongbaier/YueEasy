@@ -1,5 +1,5 @@
-import { usePlayerStore } from '@/modules/player/stores/player';
 import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useCurrentTimeHigh } from '../hooks/useLyricViewModel';
 
 interface WordProps {
   text: string;
@@ -19,6 +19,9 @@ interface WordProps {
  *
  * useLayoutEffect sets the initial gradient before first paint to avoid a flash
  * of invisible text. The useEffect subscriber takes over for subsequent frames.
+ *
+ * currentTimeHigh is read through useCurrentTimeHigh (non-reactive), so the
+ * per-frame store subscription stays outside React's render cycle.
  */
 const CurrentWord = ({
   text,
@@ -30,17 +33,18 @@ const CurrentWord = ({
   durationMs: number;
 }) => {
   const spanRef = useRef<HTMLSpanElement>(null);
+  const timeHigh = useCurrentTimeHigh();
 
   // Set initial gradient before first paint — avoids flash
   useLayoutEffect(() => {
     const el = spanRef.current;
     if (!el) return;
 
-    const currentTimeHigh = usePlayerStore.getState().currentTimeHigh;
+    const currentTimeHigh = timeHigh.read();
     const elapsed = currentTimeHigh * 1000 - absoluteStartMs;
     const progress = Math.min(Math.max(elapsed / durationMs, 0), 1);
     el.style.backgroundImage = `linear-gradient(to right, var(--primary) ${progress * 100}%, var(--muted-foreground) ${progress * 100}%)`;
-  }, [absoluteStartMs, durationMs]);
+  }, [absoluteStartMs, durationMs, timeHigh]);
 
   // Continue updating every frame via Zustand subscribe (zero React overhead)
   useEffect(() => {
@@ -49,8 +53,7 @@ const CurrentWord = ({
 
     let prevTime = -1;
 
-    const unsub = usePlayerStore.subscribe((state) => {
-      const { currentTimeHigh } = state;
+    const unsub = timeHigh.subscribe((currentTimeHigh) => {
       if (currentTimeHigh === prevTime) return;
       prevTime = currentTimeHigh;
 
@@ -60,7 +63,7 @@ const CurrentWord = ({
     });
 
     return unsub;
-  }, [absoluteStartMs, durationMs]);
+  }, [absoluteStartMs, durationMs, timeHigh]);
 
   return (
     <span ref={spanRef} className="bg-clip-text text-transparent">

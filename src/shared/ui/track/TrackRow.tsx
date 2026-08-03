@@ -1,5 +1,4 @@
 import { Crown, Heart, ListPlus, Play, SkipForward } from 'lucide-react';
-import { useCallback } from 'react';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -8,15 +7,12 @@ import {
   ContextMenuTrigger,
 } from '@/shared/ui/context-menu';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { SmartImage } from '@/shared/ui/image';
 import type { SongRef } from '@/shared/types/playlist';
 import { formatDuration } from '@/shared/utils/format';
-import { toast } from '@/shared/lib/toast';
 import { getNcmImageUrl } from '@/shared/lib/utils';
-import { ncm } from '@/tauri/ncm';
-import { useAuthStore } from '@/stores/auth';
-import { useLikeStore } from '@/stores/like';
-import { useLoginDialog } from '@/modules/auth/loginDialogStore';
-import { useQueueStore } from '@/modules/player/stores/queue';
+import { useLikeAction } from '@/shared/hooks/useLikeAction';
+import { useTrackActions } from '@/shared/hooks/useTrackActions';
 
 interface TrackRowProps {
   track: SongRef;
@@ -25,49 +21,10 @@ interface TrackRowProps {
 }
 
 export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
-  const playNext = useQueueStore((s) => s.playNext);
-  const addToQueue = useQueueStore((s) => s.addToQueue);
-  const isLiked = useLikeStore((s) => s.isLiked(track.id));
-  const toggleLike = useLikeStore((s) => s.toggle);
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
+  const { handleLike, isLiked } = useLikeAction();
+  const liked = isLiked(track.id);
 
-  const handlePlayNext = () => {
-    playNext(track);
-  };
-
-  const handleAddToQueue = () => {
-    addToQueue(track);
-    toast.success(`已添加到播放列表`);
-  };
-
-  const handleFavorite = useCallback(() => {
-    if (!isLoggedIn) {
-      toast.error('请先登录');
-      setLoginDialogOpen(true);
-      return;
-    }
-    const next = !isLiked;
-    toggleLike(track.id);
-    ncm
-      .like(track.id, next)
-      .then(() => {
-        toast.success(
-          next ? `已收藏 ${track.name}` : `已取消收藏 ${track.name}`,
-        );
-      })
-      .catch(() => {
-        toggleLike(track.id);
-        toast.error('操作失败，请重试');
-      });
-  }, [
-    track.id,
-    track.name,
-    isLiked,
-    isLoggedIn,
-    toggleLike,
-    setLoginDialogOpen,
-  ]);
+  const { handlePlayNext, handleAddToQueue } = useTrackActions();
 
   return (
     <ContextMenu>
@@ -85,9 +42,10 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
           {String(index + 1).padStart(2, '0')}
         </span>
         {track.album.picUrl && (
-          <img
+          <SmartImage
             alt={track.album.name}
-            className="h-9 w-9 shrink-0 rounded object-cover"
+            className="size-full object-cover"
+            containerClassName="h-9 w-9 shrink-0 rounded"
             src={getNcmImageUrl(track.album.picUrl, 50)}
           />
         )}
@@ -109,12 +67,12 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
           className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-red-500"
           onClick={(e) => {
             e.stopPropagation();
-            handleFavorite();
+            handleLike(track.id, track.name);
           }}
-          title={isLiked ? '取消收藏' : '收藏'}
+          title={liked ? '取消收藏' : '收藏'}
           type="button"
         >
-          <Heart className="h-4 w-4" fill={isLiked ? '#ef4444' : 'none'} />
+          <Heart className="h-4 w-4" fill={liked ? '#ef4444' : 'none'} />
         </button>
         <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
           {formatDuration(track.duration / 1000)}
@@ -125,18 +83,20 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
           <Play className="h-4 w-4" />
           播放
         </ContextMenuItem>
-        <ContextMenuItem onClick={handlePlayNext}>
+        <ContextMenuItem onClick={() => handlePlayNext(track)}>
           <SkipForward className="h-4 w-4" />
           下一首播放
         </ContextMenuItem>
-        <ContextMenuItem onClick={handleAddToQueue}>
+        <ContextMenuItem onClick={() => handleAddToQueue(track)}>
           <ListPlus className="h-4 w-4" />
           添加到播放列表
         </ContextMenuItem>
         <ContextMenuSeparator />
-        <ContextMenuItem onClick={handleFavorite}>
-          <Heart className="h-4 w-4" fill={isLiked ? '#ef4444' : 'none'} />
-          {isLiked ? '取消收藏' : '收藏'}
+        <ContextMenuItem
+          onClick={() => handleLike(track.id, track.name)}
+        >
+          <Heart className="h-4 w-4" fill={liked ? '#ef4444' : 'none'} />
+          {liked ? '取消收藏' : '收藏'}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

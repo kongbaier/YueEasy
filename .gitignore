@@ -29,3 +29,6 @@ dist-ssr
 .claude/*
 CLAUDE.md
 AGENTS.md
+
+# deepwork state
+.slim/deepwork/

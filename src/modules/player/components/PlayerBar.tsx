@@ -2,38 +2,35 @@ import {
   ChevronFirst,
   ChevronLast,
   Heart,
+  HeartOff,
   ListMusic,
   Loader2,
   Music,
   Pause,
   Play,
-} from 'lucide-react';
-import { useCallback } from 'react';
-import { Button } from '@/shared/ui/button';
-import { FollowTooltip } from '@/modules/player/components/FollowTooltip';
-import { useMediaSession } from '@/modules/player/hooks/useMediaSession';
-import { usePlayerAction } from '@/modules/player/hooks/usePlayerAction';
-import { usePlayerKeyboard } from '@/modules/player/hooks/usePlayerKeyboard';
-import { useProgress } from '@/modules/player/hooks/useProgress';
-import { formatDuration } from '@/shared/utils/format';
-import { toast } from '@/shared/lib/toast';
-import { cn } from '@/shared/lib/utils';
-import { ncm } from '@/tauri/ncm';
-import { formatQueueCount, useQueueStore } from '@/modules/player/stores/queue';
-import { useLoginDialog } from '@/modules/auth/loginDialogStore';
-import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
-import { PlayModeControl } from './PlayModeControl';
-import { SeekBar } from './SeekBar';
-import { VolumeControl } from './VolumeControl';
-import { Cover } from '@/shared/ui/image';
-import { usePlayerStore } from '../stores/player';
-import { useAuthStore } from '@/stores/auth';
-import { useLikeStore } from '@/stores/like';
+} from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/shared/ui/button";
+import { FollowTooltip } from "@/modules/player/components/FollowTooltip";
+import { useMediaSession } from "@/modules/player/hooks/useMediaSession";
+import { usePlayerKeyboard } from "@/modules/player/hooks/usePlayerKeyboard";
+import { useProgress } from "@/modules/player/hooks/useProgress";
+import { usePlayer } from "@/modules/player/hooks/usePlayer";
+import { formatDuration } from "@/shared/utils/format";
+import { toast } from "@/shared/lib/toast";
+import { cn } from "@/shared/lib/utils";
+import { formatQueueCount } from "@/shared/utils/format";
+import { usePlayerPage } from "@/modules/player/contexts/PlayerPageContext";
+import { useLikeAction } from "@/shared/hooks/useLikeAction";
+import { PlayModeControl } from "./PlayModeControl";
+import { SeekBar } from "./SeekBar";
+import { VolumeControl } from "./VolumeControl";
+import { Cover } from "@/shared/ui/image";
+import type { Track } from "@/core/types";
 
 const PlayerProgress = () => {
   const { percentage, formatted } = useProgress();
-  const seek = usePlayerStore((s) => s.seek);
-  const duration = usePlayerStore((s) => s.duration);
+  const { seek, duration } = usePlayer();
 
   return (
     <SeekBar
@@ -83,19 +80,17 @@ const PlayIcon = ({
   playing: boolean;
 }) => {
   if (loading) {
-    return <Loader2 className="size-4 animate-spin text-primary-foreground" />;
+    return <Loader2 className="size-5 animate-spin text-primary-foreground" />;
   }
   if (playing) {
-    return <Pause className="size-4 text-primary-foreground" />;
+    return <Pause className="size-5 text-primary-foreground" />;
   }
-  return <Play className="size-4 text-primary-foreground" />;
+  return <Play className="size-5 text-primary-foreground" />;
 };
 
 const PlayerControls = () => {
-  const { handlePlay, handleNext, handlePrev } = usePlayerAction();
-  const loading = usePlayerStore((s) => s.loading);
-  const playing = usePlayerStore((s) => s.playing);
-  const currentTrack = useQueueStore((s) => s.currentTrack);
+  const { togglePlay, next, prev, playing, loading, currentTrack, canPrev } =
+    usePlayer();
   const hasTrack = !!currentTrack;
   return (
     <article className="flex items-center gap-x-6">
@@ -104,13 +99,14 @@ const PlayerControls = () => {
       </section>
       <section
         className={cn(
-          'flex text-4xl gap-x-3 justify-center items-center-safe transition-opacity duration-300',
-          !hasTrack && 'opacity-30 pointer-events-none',
+          "flex text-4xl gap-x-3 justify-center items-center-safe transition-opacity duration-300",
+          !hasTrack && "opacity-30 pointer-events-none",
         )}
       >
         <Button
           className="text-foreground hover:bg-transparent hover:text-primary"
-          onClick={handlePrev}
+          disabled={!canPrev}
+          onClick={prev}
           size="icon"
           variant="ghost"
         >
@@ -118,9 +114,9 @@ const PlayerControls = () => {
         </Button>
 
         <Button
-          className="relative w-12 h-8 bg-primary rounded-2xl flex justify-center items-center cursor-pointer focus:outline-none"
+          className="relative w-14 h-9 bg-primary rounded-full flex justify-center items-center cursor-pointer focus:outline-none"
           disabled={loading}
-          onClick={handlePlay}
+          onClick={togglePlay}
           type="button"
         >
           <PlayIcon loading={loading} playing={playing} />
@@ -128,7 +124,7 @@ const PlayerControls = () => {
 
         <Button
           className="text-foreground hover:bg-transparent hover:text-primary"
-          onClick={handleNext}
+          onClick={next}
           size="icon"
           variant="ghost"
         >
@@ -142,18 +138,17 @@ const PlayerControls = () => {
   );
 };
 
-const PlayerInfo = () => {
-  const currentTrack = useQueueStore((s) => s.currentTrack);
+const PlayerInfo = ({ currentTrack }: { currentTrack: Track | null }) => {
   const { open: openPlayerPage } = usePlayerPage();
 
   return (
     <div className="flex-1 min-w-0 relative flex items-center">
       <div
         className={cn(
-          'flex items-center gap-3 transition-all duration-300',
+          "flex items-center gap-3 transition-all duration-300",
           !currentTrack
-            ? 'opacity-100'
-            : 'opacity-0 pointer-events-none absolute inset-0',
+            ? "opacity-100"
+            : "opacity-0 pointer-events-none absolute inset-0",
         )}
       >
         <div className="flex items-center justify-center size-10 shrink-0 rounded-md bg-accent/40 ring-1 ring-border/40">
@@ -171,16 +166,16 @@ const PlayerInfo = () => {
 
       <div
         className={cn(
-          'flex items-center gap-3 min-w-0 transition-all duration-300',
+          "flex items-center gap-3 min-w-0 transition-all duration-300",
           currentTrack
-            ? 'opacity-100'
-            : 'opacity-0 pointer-events-none absolute inset-0',
+            ? "opacity-100"
+            : "opacity-0 pointer-events-none absolute inset-0",
         )}
       >
         <button
           className={cn(
-            'rounded-md overflow-hidden shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 size-10 shrink-0 transition-colors',
-            'transition-transform duration-100 origin-bottom-left hover:brightness-95 hover:scale-110',
+            "size-10 shrink-0 transition-colors",
+            "transition-transform duration-100 origin-bottom-left hover:brightness-95 hover:scale-110",
           )}
           onClick={openPlayerPage}
           type="button"
@@ -188,6 +183,7 @@ const PlayerInfo = () => {
           {currentTrack?.album.picUrl ? (
             <Cover
               className="size-full"
+              foregroundClassName="rounded-md border-[0.5px]  border-border"
               alt={currentTrack.album.name}
               src={currentTrack.album.picUrl}
             />
@@ -199,10 +195,10 @@ const PlayerInfo = () => {
         </button>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">
-            {currentTrack?.name ?? ''}
+            {currentTrack?.name ?? ""}
           </p>
           <p className="truncate text-xs text-muted-foreground">
-            {currentTrack?.artists?.map((a) => a.name).join('/') || ' '}
+            {currentTrack?.artists?.map((a) => a.name).join("/") || " "}
           </p>
         </div>
       </div>
@@ -215,65 +211,61 @@ const PlayerMenu = ({
 }: {
   onToggleQueuePanel: () => void;
 }) => {
-  const queueLength = useQueueStore((s) => s.queueLength);
-  const currentTrack = useQueueStore((s) => s.currentTrack);
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
-  const isLiked = useLikeStore((s) =>
-    currentTrack ? s.isLiked(currentTrack.id) : false,
-  );
-  const toggleLike = useLikeStore((s) => s.toggle);
+  const { currentTrack, queueLength, isFm, fmTrash, isLiked } = usePlayer();
+  const liked = currentTrack ? isLiked(currentTrack.id) : false;
+  const [trashPending, setTrashPending] = useState(false);
 
-  const handleLike = useCallback(() => {
-    if (!currentTrack) return;
-    if (!isLoggedIn) {
-      toast.error('请先登录');
-      setLoginDialogOpen(true);
-      return;
+  const handleFmTrash = async () => {
+    if (trashPending) return;
+    setTrashPending(true);
+    try {
+      await fmTrash();
+      toast.success("已减少此类推荐");
+    } catch {
+      toast.error("操作失败，请重试");
+    } finally {
+      setTrashPending(false);
     }
-    const next = !isLiked;
-    toggleLike(currentTrack.id);
-    ncm
-      .like(currentTrack.id, next)
-      .then(() => {
-        toast.success(
-          next
-            ? `已收藏 ${currentTrack.name}`
-            : `已取消收藏 ${currentTrack.name}`,
-        );
-      })
-      .catch(() => {
-        toggleLike(currentTrack.id);
-        toast.error('操作失败，请重试');
-      });
-  }, [isLoggedIn, isLiked, currentTrack, toggleLike, setLoginDialogOpen]);
+  };
+
+  const { handleLike } = useLikeAction();
 
   return (
     <div className="flex-1 flex items-center justify-end">
       {currentTrack && (
         <Button
           className="text-foreground hover:bg-transparent hover:text-primary"
-          onClick={handleLike}
+          onClick={() => handleLike(currentTrack.id, currentTrack.name)}
           size="icon"
           variant="ghost"
         >
-          <Heart className="size-4" fill={isLiked ? '#ef4444' : 'none'} />
+          <Heart className="size-5" fill={liked ? "#ef4444" : "none"} />
         </Button>
       )}
       <Button
         className="text-foreground hover:bg-transparent hover:text-primary"
-        onClick={onToggleQueuePanel}
+        disabled={trashPending}
+        onClick={isFm ? handleFmTrash : onToggleQueuePanel}
         size="icon"
+        title={isFm ? "不感兴趣" : undefined}
         variant="ghost"
       >
-        <span className="relative">
-          <ListMusic className="size-4" />
-          {queueLength > 0 && (
-            <span className="absolute -top-1 -right-1.5 text-[9px] font-medium tabular-nums">
-              {formatQueueCount(queueLength)}
-            </span>
-          )}
-        </span>
+        {isFm ? (
+          trashPending ? (
+            <Loader2 className="size-5 animate-spin" />
+          ) : (
+            <HeartOff className="size-5" />
+          )
+        ) : (
+          <span className="relative">
+            <ListMusic className="size-5" />
+            {queueLength > 0 && (
+              <span className="absolute -top-1 -right-1.5 text-[9px] font-medium tabular-nums">
+                {formatQueueCount(queueLength)}
+              </span>
+            )}
+          </span>
+        )}
       </Button>
     </div>
   );
@@ -288,16 +280,17 @@ export const PlayerBar = ({
 }) => {
   usePlayerKeyboard();
   useMediaSession();
+  const { currentTrack } = usePlayer();
   return (
     <div
       className={cn(
-        'relative bg-card px-4 flex items-center justify-between',
+        "relative bg-card px-4 flex items-center justify-between",
         className,
       )}
     >
       <PlayerProgress />
 
-      <PlayerInfo />
+      <PlayerInfo currentTrack={currentTrack} />
 
       <PlayerControls />
 

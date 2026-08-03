@@ -1,4 +1,3 @@
-import { getVersion } from '@tauri-apps/api/app';
 import { Effect } from '@tauri-apps/api/window';
 import {
   Check,
@@ -10,25 +9,16 @@ import {
   RefreshCw,
   User,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
 import { useAppearanceSetting } from '@/shared/hooks/useSetting';
+import { useSettingsViewModel } from '@/shared/hooks/useSettingsViewModel';
 import { toast } from '@/shared/lib/toast';
-import { cacheClearAll, cacheSize } from '@/tauri/cache';
-import { setWindowEffect } from '@/tauri/effect';
-import type { Update } from '@/tauri/updater';
-import {
-  checkForUpdate,
-  downloadAndInstall,
-  installAndRelaunch,
-} from '@/tauri/updater';
 import type { Theme } from '@/shared/types/settings';
 import { WindowsEffect } from '@/shared/types/settings';
 import { Button } from '@/shared/ui/button';
 import { Select } from '@/shared/ui/select';
 import { Switch } from '@/shared/ui/switch';
-import { useAuthStore } from '@/stores/auth';
-import { useLoginDialog } from '@/modules/auth/loginDialogStore';
+import { SmartImage } from '@/shared/ui/image';
 
 const labels: Record<Theme, string> = {
   system: '系统',
@@ -51,99 +41,61 @@ export default function Settings() {
   const [closeBehavior, setCloseBehavior] =
     useAppearanceSetting('close_behavior');
   const closeToTray = closeBehavior === 'hide';
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const nickname = useAuthStore((s) => s.nickname);
-  const avatarUrl = useAuthStore((s) => s.avatarUrl);
-  const userId = useAuthStore((s) => s.userId);
-  const logout = useAuthStore((s) => s.logout);
-  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
-  const [cacheBytes, setCacheBytes] = useState<number | null>(null);
+  const {
+    isLoggedIn,
+    nickname,
+    avatarUrl,
+    userId,
+    logout,
+    openLogin,
+    cacheBytes,
+    updateStatus,
+    update,
+    downloadProgress,
+    appVersion,
+    handleEffectChange: applyWindowEffect,
+    handleClearCache: clearCache,
+    handleCheckUpdate: checkUpdate,
+    handleDownloadAndInstall,
+  } = useSettingsViewModel();
 
-  const loadCacheSize = useCallback(() => {
-    cacheSize()
-      .then(setCacheBytes)
-      .catch(() => setCacheBytes(null));
-  }, []);
-
-  useEffect(() => {
-    loadCacheSize();
-  }, [loadCacheSize]);
-
-  const handleClearCache = () => {
-    cacheClearAll()
-      .then(() => {
-        setCacheBytes(0);
-        toast.success('缓存已清除');
-      })
-      .catch(() => toast.error('清除缓存失败'));
+  const handleClearCache = async () => {
+    try {
+      await clearCache();
+      toast.success('缓存已清除');
+    } catch {
+      toast.error('清除缓存失败');
+    }
   };
 
-  // --- 检查更新状态 ---
-  type UpdateStatus =
-    | 'idle'
-    | 'checking'
-    | 'up-to-date'
-    | 'available'
-    | 'downloading'
-    | 'installing'
-    | 'error';
-
-  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle');
-  const [update, setUpdate] = useState<Update | null>(null);
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [appVersion, setAppVersion] = useState('...');
-
-  useEffect(() => {
-    getVersion()
-      .then(setAppVersion)
-      .catch(() => setAppVersion('0.0.0'));
-  }, []);
-
-  const handleEffectChange = (effect: WindowsEffect) => {
+  const handleEffectChange = async (effect: WindowsEffect) => {
     setWindowEffectState(effect);
-    setWindowEffect(effect as unknown as Effect).catch(() => {
+    const ok = await applyWindowEffect(effect);
+    if (!ok) {
       setWindowEffectState(WindowsEffect.mica);
       toast.error('该效果不可用，已恢复为 Mica');
-    });
+    }
   };
 
   const handleCloseToTrayChange = (checked: boolean) => {
     setCloseBehavior(checked ? 'hide' : 'quit');
   };
 
-  const handleCheckUpdate = useCallback(async () => {
-    setUpdateStatus('checking');
+  const handleCheckUpdate = async () => {
     try {
-      const u = await checkForUpdate();
-      if (u) {
-        setUpdate(u);
-        setUpdateStatus('available');
-      } else {
-        setUpdateStatus('up-to-date');
-      }
+      await checkUpdate();
     } catch {
-      setUpdateStatus('error');
       toast.error('检查更新失败，请检查网络连接');
     }
-  }, []);
+  };
 
-  const handleDownload = useCallback(async () => {
-    if (!update) return;
-    setUpdateStatus('downloading');
-    setDownloadProgress(0);
+  const handleDownload = async () => {
     try {
-      await downloadAndInstall(update, (downloaded, total) => {
-        if (total) {
-          setDownloadProgress(Math.round((downloaded / total) * 100));
-        }
-      });
-      setUpdateStatus('installing');
-      await installAndRelaunch();
+      await handleDownloadAndInstall();
     } catch {
-      setUpdateStatus('available');
       toast.error('下载失败，请重试');
     }
-  }, [update]);
+  };
 
   return (
     <div className="mx-auto w-full max-w-2xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-8 py-6 sm:py-8 animate-content-enter">
@@ -234,9 +186,10 @@ export default function Settings() {
                 <Row label="用户">
                   <div className="flex items-center gap-2">
                     {avatarUrl ? (
-                      <img
+                      <SmartImage
                         alt={nickname}
-                        className="size-6 rounded-full object-cover"
+                        className="size-full object-cover"
+                        containerClassName="size-6 rounded-full"
                         src={avatarUrl}
                       />
                     ) : (
@@ -268,7 +221,7 @@ export default function Settings() {
               </>
             ) : (
               <Row label="登录网易云音乐">
-                <Button onClick={() => setLoginDialogOpen(true)} size="xs">
+                <Button onClick={() => openLogin()} size="xs">
                   立即登录
                 </Button>
               </Row>

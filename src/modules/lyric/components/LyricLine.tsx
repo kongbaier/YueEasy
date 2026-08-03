@@ -3,7 +3,7 @@ import type { LyricLine as LyricLineType } from '@/modules/lyric/parser';
 import { cn } from '@/shared/lib/utils';
 import { useLyricsContext } from './Lyrics';
 import { Word } from './Word';
-import { usePlayerStore } from '@/modules/player/stores/player';
+import { useLyricViewModel } from '../hooks/useLyricViewModel';
 
 interface LyricLineProps {
   line: LyricLineType;
@@ -21,7 +21,7 @@ export const LyricLine = ({
   activeWord,
 }: LyricLineProps) => {
   const { hasYrc } = useLyricsContext();
-  const seek = usePlayerStore((s) => s.seek);
+  const { seek } = useLyricViewModel();
 
   const handleSeek = useCallback(() => {
     seek(line.startMs / 1000);

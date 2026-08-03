@@ -6,10 +6,7 @@ import { TauriStorage } from '@/tauri/storage';
 
 // ── Helpers ──
 
-/** Format queue count for display: raw number when ≤99, "99+" otherwise. */
-export function formatQueueCount(count: number): string {
-  return count > 99 ? '99+' : String(count);
-}
+export { formatQueueCount } from '@/shared/utils/format';
 
 /** Push service queue state into the Zustand store (must copy the array). */
 export function syncQueueDerived(): void {
@@ -17,6 +14,9 @@ export function syncQueueDerived(): void {
     queue: [...playerService.queue],
     currentTrack: playerService.currentTrack,
     queueLength: playerService.queueLength,
+    isFm: playerService.isFm,
+    fmExitWillEmpty: playerService.fmExitWillEmpty,
+    canPrev: playerService.canPrev,
   });
 }
 
@@ -26,6 +26,10 @@ export interface QueueStore {
   queue: Track[];
   currentTrack: Track | null;
   queueLength: number;
+  isFm: boolean;
+  /** 退出漫游是否会清空队列（进入漫游前无队列快照）。 */
+  fmExitWillEmpty: boolean;
+  canPrev: boolean;
 
   play: (track: Track) => Promise<void>;
   replaceAndPlay: (tracks: Track[], startIndex?: number) => Promise<void>;
@@ -36,6 +40,9 @@ export interface QueueStore {
   playFromIndex: (index: number) => Promise<void>;
   removeFromQueue: (index: number) => Promise<void>;
   clearQueue: () => void;
+  enterFm: (tracks?: Track[]) => Promise<void>;
+  exitFm: () => Promise<void>;
+  fmTrash: () => Promise<void>;
 }
 
 export const useQueueStore = create<QueueStore>()(
@@ -49,6 +56,9 @@ export const useQueueStore = create<QueueStore>()(
         queue: [],
         currentTrack: null,
         queueLength: 0,
+        isFm: false,
+        fmExitWillEmpty: false,
+        canPrev: true,
 
         play: async (track) => {
           await playerService.play(track);
@@ -94,16 +104,34 @@ export const useQueueStore = create<QueueStore>()(
           playerService.clearQueue();
           syncQueueDerived();
         },
+
+        enterFm: async (tracks) => {
+          await playerService.enterFm(tracks);
+          syncQueueDerived();
+        },
+
+        exitFm: async () => {
+          await playerService.exitFm();
+          syncQueueDerived();
+        },
+
+        fmTrash: async () => {
+          await playerService.fmTrash();
+          syncQueueDerived();
+        },
       };
     },
     {
       name: 'player-queue',
       storage: createJSONStorage(() => TauriStorage),
-      partialize: (state) => ({
-        queue: state.queue,
-        index: playerService.currentIndex,
-        currentTime: 0, // placeholder — currentTime lives in player store
-      }),
+      partialize: (state) =>
+        playerService.isFm
+          ? { queue: [], index: -1, currentTime: 0 } // 漫游会话不落盘
+          : {
+              queue: state.queue,
+              index: playerService.currentIndex,
+              currentTime: 0, // placeholder — currentTime lives in player store
+            },
       onRehydrateStorage: () => (state) => {
         const data = state as
           | { queue?: Track[]; index?: number }

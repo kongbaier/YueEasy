@@ -10,8 +10,8 @@ import {
 } from 'lucide-react';
 import React, {
   Activity,
-  useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -20,10 +20,7 @@ import { useWindowState } from '@/shared/hooks/useWindowState';
 import { Button } from '@/shared/ui/button';
 import { Cover } from '@/shared/ui/image';
 import type { Track } from '@/core/types';
-import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/lib/utils';
-import { ncm } from '@/tauri/ncm';
-import { useLoginDialog } from '@/modules/auth/loginDialogStore';
 import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
 import { Lyrics } from '@/modules/lyric/components/Lyrics';
 import { PlayerPageComments } from './PlayerPageComments';
@@ -33,19 +30,25 @@ import { PlayerPageQueue } from './PlayerPageQueue';
 import { PlayerPageVolume } from './PlayerPageVolume';
 import { AnimatePresence, motion } from 'motion/react';
 import { AspectFit } from '@/shared/ui/aspect-fit';
-import { useQueueStore } from '../stores/queue';
-import { useAuthStore } from '@/stores/auth';
-import { useLikeStore } from '@/stores/like';
+import { usePlayer } from '@/modules/player/hooks/usePlayer';
+import { useLikeAction } from '@/shared/hooks/useLikeAction';
 
 export default function PlayerPage() {
-  const currentTrack = useQueueStore((s) => s.currentTrack);
-  const { close, isOpen } = usePlayerPage();
+  const { currentTrack, queue } = usePlayer();
+  const { close, isOpen, runAfterExit } = usePlayerPage();
   const [showQueue, setShowQueue] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
+  // 安全网：播放页打开时若无歌可播，自动关闭。
+  // 用户触发的清空类操作（清空/移除最后一首/退出漫游且无队列可恢复）已在
+  // 处理器里统一“先 close、退出动画结束再变更”处理（见 PlayerPageQueue）；
+  // 本约束兜底领域驱动的空队列（如自然播完最后一首）及未来新增的路径。
+  useLayoutEffect(() => {
+    if (isOpen && !currentTrack) close();
+  }, [isOpen, currentTrack, close]);
+
   useEffect(() => {
     if (!currentTrack) return;
-    const { queue } = useQueueStore.getState();
     const idx = queue.findIndex((t) => t.id === currentTrack.id);
     const next = queue[idx + 1];
     if (next?.album?.picUrl) {
@@ -53,12 +56,12 @@ export default function PlayerPage() {
       img.src = next.album.picUrl;
       img.decode().catch(() => {});
     }
-  }, [currentTrack]);
+  }, [currentTrack, queue]);
 
   const handleBack = () => close();
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={runAfterExit}>
       {isOpen && (
         <motion.div
           animate={{ y: 0 }}
@@ -112,7 +115,7 @@ export default function PlayerPage() {
               <Activity
                 mode={!showComments && showQueue ? 'visible' : 'hidden'}
               >
-                <PlayerPageQueue key="queue" onBack={handleBack} />
+                <PlayerPageQueue key="queue" />
               </Activity>
               <Activity
                 mode={!showComments && !showQueue ? 'visible' : 'hidden'}
@@ -195,42 +198,12 @@ const PlayerMenu = ({
   showComments: boolean;
   onToggleComments: () => void;
 }) => {
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
-  const isLiked = useLikeStore((s) => s.isLiked(currentTrack.id));
-  const toggleLike = useLikeStore((s) => s.toggle);
+  const { isLiked } = usePlayer();
+  const liked = isLiked(currentTrack.id);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
-  const handleLike = useCallback(() => {
-    if (!isLoggedIn) {
-      toast.error('请先登录');
-      setLoginDialogOpen(true);
-      return;
-    }
-    const next = !isLiked;
-    toggleLike(currentTrack.id);
-    ncm
-      .like(currentTrack.id, next)
-      .then(() => {
-        toast.success(
-          next
-            ? `已收藏 ${currentTrack.name}`
-            : `已取消收藏 ${currentTrack.name}`,
-        );
-      })
-      .catch(() => {
-        toggleLike(currentTrack.id);
-        toast.error('操作失败，请重试');
-      });
-  }, [
-    isLoggedIn,
-    isLiked,
-    currentTrack.id,
-    currentTrack.name,
-    toggleLike,
-    setLoginDialogOpen,
-  ]);
+  const { handleLike } = useLikeAction();
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -245,11 +218,15 @@ const PlayerMenu = ({
 
   return (
     <div className="w-full shrink-0 h-1/10 flex justify-between items-center gap-1 text-foreground">
-      <Button onClick={handleLike} size="icon-lg" variant="ghost">
+      <Button
+        onClick={() => handleLike(currentTrack.id, currentTrack.name)}
+        size="icon-lg"
+        variant="ghost"
+      >
         <Heart
           className={cn(
             'size-5',
-            isLiked ? 'text-red-500 fill-red-500' : 'hover:text-primary',
+            liked ? 'text-red-500 fill-red-500' : 'hover:text-primary',
           )}
           strokeWidth={1.5}
         />

@@ -2,17 +2,14 @@ import { Search as SearchIcon, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
-import type { SongRef } from '@/shared/types/playlist';
 import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { ScrollContainerContext } from '@/shared/hooks/useLoadMore';
-import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/lib/utils';
 import { SEARCH_TABS } from './constants';
 import { HotDropdown } from './HotDropdown';
 import { SearchResults } from './SearchResults';
-import { useSearchStore } from './store';
 import { SuggestDropdown } from './SuggestDropdown';
-import { useQueueStore } from '../player/stores/queue';
+import { useSearchController } from './useSearchController';
 
 // ---- layout ----
 
@@ -33,20 +30,18 @@ export function SearchInput({
   onFocus?: () => void;
   children?: React.ReactNode;
 }) {
-  const input = useSearchStore((s) => s.input);
+  const { input, setInput, submit, clearInput } = useSearchController();
 
-  const submit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed) return;
-    useSearchStore.setState({ searchKeyword: trimmed, show: null });
+    submit();
   };
 
   return (
     <form
       autoComplete="off"
       className="flex items-center gap-2"
-      onSubmit={submit}
+      onSubmit={handleSubmit}
     >
       <div className="relative flex-1">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" />
@@ -54,7 +49,7 @@ export function SearchInput({
           autoComplete="off"
           autoFocus
           className="pl-10 pr-8 h-9"
-          onChange={(e) => useSearchStore.setState({ input: e.target.value })}
+          onChange={(e) => setInput(e.target.value)}
           onFocus={onFocus}
           placeholder="搜索歌曲、歌手、专辑..."
           value={input}
@@ -62,7 +57,7 @@ export function SearchInput({
         {input && (
           <button
             className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            onClick={() => useSearchStore.setState({ input: '' })}
+            onClick={clearInput}
             type="button"
           >
             <X className="size-3.5" />
@@ -80,7 +75,7 @@ export function SearchInput({
 // ---- tabs ----
 
 export function SearchTabs() {
-  const searchType = useSearchStore((s) => s.searchType);
+  const { searchType, setType } = useSearchController();
 
   return (
     <div className="flex items-center gap-1 mt-3">
@@ -93,7 +88,7 @@ export function SearchTabs() {
               : 'text-muted-foreground hover:text-foreground hover:bg-accent',
           )}
           key={tab.type}
-          onClick={() => useSearchStore.setState({ searchType: tab.type })}
+          onClick={() => setType(tab.type)}
           type="button"
         >
           {tab.label}
@@ -106,27 +101,26 @@ export function SearchTabs() {
 // ---- dropdown ----
 
 export function SearchDropdown() {
-  const show = useSearchStore((s) => s.show);
-  const input = useSearchStore((s) => s.input);
-  const hots = useSearchStore((s) => s.hots);
-  const suggestions = useSearchStore((s) => s.suggestions);
+  const { show, input, hots, suggestions, setInput, setShow } =
+    useSearchController();
 
   return (
     <>
       {show === 'hot' && !input.trim() && hots.length > 0 && (
         <HotDropdown
           hots={hots}
-          onClose={() => useSearchStore.setState({ show: null })}
-          onPick={(keyword) => useSearchStore.setState({ input: keyword })}
+          onClose={() => setShow(null)}
+          onPick={(keyword) => setInput(keyword)}
         />
       )}
       {show === 'suggest' && suggestions.length > 0 && (
         <SuggestDropdown
           items={suggestions}
-          onClose={() => useSearchStore.setState({ show: null })}
-          onPick={(keyword) =>
-            useSearchStore.setState({ input: keyword, show: null })
-          }
+          onClose={() => setShow(null)}
+          onPick={(keyword) => {
+            setInput(keyword);
+            setShow(null);
+          }}
         />
       )}
     </>
@@ -136,13 +130,15 @@ export function SearchDropdown() {
 // ---- results ----
 
 export function SearchResultsDisplay() {
-  const results = useSearchStore((s) => s.results);
-  const loading = useSearchStore((s) => s.loading);
-  const error = useSearchStore((s) => s.error);
-  const searchType = useSearchStore((s) => s.searchType);
-  const searchKeyword = useSearchStore((s) => s.searchKeyword);
-  const show = useSearchStore((s) => s.show);
-  const play = useQueueStore((s) => s.play);
+  const {
+    results,
+    loading,
+    error,
+    searchType,
+    searchKeyword,
+    show,
+    handlePlay,
+  } = useSearchController();
 
   const hasSearched = searchKeyword.trim().length > 0;
 
@@ -152,17 +148,6 @@ export function SearchResultsDisplay() {
     [],
   );
   const visibleCount = useLoadMore(results.length);
-
-  const handlePlay = useCallback(
-    async (track: SongRef) => {
-      try {
-        await play(track);
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : '播放失败');
-      }
-    },
-    [play],
-  );
 
   return (
     <ScrollContainerContext.Provider value={scrollEl}>

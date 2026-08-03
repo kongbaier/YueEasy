@@ -1,6 +1,11 @@
 import type { Track } from '../types';
 import type { PlayMode } from '../types';
 
+// ── Queue source ──
+
+/** Where the current queue content comes from. FM is a queue source, not a play mode. */
+export type QueueSource = 'list' | 'fm';
+
 // ── Internal strategy interface ──
 
 interface QueueStrategy {
@@ -82,6 +87,14 @@ export class QueueManager {
   #currentIndex: number;
   #mode: PlayMode;
   #strategy: QueueStrategy;
+  #source: QueueSource = 'list';
+  // 进入漫游前的队列快照：退出漫游时原样恢复（音频进度由上层 PlayerService 保管）
+  #fmSnapshot: {
+    tracks: Track[];
+    currentIndex: number;
+    mode: PlayMode;
+    strategy: QueueStrategy;
+  } | null = null;
 
   constructor(tracks?: Track[], startIndex?: number, mode?: PlayMode) {
     this.#tracks = [];
@@ -124,10 +137,39 @@ export class QueueManager {
     return this.#mode;
   }
 
+  get source(): QueueSource {
+    return this.#source;
+  }
+
+  get isFm(): boolean {
+    return this.#source === 'fm';
+  }
+
+  /** In FM mode, prev is only allowed when not at the very first song. */
+  get canPrev(): boolean {
+    if (this.#source === 'fm') return this.#currentIndex > 0;
+    return true;
+  }
+
+  get isAtEnd(): boolean {
+    return (
+      this.#tracks.length === 0 ||
+      this.#currentIndex >= this.#tracks.length - 1
+    );
+  }
+
+  /** 退出漫游是否会清空队列（进入漫游前无队列快照时可恢复，不会清空）。 */
+  get fmExitWillEmpty(): boolean {
+    return this.#source === 'fm' && this.#fmSnapshot === null;
+  }
+
   // ── Queue mutations ──
 
   /** Replace entire queue and start playing from startIndex */
   replace(tracks: Track[], startIndex?: number): void {
+    // 整批替换 = 重新选择播放源，退出漫游
+    this.#source = 'list';
+    this.#fmSnapshot = null; // 用户主动选择新源，放弃漫游快照
     this.#tracks = [...tracks];
 
     if (this.#tracks.length === 0) {
@@ -150,6 +192,9 @@ export class QueueManager {
    * current and jump to the new track.
    */
   play(track: Track): void {
+    // 用户主动点歌 = 退出漫游，回到列表语义
+    this.#source = 'list';
+    this.#fmSnapshot = null; // 用户主动点歌，放弃漫游快照
     const existingIndex = this.#tracks.findIndex((t) => t.id === track.id);
 
     if (existingIndex >= 0) {
@@ -220,9 +265,70 @@ export class QueueManager {
 
   /** Clear the entire queue */
   clear(): void {
+    // 清空 = 退出漫游
+    this.#source = 'list';
+    this.#fmSnapshot = null; // 主动清空，放弃漫游快照
     this.#tracks = [];
     this.#currentIndex = -1;
     // No need to re-create strategy — it will handle length===0 gracefully
+  }
+
+  /** Switch the queue into FM mode and start from the first given song. */
+  enterFm(tracks: Track[]): void {
+    // 进入漫游前快照当前队列；已在漫游中再次进入不覆盖已有快照
+    if (this.#source !== 'fm') {
+      this.#fmSnapshot =
+        this.#tracks.length > 0
+          ? {
+              tracks: [...this.#tracks],
+              currentIndex: this.#currentIndex,
+              mode: this.#mode,
+              strategy: this.#strategy,
+            }
+          : null;
+    }
+    this.#source = 'fm';
+    this.#tracks = [...tracks];
+    this.#currentIndex = tracks.length > 0 ? 0 : -1;
+  }
+
+  /**
+   * Leave FM mode. If a pre-FM queue snapshot exists, restore it as-is
+   * (tracks, position, play mode & strategy); otherwise empty the queue.
+   * Returns the restored snapshot (or null) so the caller can resume the
+   * audio at its saved position.
+   */
+  exitFm(): {
+    tracks: Track[];
+    currentIndex: number;
+    mode: PlayMode;
+    strategy: QueueStrategy;
+  } | null {
+    const snapshot = this.#fmSnapshot;
+    this.#fmSnapshot = null;
+    this.#source = 'list';
+    if (snapshot) {
+      this.#tracks = [...snapshot.tracks];
+      this.#currentIndex = snapshot.currentIndex;
+      this.#mode = snapshot.mode;
+      this.#strategy = snapshot.strategy;
+    } else {
+      this.#tracks = [];
+      this.#currentIndex = -1;
+    }
+    return snapshot;
+  }
+
+  /**
+   * Append many tracks to the end of the queue (dupe-safe, reuses append's
+   * dedup logic). Returns the number of tracks actually added.
+   */
+  appendMany(tracks: Track[]): number {
+    const before = this.#tracks.length;
+    for (const track of tracks) {
+      this.append(track);
+    }
+    return this.#tracks.length - before;
   }
 
   /** Jump to a specific index. Returns false if index is invalid. */
@@ -240,6 +346,12 @@ export class QueueManager {
       this.#currentIndex = -1;
       return -1;
     }
+    if (this.#source === 'fm') {
+      // FM never wraps around — caller is expected to refill at the end.
+      if (this.isAtEnd) return this.#currentIndex;
+      this.#currentIndex++;
+      return this.#currentIndex;
+    }
     this.#currentIndex = this.#strategy.next(
       this.#currentIndex,
       this.#tracks.length,
@@ -253,6 +365,12 @@ export class QueueManager {
       this.#currentIndex = -1;
       return -1;
     }
+    if (this.#source === 'fm') {
+      // FM cannot go before the first song.
+      if (this.#currentIndex === 0) return 0;
+      this.#currentIndex--;
+      return this.#currentIndex;
+    }
     this.#currentIndex = this.#strategy.prev(
       this.#currentIndex,
       this.#tracks.length,
@@ -265,6 +383,12 @@ export class QueueManager {
     if (this.#tracks.length === 0) {
       this.#currentIndex = -1;
       return -1;
+    }
+    if (this.#source === 'fm') {
+      // Same semantics as advance's FM branch — never wrap around.
+      if (this.isAtEnd) return this.#currentIndex;
+      this.#currentIndex++;
+      return this.#currentIndex;
     }
     this.#currentIndex = this.#strategy.onEnd(
       this.#currentIndex,

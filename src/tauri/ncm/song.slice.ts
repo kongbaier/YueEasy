@@ -1,4 +1,16 @@
-import { ncmApi } from './api';
+import {
+  ncmAlbum,
+  ncmCloudsearch,
+  ncmLike,
+  ncmLikelist,
+  ncmLyric,
+  ncmLyricNew,
+  ncmRecordRecentSong,
+  ncmSearchHot,
+  ncmSearchSuggest,
+  ncmSongDetail,
+  ncmSongUrlV1,
+} from './api';
 import type {
   AlbumDetailResponse,
   LikeListResponse,
@@ -17,65 +29,53 @@ import type {
 
 export const songSlice = {
   search: (keywords: string, limit = 30, offset = 0) =>
-    ncmApi<SearchResponse>('cloudsearch', {
-      keywords,
-      type: '1',
-      limit: String(limit),
-      offset: String(offset),
-    }),
+    ncmCloudsearch<SearchResponse>({ keywords, searchType: 1, limit, offset }),
 
   searchAlbum: (keywords: string, limit = 30, offset = 0) =>
-    ncmApi<SearchAlbumResponse>('cloudsearch', {
+    ncmCloudsearch<SearchAlbumResponse>({
       keywords,
-      type: '10',
-      limit: String(limit),
-      offset: String(offset),
+      searchType: 10,
+      limit,
+      offset,
     }),
 
   searchArtist: (keywords: string, limit = 30, offset = 0) =>
-    ncmApi<SearchArtistResponse>('cloudsearch', {
+    ncmCloudsearch<SearchArtistResponse>({
       keywords,
-      type: '100',
-      limit: String(limit),
-      offset: String(offset),
+      searchType: 100,
+      limit,
+      offset,
     }),
 
   searchUser: (keywords: string, limit = 30, offset = 0) =>
-    ncmApi<SearchUserResponse>('cloudsearch', {
+    ncmCloudsearch<SearchUserResponse>({
       keywords,
-      type: '1002',
-      limit: String(limit),
-      offset: String(offset),
+      searchType: 1002,
+      limit,
+      offset,
     }),
 
   searchSuggest: (keywords: string) =>
-    ncmApi<SearchSuggestResponse>('search/suggest', { keywords }),
+    ncmSearchSuggest<SearchSuggestResponse>({ keywords }),
 
-  albumDetail: (id: number) =>
-    ncmApi<AlbumDetailResponse>('album', { id: String(id) }),
+  albumDetail: (id: number) => ncmAlbum<AlbumDetailResponse>({ id }),
 
-  searchHot: () => ncmApi<SearchHotResponse>('search/hot'),
+  searchHot: () => ncmSearchHot<SearchHotResponse>(),
 
   songUrl: (id: number) =>
-    ncmApi<SongUrlResponse>('song_url_v1', {
-      id: String(id),
-      level: 'standard',
-    }),
+    ncmSongUrlV1<SongUrlResponse>({ id, level: 'standard' }),
 
   songDetail: (ids: number[]) =>
-    ncmApi<SongDetailResponse>('song_detail', { ids: ids.join(',') }),
+    ncmSongDetail<SongDetailResponse>({ ids }),
 
-  lyric: (id: number) => ncmApi<LyricResponse>('lyric', { id: String(id) }),
+  lyric: (id: number) => ncmLyric<LyricResponse>({ id }),
 
-  lyricNew: (id: number) =>
-    ncmApi<LyricNewResponse>('lyric_new', { id: String(id) }),
+  lyricNew: (id: number) => ncmLyricNew<LyricNewResponse>({ id }),
 
-  like: (id: number, like = true) =>
-    ncmApi<unknown>('like', { id: String(id), like: like ? 'true' : 'false' }),
+  like: (id: number, like = true) => ncmLike({ id, like }),
 
-  likeList: (uid: number) =>
-    ncmApi<LikeListResponse>('likelist', { uid: String(uid) }),
+  likeList: (uid: number) => ncmLikelist<LikeListResponse>({ uid }),
 
   recentSong: (uid: number) =>
-    ncmApi<RecentSongResponse>('record/recent/song', { uid: String(uid) }),
+    ncmRecordRecentSong<RecentSongResponse>({ uid }),
 };

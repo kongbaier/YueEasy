@@ -10,13 +10,10 @@ import {
   Settings,
   Sparkles,
 } from 'lucide-react';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/lib/utils';
-import type { TopPlaylist } from '@/tauri/ncm';
-import { ncm } from '@/tauri/ncm';
 import {
   Sidebar,
   SidebarContent,
@@ -33,9 +30,10 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/shared/ui/sidebar';
+import { SmartImage } from '@/shared/ui/image';
 import { useLocalStorageState } from '@/shared/hooks/useLocalStorageState';
-import { useAuthStore } from '@/stores/auth';
-import { useLoginDialog } from '@/modules/auth/loginDialogStore';
+import { useSidebarPlaylists } from '@/shared/hooks/useSidebarPlaylists';
+import { useAuthViewModel } from '@/shared/hooks/useAuthViewModel';
 
 const items = [
   { to: '/', icon: Home, label: '发现' },
@@ -134,11 +132,9 @@ export const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { state } = useSidebar();
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const userId = useAuthStore((s) => s.userId);
-  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
+  const { isLoggedIn, userId, openLogin } = useAuthViewModel();
+  const { userPlaylists } = useSidebarPlaylists();
 
-  const [userPlaylists, setUserPlaylists] = useState<TopPlaylist[]>([]);
   const [createdCollapsed, setCreatedCollapsed] = useLocalStorageState(
     'sidebar_created_collapsed',
     false,
@@ -147,26 +143,6 @@ export const AppSidebar = () => {
     'sidebar_favorited_collapsed',
     false,
   );
-
-  useEffect(() => {
-    if (!isLoggedIn || !userId) return;
-
-    let cancelled = false;
-
-    ncm
-      .userPlaylist(userId)
-      .then((res) => {
-        if (!cancelled)
-          setUserPlaylists(res.playlist.filter((p) => p.specialType !== 5));
-      })
-      .catch(() => {
-        toast.error('加载歌单失败，请检查网络');
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoggedIn, userId]);
 
   const createdPlaylists = userPlaylists.filter(
     (p) => p.creator.userId === userId,
@@ -276,9 +252,10 @@ export const AppSidebar = () => {
                           onClick={() => navigate(`/playlist/${p.id}`)}
                         >
                           {p.coverImgUrl ? (
-                            <img
+                            <SmartImage
                               alt=""
-                              className="h-5 w-5 shrink-0 rounded-sm object-cover group-data-[collapsible=icon]:size-4"
+                              className="size-full object-cover"
+                              containerClassName="h-5 w-5 shrink-0 rounded-sm group-data-[collapsible=icon]:size-4"
                               src={p.coverImgUrl}
                             />
                           ) : (
@@ -322,9 +299,10 @@ export const AppSidebar = () => {
                           onClick={() => navigate(`/playlist/${p.id}`)}
                         >
                           {p.coverImgUrl ? (
-                            <img
+                            <SmartImage
                               alt=""
-                              className="h-5 w-5 shrink-0 rounded-sm object-cover group-data-[collapsible=icon]:size-4"
+                              className="size-full object-cover"
+                              containerClassName="h-5 w-5 shrink-0 rounded-sm group-data-[collapsible=icon]:size-4"
                               src={p.coverImgUrl}
                             />
                           ) : (
@@ -348,7 +326,7 @@ export const AppSidebar = () => {
             <SidebarMenuItem>
               <SidebarMenuButton
                 className="gap-x-2"
-                onClick={() => setLoginDialogOpen(true)}
+                onClick={openLogin}
               >
                 <LogIn />
                 <span>登录</span>

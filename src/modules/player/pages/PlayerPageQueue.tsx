@@ -12,9 +12,13 @@ import {
   DialogTitle,
 } from '@/shared/ui/dialog';
 import { VirtuosoScroller } from '@/shared/ui/virtuoso';
+import { SmartImage } from '@/shared/ui/image';
 import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/lib/utils';
-import { formatQueueCount, useQueueStore } from '@/modules/player/stores/queue';
+import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
+import { formatQueueCount } from '@/shared/utils/format';
+import { usePlayer } from '@/modules/player/hooks/usePlayer';
+import type { Track } from '@/core/types';
 
 const QueueItem = ({
   track,
@@ -23,7 +27,7 @@ const QueueItem = ({
   onPlay,
   onRemove,
 }: {
-  track: ReturnType<typeof useQueueStore.getState>['queue'][number];
+  track: Track;
   index: number;
   isCurrent: boolean;
   onPlay: (index: number) => void;
@@ -42,9 +46,10 @@ const QueueItem = ({
     >
       <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
         {track.album?.picUrl ? (
-          <img
+          <SmartImage
             alt={track.album.name}
-            className="object-cover"
+            className="size-full object-cover"
+            containerClassName="size-full"
             src={track.album.picUrl}
           />
         ) : (
@@ -75,15 +80,13 @@ const QueueItem = ({
   );
 };
 
-export const PlayerPageQueue = ({ onBack }: { onBack: () => void }) => {
-  const queue = useQueueStore((s) => s.queue);
-  const queueLength = useQueueStore((s) => s.queueLength);
-  const currentTrack = useQueueStore((s) => s.currentTrack);
-  const removeFromQueue = useQueueStore((s) => s.removeFromQueue);
-  const playFromIndex = useQueueStore((s) => s.playFromIndex);
-  const clearQueue = useQueueStore((s) => s.clearQueue);
+export const PlayerPageQueue = () => {
+  const { queue, queueLength, currentTrack, playFromIndex, isFm, clearQueue, removeFromQueue } =
+    usePlayer();
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+
+  const { close } = usePlayerPage();
 
   const currentIndex = currentTrack
     ? queue.findIndex((item) => item.id === currentTrack.id)
@@ -101,16 +104,28 @@ export const PlayerPageQueue = ({ onBack }: { onBack: () => void }) => {
   }, [currentIndex]);
 
   const handleClear = () => {
-    clearQueue();
+    // 清空队列：先关闭播放页（退出动画展示清空前的内容），
+    // 页面退出动画结束后（AnimatePresence onExitComplete）才真正清空。
+    close(() => {
+      clearQueue();
+    });
     setClearConfirmOpen(false);
     toast.success('播放列表已清空');
-    onBack();
+  };
+
+  const handleRemove = (index: number) => {
+    if (queue.length === 1) {
+      // 移除最后一首 = 清空队列：同样先关页面，动画结束再移除
+      close(() => removeFromQueue(index));
+    } else {
+      removeFromQueue(index);
+    }
   };
 
   return (
     <div className="h-full w-full flex flex-col">
       <header className="flex items-center justify-between px-2 py-3 shrink-0">
-        <h2 className="text-sm font-medium">
+        <h2 className="text-sm font-medium flex items-center gap-1.5">
           播放列表
           {queueLength > 0 && (
             <span className="ml-1.5 text-xs text-muted-foreground">
@@ -118,7 +133,7 @@ export const PlayerPageQueue = ({ onBack }: { onBack: () => void }) => {
             </span>
           )}
         </h2>
-        {queue.length > 0 && (
+        {!isFm && queue.length > 0 && (
           <button
             className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground transition-colors"
             onClick={() => setClearConfirmOpen(true)}
@@ -131,69 +146,73 @@ export const PlayerPageQueue = ({ onBack }: { onBack: () => void }) => {
       </header>
 
       <div className="flex-1 relative">
-        <div
-          className={cn(
-            'absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300',
-            queue.length === 0
-              ? 'opacity-100 scale-100'
-              : 'opacity-0 scale-95 pointer-events-none',
-          )}
-        >
-          <Music className="size-10 opacity-30" />
-          <p className="text-xs">播放列表为空</p>
-          <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
-        </div>
-        <div
-          className={cn(
-            'h-full transition-all duration-300 px-2 py-1 mr-4',
-            queue.length > 0
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-2 pointer-events-none',
-          )}
-        >
-          <Virtuoso
-            components={{ Scroller: VirtuosoScroller }}
-            computeItemKey={(index) => queue[index]?.id ?? index}
-            fixedItemHeight={48}
-            itemContent={(index) => (
-              <QueueItem
-                index={index}
-                isCurrent={currentTrack?.id === queue[index]?.id}
-                onPlay={playFromIndex}
-                onRemove={removeFromQueue}
-                track={queue[index]}
+        <>
+          <div
+            className={cn(
+                'absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300',
+                queue.length === 0
+                  ? 'opacity-100 scale-100'
+                  : 'opacity-0 scale-95 pointer-events-none',
+              )}
+            >
+              <Music className="size-10 opacity-30" />
+              <p className="text-xs">播放列表为空</p>
+              <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
+            </div>
+            <div
+              className={cn(
+                'h-full transition-all duration-300 px-2 py-1 mr-4',
+                queue.length > 0
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-2 pointer-events-none',
+              )}
+            >
+              <Virtuoso
+                components={{ Scroller: VirtuosoScroller }}
+                computeItemKey={(index) => queue[index]?.id ?? index}
+                fixedItemHeight={48}
+                itemContent={(index) => (
+                  <QueueItem
+                    index={index}
+                    isCurrent={currentTrack?.id === queue[index]?.id}
+                    onPlay={playFromIndex}
+                    onRemove={handleRemove}
+                    track={queue[index]}
+                  />
+                )}
+                overscan={50}
+                ref={(ref) => {
+                  virtuosoRef.current = ref;
+                  if (ref && currentIndex >= 0) scrollToCurrent();
+                }}
+                style={{ height: '100%' }}
+                totalCount={queue.length}
               />
-            )}
-            overscan={50}
-            ref={(ref) => {
-              virtuosoRef.current = ref;
-              if (ref && currentIndex >= 0) scrollToCurrent();
-            }}
-            style={{ height: '100%' }}
-            totalCount={queue.length}
-          />
-        </div>
+            </div>
+        </>
       </div>
 
-      <Dialog onOpenChange={setClearConfirmOpen} open={clearConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>清空播放列表</DialogTitle>
-            <DialogDescription>
-              确定要清空播放列表吗？此操作不可撤销。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              onClick={() => setClearConfirmOpen(false)}
-              variant="outline"
-            >
-              取消
-            </Button>
-            <Button onClick={handleClear}>确定</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {!isFm && (
+        <Dialog onOpenChange={setClearConfirmOpen} open={clearConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>清空播放列表</DialogTitle>
+              <DialogDescription>
+                确定要清空播放列表吗？此操作不可撤销。
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                onClick={() => setClearConfirmOpen(false)}
+                variant="outline"
+              >
+                取消
+              </Button>
+              <Button onClick={handleClear}>确定</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

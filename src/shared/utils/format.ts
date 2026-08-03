@@ -9,3 +9,8 @@ export function formatCount(count: number): string {
   if (count >= 10000) return `${(count / 10000).toFixed(1)}万`;
   return count.toString();
 }
+
+/** Format queue count for display: raw number when ≤99, "99+" otherwise. */
+export function formatQueueCount(count: number): string {
+  return count > 99 ? '99+' : String(count);
+}

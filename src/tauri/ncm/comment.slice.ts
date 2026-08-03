@@ -1,19 +1,11 @@
-import { ncmApi } from './api';
+import { ncmCommentMusic, ncmCommentPlaylist } from './api';
 import type { CommentResponse } from './types/comment.response';
 
 export type { CommentResponse } from './types/comment.response';
 
 export const commentSlice = {
   commentPlaylist: (id: number, limit = 20, offset = 0) =>
-    ncmApi<CommentResponse>('comment_playlist', {
-      id: String(id),
-      limit: String(limit),
-      offset: String(offset),
-    }),
+    ncmCommentPlaylist<CommentResponse>({ id, limit, offset }),
   commentMusic: (id: number, limit = 20, offset = 0) =>
-    ncmApi<CommentResponse>('comment_music', {
-      id: String(id),
-      limit: String(limit),
-      offset: String(offset),
-    }),
+    ncmCommentMusic<CommentResponse>({ id, limit, offset }),
 };

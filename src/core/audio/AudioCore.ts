@@ -30,6 +30,12 @@ export class AudioCore {
   #state: AudioState = 'idle';
   #events: EventEmitter<AudioEvents>;
   #tickCleanup: (() => void) | null = null;
+  #loadSeq = 0;
+  #loadWaiter: {
+    resolve: () => void;
+    onCanPlay: () => void;
+    onError: () => void;
+  } | null = null;
 
   constructor() {
     this.#events = new EventEmitter();
@@ -124,6 +130,10 @@ export class AudioCore {
   // ── Public API ──
 
   async load(src: string): Promise<void> {
+    const seq = ++this.#loadSeq;
+    // 顶掉上一次尚未结束的 load 等待：快速切歌时旧 promise 不会被 canplay 永久挂起
+    this.#cancelLoadWaiter();
+
     this.#state = 'loading';
     this.#events.emit('loading');
     this.#audio.src = src;
@@ -134,12 +144,33 @@ export class AudioCore {
       return;
     }
     await new Promise<void>((resolve) => {
-      const onCanPlay = () => {
-        this.#audio.removeEventListener('canplay', onCanPlay);
-        resolve();
-      };
+      const onCanPlay = () => this.#finishLoad(seq, resolve);
+      const onError = () => this.#finishLoad(seq, resolve);
+      this.#loadWaiter = { resolve, onCanPlay, onError };
       this.#audio.addEventListener('canplay', onCanPlay);
+      this.#audio.addEventListener('error', onError);
     });
+  }
+
+  /** 结束当前 load 的等待（canplay 或 error 触发；被更新的 load 顶掉时由新 waiter 接管）。 */
+  #finishLoad(seq: number, resolve: () => void): void {
+    if (seq !== this.#loadSeq) return; // 已被更新的 load 接管
+    if (this.#loadWaiter) {
+      this.#audio.removeEventListener('canplay', this.#loadWaiter.onCanPlay);
+      this.#audio.removeEventListener('error', this.#loadWaiter.onError);
+      this.#loadWaiter = null;
+    }
+    resolve();
+  }
+
+  /** 释放仍在等待的 load waiter，让对应 promise 正常结束而非永远挂起。 */
+  #cancelLoadWaiter(): void {
+    if (this.#loadWaiter) {
+      this.#audio.removeEventListener('canplay', this.#loadWaiter.onCanPlay);
+      this.#audio.removeEventListener('error', this.#loadWaiter.onError);
+      this.#loadWaiter.resolve();
+      this.#loadWaiter = null;
+    }
   }
 
   unload(): void {

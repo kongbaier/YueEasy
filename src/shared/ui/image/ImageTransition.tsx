@@ -1,5 +1,12 @@
 import { cn } from '@/shared/lib/utils';
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { Skeleton } from '@/shared/ui/skeleton';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 function subscribe(callback: () => void) {
   const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -44,26 +51,53 @@ export const ImageTransition = ({
   ...props
 }: ImageTransitionProps) => {
   const reduceMotion = usePrefersReducedMotion();
-  const [current, setCurrent] = useState(src);
+  const [current, setCurrent] = useState<string>();
   const [previous, setPrevious] = useState<string>();
+  // 镜像 current 状态，供 decode 完成回调读取最新值，避免闭包过期
+  const currentSrcRef = useRef<string | undefined>(undefined);
 
-  if (src !== current) {
-    if (reduceMotion) {
+  // 新 src 先离屏预加载并完整解码：首次加载期间展示 shimmer，
+  // 切换时保持旧图可见，解码完成后才挂载 <img> 并做交叉淡入淡出，
+  // 避免渐进式图片逐行绘制。
+  useEffect(() => {
+    if (src === currentSrcRef.current) return;
+
+    let cancelled = false;
+    const img = new Image();
+    img.src = src;
+
+    const markReady = () => {
+      if (cancelled) return;
+      const prev = currentSrcRef.current;
+      if (!reduceMotion && prev !== undefined) {
+        setPrevious(prev);
+      }
+      currentSrcRef.current = src;
       setCurrent(src);
+    };
+
+    const decode = (img as HTMLImageElement & { decode?: () => Promise<void> })
+      .decode;
+    if (typeof decode === 'function') {
+      decode.call(img).then(markReady).catch(markReady);
     } else {
-      setPrevious(current);
-      setCurrent(src);
+      img.addEventListener('load', markReady);
+      img.addEventListener('error', markReady);
     }
-  }
 
-  const previousRef = useRef<HTMLImageElement>(null);
-  const currentRef = useRef<HTMLImageElement>(null);
+    return () => {
+      cancelled = true;
+    };
+  }, [src, reduceMotion]);
+
+  const prevNodeRef = useRef<HTMLImageElement>(null);
+  const curNodeRef = useRef<HTMLImageElement>(null);
 
   useLayoutEffect(() => {
     if (!previous) return;
 
-    const prevNode = previousRef.current;
-    const curNode = currentRef.current;
+    const prevNode = prevNodeRef.current;
+    const curNode = curNodeRef.current;
     if (!prevNode || !curNode) return;
 
     const opts: KeyframeAnimationOptions = {
@@ -98,22 +132,27 @@ export const ImageTransition = ({
     <div
       className={cn('relative overflow-hidden size-full', containerClassName)}
     >
+      {!current && !previous && (
+        <Skeleton className="absolute inset-0 size-full" shimmer />
+      )}
       {previous && (
         <img
           key={previous}
-          ref={previousRef}
+          ref={prevNodeRef}
           src={previous}
           {...props}
           className={cn('absolute inset-0 object-cover', className)}
         />
       )}
-      <img
-        key={current}
-        ref={currentRef}
-        src={current}
-        {...props}
-        className={cn('absolute inset-0 object-cover', className)}
-      />
+      {current && (
+        <img
+          key={current}
+          ref={curNodeRef}
+          src={current}
+          {...props}
+          className={cn('absolute inset-0 object-cover', className)}
+        />
+      )}
     </div>
   );
 };

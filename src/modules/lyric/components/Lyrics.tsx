@@ -4,23 +4,11 @@ import { createContext, use } from 'react';
 import { cn } from '@/shared/lib/utils';
 import { LyricLine } from './LyricLine';
 import { useLyricScroll } from '../hooks/useLyricScroll';
-import { useLyrics } from '../hooks/useLyrics';
-import { useQuery } from '@tanstack/react-query';
-import { fetchLyrics } from '../lyricsService';
-import { useQueueStore } from '@/modules/player/stores/queue';
+import { useLyricViewModel } from '../hooks/useLyricViewModel';
 
 export const Lyrics = ({ className }: { className?: string }) => {
-  const trackId = useQueueStore((s) => s.currentTrack?.id);
-  const { data, isLoading } = useQuery({
-    queryKey: ['lyrics', trackId],
-    queryFn: () => {
-      if (!trackId) return { lyric: [], tlyric: [], yrc: [] };
-      return fetchLyrics(trackId);
-    },
-    enabled: Boolean(trackId),
-    staleTime: Infinity,
-  });
-  const { lines, active, hasLyrics, hasYrc, tlyric } = useLyrics(data);
+  const { trackId, isLoading, lines, active, hasLyrics, hasYrc, tlyric } =
+    useLyricViewModel();
   const [activeLine, activeWord] = active;
 
   const { containerRef, contentRef, contentStyle } = useLyricScroll(

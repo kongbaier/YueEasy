@@ -2,19 +2,18 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/utils';
-import { useSettingsStore } from '@/stores/settings';
+import { usePlayer } from '@/modules/player/hooks/usePlayer';
 
 export const VolumeControl = () => {
-  const volume = useSettingsStore((s) => s.player.volume);
-  const isMuted = useSettingsStore((s) => s.player.isMuted);
-  const updatePlayer = useSettingsStore((s) => s.updatePlayer);
+  const { volume, isMuted, setVolume, setMuted } = usePlayer();
 
   const applyVolume = (v: number) => {
-    updatePlayer({ volume: v, isMuted: false });
+    setVolume(v);
+    setMuted(false);
   };
 
   const applyMuted = (m: boolean) => {
-    updatePlayer({ isMuted: m });
+    setMuted(m);
   };
 
   const [open, setOpen] = useState(false);
@@ -80,9 +79,9 @@ export const VolumeControl = () => {
           variant="ghost"
         >
           {displayVolume === 0 ? (
-            <VolumeX className="size-4" />
+            <VolumeX className="size-5" />
           ) : (
-            <Volume2 className="size-4" />
+            <Volume2 className="size-5" />
           )}
         </Button>
       </div>

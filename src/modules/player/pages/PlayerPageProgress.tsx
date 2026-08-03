@@ -1,13 +1,12 @@
 import { SeekBar } from '@/modules/player/components';
 import { FollowTooltip } from '@/modules/player/components/FollowTooltip';
 import { useProgress } from '@/modules/player/hooks/useProgress';
+import { usePlayer } from '@/modules/player/hooks/usePlayer';
 import { formatDuration } from '@/shared/utils/format';
-import { usePlayerStore } from '../stores/player';
 
 export const PlayerPageProgress = ({ className }: { className?: string }) => {
   const { percentage, formatted } = useProgress();
-  const seek = usePlayerStore((s) => s.seek);
-  const duration = usePlayerStore((s) => s.duration);
+  const { seek, duration } = usePlayer();
 
   return (
     <div className={className}>

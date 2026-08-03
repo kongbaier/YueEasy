@@ -1,12 +1,13 @@
+import { useEffect } from 'react';
 import { Heart, MessageSquare } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { VirtuosoScroller } from '@/shared/ui/virtuoso';
+import { SmartImage } from '@/shared/ui/image';
 import { formatCount } from '@/shared/utils/format';
 import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/lib/utils';
-import { ncm } from '@/tauri/ncm';
+import { useComments } from '@/shared/hooks/useComments';
 import type { NcmComment } from '@/tauri/ncm/types/comment.response';
-import { useQuery } from '@tanstack/react-query';
 
 function relativeTime(timestamp: number): string {
   const now = Date.now();
@@ -34,9 +35,10 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
     <div className="group flex gap-3 px-2 py-3 w-full text-left rounded-md">
       <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
         {comment.user.avatarUrl ? (
-          <img
+          <SmartImage
             alt={comment.user.nickname}
-            className="object-cover"
+            className="size-full object-cover"
+            containerClassName="size-full"
             src={comment.user.avatarUrl}
           />
         ) : (
@@ -88,18 +90,14 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
 };
 
 export const PlayerPageComments = ({ songId }: { songId: number }) => {
-  const { isLoading, data } = useQuery({
-    queryKey: ['comments', songId],
-    queryFn: () =>
-      ncm
-        .commentMusic(songId, 40, 0)
-        .then((data) => {
-          return data;
-        })
-        .catch(() => {
-          toast.error('加载评论失败');
-        }),
+  const { data, isLoading, isError } = useComments({
+    type: 'music',
+    id: songId,
   });
+
+  useEffect(() => {
+    if (isError) toast.error('加载评论失败');
+  }, [isError]);
 
   if (isLoading) {
     return (

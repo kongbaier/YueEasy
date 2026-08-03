@@ -8,7 +8,7 @@ import {
   SearchResultsDisplay,
   SearchTabs,
 } from './Search';
-import { useSearchStore } from './store';
+import { useSearchController } from './useSearchController';
 import {
   useSearchExecution,
   useSearchHot,
@@ -17,25 +17,22 @@ import {
 
 export default function SearchPage() {
   usePageTitle('搜索', { root: true });
+  const { input, searchKeyword, searchType, setShow } = useSearchController();
   // Data hooks — write results to store, return refetch methods
   const searchHot = useSearchHot();
   const searchSuggest = useSearchSuggest();
-  useSearchExecution(
-    useSearchStore((s) => s.searchKeyword),
-    useSearchStore((s) => s.searchType),
-  );
+  useSearchExecution(searchKeyword, searchType);
 
   // Wire focus: trigger hot/suggest refetch based on current input
   const handleFocus = useCallback(() => {
-    const input = useSearchStore.getState().input;
     if (!input.trim()) {
       searchHot.refetch();
-      useSearchStore.setState({ show: 'hot' });
+      setShow('hot');
     } else {
       searchSuggest.refetch();
-      useSearchStore.setState({ show: 'suggest' });
+      setShow('suggest');
     }
-  }, [searchHot, searchSuggest]);
+  }, [searchHot, searchSuggest, input, setShow]);
 
   return (
     <Search>

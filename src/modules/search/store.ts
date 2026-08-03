@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { SuggestionItem } from './SuggestDropdown';
+import type { SuggestionItem } from './constants';
 import { SearchType } from './constants';
 
 export type ShowDropdown = 'hot' | 'suggest' | null;
