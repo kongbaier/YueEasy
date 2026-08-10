@@ -80,12 +80,12 @@ const PlayIcon = ({
   playing: boolean;
 }) => {
   if (loading) {
-    return <Loader2 className="size-5 animate-spin text-primary-foreground" />;
+    return <Loader2 className="size-4 animate-spin text-primary-foreground" />;
   }
   if (playing) {
-    return <Pause className="size-5 text-primary-foreground" />;
+    return <Pause className="size-4 text-primary-foreground" />;
   }
-  return <Play className="size-5 text-primary-foreground" />;
+  return <Play className="size-4 text-primary-foreground" />;
 };
 
 const PlayerControls = () => {
@@ -110,7 +110,7 @@ const PlayerControls = () => {
           size="icon"
           variant="ghost"
         >
-          <ChevronFirst className="size-5" />
+          <ChevronFirst className="size-4.5" />
         </Button>
 
         <Button
@@ -128,7 +128,7 @@ const PlayerControls = () => {
           size="icon"
           variant="ghost"
         >
-          <ChevronLast className="size-5" />
+          <ChevronLast className="size-4.5" />
         </Button>
       </section>
       <section className="flex items-center">
@@ -239,7 +239,7 @@ const PlayerMenu = ({
           size="icon"
           variant="ghost"
         >
-          <Heart className="size-5" fill={liked ? "#ef4444" : "none"} />
+          <Heart className="size-4.5" fill={liked ? "#ef4444" : "none"} />
         </Button>
       )}
       <Button
@@ -252,13 +252,13 @@ const PlayerMenu = ({
       >
         {isFm ? (
           trashPending ? (
-            <Loader2 className="size-5 animate-spin" />
+            <Loader2 className="size-4.5 animate-spin" />
           ) : (
-            <HeartOff className="size-5" />
+            <HeartOff className="size-4.5" />
           )
         ) : (
           <span className="relative">
-            <ListMusic className="size-5" />
+            <ListMusic className="size-4.5" />
             {queueLength > 0 && (
               <span className="absolute -top-1 -right-1.5 text-[9px] font-medium tabular-nums">
                 {formatQueueCount(queueLength)}

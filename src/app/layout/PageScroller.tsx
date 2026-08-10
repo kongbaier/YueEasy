@@ -1,7 +1,7 @@
-import { useEffectOnActive } from 'keepalive-for-react';
-import type { ReactNode } from 'react';
-import { useCallback, useRef, useState } from 'react';
-import { ScrollContainerContext } from '@/shared/hooks/useLoadMore';
+import { useEffectOnActive } from "keepalive-for-react";
+import type { ReactNode } from "react";
+import { useCallback, useRef, useState } from "react";
+import { ScrollContainerContext } from "@/shared/hooks/useLoadMore";
 
 interface PageScrollerProps {
   children: ReactNode;
@@ -43,7 +43,7 @@ export function PageScroller({ children }: PageScrollerProps) {
   return (
     <ScrollContainerContext.Provider value={scrollContainer}>
       <div
-        className="h-full overflow-y-auto scrollbar-gutter-stable"
+        className="h-full overflow-y-auto scrollbar-gutter-stable mr-1"
         onScroll={handleScroll}
         ref={scrollRef}
       >

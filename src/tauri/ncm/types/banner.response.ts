@@ -2,7 +2,6 @@ export enum BannerType {
   NORMAL = 1,
   AD = 3000,
 }
-
 // NCM API Response: /banner
 export interface Banner {
   // 宽高比为 9:5的图片 URL，适用于大屏幕

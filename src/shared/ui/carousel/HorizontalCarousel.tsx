@@ -1,16 +1,16 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { ReactNode } from 'react';
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/shared/ui/button';
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { ReactNode } from "react";
+import React from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/shared/ui/button";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   useCarousel,
-} from '@/shared/ui/carousel-base';
-import { Skeleton } from '@/shared/ui/skeleton';
-import { cn } from '@/shared/lib/utils';
+} from "@/shared/ui/carousel-base";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { cn } from "@/shared/lib/utils";
 
 const SKELETON_COUNT = 8;
 
@@ -29,7 +29,7 @@ const CardSkeleton = () => {
 const ScrollButtons = () => {
   const { api, canScrollPrev, canScrollNext } = useCarousel();
 
-  const scroll = (direction: 'left' | 'right') => {
+  const scroll = (direction: "left" | "right") => {
     if (!api) return;
     const firstSlide = api.slideNodes()[0];
     if (!firstSlide) return;
@@ -41,7 +41,7 @@ const ScrollButtons = () => {
     const snaps = api.scrollSnapList();
     const current = api.selectedScrollSnap();
     const targetIndex =
-      direction === 'right'
+      direction === "right"
         ? Math.min(snaps.length - 1, current + steps)
         : Math.max(0, current - steps);
     api.scrollTo(targetIndex);
@@ -51,14 +51,14 @@ const ScrollButtons = () => {
     <div className="flex gap-0.5">
       <Button
         className={cn(
-          'w-8 h-8 rounded-full p-1 transition-colors',
-          'flex items-center justify-start',
+          "w-8 h-8 rounded-full p-1 transition-colors",
+          "flex items-center justify-start",
           canScrollPrev
-            ? 'text-foreground hover:bg-accent'
-            : 'text-muted-foreground/30',
+            ? "text-foreground hover:bg-accent"
+            : "text-muted-foreground/30",
         )}
         disabled={!canScrollPrev}
-        onClick={() => scroll('left')}
+        onClick={() => scroll("left")}
         type="button"
         variant="ghost"
       >
@@ -66,14 +66,14 @@ const ScrollButtons = () => {
       </Button>
       <Button
         className={cn(
-          'w-8 h-8 rounded-full p-1 transition-colors',
-          'flex items-center justify-end',
+          "w-8 h-8 rounded-full p-1 transition-colors",
+          "flex items-center justify-end",
           canScrollNext
-            ? 'text-foreground hover:bg-accent'
-            : 'text-muted-foreground/30',
+            ? "text-foreground hover:bg-accent"
+            : "text-muted-foreground/30",
         )}
         disabled={!canScrollNext}
-        onClick={() => scroll('right')}
+        onClick={() => scroll("right")}
         type="button"
         variant="ghost"
       >
@@ -99,7 +99,7 @@ export const HorizontalCarousel = ({
   return (
     <section>
       <Carousel
-        opts={{ loop: false, align: 'start', containScroll: 'trimSnaps' }}
+        opts={{ loop: false, align: "start", containScroll: "trimSnaps" }}
       >
         <div className="mb-4 flex items-center justify-between">
           {titleLink ? (

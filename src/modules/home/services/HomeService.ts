@@ -1,12 +1,14 @@
-import { BannerType, ncm, toFmSong } from '@/tauri/ncm';
-import { CacheKeys, cachedFetch } from '@/tauri/cache';
-import { toPlaylistDisplay } from '@/shared/utils/playlistMappers';
+import { BannerType, ncm, toFmSong } from "@/tauri/ncm";
+import { CacheKeys, cachedFetch } from "@/tauri/cache";
+import { toPlaylistDisplay } from "@/shared/utils/playlistMappers";
 
 export const homeService = {
   /** 首页 banner（过滤广告） */
   banner: async () => {
     const r = await cachedFetch(CacheKeys.banner, () => ncm.banner());
-    return r.data.banners.filter((banner) => banner.targetType !== BannerType.AD);
+    return r.data.banners.filter(
+      (banner) => banner.targetType !== BannerType.AD,
+    );
   },
 
   /** 推荐歌单 */
@@ -18,7 +20,7 @@ export const homeService = {
   },
 
   /** 热门歌单 */
-  topPlaylists: async (cat = '全部', limit = 20) => {
+  topPlaylists: async (cat = "全部", limit = 20) => {
     const r = await cachedFetch(CacheKeys.topPlaylists(cat), () =>
       ncm.topPlaylist(cat, limit),
     );

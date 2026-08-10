@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import KeepAliveRouteOutlet from 'keepalive-for-react-router';
-import { PlayerBar, QueuePanel } from '@/modules/player/components';
-import { SidebarProvider } from '@/shared/ui/sidebar';
-import { AppHeader } from './AppHeader';
-import { AppSidebar } from './AppSidebar';
-import { PageScroller } from './PageScroller';
-import { PageTitleProvider } from './PageTitleContext';
+import { useState } from "react";
+import KeepAliveRouteOutlet from "keepalive-for-react-router";
+import { PlayerBar, QueuePanel } from "@/modules/player/components";
+import { SidebarProvider } from "@/shared/ui/sidebar";
+import { AppHeader } from "./AppHeader";
+import { AppSidebar } from "./AppSidebar";
+import { PageScroller } from "./PageScroller";
+import { PageTitleProvider } from "./PageTitleContext";
 
 export function AppLayout() {
   const [queuePanelOpen, setQueuePanelOpen] = useState(false);
@@ -26,7 +26,7 @@ export function AppLayout() {
           </div>
 
           <PlayerBar
-            className="h-18 bg-background rounded-b-md"
+            className="h-18 bg-background"
             onToggleQueuePanel={() => setQueuePanelOpen((v) => !v)}
           />
 
