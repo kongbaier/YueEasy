@@ -1,5 +1,5 @@
 import { Loader2, Play, Radar, Radio } from "lucide-react";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useContainerWidth } from "@/shared/hooks/useContainerWidth";
 import { ParallaxCarousel } from "@/shared/ui/carousel";
 import { Skeleton } from "@/shared/ui/skeleton";
@@ -12,6 +12,9 @@ const WIDE_BREAKPOINT = 672; // 与 CSS @min-2xl: 对齐（64rem = 1024px，按�
 
 const BannerCarousel = () => {
   const { banners } = useHomeBannerViewModel();
+  useEffect(() => {
+    console.log(banners);
+  }, [banners]);
   return (
     <>
       <ParallaxCarousel
@@ -41,7 +44,9 @@ const BannerCarousel = () => {
   );
 };
 
-BannerCarousel.Skeleton = () => <Skeleton className="absolute inset-0 rounded-xl" shimmer />;
+BannerCarousel.Skeleton = () => (
+  <Skeleton className="absolute inset-0 rounded-xl" shimmer />
+);
 
 const FmCard = () => {
   const { isFm, displaySong, showFmSkeleton, pending, startFm } =

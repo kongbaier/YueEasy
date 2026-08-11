@@ -1,7 +1,6 @@
 import {
   ChevronFirst,
   ChevronLast,
-  Heart,
   HeartOff,
   ListMusic,
   Loader2,
@@ -21,12 +20,12 @@ import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
 import { formatQueueCount } from "@/shared/utils/format";
 import { usePlayerPage } from "@/modules/player/contexts/PlayerPageContext";
-import { useLikeAction } from "@/shared/hooks/useLikeAction";
 import { PlayModeControl } from "./PlayModeControl";
 import { SeekBar } from "./SeekBar";
 import { VolumeControl } from "./VolumeControl";
 import { Cover } from "@/shared/ui/image";
 import type { Track } from "@/core/types";
+import { LikeButton } from "@/modules/liked/components/LikeButton";
 
 const PlayerProgress = () => {
   const { percentage, formatted } = useProgress();
@@ -211,8 +210,7 @@ const PlayerMenu = ({
 }: {
   onToggleQueuePanel: () => void;
 }) => {
-  const { currentTrack, queueLength, isFm, fmTrash, isLiked } = usePlayer();
-  const liked = currentTrack ? isLiked(currentTrack.id) : false;
+  const { currentTrack, queueLength, isFm, fmTrash } = usePlayer();
   const [trashPending, setTrashPending] = useState(false);
 
   const handleFmTrash = async () => {
@@ -228,20 +226,9 @@ const PlayerMenu = ({
     }
   };
 
-  const { handleLike } = useLikeAction();
-
   return (
     <div className="flex-1 flex items-center justify-end">
-      {currentTrack && (
-        <Button
-          className="text-foreground hover:bg-transparent hover:text-primary"
-          onClick={() => handleLike(currentTrack.id, currentTrack.name)}
-          size="icon"
-          variant="ghost"
-        >
-          <Heart className="size-4.5" fill={liked ? "#ef4444" : "none"} />
-        </Button>
-      )}
+      {currentTrack && <LikeButton track={currentTrack} />}
       <Button
         className="text-foreground hover:bg-transparent hover:text-primary"
         disabled={trashPending}

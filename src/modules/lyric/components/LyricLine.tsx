@@ -1,25 +1,24 @@
-import { useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import type { LyricLine as LyricLineType } from '@/modules/lyric/parser';
 import { cn } from '@/shared/lib/utils';
 import { useLyricsContext } from './Lyrics';
 import { Word } from './Word';
 import { useLyricViewModel } from '../hooks/useLyricViewModel';
+import { useActiveLine } from '../hooks/useActiveLine';
 
 interface LyricLineProps {
   line: LyricLineType;
   tline?: LyricLineType;
   lineIndex: number;
   status: 'past' | 'active' | 'future';
-  activeWord: number;
 }
 
-export const LyricLine = ({
+export const LyricLine = memo(function LyricLine({
   line,
   tline,
   lineIndex,
   status,
-  activeWord,
-}: LyricLineProps) => {
+}: LyricLineProps) {
   const { hasYrc } = useLyricsContext();
   const { seek } = useLyricViewModel();
 
@@ -46,33 +45,63 @@ export const LyricLine = ({
           'group-data-[status=active]:scale-110',
         )}
       >
-        {showWords
-          ? line.words?.map((w, wordIndex) => {
+        {showWords ? (
+          status === 'active' ? (
+            <ActiveLineContent line={line} />
+          ) : (
+            line.words?.map((w, wordIndex) => {
               const wordStatus =
-                status !== 'active'
-                  ? status === 'past'
-                    ? ('past-line' as const)
-                    : ('future-line' as const)
-                  : wordIndex < activeWord
-                    ? ('past-word' as const)
-                    : wordIndex === activeWord
-                      ? ('current-word' as const)
-                      : ('future-word' as const);
+                status === 'past' ? ('past-line' as const) : ('future-line' as const);
               return (
                 <Word
                   // oxlint-disable-next-line react/no-array-index-key 歌词的index不会随便改变
                   key={wordIndex}
                   text={w.text}
                   status={wordStatus}
-                  absoluteStartMs={line.startMs + w.startMs}
-                  durationMs={w.durationMs}
                 />
               );
             })
-          : line.text}
+          )
+        ) : (
+          line.text
+        )}
       </p>
       {tline && <TranslatedText text={tline.text} />}
     </li>
+  );
+});
+
+/**
+ * Words of the active line. Subscribes to currentTimeHigh (60fps) via useActiveLine
+ * and re-renders every frame; memoized Word children mean only the current word
+ * actually re-renders (its progress prop changes), the rest skip.
+ */
+const ActiveLineContent = ({ line }: { line: LyricLineType }) => {
+  const { wordIndex, progress } = useActiveLine(line);
+  const words = line.words ?? [];
+
+  if (words.length === 0) return <>{line.text}</>;
+
+  return (
+    <>
+      {words.map((w, i) => {
+        const wordStatus =
+          i < wordIndex
+            ? ('past-word' as const)
+            : i === wordIndex
+              ? ('current-word' as const)
+              : ('future-word' as const);
+        return (
+          <Word
+            // oxlint-disable-next-line react/no-array-index-key 歌词的index不会随便改变
+            key={i}
+            text={w.text}
+            status={wordStatus}
+            progress={wordStatus === 'current-word' ? progress : 0}
+          />
+        );
+      })}
+    </>
   );
 };
 

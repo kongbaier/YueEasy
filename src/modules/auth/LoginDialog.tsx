@@ -131,12 +131,8 @@ export const LoginDialog = () => {
     setSending(true);
     setError('');
     try {
-      const res = await sendSmsCode(phone);
-      if (res.code === 200) {
-        setCountdown(60);
-      } else {
-        setError(res.message || `发送失败 (${res.code})`);
-      }
+      await sendSmsCode(phone);
+      setCountdown(60);
     } catch (err) {
       setError(err instanceof Error ? err.message : '发送验证码失败');
     } finally {
@@ -169,7 +165,7 @@ export const LoginDialog = () => {
     });
     try {
       const keyRes = await getQrKey();
-      const key = keyRes.unikey;
+      const key = keyRes.key;
       if (!key) {
         setError('获取二维码密钥失败');
         setQrLoading(false);
@@ -178,9 +174,9 @@ export const LoginDialog = () => {
       qrKeyRef.current = key;
 
       const qrRes = await createQr(key);
-      const qrurl = qrRes.data.qrurl;
+      const qrurl = qrRes.url;
       setQrImg(
-        qrRes.data.qrimg ||
+        qrRes.image ||
           `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrurl)}`,
       );
       setQrStatus('请使用网易云音乐 App 扫码');
@@ -189,18 +185,18 @@ export const LoginDialog = () => {
       qrTimerRef.current = setInterval(async () => {
         try {
           const checkRes = await checkQr(qrKeyRef.current);
-          switch (checkRes.code) {
-            case 803:
+          switch (checkRes.status) {
+            case 'confirmed':
               clearQrTimer();
-              handleQrSuccess(checkRes.cookie);
+              handleQrSuccess(checkRes.cookie ?? '');
               break;
-            case 802:
+            case 'scanned':
               setQrStatus('已扫码，请在手机上确认登录');
               break;
-            case 801:
+            case 'waiting':
               setQrStatus('请使用网易云音乐 App 扫码');
               break;
-            case 800:
+            case 'expired':
               clearQrTimer();
               setQrImg('');
               setQrStatus('二维码已过期，点击刷新');
@@ -370,3 +366,4 @@ export const LoginDialog = () => {
     </Dialog>
   );
 };
+

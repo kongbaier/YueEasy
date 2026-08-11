@@ -6,14 +6,14 @@ import {
   Loader2,
   Pause,
   Play,
-} from 'lucide-react';
-import { useState } from 'react';
-import { PlayModeControl } from '@/modules/player/components';
-import { Button } from '@/shared/ui/button';
-import { cn } from '@/shared/lib/utils';
-import { toast } from '@/shared/lib/toast';
-import { formatQueueCount } from '@/shared/utils/format';
-import { usePlayer } from '@/modules/player/hooks/usePlayer';
+} from "lucide-react";
+import { useState } from "react";
+import { PlayModeControl } from "@/modules/player/components";
+import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/lib/utils";
+import { toast } from "@/shared/lib/toast";
+import { formatQueueCount } from "@/shared/utils/format";
+import { usePlayer } from "@/modules/player/hooks/usePlayer";
 
 interface PlayerPageControlsProps {
   className?: string;
@@ -44,9 +44,9 @@ export const PlayerPageControls = ({
     setTrashPending(true);
     try {
       await fmTrash();
-      toast.success('已减少此类推荐');
+      toast.success("已减少此类推荐");
     } catch {
-      toast.error('操作失败，请重试');
+      toast.error("操作失败，请重试");
     } finally {
       setTrashPending(false);
     }
@@ -54,7 +54,7 @@ export const PlayerPageControls = ({
 
   return (
     <div
-      className={`grid grid-cols-[auto_4fr_auto_3fr_auto_3fr_auto_4fr_auto] items-center ${className ?? ''}`}
+      className={`grid grid-cols-[auto_4fr_auto_3fr_auto_3fr_auto_4fr_auto] items-center ${className ?? ""}`}
     >
       <PlayModeControl className="col-start-1" />
 
@@ -68,17 +68,17 @@ export const PlayerPageControls = ({
         <ChevronFirst className="size-5" />
       </Button>
       <Button
-        className="col-start-5 flex h-12 w-12 items-center justify-center rounded-full bg-primary hover:bg-primary/90 transition-transform hover:scale-105 active:scale-95"
+        className="col-start-5 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary transition-transform hover:scale-100 active:scale-95"
         disabled={isLoading}
         onClick={togglePlay}
         type="button"
       >
         {isLoading ? (
-          <Loader2 className="size-5 animate-spin text-primary-foreground" />
+          <Loader2 className="size-5 animate-spin" />
         ) : isPlaying ? (
-          <Pause className="size-5 fill-primary-foreground text-primary-foreground" />
+          <Pause className="size-5 fill-primary-foreground" />
         ) : (
-          <Play className="size-5 fill-primary-foreground text-primary-foreground ml-0.5" />
+          <Play className="size-5 fill-primary-foreground ml-0.5" />
         )}
       </Button>
 
@@ -93,18 +93,18 @@ export const PlayerPageControls = ({
 
       <Button
         className={cn(
-          'col-start-9',
+          "col-start-9",
           !isFm &&
             (showQueue
-              ? 'text-primary hover:text-primary'
-              : 'text-foreground hover:bg-transparent hover:text-primary'),
-          isFm && 'text-foreground hover:bg-transparent hover:text-primary',
+              ? "text-primary hover:text-primary"
+              : "text-foreground hover:bg-transparent hover:text-primary"),
+          isFm && "text-foreground hover:bg-transparent hover:text-primary",
         )}
         disabled={trashPending}
         onClick={isFm ? handleFmTrash : onToggleQueue}
         size="icon"
-        title={isFm ? '不感兴趣' : '播放列表'}
-        variant={showQueue && !isFm ? 'secondary' : 'ghost'}
+        title={isFm ? "不感兴趣" : "播放列表"}
+        variant={showQueue && !isFm ? "secondary" : "ghost"}
       >
         {isFm ? (
           trashPending ? (

@@ -1,6 +1,6 @@
-import type { Playlist } from '@/shared/types/playlist';
+import type { Playlist } from '@/shared/types/entities';
 import { CacheKeys, cacheGet, cacheSet } from '@/tauri/cache';
-import { ncm, toPlaylist, toSongRef } from '@/tauri/ncm';
+import { ncm } from '@/tauri/ncm';
 
 export async function getPlaylistDetail(
   id: number,
@@ -11,16 +11,12 @@ export async function getPlaylistDetail(
 
   try {
     const fresh = await ncm.playlistDetail(id);
-    const playlist: Playlist = {
-      ...toPlaylist(fresh.playlist),
-      tracks: fresh.playlist.tracks?.map(toSongRef),
-    };
 
-    if (!cached || cached.value.trackCount !== playlist.trackCount) {
-      await cacheSet(key, playlist);
+    if (!cached || cached.value.trackCount !== fresh.trackCount) {
+      await cacheSet(key, fresh);
     }
 
-    return { playlist, fromCache: false };
+    return { playlist: fresh, fromCache: false };
   } catch {
     if (cached) {
       return { playlist: cached.value, fromCache: true };
@@ -28,3 +24,4 @@ export async function getPlaylistDetail(
     throw new Error('加载歌单失败');
   }
 }
+

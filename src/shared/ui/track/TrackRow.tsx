@@ -8,16 +8,16 @@ import {
 } from '@/shared/ui/context-menu';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { SmartImage } from '@/shared/ui/image';
-import type { SongRef } from '@/shared/types/playlist';
+import type { Song } from '@/shared/types/entities';
 import { formatDuration } from '@/shared/utils/format';
 import { getNcmImageUrl } from '@/shared/lib/utils';
 import { useLikeAction } from '@/shared/hooks/useLikeAction';
 import { useTrackActions } from '@/shared/hooks/useTrackActions';
 
 interface TrackRowProps {
-  track: SongRef;
+  track: Song;
   index: number;
-  onPlay: (track: SongRef) => void;
+  onPlay: (track: Song) => void;
 }
 
 export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
@@ -75,7 +75,7 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
           <Heart className="h-4 w-4" fill={liked ? '#ef4444' : 'none'} />
         </button>
         <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-          {formatDuration(track.duration / 1000)}
+          {formatDuration(track.durationMs / 1000)}
         </span>
       </ContextMenuTrigger>
       <ContextMenuContent>
@@ -120,3 +120,5 @@ export const TrackRowSkeleton = ({ index }: { index: number }) => {
     </div>
   );
 };
+
+

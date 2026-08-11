@@ -32,7 +32,7 @@ import {
 } from '@/shared/ui/sidebar';
 import { SmartImage } from '@/shared/ui/image';
 import { useLocalStorageState } from '@/shared/hooks/useLocalStorageState';
-import { useSidebarPlaylists } from '@/shared/hooks/useSidebarPlaylists';
+import { useSidebarPlaylists } from './useSidebarPlaylists';
 import { useAuthViewModel } from '@/shared/hooks/useAuthViewModel';
 
 const items = [
@@ -145,10 +145,10 @@ export const AppSidebar = () => {
   );
 
   const createdPlaylists = userPlaylists.filter(
-    (p) => p.creator.userId === userId,
+    (p) => p.creator?.id === userId,
   );
   const favoritedPlaylists = userPlaylists.filter(
-    (p) => p.creator.userId !== userId,
+    (p) => p.creator?.id !== userId,
   );
 
   return (
@@ -178,7 +178,7 @@ export const AppSidebar = () => {
                       <item.icon
                         className={cn(
                           isActive &&
-                            'fill-primary text-primary-darkest dark:text-primary-lightest',
+                            'fill-primary text-primary-strong',
                         )}
                       />
                       <span>{item.label}</span>
@@ -208,7 +208,7 @@ export const AppSidebar = () => {
                       <item.icon
                         className={cn(
                           isActive &&
-                            'fill-primary text-primary-darkest dark:text-primary-lightest',
+                            'fill-primary text-primary-strong',
                         )}
                       />
                       <span>{item.label}</span>
@@ -251,12 +251,12 @@ export const AppSidebar = () => {
                           isActive={isActive}
                           onClick={() => navigate(`/playlist/${p.id}`)}
                         >
-                          {p.coverImgUrl ? (
+                          {p.coverUrl ? (
                             <SmartImage
                               alt=""
                               className="size-full object-cover"
                               containerClassName="h-5 w-5 shrink-0 rounded-sm group-data-[collapsible=icon]:size-4"
-                              src={p.coverImgUrl}
+                              src={p.coverUrl}
                             />
                           ) : (
                             <Music className="h-4 w-4 shrink-0" />
@@ -298,12 +298,12 @@ export const AppSidebar = () => {
                           isActive={isActive}
                           onClick={() => navigate(`/playlist/${p.id}`)}
                         >
-                          {p.coverImgUrl ? (
+                          {p.coverUrl ? (
                             <SmartImage
                               alt=""
                               className="size-full object-cover"
                               containerClassName="h-5 w-5 shrink-0 rounded-sm group-data-[collapsible=icon]:size-4"
-                              src={p.coverImgUrl}
+                              src={p.coverUrl}
                             />
                           ) : (
                             <Library className="h-4 w-4 shrink-0" />
@@ -345,7 +345,7 @@ export const AppSidebar = () => {
                   <item.icon
                     className={cn(
                       isActive &&
-                        'fill-primary text-primary-darkest dark:text-primary-lightest',
+                        'fill-primary text-primary-strong',
                     )}
                   />
                   <span>{item.label}</span>

@@ -1,10 +1,6 @@
 import { Search as SearchIcon, SearchX } from 'lucide-react';
-import type { SongRef } from '@/shared/types/playlist';
-import type {
-  NcmSearchAlbum,
-  NcmSearchArtist,
-  NcmSearchUser,
-} from '@/tauri/ncm';
+import type { Album, Artist, Song, User } from '@/shared/types/entities';
+
 import { TrackRow, TrackRowSkeleton } from '@/shared/ui/track';
 import { SearchAlbumCard, SearchAlbumCardSkeleton } from './SearchAlbumCard';
 import { SearchArtistCard, SearchArtistCardSkeleton } from './SearchArtistCard';
@@ -80,7 +76,7 @@ interface SearchResultsProps {
   /** 热门搜索下拉是否可见（影响初始引导提示） */
   showDropdown: boolean;
   /** 播放某首歌曲 */
-  onPlay: (track: SongRef) => void;
+  onPlay: (track: Song) => void;
 }
 
 export function SearchResults({
@@ -111,7 +107,7 @@ export function SearchResults({
           {/* Song results */}
           {searchType === '1' && (
             <div className="space-y-0.5">
-              {(results as SongRef[])
+              {(results as Song[])
                 .slice(0, visibleCount)
                 .map((track, index) => (
                   <TrackRow
@@ -127,7 +123,7 @@ export function SearchResults({
           {/* Album results */}
           {searchType === '10' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {(results as NcmSearchAlbum[])
+              {(results as Album[])
                 .slice(0, visibleCount)
                 .map((item) => (
                   <SearchAlbumCard item={item} key={item.id} />
@@ -138,7 +134,7 @@ export function SearchResults({
           {/* Artist results */}
           {searchType === '100' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {(results as NcmSearchArtist[])
+              {(results as Artist[])
                 .slice(0, visibleCount)
                 .map((item) => (
                   <SearchArtistCard item={item} key={item.id} />
@@ -149,10 +145,10 @@ export function SearchResults({
           {/* User results */}
           {searchType === '1002' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {(results as NcmSearchUser[])
+              {(results as User[])
                 .slice(0, visibleCount)
                 .map((item) => (
-                  <SearchUserCard item={item} key={item.userId} />
+                  <SearchUserCard item={item} key={item.id} />
                 ))}
             </div>
           )}
@@ -172,3 +168,5 @@ export function SearchResults({
     </>
   );
 }
+
+

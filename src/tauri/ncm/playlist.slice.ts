@@ -6,37 +6,18 @@ import {
   ncmTopPlaylist,
   ncmUserPlaylist,
 } from './api';
-import type {
-  PersonalizedResponse,
-  PlaylistDetailResponse,
-  PlaylistRecommendResponse,
-  TopPlaylistResponse,
-  UserPlaylistResponse,
-} from './types';
-
-export type {
-  PersonalizedResponse,
-  PlaylistDetailResponse,
-  PlaylistRecommendResponse,
-  TopPlaylistResponse,
-  UserPlaylistResponse,
-} from './types';
 
 export const playlistSlice = {
-  playlistDetail: (id: number) =>
-    ncmPlaylistDetail<PlaylistDetailResponse>({ id }),
+  playlistDetail: (id: number) => ncmPlaylistDetail({ id }),
 
-  userPlaylist: (uid: number) =>
-    ncmUserPlaylist<UserPlaylistResponse>({ uid }),
+  userPlaylist: (uid: number) => ncmUserPlaylist({ uid }),
 
-  personalizedPlaylist: (limit = 30) =>
-    ncmPersonalized<PersonalizedResponse>({ limit }),
+  personalizedPlaylist: (limit = 30) => ncmPersonalized({ limit }),
 
   topPlaylist: (cat = '全部', limit = 30, offset = 0) =>
-    ncmTopPlaylist<TopPlaylistResponse>({ cat, limit, offset }),
+    ncmTopPlaylist({ cat, limit, offset }),
 
-  playlistRecommend: () =>
-    ncmRecommendResource<PlaylistRecommendResponse>(),
+  playlistRecommend: () => ncmRecommendResource(),
 
   playlistHot: () => ncmPlaylistHot(),
 };

@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { SearchType } from './constants';
 import { useSearchStore } from './store';
 import type { ShowDropdown } from './store';
-import type { SongRef } from '@/shared/types/playlist';
+import type { Song } from '@/shared/types/entities';
 import { useQueueStore } from '../player/stores/queue';
 import { toast } from '@/shared/lib/toast';
 
@@ -32,7 +32,7 @@ export function useSearchController() {
   const setShow = (show: ShowDropdown) => useSearchStore.setState({ show });
 
   const handlePlay = useCallback(
-    async (track: SongRef) => {
+    async (track: Song) => {
       try {
         await play(track);
       } catch (e) {
@@ -61,3 +61,5 @@ export function useSearchController() {
     handlePlay,
   };
 }
+
+

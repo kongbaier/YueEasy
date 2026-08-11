@@ -11,71 +11,37 @@ import {
   ncmSongDetail,
   ncmSongUrlV1,
 } from './api';
-import type {
-  AlbumDetailResponse,
-  LikeListResponse,
-  LyricNewResponse,
-  LyricResponse,
-  RecentSongResponse,
-  SearchAlbumResponse,
-  SearchArtistResponse,
-  SearchHotResponse,
-  SearchResponse,
-  SearchSuggestResponse,
-  SearchUserResponse,
-  SongDetailResponse,
-  SongUrlResponse,
-} from './types';
 
 export const songSlice = {
   search: (keywords: string, limit = 30, offset = 0) =>
-    ncmCloudsearch<SearchResponse>({ keywords, searchType: 1, limit, offset }),
+    ncmCloudsearch({ keywords, searchType: 1, limit, offset }),
 
   searchAlbum: (keywords: string, limit = 30, offset = 0) =>
-    ncmCloudsearch<SearchAlbumResponse>({
-      keywords,
-      searchType: 10,
-      limit,
-      offset,
-    }),
+    ncmCloudsearch({ keywords, searchType: 10, limit, offset }),
 
   searchArtist: (keywords: string, limit = 30, offset = 0) =>
-    ncmCloudsearch<SearchArtistResponse>({
-      keywords,
-      searchType: 100,
-      limit,
-      offset,
-    }),
+    ncmCloudsearch({ keywords, searchType: 100, limit, offset }),
 
   searchUser: (keywords: string, limit = 30, offset = 0) =>
-    ncmCloudsearch<SearchUserResponse>({
-      keywords,
-      searchType: 1002,
-      limit,
-      offset,
-    }),
+    ncmCloudsearch({ keywords, searchType: 1002, limit, offset }),
 
-  searchSuggest: (keywords: string) =>
-    ncmSearchSuggest<SearchSuggestResponse>({ keywords }),
+  searchSuggest: (keywords: string) => ncmSearchSuggest({ keywords }),
 
-  albumDetail: (id: number) => ncmAlbum<AlbumDetailResponse>({ id }),
+  albumDetail: (id: number) => ncmAlbum({ id }),
 
-  searchHot: () => ncmSearchHot<SearchHotResponse>(),
+  searchHot: () => ncmSearchHot(),
 
-  songUrl: (id: number) =>
-    ncmSongUrlV1<SongUrlResponse>({ id, level: 'standard' }),
+  songUrl: (id: number) => ncmSongUrlV1({ id, level: 'standard' }),
 
-  songDetail: (ids: number[]) =>
-    ncmSongDetail<SongDetailResponse>({ ids }),
+  songDetail: (ids: number[]) => ncmSongDetail({ ids }),
 
-  lyric: (id: number) => ncmLyric<LyricResponse>({ id }),
+  lyric: (id: number) => ncmLyric({ id }),
 
-  lyricNew: (id: number) => ncmLyricNew<LyricNewResponse>({ id }),
+  lyricNew: (id: number) => ncmLyricNew({ id }),
 
   like: (id: number, like = true) => ncmLike({ id, like }),
 
-  likeList: (uid: number) => ncmLikelist<LikeListResponse>({ uid }),
+  likeList: (uid: number) => ncmLikelist({ uid }),
 
-  recentSong: (uid: number) =>
-    ncmRecordRecentSong<RecentSongResponse>({ uid }),
+  recentSong: (uid: number) => ncmRecordRecentSong({ uid }),
 };

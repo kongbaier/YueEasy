@@ -25,7 +25,7 @@ export function useRadarCardViewModel() {
   });
 
   const radar = dragonBalls?.find(
-    (item) => item.name === '私人雷达' || item.title === '私人雷达',
+    (item) => item.name === '私人雷达',
   );
   const resourceId = radar?.resourceId ? Number(radar.resourceId) : null;
   const hasResource = resourceId !== null && Number.isFinite(resourceId);
@@ -42,12 +42,12 @@ export function useRadarCardViewModel() {
 
   // 封面取歌单第一首歌的专辑图（更贴近"雷达正在放的第一首"），失败退回歌单封面/入口图标
   const coverUrl =
-    radarDetail?.playlist?.tracks?.[0]?.al?.picUrl ??
-    radarDetail?.playlist?.coverImgUrl ??
+    radarDetail?.tracks?.[0]?.album?.picUrl ??
+    radarDetail?.coverUrl ??
     radar?.iconUrl;
   const playlistName =
-    radarDetail?.playlist?.name && radarDetail.playlist.name !== '私人雷达'
-      ? radarDetail.playlist.name
+    radarDetail?.name && radarDetail.name !== '私人雷达'
+      ? radarDetail.name
       : '为你定制专属歌单';
   // 入口/歌单详情仍在请求中且尚无封面时，先展示与 banner 一致的 shimmer 骨架
   const showRadarSkeleton =
@@ -75,3 +75,5 @@ export function useRadarCardViewModel() {
     [isLoggedIn, coverUrl, playlistName, showRadarSkeleton, goRadar],
   );
 }
+
+

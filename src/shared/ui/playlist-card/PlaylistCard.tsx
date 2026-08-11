@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { formatCount } from '@/shared/utils/format';
 import { cn } from '@/shared/lib/utils';
 import { SmartImage } from '@/shared/ui/image';
-import type { PlaylistDisplay } from './PlaylistDisplay';
+import type { Playlist } from '@/shared/types/entities';
 import { AspectRatio } from '../aspect-ratio';
 
 interface PlaylistCardProps {
-  playlist: PlaylistDisplay;
+  playlist: Playlist;
   showPlayCount?: boolean;
 }
 
@@ -54,7 +54,7 @@ export const PlaylistCard = ({
         </p>
         <p className="flex items-center gap-1 text-xs text-muted-foreground truncate">
           {playlist.creator ? (
-            <span>{playlist.creator}</span>
+            <span>{playlist.creator.nickname}</span>
           ) : (
             playlist.trackCount > 0 && (
               <>
@@ -68,3 +68,6 @@ export const PlaylistCard = ({
     </button>
   );
 };
+
+
+

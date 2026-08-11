@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { SmartImage } from '@/shared/ui/image';
 import { getNcmImageUrl } from '@/shared/lib/utils';
-import type { NcmSearchAlbum } from '@/tauri/ncm';
+import type { Album } from '@/shared/types/entities';
 
 interface SearchAlbumCardProps {
   /** 专辑搜索结果项 */
-  item: NcmSearchAlbum;
+  item: Album;
 }
 
 export function SearchAlbumCard({ item }: SearchAlbumCardProps) {
@@ -49,3 +49,5 @@ export function SearchAlbumCardSkeleton() {
     </div>
   );
 }
+
+

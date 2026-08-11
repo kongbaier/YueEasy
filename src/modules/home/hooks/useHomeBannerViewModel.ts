@@ -8,7 +8,11 @@ import { homeService } from "../services/HomeService";
 export function useHomeBannerViewModel() {
   const { data: banners } = useSuspenseQuery({
     queryKey: ["home_carousel"],
-    queryFn: () => homeService.banner().catch(() => []),
+    queryFn: () =>
+      homeService.banner().catch(() => {
+        console.log("出现异常");
+        return [];
+      }),
   });
 
   return { banners };

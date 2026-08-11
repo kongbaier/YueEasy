@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   getMusicComments,
   getPlaylistComments,
-} from '@/services/CommentService';
+} from '@/shared/services/CommentService';
 
 type CommentTarget =
   | { type: 'playlist'; id: number }

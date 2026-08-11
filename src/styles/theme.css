@@ -1,16 +1,26 @@
 :root {
   --font-family:
-    'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
   --background: color-mix(in oklch, #ffffff 45%, transparent);
   --foreground: #171717;
-  --primary: #e74c3c;
+
+  /* 物理色阶：品牌强调色阶梯，主题无关。
+     非 Windows 的静态 fallback；Windows 下由 useAccentColor 运行时注入覆盖。
+     命名 --brand*，避免与 shadcn 基线语义色 --accent（灰阶 hover 高亮）冲突。 */
+  --brand: #e74c3c;
+  --brand-d1: #c0392b;
+  --brand-d2: #a93226;
+  --brand-d3: #7b241c;
+  --brand-l1: #f1948a;
+  --brand-l2: #f5b7b1;
+  --brand-l3: #fdedec;
+
+  /* 语义角色：主题感知映射（浅色主题：深色阶作强调、hover 混黑变深） */
+  --primary: var(--brand);
   --primary-foreground: #ffffff;
-  --primary-dark: #c0392b;
-  --primary-darker: #a93226;
-  --primary-darkest: #7b241c;
-  --primary-light: #f1948a;
-  --primary-lighter: #f5b7b1;
-  --primary-lightest: #fdedec;
+  --primary-strong: var(--brand-d3);
+  --primary-hover: color-mix(in oklch, var(--primary) 88%, black);
+  --primary-active: color-mix(in oklch, var(--primary) 78%, black);
   --ring: var(--primary);
   --secondary: color-mix(in oklch, #e5e7eb 45%, transparent);
   --secondary-foreground: #1f2937;
@@ -42,17 +52,16 @@
 
 :root.dark {
   --font-family:
-    'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
   --background: color-mix(in oklch, #121212 38%, transparent);
   --foreground: #f6f6f6;
-  --primary: #e74c3c;
+
+  /* 语义角色：主题感知映射（深色主题：浅色阶作强调、hover 混白变亮） */
+  --primary: var(--brand);
   --primary-foreground: #ffffff;
-  --primary-dark: #c0392b;
-  --primary-darker: #a93226;
-  --primary-darkest: #7b241c;
-  --primary-light: #f1948a;
-  --primary-lighter: #f5b7b1;
-  --primary-lightest: #fdedec;
+  --primary-strong: var(--brand-l3);
+  --primary-hover: color-mix(in oklch, var(--primary) 88%, white);
+  --primary-active: color-mix(in oklch, var(--primary) 78%, white);
   --ring: var(--primary);
   --secondary: color-mix(in oklch, #1e1e1e 38%, transparent);
   --secondary-foreground: #e5e7eb;
@@ -86,12 +95,9 @@
   --color-ring: var(--ring);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-primary-dark: var(--primary-dark);
-  --color-primary-darker: var(--primary-darker);
-  --color-primary-darkest: var(--primary-darkest);
-  --color-primary-light: var(--primary-light);
-  --color-primary-lighter: var(--primary-lighter);
-  --color-primary-lightest: var(--primary-lightest);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -132,7 +138,7 @@
   }
 
   button:not(:disabled),
-  [role='button']:not(:disabled) {
+  [role="button"]:not(:disabled) {
     cursor: pointer;
   }
 

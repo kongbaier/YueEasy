@@ -1,3 +1,5 @@
+import type { Song } from '@/shared/types/entities';
+
 // ── Play mode ──
 
 export const PlayModes = ['sequential', 'shuffle', 'repeatOne'] as const;
@@ -14,21 +16,9 @@ export function cyclePlayMode(mode: PlayMode): PlayMode {
 
 // ── Track model ──
 
-export interface Track {
-  id: number;
-  name: string;
-  artists: TrackArtist[];
-  album: TrackAlbum;
-  duration: number;
-}
+/**
+ * 队列歌曲：即 Rust 适配层统一 Song 实体（字段已由 Rust 归一）。
+ * 使用 type-only import，不构成运行时跨层依赖。
+ */
+export type Track = Song;
 
-export interface TrackArtist {
-  id: number;
-  name: string;
-}
-
-export interface TrackAlbum {
-  id: number;
-  name: string;
-  picUrl?: string;
-}

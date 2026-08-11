@@ -10,14 +10,15 @@ interface SystemAccentColors {
   accent_light3: string;
 }
 
+// 注入物理色阶变量（主题无关）；语义角色映射在 theme.css 中按主题完成
 const mappings: Record<keyof SystemAccentColors, string> = {
-  accent: '--primary',
-  accent_dark1: '--primary-dark',
-  accent_dark2: '--primary-darker',
-  accent_dark3: '--primary-darkest',
-  accent_light1: '--primary-light',
-  accent_light2: '--primary-lighter',
-  accent_light3: '--primary-lightest',
+  accent: '--brand',
+  accent_dark1: '--brand-d1',
+  accent_dark2: '--brand-d2',
+  accent_dark3: '--brand-d3',
+  accent_light1: '--brand-l1',
+  accent_light2: '--brand-l2',
+  accent_light3: '--brand-l3',
 };
 
 function apply(colors: SystemAccentColors) {

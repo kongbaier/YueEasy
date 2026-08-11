@@ -7,9 +7,8 @@ import { useLyricScroll } from '../hooks/useLyricScroll';
 import { useLyricViewModel } from '../hooks/useLyricViewModel';
 
 export const Lyrics = ({ className }: { className?: string }) => {
-  const { trackId, isLoading, lines, active, hasLyrics, hasYrc, tlyric } =
+  const { trackId, isLoading, lines, activeLine, hasLyrics, hasYrc, tlyric } =
     useLyricViewModel();
-  const [activeLine, activeWord] = active;
 
   const { containerRef, contentRef, contentStyle } = useLyricScroll(
     activeLine,
@@ -63,7 +62,6 @@ export const Lyrics = ({ className }: { className?: string }) => {
                   lineIndex={i}
                   tline={tlyric[i]}
                   status={status}
-                  activeWord={status === 'active' ? activeWord : -1}
                 />
               );
             })}

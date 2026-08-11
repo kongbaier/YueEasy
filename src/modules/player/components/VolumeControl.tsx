@@ -1,8 +1,9 @@
 import { Volume2, VolumeX } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
 import { usePlayer } from "@/modules/player/hooks/usePlayer";
+
+const DELAY_MS = 200;
 
 export const VolumeControl = () => {
   const { volume, isMuted, setVolume, setMuted } = usePlayer();
@@ -54,13 +55,13 @@ export const VolumeControl = () => {
   };
 
   const handleControlLeave = () => {
-    closeTimerRef.current = setTimeout(() => setOpen(false), 150);
+    closeTimerRef.current = setTimeout(() => setOpen(false), DELAY_MS);
   };
 
   const handlePopupEnter = () => clearTimeout(closeTimerRef.current);
 
   const handlePopupLeave = () => {
-    closeTimerRef.current = setTimeout(() => setOpen(false), 150);
+    closeTimerRef.current = setTimeout(() => setOpen(false), DELAY_MS);
   };
 
   const displayVolume = isMuted ? 0 : volume;
@@ -108,15 +109,6 @@ export const VolumeControl = () => {
           <span className="text-xs text-muted-foreground tabular-nums">
             {Math.round(displayVolume * 100)}
           </span>
-          <div
-            className={cn(
-              "absolute -bottom-1.5 left-1/2 -translate-x-1/2",
-              "w-0 h-0",
-              "border-l-[6px] border-r-[6px] border-t-[6px]",
-              "border-l-transparent border-r-transparent",
-              "border-t-popover",
-            )}
-          />
         </div>
       )}
     </div>

@@ -1,5 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
-import { useCurrentTimeHigh } from '../hooks/useLyricViewModel';
+import { memo } from 'react';
 
 interface WordProps {
   text: string;
@@ -9,75 +8,19 @@ interface WordProps {
     | 'current-word'
     | 'future-word'
     | 'future-line';
-  absoluteStartMs: number;
-  durationMs: number;
+  /** Fill ratio 0..1 for the current word; ignored otherwise. */
+  progress?: number;
 }
 
 /**
- * Current word — gradient animation driven by direct DOM write via Zustand subscribe.
- * Bypasses React rendering entirely for the per-frame gradient update (~60fps).
- *
- * useLayoutEffect sets the initial gradient before first paint to avoid a flash
- * of invisible text. The useEffect subscriber takes over for subsequent frames.
- *
- * currentTimeHigh is read through useCurrentTimeHigh (non-reactive), so the
- * per-frame store subscription stays outside React's render cycle.
+ * Pure presentational word. Memoized so only the current word (whose progress
+ * changes every frame) re-renders; past/future words keep stable props and skip.
  */
-const CurrentWord = ({
-  text,
-  absoluteStartMs,
-  durationMs,
-}: {
-  text: string;
-  absoluteStartMs: number;
-  durationMs: number;
-}) => {
-  const spanRef = useRef<HTMLSpanElement>(null);
-  const timeHigh = useCurrentTimeHigh();
-
-  // Set initial gradient before first paint — avoids flash
-  useLayoutEffect(() => {
-    const el = spanRef.current;
-    if (!el) return;
-
-    const currentTimeHigh = timeHigh.read();
-    const elapsed = currentTimeHigh * 1000 - absoluteStartMs;
-    const progress = Math.min(Math.max(elapsed / durationMs, 0), 1);
-    el.style.backgroundImage = `linear-gradient(to right, var(--primary) ${progress * 100}%, var(--muted-foreground) ${progress * 100}%)`;
-  }, [absoluteStartMs, durationMs, timeHigh]);
-
-  // Continue updating every frame via Zustand subscribe (zero React overhead)
-  useEffect(() => {
-    const el = spanRef.current;
-    if (!el) return;
-
-    let prevTime = -1;
-
-    const unsub = timeHigh.subscribe((currentTimeHigh) => {
-      if (currentTimeHigh === prevTime) return;
-      prevTime = currentTimeHigh;
-
-      const elapsed = currentTimeHigh * 1000 - absoluteStartMs;
-      const progress = Math.min(Math.max(elapsed / durationMs, 0), 1);
-      el.style.backgroundImage = `linear-gradient(to right, var(--primary) ${progress * 100}%, var(--muted-foreground) ${progress * 100}%)`;
-    });
-
-    return unsub;
-  }, [absoluteStartMs, durationMs, timeHigh]);
-
-  return (
-    <span ref={spanRef} className="bg-clip-text text-transparent">
-      {text}
-    </span>
-  );
-};
-
-export const Word = ({
+export const Word = memo(function Word({
   text,
   status,
-  absoluteStartMs,
-  durationMs,
-}: WordProps) => {
+  progress = 0,
+}: WordProps) {
   if (status === 'past-line') {
     return <span>{text}</span>;
   }
@@ -92,13 +35,16 @@ export const Word = ({
 
   if (status === 'current-word') {
     return (
-      <CurrentWord
-        text={text}
-        absoluteStartMs={absoluteStartMs}
-        durationMs={durationMs}
-      />
+      <span
+        className="bg-clip-text text-transparent"
+        style={{
+          backgroundImage: `linear-gradient(to right, var(--primary) ${progress * 100}%, var(--muted-foreground) ${progress * 100}%)`,
+        }}
+      >
+        {text}
+      </span>
     );
   }
 
   return <span className="text-muted-foreground">{text}</span>;
-};
+});

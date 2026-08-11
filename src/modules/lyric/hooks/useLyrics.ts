@@ -5,55 +5,30 @@ import { usePlayerStore } from '@/modules/player/stores/player';
 
 interface LyricsState {
   lines: LyricLine[];
-  active: readonly [number, number];
+  activeLine: number;
   hasLyrics: boolean;
   hasYrc: boolean;
   tlyric: LyricLine[];
 }
 
 /**
- * Synchronously compute [lineIndex, wordIndex] from the given time and lyric data.
+ * Synchronously compute active line index from the given time and lyric data.
  * Pure function — no side effects, safe for lazy state init and subscriber callbacks.
  */
-function computeActive(
+function computeActiveLine(
   currentTime: number,
   lines: LyricLine[],
-  hasYrc: boolean,
-): readonly [number, number] {
-  if (lines.length === 0) return [-1, -1];
+): number {
+  if (lines.length === 0) return -1;
 
   const ms = currentTime * 1000;
 
-  // Find active line (reverse scan)
-  let lineIndex = -1;
+  // Reverse scan for the last line whose start is reached
   for (let i = lines.length - 1; i >= 0; i--) {
-    if (ms >= lines[i].startMs) {
-      lineIndex = i;
-      break;
-    }
+    if (ms >= lines[i].startMs) return i;
   }
 
-  // Find active word (YRC only)
-  let wordIndex = -1;
-  if (hasYrc && lineIndex >= 0) {
-    const line = lines[lineIndex];
-    if (line.words?.length) {
-      const elapsed = ms - line.startMs;
-      for (let i = line.words.length - 1; i >= 0; i--) {
-        const word = line.words[i];
-        if (elapsed < word.startMs) continue;
-        const wordEnd = word.startMs + word.durationMs;
-        if (elapsed <= wordEnd) {
-          wordIndex = i;
-          break;
-        }
-        wordIndex = i;
-        break;
-      }
-    }
-  }
-
-  return [lineIndex, wordIndex];
+  return -1;
 }
 
 export const useLyrics = (
@@ -67,27 +42,23 @@ export const useLyrics = (
   const mainLines = hasYrc ? yrc : lyric;
   const lines = mainLines.length > 0 ? mainLines : tlyric;
 
-  // Refs hold latest data for the Zustand subscriber without effect deps churn
+  // Ref holds latest data for the Zustand subscriber without effect deps churn.
+  // No deps: intentionally synced after every render to keep refs current.
   const linesRef = useRef(lines);
-  const hasYrcRef = useRef(hasYrc);
 
-  // Sync refs after render so subscriber always reads the latest lyrics data.
-  // No deps: intentionally runs after every render to keep refs current.
   useEffect(() => {
     linesRef.current = lines;
-    hasYrcRef.current = hasYrc;
   });
 
-  // Eagerly compute active on mount so the scroll position is correct on first paint.
+  // Eagerly compute active line on mount so the scroll position is correct on first paint.
   // Lazy initializer runs once; subsequent updates come from the Zustand subscriber.
-  const [active, setActive] = useState<readonly [number, number]>(() =>
-    computeActive(usePlayerStore.getState().currentTime, lines, hasYrc),
+  const [activeLine, setActiveLine] = useState<number>(() =>
+    computeActiveLine(usePlayerStore.getState().currentTime, lines),
   );
 
-  // Subscribe to currentTime via Zustand — only setState when line or word index changes.
+  // Subscribe to currentTime via Zustand — only setState when the line index changes.
   useEffect(() => {
-    let prevLine = active[0];
-    let prevWord = active[1];
+    let prevLine = activeLine;
     let prevTime = -1;
 
     const unsub = usePlayerStore.subscribe((state) => {
@@ -95,16 +66,11 @@ export const useLyrics = (
       if (currentTime === prevTime) return;
       prevTime = currentTime;
 
-      const [lineIndex, wordIndex] = computeActive(
-        currentTime,
-        linesRef.current,
-        hasYrcRef.current,
-      );
+      const lineIndex = computeActiveLine(currentTime, linesRef.current);
 
-      if (lineIndex !== prevLine || wordIndex !== prevWord) {
+      if (lineIndex !== prevLine) {
         prevLine = lineIndex;
-        prevWord = wordIndex;
-        setActive([lineIndex, wordIndex]);
+        setActiveLine(lineIndex);
       }
     });
 
@@ -113,7 +79,7 @@ export const useLyrics = (
 
   return {
     lines,
-    active,
+    activeLine,
     hasLyrics: lines.length > 0,
     hasYrc,
     tlyric,

@@ -7,41 +7,22 @@ import {
   ncmLoginQrKey,
   ncmLoginStatus,
 } from './api';
-import type {
-  CaptchaResponse,
-  LoginResponse,
-  LoginStatusResponse,
-  QrCheckResponse,
-  QrCreateResponse,
-  QrKeyResponse,
-} from './types';
-
-export type {
-  CaptchaResponse,
-  LoginResponse,
-  LoginStatusResponse,
-  QrCheckResponse,
-  QrCreateResponse,
-  QrKeyResponse,
-} from './types';
 
 export const authSlice = {
   loginCellphone: (
     params: { phone: string } & ({ password: string } | { captcha: string }),
-  ) => ncmLoginCellphone<LoginResponse>(params),
+  ) => ncmLoginCellphone(params),
 
-  captchaSent: (phone: string) =>
-    ncmCaptchaSent<CaptchaResponse>({ phone }),
+  captchaSent: (phone: string) => ncmCaptchaSent({ phone }),
 
   captchaVerify: (phone: string, captcha: string) =>
-    ncmCaptchaVerify<CaptchaResponse>({ phone, captcha }),
+    ncmCaptchaVerify({ phone, captcha }),
 
-  qrKey: () => ncmLoginQrKey<QrKeyResponse>(),
+  qrKey: () => ncmLoginQrKey(),
 
-  qrCreate: (key: string) =>
-    ncmLoginQrCreate<QrCreateResponse>({ key, qrimg: 'true' }),
+  qrCreate: (key: string) => ncmLoginQrCreate({ key, qrimg: 'true' }),
 
-  qrCheck: (key: string) => ncmLoginQrCheck<QrCheckResponse>({ key }),
+  qrCheck: (key: string) => ncmLoginQrCheck({ key }),
 
-  loginStatus: () => ncmLoginStatus<LoginStatusResponse>(),
+  loginStatus: () => ncmLoginStatus(),
 };

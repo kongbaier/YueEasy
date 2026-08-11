@@ -4,7 +4,7 @@ import { SmartImage } from '@/shared/ui/image';
 import { formatCount } from '@/shared/utils/format';
 import { cn, getNcmImageUrl } from '@/shared/lib/utils';
 import { useComments } from '@/shared/hooks/useComments';
-import type { NcmComment } from '@/tauri/ncm/types/comment.response';
+import type { Comment } from '@/shared/types/entities';
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */
@@ -21,7 +21,7 @@ const formatTime = (ts: number) => {
 /*  单条评论                                                           */
 /* ------------------------------------------------------------------ */
 
-const CommentItem = ({ comment }: { comment: NcmComment }) => (
+const CommentItem = ({ comment }: { comment: Comment }) => (
   <div
     className={cn(
       'rounded-lg px-3 py-2.5',
@@ -40,7 +40,7 @@ const CommentItem = ({ comment }: { comment: NcmComment }) => (
         {comment.user.nickname}
       </span>
       <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
-        {formatTime(comment.time)}
+        {formatTime(comment.timeMs)}
       </span>
     </div>
 
@@ -55,9 +55,9 @@ const CommentItem = ({ comment }: { comment: NcmComment }) => (
         {comment.beReplied.map((reply) => (
           <p
             className="text-[11px] text-muted-foreground leading-relaxed"
-            key={reply.beRepliedCommentId}
+            key={reply.id}
           >
-            <span className="text-primary/80">@{reply.user.nickname}</span>{' '}
+            <span className="text-primary/80">@{reply.user?.nickname ?? ''}</span>{' '}
             {reply.content}
           </p>
         ))}
@@ -141,7 +141,7 @@ const CommentPanelContent = ({ playlistId }: CommentPanelContentProps) => {
                 精彩评论
               </p>
               {hotComments.map((c) => (
-                <CommentItem comment={c} key={c.commentId} />
+                <CommentItem comment={c} key={c.id} />
               ))}
             </div>
           )}
@@ -155,7 +155,7 @@ const CommentPanelContent = ({ playlistId }: CommentPanelContentProps) => {
                 </p>
               )}
               {comments.map((c) => (
-                <CommentItem comment={c} key={c.commentId} />
+                <CommentItem comment={c} key={c.id} />
               ))}
             </div>
           )}
@@ -178,3 +178,7 @@ export const CommentPanel = ({ playlistId }: CommentPanelProps) => {
 };
 
 export { CommentSkeleton };
+
+
+
+

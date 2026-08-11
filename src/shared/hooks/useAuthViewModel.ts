@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import { useLoginDialog } from '@/modules/auth/loginDialogStore';
-import { authService } from '@/services/AuthService';
+import { authService } from '@/shared/services/AuthService';
 
 export function useAuthViewModel() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);

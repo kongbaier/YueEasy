@@ -37,6 +37,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
 /**
  * Restore login session from persisted cookie.
  * Called once at app startup (bootstrap).
+ * 登录状态已由 Rust 适配层归一为 `LoginStatus { profile? }`，前端不再判断 code。
  */
 export async function initAuth() {
   try {
@@ -44,19 +45,13 @@ export async function initAuth() {
     if (!cookie) return;
 
     const res = await ncm.loginStatus();
-    const profile =
-      res.data?.profile ??
-      ((res as unknown as Record<string, unknown>).profile as
-        | { userId: number; nickname: string; avatarUrl: string }
-        | undefined);
-    const statusCode =
-      res.data?.code ?? (res as unknown as Record<string, unknown>).code;
+    const profile = res.profile;
 
-    if (statusCode === 200 && profile?.userId) {
+    if (profile?.id) {
       useAuthStore.getState().setAuth({
         isLoggedIn: true,
         cookie,
-        userId: profile.userId,
+        userId: profile.id,
         nickname: profile.nickname ?? '',
         avatarUrl: profile.avatarUrl ?? '',
       });

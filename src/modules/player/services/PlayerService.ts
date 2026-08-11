@@ -3,7 +3,7 @@ import type { PlayMode, Track } from '@/core/types';
 import { EventEmitter } from '@/shared/lib/EventEmitter';
 import type { PlayerSettings } from '@/shared/types/settings';
 import { useSettingsStore } from '@/stores/settings';
-import { ncm, toFmSong } from '@/tauri/ncm';
+import { ncm } from '@/tauri/ncm';
 
 // ── Service events (engine state broadcasts) ──
 
@@ -368,8 +368,8 @@ class PlayerService {
   }
 
   async #fetchFmBatch(): Promise<Track[]> {
-    const res = await ncm.personalFm();
-    return (res.data ?? []).map(toFmSong);
+    // Rust 适配层已把 /personal_fm 归一为 Song[]，直接消费
+    return ncm.personalFm();
   }
 
   /** 漫游模式下若已到队尾则拉取一批新歌追加；返回是否成功补充了歌曲 */
@@ -451,3 +451,4 @@ class PlayerService {
 }
 
 export const playerService = new PlayerService();
+

@@ -4,14 +4,14 @@ import { AppLayout } from "./layout";
 import { PlayerPageProvider } from "@/modules/player/contexts/PlayerPageContext";
 import { LoginDialog } from "@/modules/auth/LoginDialog";
 
-const Home = lazy(() => import("@/pages/Home"));
+const Home = lazy(() => import("@/modules/home/Home"));
 const Search = lazy(() => import("@/modules/search"));
-const Playlist = lazy(() => import("@/pages/Playlist"));
-const Album = lazy(() => import("@/pages/Album"));
-const DailyRecommend = lazy(() => import("@/pages/DailyRecommend"));
-const LikedSongs = lazy(() => import("@/pages/LikedSongs"));
-const RecentPlays = lazy(() => import("@/pages/RecentPlays"));
-const Settings = lazy(() => import("@/pages/Settings"));
+const Playlist = lazy(() => import("@/modules/playlist/Playlist"));
+const Album = lazy(() => import("@/modules/album/Album"));
+const DailyRecommend = lazy(() => import("@/modules/daily/DailyRecommend"));
+const LikedSongs = lazy(() => import("@/modules/liked/LikedSongs"));
+const RecentPlays = lazy(() => import("@/modules/recent/RecentPlays"));
+const Settings = lazy(() => import("@/modules/settings/Settings"));
 const PlayerPage = lazy(() => import("@/modules/player/pages/PlayerPage"));
 
 export function AppRouter() {
@@ -36,3 +36,4 @@ export function AppRouter() {
     </BrowserRouter>
   );
 }
+

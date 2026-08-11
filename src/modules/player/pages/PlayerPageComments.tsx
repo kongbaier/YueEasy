@@ -7,7 +7,7 @@ import { formatCount } from '@/shared/utils/format';
 import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/lib/utils';
 import { useComments } from '@/shared/hooks/useComments';
-import type { NcmComment } from '@/tauri/ncm/types/comment.response';
+import type { Comment } from '@/shared/types/entities';
 
 function relativeTime(timestamp: number): string {
   const now = Date.now();
@@ -26,7 +26,7 @@ function relativeTime(timestamp: number): string {
 }
 
 interface CommentItemProps {
-  comment: NcmComment;
+  comment: Comment;
   isHot?: boolean;
 }
 
@@ -65,9 +65,9 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
         {comment.beReplied && comment.beReplied.length > 0 && (
           <div className="mt-1.5 p-2 rounded bg-surface-hover text-xs text-muted-foreground">
             {comment.beReplied.map((reply) => (
-              <span key={reply.beRepliedCommentId}>
+              <span key={reply.id}>
                 <span className="text-foreground/70">
-                  @{reply.user.nickname}
+                  @{reply.user?.nickname ?? ''}
                 </span>
                 ：{reply.content}
               </span>
@@ -77,7 +77,7 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
 
         <div className="flex items-center gap-3 mt-1.5">
           <span className="text-[10px] text-muted-foreground/60">
-            {relativeTime(comment.time)}
+            {relativeTime(comment.timeMs)}
           </span>
           <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground/60">
             <Heart className="size-2.5" />
@@ -147,7 +147,7 @@ export const PlayerPageComments = ({ songId }: { songId: number }) => {
         >
           <Virtuoso
             components={{ Scroller: VirtuosoScroller }}
-            computeItemKey={(index) => allComments[index]?.commentId ?? index}
+            computeItemKey={(index) => allComments[index]?.id ?? index}
             itemContent={(index) => (
               <CommentItem
                 comment={allComments[index]}
@@ -163,3 +163,6 @@ export const PlayerPageComments = ({ songId }: { songId: number }) => {
     </div>
   );
 };
+
+
+

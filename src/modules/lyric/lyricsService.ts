@@ -14,8 +14,8 @@ export async function fetchLyrics(trackId: number): Promise<LyricsResult> {
   const yrc = data.yrc;
 
   return {
-    lyric: data.lrc?.lyric && !yrc ? parseLrc(data.lrc.lyric) : [],
-    tlyric: data.tlyric?.lyric ? parseLrc(data.tlyric.lyric) : [],
-    yrc: yrc ? parseYrc(yrc.lyric) : [],
+    lyric: data.lrc?.text && !yrc ? parseLrc(data.lrc.text) : [],
+    tlyric: data.tlyric?.text ? parseLrc(data.tlyric.text) : [],
+    yrc: yrc ? parseYrc(yrc.text) : [],
   };
 }
