@@ -30,6 +30,7 @@ export class AudioCore {
     onCanPlay: () => void;
     onError: () => void;
   } | null = null;
+  #onEndedHandler: (() => Promise<void>) | null = null;
 
   constructor() {
     this.#events = new EventEmitter();
@@ -90,6 +91,7 @@ export class AudioCore {
       this.#state = "ended";
       this.#events.emit("ended");
       this.#tickCleanup?.();
+      void this.#onEndedHandler?.();
     });
 
     this.#audio.addEventListener("waiting", () => {
@@ -172,6 +174,14 @@ export class AudioCore {
     this.#tickCleanup?.();
     this.#audio.removeAttribute("src");
     this.#state = "idle";
+  }
+
+  /**
+   * 注册 ended 事件的外部 handler（PlayerService 注入）。
+   * AudioCore 不感知队列/策略：仅负责在 ended 时调回调，由编排层决策下一步。
+   */
+  setOnEndedHandler(handler: () => Promise<void>): void {
+    this.#onEndedHandler = handler;
   }
 
   async play(): Promise<void> {

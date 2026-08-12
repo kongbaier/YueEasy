@@ -6,7 +6,9 @@
 //!
 //! 纯逻辑：零 I/O、零网络、零第三方类型（仅 std + serde derive）。core 无外部依赖。
 
-use crate::core::types::{AdvanceResult, FmState, PlayMode, PlayerSnapshot, QueueItem};
+use crate::core::types::{
+    AdvanceResult, AfterEndAction, ContentSource, PlayMode, PlayerSnapshot, QueueItem,
+};
 
 // ── 内部小型 PRNG（xorshift64）──
 // core 零外部依赖，不依赖 rand crate；构造时可注入种子保证测试确定性。
@@ -45,18 +47,21 @@ struct SavedContext {
     mode: PlayMode,
 }
 
-/// 播放器领域引擎：队列管理、播放模式决策、FM 状态机（§2.1）。
+/// 播放器领域引擎：队列管理、内容来源/迭代策略决策（§2.1 + §2.6）。
 pub struct PlayerEngine {
     // === 对外可见状态 ===
     queue: Vec<QueueItem>,
     current_index: Option<usize>,
     mode: PlayMode,
-    fm: FmState,
+    /// 内容来源（§2.6）：Queue 走本地队列、PersonalFm 走 SDK 推送。
+    content_source: ContentSource,
 
     // === 内部状态（不对外暴露） ===
     shuffle_order: Vec<usize>,
     shuffle_pos: usize,
     fm_saved: Option<SavedContext>,
+    /// FM 已播 id 列表（从原 FmState 拆出；Queue 源时为空）。
+    fm_played_ids: Vec<u64>,
     rng: XorShift64,
     /// 前端上报的当前播放位置（秒）——位置持久化用（Phase F，快照仅存此值）。
     last_position: f64,
@@ -89,10 +94,11 @@ impl PlayerEngine {
             queue: Vec::new(),
             current_index: None,
             mode: PlayMode::Sequential,
-            fm: FmState::Idle,
+            content_source: ContentSource::Queue,
             shuffle_order: Vec::new(),
             shuffle_pos: 0,
             fm_saved: None,
+            fm_played_ids: Vec::new(),
             rng: XorShift64::new(seed),
             last_position: 0.0,
             last_playing: false,
@@ -111,21 +117,11 @@ impl PlayerEngine {
         } else {
             snapshot.current_index.filter(|&i| i < engine.queue.len())
         };
-        engine.mode = snapshot.mode;
+        engine.mode = snapshot.iteration_strategy;
+        engine.content_source = snapshot.content_source;
+        engine.fm_played_ids = snapshot.fm_played_ids;
         engine.last_position = snapshot.position_secs;
         engine.last_playing = snapshot.playing;
-        if snapshot.fm_active {
-            if let Some(track) = engine
-                .current_index
-                .and_then(|i| engine.queue.get(i))
-                .cloned()
-            {
-                engine.fm = FmState::Active {
-                    current_track: track,
-                    played_ids: snapshot.fm_played_ids,
-                };
-            }
-        }
         engine.reshuffle_if_needed();
         engine
     }
@@ -186,7 +182,7 @@ impl PlayerEngine {
         self.current_track()
     }
 
-    /// 下一首（根据 mode 决策）。FM 模式下返回 NeedFmTrack。
+    /// 下一首（根据 content_source + mode 决策）。FM 模式下返回 NeedFmTrack。
     pub fn next(&mut self) -> AdvanceResult {
         if self.is_fm_active() {
             return AdvanceResult::NeedFmTrack;
@@ -199,14 +195,19 @@ impl PlayerEngine {
         }
         match self.mode {
             PlayMode::Sequential => {
-                if ci + 1 < self.queue.len() {
-                    self.current_index = Some(ci + 1);
-                    self.reset_reported_position();
-                    AdvanceResult::PlayTrack(ci + 1)
-                } else {
-                    // 队尾不环绕（附录 B 决策③；TS 为环绕回 0）
-                    AdvanceResult::EndOfQueue
-                }
+                // 与 LoopAll 一致：边界环绕到 0（prev 早已环绕，next 对齐）。
+                // 差异：on_track_end 独立决策，Sequential 末尾返回 Stopped 保持暂停。
+                let next_idx = if ci + 1 < self.queue.len() { ci + 1 } else { 0 };
+                self.current_index = Some(next_idx);
+                self.reset_reported_position();
+                AdvanceResult::PlayTrack(next_idx)
+            }
+            PlayMode::LoopAll => {
+                // 列表循环：队尾自动绕回首（与 Sequential 不环绕的区别）
+                let next_idx = if ci + 1 < self.queue.len() { ci + 1 } else { 0 };
+                self.current_index = Some(next_idx);
+                self.reset_reported_position();
+                AdvanceResult::PlayTrack(next_idx)
             }
             PlayMode::LoopOne => {
                 // 保持当前曲目（对齐 TS RepeatOne）
@@ -236,7 +237,8 @@ impl PlayerEngine {
             return None;
         }
         match self.mode {
-            PlayMode::Sequential => {
+            PlayMode::Sequential | PlayMode::LoopAll => {
+                // Sequential 与 LoopAll 的 prev 语义相同：队首环绕到队尾
                 self.current_index = Some(if ci == 0 { self.queue.len() - 1 } else { ci - 1 });
                 self.reset_reported_position();
             }
@@ -260,9 +262,59 @@ impl PlayerEngine {
         self.current_track()
     }
 
-    /// 曲目自然播放结束。语义同 next（附录 B 决策③）。
-    pub fn on_track_end(&mut self) -> AdvanceResult {
-        self.next()
+    /// 曲目自然结束。按模式独立决策（不再 = next()）。
+    /// 返回 AfterEndAction：cmd 层据此决定 I/O（resolve URL / 拉 FM / 停止）。
+    ///
+    /// 与 `next()` 的关键差异：
+    /// - 手动 next（UI）：Sequential 末尾环绕回 0（`next()` → `PlayTrack(0)`）。
+    /// - end 后（自动）：Sequential 末尾保持暂停（`on_track_end()` → `Stopped`）。
+    ///
+    /// `PlayNext` / `ReplayCurrent` 都会推进引擎状态（current_index / 位置重置），
+    /// 保证 `current_track()` 与快照在 cmd 层 I/O 前后始终一致。
+    pub fn on_track_end(&mut self) -> AfterEndAction {
+        if self.is_fm_active() {
+            return AfterEndAction::NeedFmTrack;
+        }
+        let Some(ci) = self.current_index else {
+            return AfterEndAction::Stopped;
+        };
+        if self.queue.is_empty() {
+            return AfterEndAction::Stopped;
+        }
+        match self.mode {
+            PlayMode::LoopOne => {
+                // 重播当前曲：保留 current_index，仅重置位置
+                self.reset_reported_position();
+                AfterEndAction::ReplayCurrent
+            }
+            PlayMode::Sequential => {
+                // end 后策略：Sequential 末尾保持暂停（与手动 next 的环绕行为不同）
+                if ci + 1 < self.queue.len() {
+                    self.current_index = Some(ci + 1);
+                    self.reset_reported_position();
+                    AfterEndAction::PlayNext(ci + 1)
+                } else {
+                    AfterEndAction::Stopped
+                }
+            }
+            PlayMode::LoopAll => {
+                // end 后策略：自动环绕回 0（与手动 next 一致）
+                let next_idx = if ci + 1 < self.queue.len() { ci + 1 } else { 0 };
+                self.current_index = Some(next_idx);
+                self.reset_reported_position();
+                AfterEndAction::PlayNext(next_idx)
+            }
+            PlayMode::Shuffle => {
+                if self.shuffle_order.is_empty() {
+                    self.rebuild_shuffle();
+                }
+                self.shuffle_pos = (self.shuffle_pos + 1) % self.shuffle_order.len();
+                let idx = self.shuffle_order[self.shuffle_pos];
+                self.current_index = Some(idx);
+                self.reset_reported_position();
+                AfterEndAction::PlayNext(idx)
+            }
+        }
     }
 
     // ── 队列操作 ──
@@ -379,12 +431,11 @@ impl PlayerEngine {
             });
         }
         self.current_index = Some(0);
-        self.queue = vec![initial_track.clone()];
+        self.queue = vec![initial_track];
         self.reset_reported_position();
-        self.fm = FmState::Active {
-            current_track: initial_track,
-            played_ids: Vec::new(),
-        };
+        // 每次进入 FM 重置已播 id 列表（与原 FmState::Active { played_ids: Vec::new() } 等价）
+        self.fm_played_ids.clear();
+        self.content_source = ContentSource::PersonalFm;
     }
 
     /// 退出 FM。恢复原队列上下文。非 FM 状态调用为 no-op（附录 B 决策②守卫）。
@@ -392,7 +443,8 @@ impl PlayerEngine {
         if !self.is_fm_active() {
             return self.current_track(); // 守卫：不碰队列
         }
-        self.fm = FmState::Idle;
+        self.content_source = ContentSource::Queue;
+        self.fm_played_ids.clear();
         if let Some(ctx) = self.fm_saved.take() {
             self.queue = ctx.queue;
             self.current_index = ctx.index;
@@ -410,8 +462,7 @@ impl PlayerEngine {
 
     /// FM 切歌：cmd 层从服务端取歌后调用，替换单曲（queue=[track], index=0，保留 played_ids）。
     pub fn set_fm_track(&mut self, track: QueueItem) {
-        if let FmState::Active { current_track, .. } = &mut self.fm {
-            *current_track = track.clone();
+        if self.is_fm_active() {
             self.queue = vec![track];
             self.current_index = Some(0);
             self.reset_reported_position();
@@ -423,8 +474,10 @@ impl PlayerEngine {
     /// Phase D 未接线（FM 上报在 Phase E），仅测试使用；保留为设计 API。
     #[allow(dead_code)]
     pub fn fm_record_played(&mut self) {
-        if let FmState::Active { current_track, played_ids } = &mut self.fm {
-            played_ids.push(current_track.track_id);
+        if self.is_fm_active() {
+            if let Some(track) = self.current_track() {
+                self.fm_played_ids.push(track.track_id);
+            }
         }
     }
 
@@ -449,21 +502,17 @@ impl PlayerEngine {
     }
 
     pub fn is_fm_active(&self) -> bool {
-        matches!(self.fm, FmState::Active { .. })
+        matches!(self.content_source, ContentSource::PersonalFm)
     }
 
     /// 全量快照（§7 + 评审要求：含 fm_played_ids）。
     pub fn snapshot(&self) -> PlayerSnapshot {
-        let (fm_active, fm_played_ids) = match &self.fm {
-            FmState::Active { played_ids, .. } => (true, played_ids.clone()),
-            FmState::Idle => (false, Vec::new()),
-        };
         PlayerSnapshot {
             queue: self.queue.clone(),
             current_index: self.current_index,
-            mode: self.mode,
-            fm_active,
-            fm_played_ids,
+            iteration_strategy: self.mode,
+            content_source: self.content_source,
+            fm_played_ids: self.fm_played_ids.clone(),
             position_secs: self.last_position,
             playing: self.last_playing,
         }
@@ -479,8 +528,9 @@ impl PlayerEngine {
 
     /// 退出 FM 并丢弃快照（play_track / clear 用，对齐 TS「主动操作放弃漫游快照」）。
     fn discard_fm(&mut self) {
-        self.fm = FmState::Idle;
+        self.content_source = ContentSource::Queue;
         self.fm_saved = None;
+        self.fm_played_ids.clear();
     }
 
     /// 当前曲目变化：重置已上报位置（位置按曲目归属，切歌后旧曲目的位置对新曲目无效）。
@@ -602,22 +652,72 @@ mod tests {
     }
 
     #[test]
-    fn sequential_next_at_end_returns_end_of_queue() {
-        // 差异③：TS 队尾环绕回 0（line 92-95）；Rust 返回 EndOfQueue、位置不变
+    fn sequential_next_at_end_wraps_to_zero() {
+        // 决策：手动 next 在 Sequential 末尾环绕回 0（与 LoopAll / prev 对齐；原 Rust 返回 EndOfQueue）
         let mut e = setup(4);
         e.play_queue_at(3);
-        assert!(matches!(e.next(), AdvanceResult::EndOfQueue));
-        assert_eq!(e.current_index(), Some(3)); // 位置不变
+        assert!(matches!(e.next(), AdvanceResult::PlayTrack(0)));
+        assert_eq!(e.current_index(), Some(0)); // 位置已环绕
+        assert_eq!(e.current_track().unwrap().track_id, 0);
+    }
+
+    #[test]
+    fn on_track_end_sequential_end_returns_stopped() {
+        // end 后策略：Sequential 末尾保持暂停（与手动 next 的环绕行为不同）
+        let mut e = setup(4);
+        e.play_queue_at(3);
+        assert!(matches!(e.on_track_end(), AfterEndAction::Stopped));
+        assert_eq!(e.current_index(), Some(3)); // 位置不变，保持暂停
         assert_eq!(e.current_track().unwrap().track_id, 3);
     }
 
     #[test]
-    fn sequential_on_track_end_at_end_returns_end_of_queue() {
-        // 差异③：TS advanceOnEnd 环绕（line 107-110）；Rust EndOfQueue
+    fn on_track_end_sequential_middle_returns_play_next() {
+        // end 后策略：Sequential 中间 → 推进到下一首
+        let mut e = setup(4);
+        e.play_queue_at(1);
+        assert!(matches!(e.on_track_end(), AfterEndAction::PlayNext(2)));
+        assert_eq!(e.current_index(), Some(2));
+        assert_eq!(e.current_track().unwrap().track_id, 2);
+    }
+
+    #[test]
+    fn on_track_end_loop_one_returns_replay_current() {
+        // end 后策略：LoopOne → 重播当前曲（保留 current_index）
+        let mut e = setup(4);
+        e.play_queue_at(2);
+        e.set_mode(PlayMode::LoopOne);
+        assert!(matches!(e.on_track_end(), AfterEndAction::ReplayCurrent));
+        assert_eq!(e.current_index(), Some(2));
+        assert_eq!(e.current_track().unwrap().track_id, 2);
+    }
+
+    #[test]
+    fn on_track_end_loop_all_end_wraps_to_zero() {
+        // end 后策略：LoopAll 末尾自动环绕回 0（与手动 next 一致）
         let mut e = setup(4);
         e.play_queue_at(3);
-        assert!(matches!(e.on_track_end(), AdvanceResult::EndOfQueue));
-        assert_eq!(e.current_index(), Some(3));
+        e.set_mode(PlayMode::LoopAll);
+        assert!(matches!(e.on_track_end(), AfterEndAction::PlayNext(0)));
+        assert_eq!(e.current_index(), Some(0));
+        assert_eq!(e.current_track().unwrap().track_id, 0);
+    }
+
+    #[test]
+    fn on_track_end_empty_queue_returns_stopped() {
+        // end 后策略：空队列 → Stopped（保持暂停）
+        let mut e = setup(0);
+        assert!(matches!(e.on_track_end(), AfterEndAction::Stopped));
+        assert_eq!(e.current_index(), None);
+    }
+
+    #[test]
+    fn on_track_end_fm_returns_need_fm_track() {
+        // end 后策略：FM 模式 → NeedFmTrack（cmd 层取 personal_fm）
+        let mut e = setup(3);
+        e.enter_fm(make_item(100));
+        assert!(e.is_fm_active());
+        assert!(matches!(e.on_track_end(), AfterEndAction::NeedFmTrack));
     }
 
     #[test]
@@ -639,7 +739,7 @@ mod tests {
         e.play_queue_at(2);
         e.set_mode(PlayMode::LoopOne);
         assert!(matches!(e.next(), AdvanceResult::PlayTrack(2)));
-        assert!(matches!(e.on_track_end(), AdvanceResult::PlayTrack(2)));
+        assert!(matches!(e.on_track_end(), AfterEndAction::ReplayCurrent));
         assert_eq!(e.prev().unwrap().track_id, 2);
         assert_eq!(e.current_index(), Some(2));
     }
@@ -1108,7 +1208,7 @@ mod tests {
 
         // FM 中 next / on_track_end → NeedFmTrack（由 cmd 层取歌后 set_fm_track）
         assert!(matches!(e.next(), AdvanceResult::NeedFmTrack));
-        assert!(matches!(e.on_track_end(), AdvanceResult::NeedFmTrack));
+        assert!(matches!(e.on_track_end(), AfterEndAction::NeedFmTrack));
         // FM 中 prev 不支持
         assert!(e.prev().is_none());
 
@@ -1263,7 +1363,7 @@ mod tests {
         e.fm_record_played();
         e.set_fm_track(make_item(200));
         let snap = e.snapshot();
-        assert!(snap.fm_active);
+        assert!(matches!(snap.content_source, ContentSource::PersonalFm));
         assert_eq!(snap.fm_played_ids, vec![100]);
         let mut restored = PlayerEngine::from_snapshot(snap);
         assert!(restored.is_fm_active());
@@ -1290,8 +1390,8 @@ mod tests {
         let snap = PlayerSnapshot {
             queue: items(2),
             current_index: Some(5),
-            mode: PlayMode::Sequential,
-            fm_active: false,
+            iteration_strategy: PlayMode::Sequential,
+            content_source: ContentSource::Queue,
             fm_played_ids: Vec::new(),
             position_secs: 42.0,
             playing: true,
@@ -1309,7 +1409,7 @@ mod tests {
         // 对齐 TS line 589-595（差异：TS 返回 -1；Rust 语义为 EndOfQueue / None）
         let mut e = setup(0);
         assert!(matches!(e.next(), AdvanceResult::EndOfQueue));
-        assert!(matches!(e.on_track_end(), AdvanceResult::EndOfQueue));
+        assert!(matches!(e.on_track_end(), AfterEndAction::Stopped));
         assert!(e.prev().is_none());
         assert_eq!(e.current_index(), None);
         assert!(e.current_track().is_none());
@@ -1317,7 +1417,7 @@ mod tests {
 
     #[test]
     fn empty_queue_any_mode_ends() {
-        // 决策③：空队列任何模式 next/on_track_end → EndOfQueue
+        // 决策③：空队列任何模式 next/on_track_end → EndOfQueue / Stopped
         for mode in [PlayMode::Sequential, PlayMode::LoopOne, PlayMode::Shuffle] {
             let mut e = setup(0);
             e.set_mode(mode);
@@ -1326,19 +1426,19 @@ mod tests {
                 "empty queue next in mode {:?} should EndOfQueue",
                 mode
             );
-            assert!(matches!(e.on_track_end(), AdvanceResult::EndOfQueue));
+            assert!(matches!(e.on_track_end(), AfterEndAction::Stopped));
         }
     }
 
     #[test]
-    fn single_track_sequential_next_ends_queue() {
-        // 差异（注明）：TS 单曲 sequential 环绕回自己（line 603-608）；
-        // Rust 决策③ 不环绕 → EndOfQueue、位置不变；prev 对齐 TS 环绕回自己
+    fn single_track_sequential_next_wraps_to_itself() {
+        // 决策：单曲 Sequential 手动 next 环绕回自己（PlayTrack(0)）；
+        // end 后策略：单曲顺序播完 → Stopped（保持暂停）；prev 对齐 TS 环绕回自己
         let mut e = setup(1);
         assert_eq!(e.current_index(), Some(0));
-        assert!(matches!(e.next(), AdvanceResult::EndOfQueue));
-        assert_eq!(e.current_index(), Some(0)); // 位置不变
-        assert!(matches!(e.on_track_end(), AdvanceResult::EndOfQueue));
+        assert!(matches!(e.next(), AdvanceResult::PlayTrack(0)));
+        assert_eq!(e.current_index(), Some(0)); // 环绕回自己，位置不变
+        assert!(matches!(e.on_track_end(), AfterEndAction::Stopped));
         assert_eq!(e.prev().unwrap().track_id, 0);
     }
 
@@ -1347,7 +1447,7 @@ mod tests {
         let mut e = setup(1);
         e.set_mode(PlayMode::LoopOne);
         assert!(matches!(e.next(), AdvanceResult::PlayTrack(0)));
-        assert!(matches!(e.on_track_end(), AdvanceResult::PlayTrack(0)));
+        assert!(matches!(e.on_track_end(), AfterEndAction::ReplayCurrent));
         assert_eq!(e.prev().unwrap().track_id, 0);
     }
 

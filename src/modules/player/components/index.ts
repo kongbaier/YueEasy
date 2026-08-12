@@ -1,4 +1,5 @@
 export { PlayerBar } from './PlayerBar';
-export { PlayModeControl } from './PlayModeControl';
+export { SourceSwitcher } from './SourceSwitcher';
+export { StrategyCycler } from './StrategyCycler';
 export { QueuePanel } from './QueuePanel';
 export { SeekBar } from './SeekBar';

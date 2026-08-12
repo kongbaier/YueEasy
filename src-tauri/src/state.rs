@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::core::types::{PlayMode, QueueItem};
+use crate::core::types::{ContentSource, PlayMode, QueueItem};
 use crate::core::PlayerEngine;
 use crate::infra::storage::db::Database;
 
@@ -16,12 +16,16 @@ use crate::infra::storage::db::Database;
 pub struct PlayerState {
     /// 播放器领域引擎 —— 所有播放命令共享同一实例。
     pub engine: Arc<Mutex<PlayerEngine>>,
+    /// 最近一次成功 resolve 的播放 URL（LoopOne 重播时复用，避免重复 NCM 请求）。
+    /// `(track_id, url)`：track_id 用于匹配当前曲，防止旧缓存命中。
+    pub last_url: Arc<Mutex<Option<(u64, String)>>>,
 }
 
 impl Default for PlayerState {
     fn default() -> Self {
         Self {
             engine: Arc::new(Mutex::new(PlayerEngine::new())),
+            last_url: Arc::new(Mutex::new(None)),
         }
     }
 }
@@ -52,8 +56,6 @@ pub fn persist_snapshot(app: &AppHandle, player: &PlayerState) {
 #[derive(Serialize)]
 #[serde(tag = "event", content = "data")]
 pub enum PlayerEvent {
-    /// Phase D 不发射（SMTC 媒体键等 Rust 内部路径在 Phase E 推送，设计 §4.4）。
-    #[allow(dead_code)]
     #[serde(rename = "player:track-changed")]
     TrackChanged { track: QueueItem },
     #[serde(rename = "player:queue-changed")]
@@ -61,12 +63,12 @@ pub enum PlayerEvent {
         items: Vec<QueueItem>,
         current_index: Option<usize>,
     },
-    #[serde(rename = "player:mode-changed")]
-    ModeChanged { mode: PlayMode },
-    /// Phase D 不发射（enter/exit_fm 以 PlayUrlInfo 响应为主；镜像在 Phase E）。
-    #[allow(dead_code)]
-    #[serde(rename = "player:fm-state-changed")]
-    FmStateChanged { active: bool },
+    /// 迭代策略变更（sequential / loop_all / loop_one / shuffle）。
+    #[serde(rename = "player:iteration-strategy-changed")]
+    IterationStrategyChanged { iteration_strategy: PlayMode },
+    /// 内容来源变更（queue / personal_fm）；取代原 `player:fm-state-changed`。
+    #[serde(rename = "player:content-source-changed")]
+    ContentSourceChanged { source: ContentSource },
     #[serde(rename = "player:seek-to")]
     SeekTo { position_secs: f64 },
     #[serde(rename = "player:queue-ended")]

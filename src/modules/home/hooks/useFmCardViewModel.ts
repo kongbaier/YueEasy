@@ -10,14 +10,14 @@ import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
 import { toast } from '@/shared/lib/toast';
 
 /**
- * 私人漫游卡片 viewmodel：组合预请求候选歌 + queue store 的 enterFm / MirrorStore 的漫游状态。
+ * 私人漫游卡片 viewmodel：组合预请求候选歌 + queue store 的 setContentSource / MirrorStore 的内容来源。
  * 只订阅 store / context，组件不再直接触碰它们。
  */
 export function useFmCardViewModel() {
   // Rust 模式下 queue store 的 syncQueueDerived 早退，isFm/currentTrack 恒空值；
-  // 漫游状态改读 MirrorStore（fmActive / currentTrack wire 字段），enterFm action 仍走 queue store。
-  const isFm = usePlayerMirrorStore((s) => s.fmActive);
-  const enterFm = useQueueStore((s) => s.enterFm);
+  // 内容来源（FM 标志）改读 MirrorStore.contentSource，setContentSource action 仍走 queue store。
+  const isFm = usePlayerMirrorStore((s) => s.contentSource === 'personal_fm');
+  const setContentSource = useQueueStore((s) => s.setContentSource);
   const currentTrackRaw = usePlayerMirrorStore((s) => s.currentTrack);
   const currentTrack = currentTrackRaw ? queueItemToSong(currentTrackRaw) : null;
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
@@ -59,8 +59,8 @@ export function useFmCardViewModel() {
       }
       setPending(true);
       try {
-        // 直接消费预请求的歌曲批次（封面对应的那首就是第一首播放的），service 已映射为 Track[]
-        await enterFm(previewSongs ?? []);
+        // 切换 contentSource 为 personal_fm（Rust 端 fetch 曲目）；预请求仅用于 UI 封面显示
+        await setContentSource('personal_fm');
         // 已消费，下次回到 home 重新拉新的推荐
         queryClient.invalidateQueries({ queryKey: ['personal-fm', 'preview'] });
         if (openPage) openPlayerPage();
@@ -76,8 +76,7 @@ export function useFmCardViewModel() {
       isFm,
       openPlayerPage,
       setLoginDialogOpen,
-      enterFm,
-      previewSongs,
+      setContentSource,
       queryClient,
     ],
   );

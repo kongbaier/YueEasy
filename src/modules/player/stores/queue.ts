@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
-import type { Track } from '@/shared/types/player';
+import type { RustContentSource, Track } from '@/shared/types/player';
 import { playerService } from '../services/PlayerService';
+import { isQueueEnded } from '../services/PlayerService';
 import { songToQueueItem } from '@/shared/utils/mappers';
 import type { PlayUrlInfo } from '@/shared/types/player';
 
@@ -13,7 +14,15 @@ export { formatQueueCount } from '@/shared/utils/format';
 async function rustLoadAndPlay(command: string, args?: Record<string, unknown>): Promise<void> {
   // 切歌前上报旧曲目最终进度/状态（引擎随后重置位置）
   await playerService.flushPosition();
-  const result = await invoke<PlayUrlInfo>(command, args);
+  let result: PlayUrlInfo;
+  try {
+    result = await invoke<PlayUrlInfo>(command, args);
+  } catch (err) {
+    // Rust 引擎正常态：advance 语义（play_next / fm_trash）在队列耗尽时返回
+    // `Err("queue ended")`，视为自然结束、保持暂停即可；其余错误上抛由调用方处理。
+    if (isQueueEnded(err)) return;
+    throw err;
+  }
   await playerService.audioCore.load(result.url);
   await playerService.audioCore.play();
 }
@@ -38,8 +47,8 @@ export interface QueueStore {
   playFromIndex: (index: number) => Promise<void>;
   removeFromQueue: (index: number) => Promise<void>;
   clearQueue: () => void;
-  enterFm: (tracks?: Track[]) => Promise<void>;
-  exitFm: () => Promise<void>;
+  /** 切换内容来源（"queue" / "personal_fm"）—— 取代原 enterFm/exitFm。 */
+  setContentSource: (source: RustContentSource) => Promise<void>;
   fmTrash: () => Promise<void>;
 }
 
@@ -91,19 +100,8 @@ export const useQueueStore = create<QueueStore>()(
       void invoke<void>('clear_queue');
     },
 
-    enterFm: async (_tracks) => {
-      // Rust 自动取歌（enter_fm 无参数），预请求候选歌暂不使用
-      await rustLoadAndPlay('enter_fm');
-    },
-
-    exitFm: async () => {
-      // 切回原队列前上报 FM 曲目最终进度/状态
-      await playerService.flushPosition();
-      const result = await invoke<PlayUrlInfo>('exit_fm');
-      if (result.track) {
-        await playerService.audioCore.load(result.url);
-        await playerService.audioCore.play();
-      }
+    setContentSource: async (source) => {
+      await rustLoadAndPlay('set_content_source', { source });
     },
 
     fmTrash: async () => {

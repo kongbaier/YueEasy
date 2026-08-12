@@ -22,17 +22,22 @@ export function usePlayerEvents(): void {
           usePlayerMirrorStore.setState({
             queue: payload.data.items,
             currentIndex: payload.data.current_index,
+            queueEnded: false, // 队列变化时清 ended 标志
           });
           break;
-        case 'player:mode-changed':
-          usePlayerMirrorStore.setState({ mode: payload.data.mode });
+        case 'player:iteration-strategy-changed':
+          usePlayerMirrorStore.setState({
+            iterationStrategy: payload.data.iteration_strategy,
+          });
           break;
-        case 'player:fm-state-changed':
-          usePlayerMirrorStore.setState({ fmActive: payload.data.active });
+        case 'player:content-source-changed':
+          usePlayerMirrorStore.setState({ contentSource: payload.data.source });
           break;
         case 'player:seek-to':
+          // 可选事件：SMTC seek 回传，暂不映射到 MirrorStore（Phase F 再评估）。
+          break;
         case 'player:queue-ended':
-          // 可选事件：SMTC seek 回传 / 队列耗尽，暂不映射到 MirrorStore（Phase F 再评估）。
+          usePlayerMirrorStore.setState({ queueEnded: true });
           break;
       }
     }).then((fn) => {

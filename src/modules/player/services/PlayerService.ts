@@ -6,6 +6,15 @@ import { usePlayerMirrorStore } from '@/stores/playerMirror';
 import { useSettingsStore } from '@/stores/settings';
 import { invoke } from '@tauri-apps/api/core';
 
+/**
+ * Rust `advance_once` 的正常结束哨兵（队尾 / 队列空）—— 非错误，不上抛。
+ * 调用方（queue store 的 `next` / `fmTrash`、本服务的 `#handleEnded` / `resumeFromEnd`）识别后静默吞掉。
+ */
+export function isQueueEnded(err: unknown): boolean {
+  if (err instanceof Error) return err.message === 'queue ended';
+  return String(err) === 'queue ended';
+}
+
 // ── Service events (engine state broadcasts) ──
 
 export type PlayerEvents = {
@@ -27,9 +36,13 @@ class PlayerService {
   // 位置持久化：周期上报 timer（单个 setInterval，暂停即清除）+ seek 去抖
   #positionTimer: number | null = null;
   #seekDebounceTimer: number | null = null;
+  // end-after 决策防重入（ended 回调 / resumeFromEnd 并发时只允许一个接管）
+  #endInProgress: boolean = false;
 
   constructor() {
     this.#audio = new AudioCore();
+    // ended 决策编排：AudioCore 不感知队列/策略，由本服务询问 Rust 下一步
+    this.#audio.setOnEndedHandler(() => this.#handleEnded());
     this.#wireAudio();
     this.#applyPlayerSettings(useSettingsStore.getState().player);
 
@@ -80,8 +93,37 @@ class PlayerService {
       this.#stopPositionReporting();
       // 曲目自然结束也落盘（结束位置 + playing=false）
       void this.#reportPositionNow();
+      // 推进职责已下放给 setOnEndedHandler 注册的 #handleEnded 回调
     });
   }
+
+  /**
+   * end-after 决策（AudioCore ended → Rust `decide_after_end` → load + play）。
+   * Rust 决策层是单一权威：PlayTrack/NeedFmTrack → PlayUrlInfo；队列耗尽 → Err("queue ended")。
+   * 与旧 `#advanceOnEnd` 的关键差别：不再假设返回 URL，Stopped（queue ended）是合法结果。
+   */
+  async #dispatchEndAction(): Promise<void> {
+    const result = await invoke<PlayUrlInfo>('decide_after_end');
+    await this.#audio.load(result.url);
+    await this.#audio.play();
+  }
+
+  /**
+   * AudioCore ended 回调：询问 Rust "end 后该做什么"。
+   * 队尾（queue ended）自然保持暂停；其他错误记日志不阻断（与 restorePlayerState 同策略）。
+   */
+  #handleEnded = async (): Promise<void> => {
+    if (this.#endInProgress) return; // 防重入
+    this.#endInProgress = true;
+    try {
+      await this.#dispatchEndAction();
+    } catch (err) {
+      if (isQueueEnded(err)) return; // 队尾：自然保持暂停
+      console.warn('[PlayerService] 曲目自然结束推进失败（保持暂停）:', err);
+    } finally {
+      this.#endInProgress = false;
+    }
+  };
 
   #applyPlayerSettings(settings: PlayerSettings): void {
     this.setVolume(settings.volume);
@@ -164,6 +206,23 @@ class PlayerService {
     this.#audio.pause();
   }
 
+  /**
+   * 队尾/ended 态点 play：从队列第一个开始（Sequential 末尾行为）。
+   * 复用 decide_after_end：Rust 决策层是单一权威。
+   */
+  async resumeFromEnd(): Promise<void> {
+    if (this.#endInProgress) return; // 让 #handleEnded 接管
+    this.#endInProgress = true;
+    try {
+      await this.#dispatchEndAction();
+    } catch (err) {
+      if (isQueueEnded(err)) return;
+      console.warn('[PlayerService] 队尾恢复失败:', err);
+    } finally {
+      this.#endInProgress = false;
+    }
+  }
+
   seek(time: number): void {
     this.#audio.seek(time);
     // seek 落盘（去抖 500ms 后上报一次）
@@ -196,8 +255,8 @@ export async function restorePlayerState(): Promise<void> {
       currentTrack: current_track,
       queue: snapshot.queue,
       currentIndex: snapshot.current_index,
-      mode: snapshot.mode,
-      fmActive: snapshot.fm_active,
+      iterationStrategy: snapshot.iteration_strategy,
+      contentSource: snapshot.content_source,
       playing: snapshot.playing,
     });
     if (!current_track) return;

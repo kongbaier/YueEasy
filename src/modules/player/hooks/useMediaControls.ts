@@ -17,6 +17,11 @@ export function useMediaControls() {
   const handlePlay = useCallback(async () => {
     const audio = playerService.audioCore;
     if (usePlayerStore.getState().loading) return;
+    // ended 态：队尾/自然结束后点 play → 询问 Rust 该做什么
+    if (audio.state === 'ended') {
+      void playerService.resumeFromEnd();
+      return;
+    }
     if (audio.state === 'idle' || audio.state === 'error') {
       // 没有已加载的源：镜像 rustLoadAndPlay（invoke resolve_play_url → load → play）
       const trackId = usePlayerMirrorStore.getState().currentTrack?.track_id;

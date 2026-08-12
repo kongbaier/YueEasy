@@ -13,7 +13,7 @@ export interface PlayerStore {
   seek: (time: number) => void;
 }
 
-export const usePlayerStore = create<PlayerStore>((set) => {
+export const usePlayerStore = create<PlayerStore>((set, get) => {
   // ── Mirror playback state from the service (single source of truth) ──
 
   playerService.on('play', () => set({ playing: true }));
@@ -22,7 +22,11 @@ export const usePlayerStore = create<PlayerStore>((set) => {
   playerService.on('loading', () => set({ loading: true }));
   playerService.on('ready', () => set({ loading: false }));
   playerService.on('error', () => set({ loading: false, playing: false }));
-  playerService.on('timeupdate', (currentTime) => set({ currentTime }));
+  playerService.on('timeupdate', (currentTime) => {
+    // 钳制到 duration：ended/流边界处 timeupdate 偶发越过 duration，避免进度条溢出
+    const duration = get().duration;
+    set({ currentTime: Math.min(currentTime, duration || Infinity) });
+  });
   playerService.on('timetick', (currentTimeHigh) =>
     set({ currentTimeHigh }),
   );

@@ -7,7 +7,7 @@
 use serde::Serialize;
 use tauri::{AppHandle, State};
 
-use crate::core::types::{AdvanceResult, PlayMode, QueueItem};
+use crate::core::types::{AdvanceResult, AfterEndAction, ContentSource, PlayMode, QueueItem};
 use crate::infra::ncm::entity::SongUrlResult;
 use crate::infra::ncm::NcmState;
 use crate::service::ncm_service::NcmService;
@@ -39,7 +39,9 @@ pub(crate) async fn resolve_url(
         .ok_or_else(|| format!("无法获取曲目 {} 的播放地址", track.track_id))
 }
 
-/// 共享推进逻辑：`play_next` / `advance_on_end` 同一语义（engine 中 `on_track_end == next`）。
+/// 共享「手动推进」逻辑：`play_next` / `fm_trash` 走 `engine.next()`（Sequential 末尾环绕）。
+/// 注意：与 `decide_after_end`（曲目自然结束，走 `engine.on_track_end()`）语义不同——
+/// 手动 next 在 Sequential 末尾环绕回 0，end 后策略保持暂停。
 async fn advance_once(
     app: &AppHandle,
     player: &PlayerState,
@@ -47,7 +49,7 @@ async fn advance_once(
 ) -> Result<PlayUrlInfo, String> {
     let result = {
         let mut engine = player.engine.lock().unwrap();
-        engine.on_track_end()
+        engine.next()
     };
     match result {
         AdvanceResult::PlayTrack(idx) => {
@@ -56,6 +58,7 @@ async fn advance_once(
                 engine.queue_items()[idx].clone()
             };
             let url = resolve_url(app, ncm, &track, None).await?;
+            *player.last_url.lock().unwrap() = Some((track.track_id, url.clone()));
             emit_queue_changed(app, player);
             emit_player_event(app, PlayerEvent::TrackChanged { track: track.clone() });
             persist_snapshot(app, player);
@@ -72,6 +75,7 @@ async fn advance_once(
                 .map(NcmService::song_to_queue_item)
                 .ok_or_else(|| "FM 暂无可用曲目".to_string())?;
             let url = resolve_url(app, ncm, &track, None).await?;
+            *player.last_url.lock().unwrap() = Some((track.track_id, url.clone()));
             {
                 let mut engine = player.engine.lock().unwrap();
                 engine.set_fm_track(track.clone());
@@ -194,34 +198,104 @@ pub(crate) async fn play_prev(
     Ok(PlayUrlInfo { track, url })
 }
 
-/// 当前曲目自然结束时调用。语义同 play_next。
+/// 曲目自然结束后由前端调用（替代 advance_on_end）。
+/// 按 engine.on_track_end() 决策返回 PlayUrlInfo 或 Err("queue ended")。
+/// Stopped 走 Err("queue ended") 路径，与前端 isQueueEnded 协议保持兼容。
 #[tauri::command]
-pub(crate) async fn advance_on_end(
+pub(crate) async fn decide_after_end(
     app: AppHandle,
     player: State<'_, PlayerState>,
     ncm: State<'_, NcmState>,
 ) -> Result<PlayUrlInfo, String> {
-    advance_once(&app, &player, &ncm).await
+    let action = {
+        let mut engine = player.engine.lock().unwrap();
+        engine.on_track_end()
+    };
+    match action {
+        AfterEndAction::PlayNext(idx) => {
+            let track = {
+                let engine = player.engine.lock().unwrap();
+                engine.queue_items()[idx].clone()
+            };
+            let url = resolve_url(&app, &ncm, &track, None).await?;
+            // 更新 last_url 缓存
+            *player.last_url.lock().unwrap() = Some((track.track_id, url.clone()));
+            emit_queue_changed(&app, &player);
+            emit_player_event(&app, PlayerEvent::TrackChanged { track: track.clone() });
+            persist_snapshot(&app, &player);
+            Ok(PlayUrlInfo { track, url })
+        }
+        AfterEndAction::ReplayCurrent => {
+            let track = {
+                let engine = player.engine.lock().unwrap();
+                engine.current_track()
+                    .ok_or_else(|| "no current track".to_string())?
+                    .clone()
+            };
+            // 优先用 last_url 缓存（track_id 匹配），避免重复 NCM URL 请求
+            let url = {
+                let cache = player.last_url.lock().unwrap().clone();
+                match cache {
+                    Some((tid, u)) if tid == track.track_id => u,
+                    _ => {
+                        let u = resolve_url(&app, &ncm, &track, None).await?;
+                        *player.last_url.lock().unwrap() = Some((track.track_id, u.clone()));
+                        u
+                    }
+                }
+            };
+            // LoopOne 不需要切歌：保留 current_index、不 emit TrackChanged（引擎已重置位置）
+            persist_snapshot(&app, &player);
+            Ok(PlayUrlInfo { track, url })
+        }
+        AfterEndAction::NeedFmTrack => {
+            // 复用 advance_once 的 FM 分支逻辑（await 在锁外）
+            let songs = NcmService::personal_fm(&app, &ncm)
+                .await
+                .map_err(|e| e.to_string())?;
+            let track = songs
+                .iter()
+                .next()
+                .map(NcmService::song_to_queue_item)
+                .ok_or_else(|| "FM 暂无可用曲目".to_string())?;
+            let url = resolve_url(&app, &ncm, &track, None).await?;
+            {
+                let mut engine = player.engine.lock().unwrap();
+                engine.set_fm_track(track.clone());
+            }
+            *player.last_url.lock().unwrap() = Some((track.track_id, url.clone()));
+            emit_queue_changed(&app, &player);
+            emit_player_event(&app, PlayerEvent::TrackChanged { track: track.clone() });
+            persist_snapshot(&app, &player);
+            Ok(PlayUrlInfo { track, url })
+        }
+        AfterEndAction::Stopped => {
+            emit_player_event(&app, PlayerEvent::QueueEnded);
+            Err("queue ended".to_string())
+        }
+    }
 }
 
-/// 设置播放模式（"sequential" / "loop_one" / "shuffle"）。非法值 → Err。
+/// 设置迭代策略（"sequential" / "loop_all" / "loop_one" / "shuffle"）。非法值 → Err。
+/// FM 模式下策略字段被引擎忽略（§2.6：content_source 决定行为来源）。
 #[tauri::command]
-pub(crate) async fn set_play_mode(
+pub(crate) async fn set_iteration_strategy(
     app: AppHandle,
     player: State<'_, PlayerState>,
-    mode: String,
+    strategy: String,
 ) -> Result<(), String> {
-    let mode = match mode.as_str() {
+    let strategy = match strategy.as_str() {
         "sequential" => PlayMode::Sequential,
+        "loop_all" => PlayMode::LoopAll,
         "loop_one" => PlayMode::LoopOne,
         "shuffle" => PlayMode::Shuffle,
-        _ => return Err(format!("未知播放模式：{mode}")),
+        _ => return Err(format!("未知迭代策略：{strategy}")),
     };
     {
         let mut engine = player.engine.lock().unwrap();
-        engine.set_mode(mode);
+        engine.set_mode(strategy);
     }
-    emit_player_event(&app, PlayerEvent::ModeChanged { mode });
+    emit_player_event(&app, PlayerEvent::IterationStrategyChanged { iteration_strategy: strategy });
     persist_snapshot(&app, &player);
     Ok(())
 }
@@ -233,51 +307,66 @@ pub(crate) async fn seek(app: AppHandle, position_secs: f64) -> Result<(), Strin
     crate::infra::platform::media_session::update_position(&app, position_secs)
 }
 
-/// 进入 FM：取一首 FM 曲目作为初始单曲。
+/// 切换内容来源（"queue" / "personal_fm"）。
+/// - queue：退出 FM（恢复原队列上下文）；无当前曲目 → Err。
+/// - personal_fm：从 NCM 取一首 FM 曲目作为初始单曲；与原 `enter_fm` 语义一致
+///   （每次调用都重新取歌 + 替换单曲 + 重置 played_ids）。
+/// 非法值 → Err。
 #[tauri::command]
-pub(crate) async fn enter_fm(
+pub(crate) async fn set_content_source(
     app: AppHandle,
     player: State<'_, PlayerState>,
     ncm: State<'_, NcmState>,
+    source: String,
 ) -> Result<PlayUrlInfo, String> {
-    let songs = NcmService::personal_fm(&app, &ncm)
-        .await
-        .map_err(|e| e.to_string())?;
-    let track = songs
-        .iter()
-        .next()
-        .map(NcmService::song_to_queue_item)
-        .ok_or_else(|| "FM 暂无可用曲目".to_string())?;
-    {
-        let mut engine = player.engine.lock().unwrap();
-        engine.enter_fm(track.clone());
+    let source = match source.as_str() {
+        "queue" => ContentSource::Queue,
+        "personal_fm" => ContentSource::PersonalFm,
+        _ => return Err(format!("未知内容来源：{source}")),
+    };
+    match source {
+        ContentSource::Queue => {
+            let track = {
+                let mut engine = player.engine.lock().unwrap();
+                engine.exit_fm().cloned()
+            };
+            let Some(track) = track else {
+                return Err("当前无曲目".to_string());
+            };
+            let url = resolve_url(&app, &ncm, &track, None).await?;
+            emit_player_event(
+                &app,
+                PlayerEvent::ContentSourceChanged { source: ContentSource::Queue },
+            );
+            emit_player_event(&app, PlayerEvent::TrackChanged { track: track.clone() });
+            emit_queue_changed(&app, &player);
+            persist_snapshot(&app, &player);
+            Ok(PlayUrlInfo { track, url })
+        }
+        ContentSource::PersonalFm => {
+            let songs = NcmService::personal_fm(&app, &ncm)
+                .await
+                .map_err(|e| e.to_string())?;
+            let track = songs
+                .iter()
+                .next()
+                .map(NcmService::song_to_queue_item)
+                .ok_or_else(|| "FM 暂无可用曲目".to_string())?;
+            {
+                let mut engine = player.engine.lock().unwrap();
+                engine.enter_fm(track.clone());
+            }
+            let url = resolve_url(&app, &ncm, &track, None).await?;
+            emit_player_event(
+                &app,
+                PlayerEvent::ContentSourceChanged { source: ContentSource::PersonalFm },
+            );
+            emit_player_event(&app, PlayerEvent::TrackChanged { track: track.clone() });
+            emit_queue_changed(&app, &player);
+            persist_snapshot(&app, &player);
+            Ok(PlayUrlInfo { track, url })
+        }
     }
-    let url = resolve_url(&app, &ncm, &track, None).await?;
-    emit_player_event(&app, PlayerEvent::TrackChanged { track: track.clone() });
-    emit_queue_changed(&app, &player);
-    persist_snapshot(&app, &player);
-    Ok(PlayUrlInfo { track, url })
-}
-
-/// 退出 FM：恢复原队列上下文。
-#[tauri::command]
-pub(crate) async fn exit_fm(
-    app: AppHandle,
-    player: State<'_, PlayerState>,
-    ncm: State<'_, NcmState>,
-) -> Result<PlayUrlInfo, String> {
-    let track = {
-        let mut engine = player.engine.lock().unwrap();
-        engine.exit_fm().cloned()
-    };
-    let Some(track) = track else {
-        return Err("当前无曲目".to_string());
-    };
-    let url = resolve_url(&app, &ncm, &track, None).await?;
-    emit_player_event(&app, PlayerEvent::TrackChanged { track: track.clone() });
-    emit_queue_changed(&app, &player);
-    persist_snapshot(&app, &player);
-    Ok(PlayUrlInfo { track, url })
 }
 
 // ── 队列操作（设计 §4.1；每次突变后推全量 QueueChanged） ───────────────

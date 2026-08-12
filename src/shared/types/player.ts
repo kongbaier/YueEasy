@@ -5,20 +5,25 @@ import type { QueueItem, Song } from './entities';
 
 // ── UI 概念（与 Rust wire 严格区分）──
 
-/** UI 显示用播放模式。故意与 RustPlayMode 不同：UI 用 'repeatOne'，wire 用 'loop_one'。 */
-export const PlayModes = ['sequential', 'shuffle', 'repeatOne'] as const;
+/** UI 显示用迭代策略。故意与 RustPlayMode 不同：UI 用 camelCase 名，wire 用 snake_case。 */
+export const PlayModes = ['sequential', 'shuffle', 'repeatOne', 'repeatAll'] as const;
 export type PlayMode = (typeof PlayModes)[number];
 
 /** Track = Song 实体的别名（兼容旧 import）。 */
 export type Track = Song;
 
-/** Rust wire → UI 映射。loop_one → repeatOne；sequential/shuffle 直通。集中维护避免散落。 */
+/** Rust wire → UI 映射。loop_one → repeatOne；loop_all → repeatAll；sequential/shuffle 直通。 */
 export function rustPlayModeToUi(rust: RustPlayMode): PlayMode {
-  return rust === 'loop_one' ? 'repeatOne' : rust;
+  if (rust === 'loop_one') return 'repeatOne';
+  if (rust === 'loop_all') return 'repeatAll';
+  return rust;
 }
 
-/** Rust `core::types::PlayMode` 的 snake_case wire 名（MirrorStore / player:mode-changed）。 */
-export type RustPlayMode = 'sequential' | 'loop_one' | 'shuffle';
+/** Rust `core::types::PlayMode` 的 snake_case wire 名（4 种迭代策略）。 */
+export type RustPlayMode = 'sequential' | 'loop_all' | 'loop_one' | 'shuffle';
+
+/** Rust `core::types::ContentSource` 的 snake_case wire 名（内容来源）。 */
+export type RustContentSource = 'queue' | 'personal_fm';
 
 /** 播放命令返回：当前曲目 + 已解析播放地址（设计 §4.4，切歌无间断优先）。 */
 export interface PlayUrlInfo {
@@ -26,12 +31,14 @@ export interface PlayUrlInfo {
   url: string;
 }
 
-/** Rust `core::types::PlayerSnapshot` wire 镜像（get_player_snapshot / get_full_player_state）。 */
+/** Rust `core::types::PlayerSnapshot` wire 镜像（get_player_snapshot / get_full_player_state）。
+ *  硬切换：旧 `mode` / `fm_active` 字段删除，新字段 `iteration_strategy` + `content_source`。 */
 export interface PlayerSnapshot {
   queue: QueueItem[];
   current_index: number | null;
-  mode: RustPlayMode;
-  fm_active: boolean;
+  iteration_strategy: RustPlayMode;
+  content_source: RustContentSource;
+  /** FM 已播 id 列表（content_source == 'personal_fm' 时累计；其他源时为空）。 */
   fm_played_ids: number[];
   /** 前端上报的当前播放位置（秒）。仅供重启恢复。 */
   position_secs: number;
@@ -55,7 +62,13 @@ export type PlayerEventPayload =
       event: 'player:queue-changed';
       data: { items: QueueItem[]; current_index: number | null };
     }
-  | { event: 'player:mode-changed'; data: { mode: RustPlayMode } }
-  | { event: 'player:fm-state-changed'; data: { active: boolean } }
+  | {
+      event: 'player:iteration-strategy-changed';
+      data: { iteration_strategy: RustPlayMode };
+    }
+  | {
+      event: 'player:content-source-changed';
+      data: { source: RustContentSource };
+    }
   | { event: 'player:seek-to'; data: { position_secs: number } }
   | { event: 'player:queue-ended'; data?: never };

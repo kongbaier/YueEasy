@@ -8,7 +8,7 @@ import {
   Play,
 } from "lucide-react";
 import { useState } from "react";
-import { PlayModeControl } from "@/modules/player/components";
+import { SourceSwitcher, StrategyCycler } from "@/modules/player/components";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "@/shared/lib/toast";
@@ -56,7 +56,10 @@ export const PlayerPageControls = ({
     <div
       className={`grid grid-cols-[auto_4fr_auto_3fr_auto_3fr_auto_4fr_auto] items-center ${className ?? ""}`}
     >
-      <PlayModeControl className="col-start-1" />
+      <div className="col-start-1 flex items-center gap-x-1">
+        <SourceSwitcher />
+        <StrategyCycler />
+      </div>
 
       <Button
         className="col-start-3 text-foreground hover:bg-transparent hover:text-primary"

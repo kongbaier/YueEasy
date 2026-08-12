@@ -19,9 +19,11 @@ import { rustPlayModeToUi, type RustPlayMode } from '@/shared/types/player';
  * 若后续出现高频重渲染问题，可按需拆分为 usePlayerTransport / usePlayerSettings / usePlayerQueue。
  */
 
-/** Rust 播放模式循环：sequential → loop_one → shuffle → sequential（设计 §4.1）。 */
-const NEXT_RUST_MODE: Record<RustPlayMode, RustPlayMode> = {
-  sequential: 'loop_one',
+/** Rust 迭代策略循环：sequential → loop_all → loop_one → shuffle → sequential（设计 §2.6 + §4.1）。
+ *  仅当 content_source == queue 时生效。 */
+const NEXT_RUST_STRATEGY: Record<RustPlayMode, RustPlayMode> = {
+  sequential: 'loop_all',
+  loop_all: 'loop_one',
   loop_one: 'shuffle',
   shuffle: 'sequential',
 };
@@ -49,12 +51,11 @@ export function usePlayer() {
       playFromIndex: s.playFromIndex,
       removeFromQueue: s.removeFromQueue,
       clearQueue: s.clearQueue,
-      enterFm: s.enterFm,
-      exitFm: s.exitFm,
+      setContentSource: s.setContentSource,
       fmTrash: s.fmTrash,
     })),
   );
-  // Rust 引擎只读镜像：队列/当前曲目/播放模式等状态一律读此镜像（不读 queue store 状态字段）。
+  // Rust 引擎只读镜像：队列/当前曲目/迭代策略/内容来源等状态一律读此镜像（不读 queue store 状态字段）。
   // 注意：playing 不在此订阅 —— 播放/暂停是真实 AudioCore 状态，由 usePlayerStore 驱动。
   const mirror = usePlayerMirrorStore(
     useShallow((s) => ({
@@ -62,10 +63,10 @@ export function usePlayer() {
       queue: s.queue,
       queueLength: s.queue.length,
       currentIndex: s.currentIndex,
-      isFm: s.fmActive,
-      fmExitWillEmpty: !s.fmActive,
+      isFm: s.contentSource === 'personal_fm',
+      fmExitWillEmpty: s.contentSource !== 'personal_fm',
       canPrev: s.currentIndex !== null && s.currentIndex > 0,
-      mode: s.mode,
+      iterationStrategy: s.iterationStrategy,
     })),
   );
   const playerSettings = useSettingsStore((s) => s.player);
@@ -81,6 +82,11 @@ export function usePlayer() {
 
   const togglePlay = useCallback(() => {
     if (usePlayerStore.getState().loading) return;
+    // ended 态：队尾/自然结束后点 play → 询问 Rust 该做什么
+    if (playerService.audioCore.state === 'ended') {
+      void playerService.resumeFromEnd();
+      return;
+    }
     // 不 invoke toggle_play_pause、不做 mirror 乐观翻转：AudioCore 的 play/pause
     // 事件自然驱动 usePlayerStore.playing（真实音频状态）。
     void playerService.audioCore.toggle();
@@ -104,10 +110,11 @@ export function usePlayer() {
     useSettingsStore.getState().updatePlayer({ isMuted: muted });
   }, []);
 
-  /** 播放模式循环：invoke set_play_mode（事件推送更新镜像）。 */
-  const cyclePlayMode = useCallback(() => {
-    const current = usePlayerMirrorStore.getState().mode;
-    void invoke<void>('set_play_mode', { mode: NEXT_RUST_MODE[current] });
+  /** 迭代策略循环：invoke set_iteration_strategy（事件推送更新镜像）。
+   *  仅当 content_source == queue 时调用方启用；FM 模式下策略字段被引擎忽略。 */
+  const cycleStrategy = useCallback(() => {
+    const current = usePlayerMirrorStore.getState().iterationStrategy;
+    void invoke<void>('set_iteration_strategy', { strategy: NEXT_RUST_STRATEGY[current] });
   }, []);
 
   return useMemo(
@@ -120,13 +127,13 @@ export function usePlayer() {
       isFm: mirror.isFm,
       fmExitWillEmpty: mirror.fmExitWillEmpty,
       canPrev: mirror.canPrev,
-      playMode: rustPlayModeToUi(mirror.mode),
+      playMode: rustPlayModeToUi(mirror.iterationStrategy),
       ...queueActions,
       togglePlay,
       seek,
       setVolume,
       setMuted,
-      cyclePlayMode,
+      cycleStrategy,
       volume: playerSettings.volume,
       isMuted: playerSettings.isMuted,
       isLoggedIn,
@@ -142,7 +149,7 @@ export function usePlayer() {
       seek,
       setVolume,
       setMuted,
-      cyclePlayMode,
+      cycleStrategy,
       isLoggedIn,
       like.isLiked,
       like.likedIds,

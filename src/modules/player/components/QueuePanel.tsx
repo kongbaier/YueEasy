@@ -98,7 +98,7 @@ export const QueuePanel = ({
     clearQueue,
     isFm,
     fmTrash,
-    exitFm,
+    setContentSource,
     fmExitWillEmpty,
   } = usePlayer();
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
@@ -149,7 +149,7 @@ export const QueuePanel = ({
 
   const handleExitFm = () => {
     const run = () => {
-      void exitFm().catch(() => toast.error('操作失败，请重试'));
+      void setContentSource('queue').catch(() => toast.error('操作失败，请重试'));
     };
     if (fmExitWillEmpty) {
       closeAfter(run);

@@ -21,7 +21,8 @@ import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
 import { formatQueueCount } from "@/shared/utils/format";
 import { usePlayerPage } from "@/modules/player/contexts/PlayerPageContext";
-import { PlayModeControl } from "./PlayModeControl";
+import { SourceSwitcher } from "./SourceSwitcher";
+import { StrategyCycler } from "./StrategyCycler";
 import { SeekBar } from "./SeekBar";
 import { VolumeControl } from "./VolumeControl";
 import { Cover } from "@/shared/ui/image";
@@ -94,8 +95,9 @@ const PlayerControls = () => {
   const hasTrack = !!currentTrack;
   return (
     <article className="flex items-center gap-x-6">
-      <section className="flex items-center">
-        <PlayModeControl />
+      <section className="flex items-center gap-x-1">
+        <SourceSwitcher />
+        <StrategyCycler />
       </section>
       <section
         className={cn(
