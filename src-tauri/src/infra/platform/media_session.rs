@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Runtime};
-use tauri_plugin_media::{MediaControlEventType, MediaExt, MediaMetadata, PlaybackStatus};
+use tauri_plugin_media::{
+    InitializeMediaSessionRequest, MediaControlEventType, MediaExt, MediaMetadata, PlaybackStatus,
+};
 
 // ── 方向一：OS 媒体键/系统媒体控制 → 前端 ───────────────────────────────
 
@@ -28,6 +30,15 @@ enum MediaSessionEvent {
 pub fn setup<R: tauri::Runtime>(
     handle: &tauri::AppHandle<R>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    // 必调：启用 SystemMediaTransportControls 整体 + 各按钮（Play/Pause/Next/Prev/Stop）。
+    // 不调则 Windows 媒体面板不出现本应用会话；Linux MPRIS 服务根本不起。
+    // app_id/app_name 在 Windows 上忽略；Linux 用 app_id 拼 org.mpris.MediaPlayer2.{app_id}，
+    // app_name 作为 MPRIS Identity 名称显示。
+    handle.media().initialize_session(InitializeMediaSessionRequest {
+        app_id: "com.kongbai.yueeasy".to_string(),
+        app_name: "YueEasy".to_string(),
+    })?;
+
     let h = handle.clone();
     handle.media().set_event_handler(move |event| {
         let payload = match event.event_type {
