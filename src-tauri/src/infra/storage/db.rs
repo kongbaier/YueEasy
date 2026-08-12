@@ -2,6 +2,8 @@ use rusqlite::Connection;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
+use crate::core::types::PlayerSnapshot;
+
 use super::paths;
 
 pub struct Database {
@@ -30,7 +32,36 @@ impl Database {
                 played_at TEXT DEFAULT (datetime('now'))
             );",
         )?;
+        // Phase F：播放器状态快照（崩溃/重启续播）。只追加新表，不动 play_history。
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS player_snapshot (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );",
+        )?;
         Ok(())
+    }
+
+    /// 保存播放器快照（JSON，单行 key='current'）。错误静默忽略（WAL 模式 + 非关键路径）。
+    pub fn save_player_snapshot(&self, snapshot: &PlayerSnapshot) {
+        if let Ok(json) = serde_json::to_string(snapshot) {
+            let conn = self.conn.lock().unwrap();
+            let _ = conn.execute(
+                "INSERT OR REPLACE INTO player_snapshot (key, value) VALUES ('current', ?1)",
+                rusqlite::params![json],
+            );
+        }
+    }
+
+    /// 加载上次保存的快照。无记录/解析失败 → None。
+    pub fn load_player_snapshot(&self) -> Option<PlayerSnapshot> {
+        let conn = self.conn.lock().unwrap();
+        let json: String = conn
+            .query_row("SELECT value FROM player_snapshot WHERE key = 'current'", [], |row| {
+                row.get(0)
+            })
+            .ok()?;
+        serde_json::from_str(&json).ok()
     }
 }
 

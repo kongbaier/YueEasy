@@ -10,13 +10,10 @@ export interface PlayerStore {
   currentTimeHigh: number;
   duration: number;
 
-  pause: () => void;
-  toggle: () => void;
-  resume: () => Promise<void>;
   seek: (time: number) => void;
 }
 
-export const usePlayerStore = create<PlayerStore>((set, get) => {
+export const usePlayerStore = create<PlayerStore>((set) => {
   // ── Mirror playback state from the service (single source of truth) ──
 
   playerService.on('play', () => set({ playing: true }));
@@ -37,25 +34,6 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     currentTime: 0,
     currentTimeHigh: 0,
     duration: 0,
-
-    pause: () => {
-      playerService.pause();
-      set({ playing: false });
-    },
-
-    toggle: () => {
-      if (get().playing) {
-        get().pause();
-      } else {
-        void get().resume();
-      }
-    },
-
-    resume: async () => {
-      await playerService.resume();
-      // Defensive set() guards against rehydration timing races.
-      set({ playing: true });
-    },
 
     seek: (time) => {
       set({ currentTime: time });

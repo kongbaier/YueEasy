@@ -1,7 +1,8 @@
 mod cmd;
+mod core;
 mod infra;
 mod service;
-mod use_case;
+mod state;
 
 use tauri::Manager;
 
@@ -35,6 +36,7 @@ pub fn run() {
         .manage(Database::default())
         .manage(CacheState::default())
         .manage(NcmState::default())
+        .manage(state::PlayerState::default())
         .setup(|app| {
             let handle = app.handle();
 
@@ -48,6 +50,13 @@ pub fn run() {
             }
 
             app.state::<NcmState>().restore_cookie(handle);
+
+            // Phase F：从 SQLite 恢复上次播放器状态（崩溃/重启续播）
+            {
+                let db = app.state::<Database>();
+                let player = app.state::<state::PlayerState>();
+                player.try_restore(&db);
+            }
 
             infra::platform::window::setup(handle)?;
             infra::platform::tray::setup(handle)?;
@@ -102,6 +111,27 @@ pub fn run() {
             cmd::media_session::update_media_session_metadata,
             cmd::media_session::update_media_session_status,
             cmd::media_session::update_media_session_position,
+            cmd::player::play_track,
+            cmd::player::replace_and_play,
+            cmd::player::play_queue_at,
+            cmd::player::play_next,
+            cmd::player::play_prev,
+            cmd::player::advance_on_end,
+            cmd::player::fm_trash,
+            cmd::player::set_play_mode,
+            cmd::player::seek,
+            cmd::player::enter_fm,
+            cmd::player::exit_fm,
+            cmd::player::append_to_queue,
+            cmd::player::insert_next,
+            cmd::player::remove_from_queue,
+            cmd::player::clear_queue,
+            cmd::player::shuffle_queue,
+            cmd::query::resolve_play_url,
+            cmd::query::get_player_snapshot,
+            cmd::query::get_queue,
+            cmd::query::get_full_player_state,
+            cmd::player::report_position,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

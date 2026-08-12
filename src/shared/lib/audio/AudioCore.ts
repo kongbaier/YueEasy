@@ -1,13 +1,7 @@
-import { EventEmitter } from '@/shared/lib/EventEmitter';
+import { EventEmitter } from "@/shared/lib/EventEmitter";
 
 type AudioState =
-  | 'idle'
-  | 'loading'
-  | 'ready'
-  | 'playing'
-  | 'paused'
-  | 'ended'
-  | 'error';
+  "idle" | "loading" | "ready" | "playing" | "paused" | "ended" | "error";
 
 type AudioEvents = {
   play: [];
@@ -27,7 +21,7 @@ export class AudioCore {
   #source: MediaElementAudioSourceNode;
   #analyser: AnalyserNode;
   #gain: GainNode;
-  #state: AudioState = 'idle';
+  #state: AudioState = "idle";
   #events: EventEmitter<AudioEvents>;
   #tickCleanup: (() => void) | null = null;
   #loadSeq = 0;
@@ -41,7 +35,7 @@ export class AudioCore {
     this.#events = new EventEmitter();
 
     this.#audio = new Audio();
-    this.#audio.crossOrigin = 'anonymous';
+    this.#audio.crossOrigin = "anonymous";
 
     this.#context = new AudioContext();
 
@@ -60,56 +54,56 @@ export class AudioCore {
   // ── HTMLAudioElement event wiring ──
 
   #bindAudioEvents() {
-    this.#audio.addEventListener('loadstart', () => {
-      this.#state = 'loading';
-      this.#events.emit('loading');
+    this.#audio.addEventListener("loadstart", () => {
+      this.#state = "loading";
+      this.#events.emit("loading");
     });
 
-    this.#audio.addEventListener('loadedmetadata', () => {
-      this.#events.emit('durationchange', this.#audio.duration);
-      this.#events.emit('timeupdate', 0);
-      this.#events.emit('timetick', 0);
+    this.#audio.addEventListener("loadedmetadata", () => {
+      this.#events.emit("durationchange", this.#audio.duration);
+      this.#events.emit("timeupdate", 0);
+      this.#events.emit("timetick", 0);
     });
 
-    this.#audio.addEventListener('timeupdate', () => {
-      this.#events.emit('timeupdate', this.#audio.currentTime);
+    this.#audio.addEventListener("timeupdate", () => {
+      this.#events.emit("timeupdate", this.#audio.currentTime);
     });
 
-    this.#audio.addEventListener('canplay', () => {
-      this.#state = 'ready';
-      this.#events.emit('ready');
+    this.#audio.addEventListener("canplay", () => {
+      this.#state = "ready";
+      this.#events.emit("ready");
     });
 
-    this.#audio.addEventListener('play', () => {
-      this.#state = 'playing';
-      this.#events.emit('play');
+    this.#audio.addEventListener("play", () => {
+      this.#state = "playing";
+      this.#events.emit("play");
       this.#tickCleanup = this.#startTick();
     });
 
-    this.#audio.addEventListener('pause', () => {
-      this.#state = 'paused';
-      this.#events.emit('pause');
+    this.#audio.addEventListener("pause", () => {
+      this.#state = "paused";
+      this.#events.emit("pause");
       this.#tickCleanup?.();
     });
 
-    this.#audio.addEventListener('ended', () => {
-      this.#state = 'ended';
-      this.#events.emit('ended');
+    this.#audio.addEventListener("ended", () => {
+      this.#state = "ended";
+      this.#events.emit("ended");
       this.#tickCleanup?.();
     });
 
-    this.#audio.addEventListener('waiting', () => {
-      if (this.#state === 'playing') {
-        this.#state = 'loading';
-        this.#events.emit('loading');
+    this.#audio.addEventListener("waiting", () => {
+      if (this.#state === "playing") {
+        this.#state = "loading";
+        this.#events.emit("loading");
       }
     });
 
-    this.#audio.addEventListener('error', () => {
-      this.#state = 'error';
+    this.#audio.addEventListener("error", () => {
+      this.#state = "error";
       this.#events.emit(
-        'error',
-        new Error(this.#audio.error?.message ?? 'Unknown audio error'),
+        "error",
+        new Error(this.#audio.error?.message ?? "Unknown audio error"),
       );
     });
   }
@@ -117,7 +111,7 @@ export class AudioCore {
   #startTick(): () => void {
     let rafId = 0;
     const tick = () => {
-      this.#events.emit('timetick', this.#audio.currentTime);
+      this.#events.emit("timetick", this.#audio.currentTime);
       rafId = requestAnimationFrame(tick);
     };
     rafId = requestAnimationFrame(tick);
@@ -134,8 +128,8 @@ export class AudioCore {
     // 顶掉上一次尚未结束的 load 等待：快速切歌时旧 promise 不会被 canplay 永久挂起
     this.#cancelLoadWaiter();
 
-    this.#state = 'loading';
-    this.#events.emit('loading');
+    this.#state = "loading";
+    this.#events.emit("loading");
     this.#audio.src = src;
     this.#audio.load();
 
@@ -147,8 +141,8 @@ export class AudioCore {
       const onCanPlay = () => this.#finishLoad(seq, resolve);
       const onError = () => this.#finishLoad(seq, resolve);
       this.#loadWaiter = { resolve, onCanPlay, onError };
-      this.#audio.addEventListener('canplay', onCanPlay);
-      this.#audio.addEventListener('error', onError);
+      this.#audio.addEventListener("canplay", onCanPlay);
+      this.#audio.addEventListener("error", onError);
     });
   }
 
@@ -156,8 +150,8 @@ export class AudioCore {
   #finishLoad(seq: number, resolve: () => void): void {
     if (seq !== this.#loadSeq) return; // 已被更新的 load 接管
     if (this.#loadWaiter) {
-      this.#audio.removeEventListener('canplay', this.#loadWaiter.onCanPlay);
-      this.#audio.removeEventListener('error', this.#loadWaiter.onError);
+      this.#audio.removeEventListener("canplay", this.#loadWaiter.onCanPlay);
+      this.#audio.removeEventListener("error", this.#loadWaiter.onError);
       this.#loadWaiter = null;
     }
     resolve();
@@ -166,8 +160,8 @@ export class AudioCore {
   /** 释放仍在等待的 load waiter，让对应 promise 正常结束而非永远挂起。 */
   #cancelLoadWaiter(): void {
     if (this.#loadWaiter) {
-      this.#audio.removeEventListener('canplay', this.#loadWaiter.onCanPlay);
-      this.#audio.removeEventListener('error', this.#loadWaiter.onError);
+      this.#audio.removeEventListener("canplay", this.#loadWaiter.onCanPlay);
+      this.#audio.removeEventListener("error", this.#loadWaiter.onError);
       this.#loadWaiter.resolve();
       this.#loadWaiter = null;
     }
@@ -176,12 +170,12 @@ export class AudioCore {
   unload(): void {
     this.#audio.pause();
     this.#tickCleanup?.();
-    this.#audio.removeAttribute('src');
-    this.#state = 'idle';
+    this.#audio.removeAttribute("src");
+    this.#state = "idle";
   }
 
   async play(): Promise<void> {
-    if (this.#context.state === 'suspended') {
+    if (this.#context.state === "suspended") {
       await this.#context.resume();
     }
     await this.#audio.play();
@@ -192,7 +186,7 @@ export class AudioCore {
   }
 
   async toggle(): Promise<void> {
-    if (this.#state === 'playing') {
+    if (this.#state === "playing") {
       this.pause();
     } else {
       await this.play();
@@ -203,7 +197,7 @@ export class AudioCore {
     this.#audio.pause();
     this.#audio.currentTime = 0;
     this.#tickCleanup?.();
-    this.#state = 'idle';
+    this.#state = "idle";
   }
 
   seek(seconds: number): void {
@@ -217,7 +211,7 @@ export class AudioCore {
   destroy(): void {
     this.#audio.pause();
     this.#tickCleanup?.();
-    this.#audio.removeAttribute('src');
+    this.#audio.removeAttribute("src");
 
     this.#source.disconnect();
     this.#analyser.disconnect();
@@ -244,7 +238,7 @@ export class AudioCore {
   }
 
   get playing(): boolean {
-    return this.#state === 'playing';
+    return this.#state === "playing";
   }
 
   get volume(): number {
@@ -253,7 +247,7 @@ export class AudioCore {
 
   set volume(value: number) {
     if (value < 0 || value > 1) {
-      throw new RangeError('Volume must be between 0 and 1');
+      throw new RangeError("Volume must be between 0 and 1");
     }
     this.#audio.volume = value;
   }

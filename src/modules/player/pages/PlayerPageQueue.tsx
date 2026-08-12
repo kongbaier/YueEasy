@@ -18,7 +18,7 @@ import { cn } from '@/shared/lib/utils';
 import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
 import { formatQueueCount } from '@/shared/utils/format';
 import { usePlayer } from '@/modules/player/hooks/usePlayer';
-import type { Track } from '@/core/types';
+import type { Track } from '@/shared/types/player';
 
 const QueueItem = ({
   track,

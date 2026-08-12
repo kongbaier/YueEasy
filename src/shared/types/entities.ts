@@ -237,3 +237,17 @@ export interface RecentSong {
 export interface RecentSongs {
   list: RecentSong[];
 }
+
+/**
+ * 播放器队列条目（Phase E：Rust `core::types::QueueItem` wire 镜像）。
+ * 字段即 Rust wire 名（track_id/title/artist/album/cover_url/duration_secs），
+ * 与 `PlayerService` 侧的 `Track`（Song 实体）通过 `shared/utils/mappers` 互转。
+ */
+export interface QueueItem {
+  track_id: number;
+  title: string;
+  artist: string;
+  album: string;
+  cover_url: string;
+  duration_secs: number;
+}

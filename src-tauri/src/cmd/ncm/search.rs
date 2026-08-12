@@ -1,11 +1,11 @@
-//! NCM 搜索 IPC 命令（薄壳）：参数透传 → use_case。
+//! NCM 搜索 IPC 命令（薄壳）：参数透传 → service。
 
 use tauri::{AppHandle, State};
 
 use crate::infra::ncm::entity::{HotSearchItem, SearchResult, SuggestResult};
 use crate::infra::ncm::error::Result;
 use crate::infra::ncm::NcmState;
-use crate::use_case::ncm::NcmUseCase;
+use crate::service::ncm_service::NcmService;
 
 #[tauri::command]
 pub(crate) async fn ncm_cloudsearch(
@@ -16,7 +16,7 @@ pub(crate) async fn ncm_cloudsearch(
     limit: Option<i64>,
     offset: Option<i64>,
 ) -> Result<SearchResult> {
-    NcmUseCase::cloudsearch(&app_handle, &state, keywords, search_type, limit, offset).await
+    NcmService::cloudsearch(&app_handle, &state, keywords, search_type, limit, offset).await
 }
 
 #[tauri::command]
@@ -25,7 +25,7 @@ pub(crate) async fn ncm_search_suggest(
     state: State<'_, NcmState>,
     keywords: String,
 ) -> Result<SuggestResult> {
-    NcmUseCase::search_suggest(&app_handle, &state, keywords).await
+    NcmService::search_suggest(&app_handle, &state, keywords).await
 }
 
 #[tauri::command]
@@ -33,5 +33,5 @@ pub(crate) async fn ncm_search_hot(
     app_handle: AppHandle,
     state: State<'_, NcmState>,
 ) -> Result<Vec<HotSearchItem>> {
-    NcmUseCase::search_hot(&app_handle, &state).await
+    NcmService::search_hot(&app_handle, &state).await
 }

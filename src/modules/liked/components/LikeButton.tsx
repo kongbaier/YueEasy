@@ -1,4 +1,4 @@
-import type { Track } from "@/core";
+import type { Track } from "@/shared/types/player";
 import { useLikeAction } from "@/shared/hooks/useLikeAction";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";

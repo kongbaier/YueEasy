@@ -1,9 +1,10 @@
 //! NCM 领域服务：浅包 `infra::ncm`（客户端取数 + 归一 + 业务 code 校验）。
-//! 服务层不感知 IPC；跨服务编排在 `use_case` 层，IPC 薄壳在 `cmd` 层。
+//! 服务层不感知 IPC；cmd 薄壳直接调本服务。
 
 use ncm_api_rs::Query;
 use tauri::AppHandle;
 
+use crate::core::types::QueueItem;
 use crate::infra::ncm::client::{self, run_dto};
 use crate::infra::ncm::cookie::{merge_cookies, persist_cookie};
 use crate::infra::ncm::entity::{
@@ -21,6 +22,24 @@ pub struct NcmService;
 impl NcmService {
     fn map_playlists(dtos: Vec<raw::PlaylistDto>) -> Vec<Playlist> {
         dtos.into_iter().map(mapper::map_playlist).collect()
+    }
+
+    /// Song → QueueItem（Phase D：FM 取歌 / 播放命令用）。
+    /// mapper 只允许出现在 service 与 infra 层（AGENTS.md）；core 不感知 ncm entity。
+    pub fn song_to_queue_item(song: &Song) -> QueueItem {
+        QueueItem {
+            track_id: song.id as u64,
+            title: song.name.clone(),
+            artist: song
+                .artists
+                .iter()
+                .map(|a| a.name.clone())
+                .collect::<Vec<_>>()
+                .join(" / "),
+            album: song.album.name.clone(),
+            cover_url: song.album.pic_url.clone().unwrap_or_default(),
+            duration_secs: song.duration_ms as f64 / 1000.0,
+        }
     }
 
     // ── auth ────────────────────────────────────────────────────────

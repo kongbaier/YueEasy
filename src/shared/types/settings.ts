@@ -1,5 +1,5 @@
 import { Effect } from '@tauri-apps/api/window';
-import type { PlayMode } from '@/core/types';
+import type { PlayMode } from '@/shared/types/player';
 
 export type Theme = 'light' | 'dark' | 'system';
 export type CloseBehavior = 'quit' | 'hide';

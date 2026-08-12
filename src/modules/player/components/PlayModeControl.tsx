@@ -5,7 +5,7 @@ import {
   Shuffle,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import type { PlayMode } from "@/core/types";
+import type { PlayMode } from "@/shared/types/player";
 import { cn } from "@/shared/lib/utils";
 import { usePlayer } from "@/modules/player/hooks/usePlayer";
 

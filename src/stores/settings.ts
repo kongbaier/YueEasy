@@ -1,4 +1,3 @@
-import { cyclePlayMode } from '@/core/types';
 import {
   DEFAULTS_APPEARANCE,
   DEFAULTS_PLAYER,
@@ -15,7 +14,6 @@ import { TauriStorage } from '@/tauri/storage';
 type SettingsActions = {
   updateAppearance: (settings: Partial<AppearanceSettings>) => void;
   updatePlayer: (settings: Partial<PlayerSettings>) => void;
-  cyclePlayMode: () => void;
   resetAll: () => void;
 };
 
@@ -33,14 +31,6 @@ export const useSettingsStore = create<Settings & SettingsActions>()(
       updatePlayer: (settings) =>
         set((state) => ({
           player: { ...state.player, ...settings },
-        })),
-
-      cyclePlayMode: () =>
-        set((state) => ({
-          player: {
-            ...state.player,
-            playMode: cyclePlayMode(state.player.playMode),
-          },
         })),
 
       resetAll: () =>

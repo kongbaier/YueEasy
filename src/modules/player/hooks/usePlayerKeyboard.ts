@@ -1,8 +1,11 @@
 import { useEffect } from 'react';
+import { useMediaControls } from './useMediaControls';
 import { usePlayerStore } from '../stores/player';
 import { useQueueStore } from '../stores/queue';
 
 export const usePlayerKeyboard = () => {
+  const { handlePlay, handlePause } = useMediaControls();
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -24,9 +27,9 @@ export const usePlayerKeyboard = () => {
       if (e.code === 'Space') {
         e.preventDefault();
         if (playerState.playing) {
-          playerState.pause();
+          handlePause();
         } else {
-          playerState.resume();
+          void handlePlay();
         }
         return;
       }
@@ -54,5 +57,6 @@ export const usePlayerKeyboard = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    // handlePlay/handlePause 为 useCallback([]) 稳定引用，effect 仍只挂一次
+  }, [handlePlay, handlePause]);
 };

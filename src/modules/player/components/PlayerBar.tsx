@@ -12,6 +12,7 @@ import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { FollowTooltip } from "@/modules/player/components/FollowTooltip";
 import { useMediaSession } from "@/modules/player/hooks/useMediaSession";
+import { usePlayerEvents } from "@/shared/hooks/usePlayerEvents";
 import { usePlayerKeyboard } from "@/modules/player/hooks/usePlayerKeyboard";
 import { useProgress } from "@/modules/player/hooks/useProgress";
 import { usePlayer } from "@/modules/player/hooks/usePlayer";
@@ -24,7 +25,7 @@ import { PlayModeControl } from "./PlayModeControl";
 import { SeekBar } from "./SeekBar";
 import { VolumeControl } from "./VolumeControl";
 import { Cover } from "@/shared/ui/image";
-import type { Track } from "@/core/types";
+import type { Track } from "@/shared/types/player";
 import { LikeButton } from "@/modules/liked/components/LikeButton";
 
 const PlayerProgress = () => {
@@ -267,6 +268,7 @@ export const PlayerBar = ({
 }) => {
   usePlayerKeyboard();
   useMediaSession();
+  usePlayerEvents();
   const { currentTrack } = usePlayer();
   return (
     <div

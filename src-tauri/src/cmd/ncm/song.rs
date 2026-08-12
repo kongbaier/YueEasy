@@ -1,11 +1,11 @@
-//! NCM 歌曲/专辑 IPC 命令（薄壳）：参数透传 → use_case。
+//! NCM 歌曲/专辑 IPC 命令（薄壳）：参数透传 → service。
 
 use tauri::{AppHandle, State};
 
 use crate::infra::ncm::entity::{AlbumDetail, LikeList, Lyric, RecentSongs, Song, SongUrlResult};
 use crate::infra::ncm::error::Result;
 use crate::infra::ncm::NcmState;
-use crate::use_case::ncm::NcmUseCase;
+use crate::service::ncm_service::NcmService;
 
 #[tauri::command]
 pub(crate) async fn ncm_album(
@@ -13,7 +13,7 @@ pub(crate) async fn ncm_album(
     state: State<'_, NcmState>,
     id: i64,
 ) -> Result<AlbumDetail> {
-    NcmUseCase::album(&app_handle, &state, id).await
+    NcmService::album(&app_handle, &state, id).await
 }
 
 #[tauri::command]
@@ -23,7 +23,7 @@ pub(crate) async fn ncm_song_url_v1(
     id: i64,
     level: Option<String>,
 ) -> Result<SongUrlResult> {
-    NcmUseCase::song_url(&app_handle, &state, id, level).await
+    NcmService::song_url(&app_handle, &state, id, level).await
 }
 
 #[tauri::command]
@@ -32,7 +32,7 @@ pub(crate) async fn ncm_song_detail(
     state: State<'_, NcmState>,
     ids: Vec<i64>,
 ) -> Result<Vec<Song>> {
-    NcmUseCase::song_detail(&app_handle, &state, ids).await
+    NcmService::song_detail(&app_handle, &state, ids).await
 }
 
 #[tauri::command]
@@ -41,7 +41,7 @@ pub(crate) async fn ncm_lyric(
     state: State<'_, NcmState>,
     id: i64,
 ) -> Result<Lyric> {
-    NcmUseCase::lyric(&app_handle, &state, id).await
+    NcmService::lyric(&app_handle, &state, id).await
 }
 
 #[tauri::command]
@@ -50,7 +50,7 @@ pub(crate) async fn ncm_lyric_new(
     state: State<'_, NcmState>,
     id: i64,
 ) -> Result<Lyric> {
-    NcmUseCase::lyric_new(&app_handle, &state, id).await
+    NcmService::lyric_new(&app_handle, &state, id).await
 }
 
 #[tauri::command]
@@ -60,7 +60,7 @@ pub(crate) async fn ncm_like(
     id: i64,
     like: Option<bool>,
 ) -> Result<()> {
-    NcmUseCase::like(&app_handle, &state, id, like).await
+    NcmService::like(&app_handle, &state, id, like).await
 }
 
 #[tauri::command]
@@ -69,7 +69,7 @@ pub(crate) async fn ncm_likelist(
     state: State<'_, NcmState>,
     uid: i64,
 ) -> Result<LikeList> {
-    NcmUseCase::like_list(&app_handle, &state, uid).await
+    NcmService::like_list(&app_handle, &state, uid).await
 }
 
 #[tauri::command]
@@ -78,5 +78,5 @@ pub(crate) async fn ncm_record_recent_song(
     state: State<'_, NcmState>,
     uid: i64,
 ) -> Result<RecentSongs> {
-    NcmUseCase::recent_song(&app_handle, &state, uid).await
+    NcmService::recent_song(&app_handle, &state, uid).await
 }

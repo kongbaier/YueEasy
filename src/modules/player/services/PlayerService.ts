@@ -1,9 +1,10 @@
-import { AudioCore, QueueManager } from '@/core';
-import type { PlayMode, Track } from '@/core/types';
+import { AudioCore } from '@/shared/lib/audio/AudioCore';
 import { EventEmitter } from '@/shared/lib/EventEmitter';
 import type { PlayerSettings } from '@/shared/types/settings';
+import type { FullPlayerState, PlayUrlInfo } from '@/shared/types/player';
+import { usePlayerMirrorStore } from '@/stores/playerMirror';
 import { useSettingsStore } from '@/stores/settings';
-import { ncm } from '@/tauri/ncm';
+import { invoke } from '@tauri-apps/api/core';
 
 // ── Service events (engine state broadcasts) ──
 
@@ -22,26 +23,18 @@ export type PlayerEvents = {
 
 class PlayerService {
   #audio: AudioCore;
-  #queue: QueueManager;
-  #urlFetchedAt = 0;
   #events = new EventEmitter<PlayerEvents>();
-  // 切歌串行化：只有最新一次播放请求可以落地，旧请求直接被丢弃
-  #playToken = 0;
-  // FM 坏歌跳过：连续丢弃超过上限视为推荐全部失效，停止漫游防止死循环
-  #fmSkips = 0;
-  #fmSkipInFlight = false;
-  // 进入漫游前的音频状态快照（退出漫游时恢复到原歌原进度）
-  #fmSnapshotAudio: { currentTime: number; playing: boolean } | null = null;
-  static #FM_MAX_SKIPS = 3;
+  // 位置持久化：周期上报 timer（单个 setInterval，暂停即清除）+ seek 去抖
+  #positionTimer: number | null = null;
+  #seekDebounceTimer: number | null = null;
 
   constructor() {
     this.#audio = new AudioCore();
-    this.#queue = new QueueManager();
     this.#wireAudio();
     this.#applyPlayerSettings(useSettingsStore.getState().player);
 
     // Player preferences (settings store) are the single source of truth;
-    // apply them to the engines whenever they change.
+    // apply them to the engine whenever they change.
     useSettingsStore.subscribe((state, prev) => {
       if (state.player.volume !== prev.player.volume) {
         this.setVolume(state.player.volume);
@@ -49,42 +42,94 @@ class PlayerService {
       if (state.player.isMuted !== prev.player.isMuted) {
         this.setMuted(state.player.isMuted);
       }
-      if (state.player.playMode !== prev.player.playMode) {
-        this.setMode(state.player.playMode);
-      }
     });
   }
 
-  /** Forward engine events; auto-advance the queue when a track ends. */
+  /** Forward engine events (player store mirrors them). */
   #wireAudio(): void {
-    this.#audio.on('play', () => this.#events.emit('play'));
-    this.#audio.on('pause', () => this.#events.emit('pause'));
-    this.#audio.on('loading', () => this.#events.emit('loading'));
-    this.#audio.on('ready', () => this.#events.emit('ready'));
-    this.#audio.on('error', (error) => {
-      this.#events.emit('error', error);
-      // 漫游中遇到无法播放的歌曲（VIP/下架/无版权）自动丢进下一首
-      if (this.#queue.isFm) void this.#fmSkipTrack();
+    this.#audio.on('play', () => {
+      this.#events.emit('play');
+      this.#startPositionReporting();
     });
-    this.#audio.on('timeupdate', (currentTime) =>
+    this.#audio.on('pause', () => {
+      this.#events.emit('pause');
+      this.#stopPositionReporting();
+      // 暂停即落盘（位置 + playing=false）
+      void this.#reportPositionNow();
+    });
+    this.#audio.on('loading', () => {
+      this.#events.emit('loading');
+      // 切歌加载新源：暂停周期上报（旧曲目位置已在切歌前由 flushPosition 上报）
+      this.#stopPositionReporting();
+    });
+    this.#audio.on('ready', () => this.#events.emit('ready'));
+    this.#audio.on('error', (error: Error) => {
+      this.#events.emit('error', error);
+    });
+    this.#audio.on('timeupdate', (currentTime: number) =>
       this.#events.emit('timeupdate', currentTime),
     );
-    this.#audio.on('timetick', (currentTime) =>
+    this.#audio.on('timetick', (currentTime: number) =>
       this.#events.emit('timetick', currentTime),
     );
-    this.#audio.on('durationchange', (duration) =>
+    this.#audio.on('durationchange', (duration: number) =>
       this.#events.emit('durationchange', duration),
     );
     this.#audio.on('ended', () => {
       this.#events.emit('ended');
-      void this.#onEnded();
+      this.#stopPositionReporting();
+      // 曲目自然结束也落盘（结束位置 + playing=false）
+      void this.#reportPositionNow();
     });
   }
 
   #applyPlayerSettings(settings: PlayerSettings): void {
     this.setVolume(settings.volume);
     this.setMuted(settings.isMuted);
-    this.setMode(settings.playMode);
+  }
+
+  // ── 位置持久化（上报播放进度/状态，快照仅存此值） ──
+
+  /** 上报当前播放位置/状态。失败静默（非关键路径，重启恢复兜底）。 */
+  async #reportPositionNow(): Promise<void> {
+    try {
+      // Tauri v2：Rust 参数 position_secs / playing → JS 侧 camelCase `positionSecs`
+      await invoke<void>('report_position', {
+        positionSecs: this.#audio.currentTime,
+        playing: this.#audio.playing,
+      });
+    } catch {
+      // 上报失败不阻断播放
+    }
+  }
+
+  /** 播放中每 10s 上报一次（单个 setInterval，暂停/切歌/结束即清除）。 */
+  #startPositionReporting(): void {
+    if (this.#positionTimer !== null) return;
+    this.#positionTimer = window.setInterval(() => {
+      void this.#reportPositionNow();
+    }, 10_000);
+  }
+
+  #stopPositionReporting(): void {
+    if (this.#positionTimer !== null) {
+      window.clearInterval(this.#positionTimer);
+      this.#positionTimer = null;
+    }
+  }
+
+  /** seek 后 500ms 去抖落盘。暴露给 usePlayer 直连 audioCore.seek 的路径调用。 */
+  reportPositionDebounced(): void {
+    if (this.#seekDebounceTimer !== null) window.clearTimeout(this.#seekDebounceTimer);
+    this.#seekDebounceTimer = window.setTimeout(() => {
+      this.#seekDebounceTimer = null;
+      void this.#reportPositionNow();
+    }, 500);
+  }
+
+  /** 切歌前立即上报当前进度（旧曲目的最终位置/状态），随后引擎会重置位置。 */
+  async flushPosition(): Promise<void> {
+    await this.#reportPositionNow();
   }
 
   on<K extends keyof PlayerEvents>(
@@ -95,6 +140,11 @@ class PlayerService {
   }
 
   // ── Engine state (single source of truth) ──
+
+  /** 暴露只读 AudioCore 引用给 Rust 模式 load/play/切换。 */
+  get audioCore(): AudioCore {
+    return this.#audio;
+  }
 
   get currentTime(): number {
     return this.#audio.currentTime;
@@ -108,48 +158,16 @@ class PlayerService {
     return this.#audio.playing;
   }
 
-  // ── Queue state ──
-
-  get queue(): readonly Track[] {
-    return this.#queue.tracks;
-  }
-
-  get currentTrack(): Track | null {
-    return this.#queue.currentTrack;
-  }
-
-  get queueLength(): number {
-    return this.#queue.length;
-  }
-
-  get currentIndex(): number {
-    return this.#queue.currentIndex;
-  }
-
-  get isFm(): boolean {
-    return this.#queue.isFm;
-  }
-
-  get fmExitWillEmpty(): boolean {
-    return this.#queue.fmExitWillEmpty;
-  }
-
-  get canPrev(): boolean {
-    return this.#queue.canPrev;
-  }
-
-  // ── Playback actions ──
+  // ── 音频控制 ──
 
   pause(): void {
     this.#audio.pause();
   }
 
-  stop(): void {
-    this.#audio.stop();
-  }
-
   seek(time: number): void {
     this.#audio.seek(time);
+    // seek 落盘（去抖 500ms 后上报一次）
+    this.reportPositionDebounced();
   }
 
   setVolume(volume: number): void {
@@ -159,296 +177,45 @@ class PlayerService {
   setMuted(muted: boolean): void {
     this.#audio.muted = muted;
   }
-
-  /** Resume playback, re-resolving the URL if it is stale (>15 min). */
-  async resume(): Promise<void> {
-    const token = ++this.#playToken;
-    if (Date.now() - this.#urlFetchedAt > 15 * 60 * 1000) {
-      const track = this.#queue.currentTrack;
-      if (!track) return;
-      // Capture the position BEFORE reload — load() resets currentTime to 0.
-      const resumeFrom = this.#audio.currentTime;
-      try {
-        const url = await this.#resolveUrl(track.id);
-        if (token !== this.#playToken) return;
-        this.#urlFetchedAt = Date.now();
-        await this.#audio.load(url);
-        if (token !== this.#playToken) return;
-        this.#audio.seek(resumeFrom);
-        await this.#audio.play();
-      } catch (err) {
-        if (token !== this.#playToken) return;
-        throw err;
-      }
-    } else {
-      await this.#audio.play();
-    }
-  }
-
-  /** Resolve URL for the current queue track, load audio, and play. */
-  async playCurrent(): Promise<void> {
-    const token = ++this.#playToken;
-    const track = this.#queue.currentTrack;
-    if (!track) return;
-    try {
-      const url = await this.#resolveUrl(track.id);
-      if (token !== this.#playToken) return; // 已被更新的切歌请求顶掉
-      this.#urlFetchedAt = Date.now();
-      await this.#audio.load(url);
-      if (token !== this.#playToken) return;
-      await this.#audio.play();
-    } catch (err) {
-      if (token !== this.#playToken) return; // 过期请求的失败与当前状态无关
-      throw err;
-    }
-  }
-
-  // ── Queue use cases ──
-
-  async play(track: Track): Promise<void> {
-    this.#queue.play(track);
-    this.#events.emit('queuechange');
-    await this.playCurrent();
-  }
-
-  async replaceAndPlay(tracks: Track[], startIndex = 0): Promise<void> {
-    this.#queue.replace(tracks, startIndex);
-    this.#events.emit('queuechange');
-    await this.playCurrent();
-  }
-
-  async next(): Promise<void> {
-    if (this.#queue.isFm && this.#queue.isAtEnd) {
-      const refilled = await this.#refillFm();
-      if (!refilled) return; // 没补到新歌，留在原地（不要重载当前歌）
-    }
-    this.#queue.advance();
-    this.#events.emit('queuechange');
-    await this.#playCurrentOrSkip();
-  }
-
-  async prev(): Promise<void> {
-    if (!this.#queue.canPrev) return;
-    this.#queue.retreat();
-    this.#events.emit('queuechange');
-    await this.#playCurrentOrSkip();
-  }
-
-  async addToQueue(track: Track): Promise<void> {
-    const wasEmpty = this.#queue.length === 0;
-    this.#queue.append(track);
-    this.#events.emit('queuechange');
-    if (wasEmpty) await this.playCurrent();
-  }
-
-  async playNext(track: Track): Promise<void> {
-    const wasEmpty = this.#queue.length === 0;
-    this.#queue.insertNext(track);
-    this.#events.emit('queuechange');
-    if (wasEmpty) await this.playCurrent();
-  }
-
-  async playFromIndex(index: number): Promise<void> {
-    if (!this.#queue.select(index)) return;
-    this.#events.emit('queuechange');
-    await this.playCurrent();
-  }
-
-  async removeFromQueue(index: number): Promise<void> {
-    const wasCurrent = this.#queue.removeAt(index);
-    this.#events.emit('queuechange');
-    if (wasCurrent) {
-      if (this.#queue.length === 0) {
-        this.stop();
-      } else {
-        await this.playCurrent();
-      }
-    }
-  }
-
-  // ── FM (私人漫游) ──
-
-  /** 进入私人漫游。传入已预请求的歌曲则直接使用，否则现场拉取。返回是否成功开始播放（无歌曲返回 false）。 */
-  async enterFm(initialTracks?: Track[]): Promise<boolean> {
-    const songs =
-      initialTracks && initialTracks.length > 0
-        ? initialTracks
-        : await this.#fetchFmBatch();
-    this.#fmSkips = 0;
-    // 快照进入漫游前的播放进度与播放状态；已在漫游中再次进入不覆盖
-    if (!this.#queue.isFm) {
-      this.#fmSnapshotAudio =
-        this.#queue.length > 0
-          ? {
-              currentTime: this.#audio.currentTime,
-              playing: this.#audio.playing,
-            }
-          : null;
-    }
-    this.#queue.enterFm(songs);
-    this.#events.emit('queuechange');
-    if (songs.length === 0) return false;
-    await this.#playCurrentOrSkip();
-    return true;
-  }
-
-  /**
-   * 退出私人漫游：恢复进入漫游前的队列，并续播原歌（进度与播放/暂停状态一并恢复）；
-   * 无快照（进入漫游前队列为空）时维持原行为——清空并停止。
-   */
-  async exitFm(): Promise<void> {
-    const snapshot = this.#queue.exitFm();
-    this.#events.emit('queuechange');
-    const track = this.#queue.currentTrack;
-    if (!snapshot || !track) {
-      this.#fmSnapshotAudio = null;
-      this.stop();
-      return;
-    }
-    const audio = this.#fmSnapshotAudio;
-    this.#fmSnapshotAudio = null;
-    const token = ++this.#playToken;
-    try {
-      const url = await this.#resolveUrl(track.id);
-      if (token !== this.#playToken) return; // 已被更新的切歌请求顶掉
-      this.#urlFetchedAt = Date.now();
-      await this.#audio.load(url);
-      if (token !== this.#playToken) return;
-      if (audio && audio.currentTime > 0) this.#audio.seek(audio.currentTime);
-      // 进入漫游前正在播放才自动续播，暂停状态保持暂停
-      if (audio?.playing) await this.#audio.play();
-    } catch {
-      if (token !== this.#playToken) return; // 过期请求的失败与当前状态无关
-      this.stop(); // 恢复的歌曲无法播放时静默停止（与列表模式一致）
-    }
-  }
-
-  /** 减少推荐：把当前漫游歌曲丢进垃圾桶并从队列移除，继续播下一首。 */
-  async fmTrash(): Promise<void> {
-    const track = this.#queue.currentTrack;
-    if (!track || !this.#queue.isFm) return;
-    await ncm.fmTrash(track.id); // 失败会抛错，由调用方 toast
-    const wasLast = this.#queue.currentIndex === this.#queue.length - 1;
-    // 丢的正是队尾最后一首：先补新批次再移除，让下一首落在新批次第一首（不回退到上一首）；
-    // 没补到新歌时队列里只剩已听过的歌，停止而不是回头播放。
-    const refilled = wasLast && (await this.#refillFm());
-    this.#queue.removeAt(this.#queue.currentIndex);
-    this.#events.emit('queuechange');
-    if (wasLast && !refilled) {
-      this.stop();
-      return;
-    }
-    if (this.#queue.currentTrack) await this.#playCurrentOrSkip();
-  }
-
-  clearQueue(): void {
-    this.#queue.clear();
-    this.#events.emit('queuechange');
-    this.stop();
-  }
-
-  setMode(mode: PlayMode): void {
-    this.#queue.setMode(mode);
-    this.#events.emit('queuechange');
-  }
-
-  /** Restore a persisted queue at startup. */
-  restoreQueue(tracks: Track[], index: number): void {
-    this.#queue.replace(tracks, index);
-    this.#events.emit('queuechange');
-  }
-
-  async #resolveUrl(id: number): Promise<string> {
-    const result = await ncm.songUrl(id);
-    const url = result.data?.[0]?.url || '';
-    if (!url) {
-      throw new Error('无法解析播放地址');
-    }
-    return url;
-  }
-
-  async #fetchFmBatch(): Promise<Track[]> {
-    // Rust 适配层已把 /personal_fm 归一为 Song[]，直接消费
-    return ncm.personalFm();
-  }
-
-  /** 漫游模式下若已到队尾则拉取一批新歌追加；返回是否成功补充了歌曲 */
-  async #refillFm(): Promise<boolean> {
-    if (!this.#queue.isFm || !this.#queue.isAtEnd) return false;
-    try {
-      const songs = await this.#fetchFmBatch();
-      return this.#queue.appendMany(songs) > 0;
-    } catch {
-      return false;
-    }
-  }
-
-  /** 播放当前歌；FM 下失败自动丢弃坏歌跳到下一首，列表模式失败则停止。 */
-  async #playCurrentOrSkip(): Promise<void> {
-    try {
-      await this.playCurrent();
-    } catch {
-      if (this.#queue.isFm) {
-        await this.#fmSkipTrack();
-      } else {
-        this.stop();
-      }
-    }
-  }
-
-  /** FM 坏歌跳过入口：互斥锁防止 error 事件与切歌链路过早并发触发双重跳过。 */
-  async #fmSkipTrack(): Promise<void> {
-    if (this.#fmSkipInFlight) return;
-    this.#fmSkipInFlight = true;
-    try {
-      await this.#fmSkipLoop();
-    } finally {
-      this.#fmSkipInFlight = false;
-    }
-  }
-
-  /** 依次丢弃当前歌直到有一首能正常播放；连续超过上限说明推荐不可用，停止漫游。 */
-  async #fmSkipLoop(): Promise<void> {
-    while (this.#queue.isFm) {
-      if (++this.#fmSkips > PlayerService.#FM_MAX_SKIPS) {
-        this.stop();
-        return;
-      }
-      // 队尾的坏歌：先补新批次再移除，试播新歌而不是回退到已听过的上一首
-      // oxlint-disable-next-line no-await-in-loop 同下处，串行处理不能并发
-      if (this.#queue.isAtEnd) await this.#refillFm();
-      this.#queue.removeAt(this.#queue.currentIndex);
-      this.#events.emit('queuechange');
-      const next = this.#queue.currentTrack;
-      if (!next) {
-        this.stop();
-        return;
-      }
-      try {
-        // oxlint-disable-next-line no-await-in-loop 同上一处，串行试播
-        await this.playCurrent();
-        this.#fmSkips = 0;
-        return;
-      } catch {
-        // 这首歌也无法播放，继续跳过
-      }
-    }
-  }
-
-  /** Auto-advance when the current track ends; refill FM before wrapping. */
-  async #onEnded(): Promise<void> {
-    if (this.#queue.isFm && this.#queue.isAtEnd) {
-      await this.#refillFm();
-      if (this.#queue.isAtEnd) {
-        this.stop();
-        return;
-      }
-    }
-    this.#queue.advanceOnEnd();
-    this.#events.emit('queuechange');
-    await this.#playCurrentOrSkip();
-  }
 }
 
 export const playerService = new PlayerService();
 
+/**
+ * 启动恢复（bootstrap 调用）。从 Rust 拉取全量快照 → 填充 MirrorStore →
+ * 恢复 AudioCore 进度并按上次状态尝试续播。自动续播可能被浏览器手势策略拦截——
+ * 失败则保持暂停。
+ */
+export async function restorePlayerState(): Promise<void> {
+  try {
+    const { snapshot, current_track } = await invoke<FullPlayerState>(
+      'get_full_player_state',
+    );
+    // 填充镜像（与 usePlayerEvents 的增量事件写入合并；事件监听此时尚未挂载）
+    usePlayerMirrorStore.setState({
+      currentTrack: current_track,
+      queue: snapshot.queue,
+      currentIndex: snapshot.current_index,
+      mode: snapshot.mode,
+      fmActive: snapshot.fm_active,
+      playing: snapshot.playing,
+    });
+    if (!current_track) return;
+    // 恢复进度：解析播放 URL → load → seek → 按上次状态尝试续播
+    // Tauri v2：Rust 参数 track_id → JS 侧必须 camelCase `trackId`
+    const { url } = await invoke<PlayUrlInfo>('resolve_play_url', {
+      trackId: current_track.track_id,
+      quality: null,
+    });
+    await playerService.audioCore.load(url);
+    if (snapshot.position_secs > 0) {
+      playerService.audioCore.seek(snapshot.position_secs);
+    }
+    if (snapshot.playing) {
+      await playerService.audioCore.play();
+    }
+  } catch (err) {
+    // 恢复失败不阻塞启动：队列已入镜像，音频稍后可手动播放
+    console.warn('[restorePlayerState] 恢复播放器状态失败（保持暂停）:', err);
+  }
+}

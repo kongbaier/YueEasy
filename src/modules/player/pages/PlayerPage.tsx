@@ -19,7 +19,7 @@ import { WindowControls } from '@/shared/ui/system';
 import { useWindowState } from '@/shared/hooks/useWindowState';
 import { Button } from '@/shared/ui/button';
 import { Cover } from '@/shared/ui/image';
-import type { Track } from '@/core/types';
+import type { Track } from '@/shared/types/player';
 import { cn } from '@/shared/lib/utils';
 import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
 import { Lyrics } from '@/modules/lyric/components/Lyrics';

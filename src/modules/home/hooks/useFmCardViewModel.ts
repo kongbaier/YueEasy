@@ -2,19 +2,24 @@ import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { homeService } from '../services/HomeService';
 import { useQueueStore } from '@/modules/player/stores/queue';
+import { usePlayerMirrorStore } from '@/stores/playerMirror';
+import { queueItemToSong } from '@/shared/utils/mappers';
 import { useAuthStore } from '@/stores/auth';
 import { useLoginDialog } from '@/modules/auth/loginDialogStore';
 import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
 import { toast } from '@/shared/lib/toast';
 
 /**
- * 私人漫游卡片 viewmodel：组合预请求候选歌 + queue store 的 enterFm/isFm。
+ * 私人漫游卡片 viewmodel：组合预请求候选歌 + queue store 的 enterFm / MirrorStore 的漫游状态。
  * 只订阅 store / context，组件不再直接触碰它们。
  */
 export function useFmCardViewModel() {
-  const isFm = useQueueStore((s) => s.isFm);
+  // Rust 模式下 queue store 的 syncQueueDerived 早退，isFm/currentTrack 恒空值；
+  // 漫游状态改读 MirrorStore（fmActive / currentTrack wire 字段），enterFm action 仍走 queue store。
+  const isFm = usePlayerMirrorStore((s) => s.fmActive);
   const enterFm = useQueueStore((s) => s.enterFm);
-  const currentTrack = useQueueStore((s) => s.currentTrack);
+  const currentTrackRaw = usePlayerMirrorStore((s) => s.currentTrack);
+  const currentTrack = currentTrackRaw ? queueItemToSong(currentTrackRaw) : null;
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
   const { open: openPlayerPage } = usePlayerPage();

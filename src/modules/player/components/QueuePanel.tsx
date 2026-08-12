@@ -14,7 +14,7 @@ import {
 } from '@/shared/ui/dialog';
 import { VirtuosoScroller } from '@/shared/ui/virtuoso';
 import { SmartImage } from '@/shared/ui/image';
-import type { Track } from '@/core/types';
+import type { Track } from '@/shared/types/player';
 import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/lib/utils';
 import { formatQueueCount } from '@/shared/utils/format';

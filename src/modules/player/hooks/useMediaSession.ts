@@ -5,6 +5,9 @@ import {
   updateMediaSessionPosition,
   updateMediaSessionStatus,
 } from '@/tauri/mediaSession';
+import { usePlayerMirrorStore } from '@/stores/playerMirror';
+import { queueItemToSong } from '@/shared/utils/mappers';
+import { useMediaControls } from './useMediaControls';
 import { usePlayerStore } from '../stores/player';
 import { useQueueStore } from '../stores/queue';
 
@@ -21,23 +24,24 @@ type MediaSessionEvent =
   | { event: 'setPlaybackRate'; rate: number };
 
 export const useMediaSession = () => {
+  const { handlePlay, handlePause, handleToggle } = useMediaControls();
+
   useEffect(() => {
     const unlisteners: (() => void)[] = [];
     let cancelled = false;
 
     // 监听系统媒体键事件
     listen<MediaSessionEvent>('media-session-event', (event) => {
-      const playerStore = usePlayerStore.getState();
       const queueStore = useQueueStore.getState();
       switch (event.payload.event) {
         case 'play':
-          playerStore.resume();
+          void handlePlay();
           break;
         case 'pause':
-          playerStore.pause();
+          handlePause();
           break;
         case 'toggle':
-          playerStore.toggle();
+          handleToggle();
           break;
         case 'next':
           queueStore
@@ -50,10 +54,10 @@ export const useMediaSession = () => {
             .catch((e) => console.error('store.prev() threw:', e));
           break;
         case 'stop':
-          playerStore.pause();
+          handlePause();
           break;
         case 'seekTo':
-          playerStore.seek(event.payload.position);
+          usePlayerStore.getState().seek(event.payload.position);
           break;
       }
     }).then((unlisten) => {
@@ -66,7 +70,8 @@ export const useMediaSession = () => {
 
     // 推送元数据到系统媒体会话
     const pushMetadata = () => {
-      const track = useQueueStore.getState().currentTrack;
+      const raw = usePlayerMirrorStore.getState().currentTrack;
+      const track = raw ? queueItemToSong(raw) : null;
       if (!track) return;
 
       const artistNames = track.artists?.map((a) => a.name).join('、') ?? '';
@@ -82,8 +87,8 @@ export const useMediaSession = () => {
     };
 
     // 曲目变化 → 更新元数据
-    const unsubTrack = useQueueStore.subscribe((state, prevState) => {
-      if (state.currentTrack?.id !== prevState.currentTrack?.id) {
+    const unsubTrack = usePlayerMirrorStore.subscribe((state, prevState) => {
+      if (state.currentTrack?.track_id !== prevState.currentTrack?.track_id) {
         pushMetadata();
       }
     });
@@ -111,7 +116,7 @@ export const useMediaSession = () => {
     }, 5000);
 
     // 同步初始状态
-    const init = useQueueStore.getState();
+    const init = usePlayerMirrorStore.getState();
     if (init.currentTrack) {
       pushMetadata();
     }
@@ -126,5 +131,6 @@ export const useMediaSession = () => {
         unlisten();
       }
     };
-  }, []);
+    // handlePlay/handlePause/handleToggle 为 useCallback([]) 稳定引用，effect 仍只挂一次
+  }, [handlePlay, handlePause, handleToggle]);
 };

@@ -1,23 +1,21 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import type { Track } from '@/core/types';
+import { invoke } from '@tauri-apps/api/core';
+import type { Track } from '@/shared/types/player';
 import { playerService } from '../services/PlayerService';
-import { TauriStorage } from '@/tauri/storage';
+import { songToQueueItem } from '@/shared/utils/mappers';
+import type { PlayUrlInfo } from '@/shared/types/player';
 
 // ── Helpers ──
 
 export { formatQueueCount } from '@/shared/utils/format';
 
-/** Push service queue state into the Zustand store (must copy the array). */
-export function syncQueueDerived(): void {
-  useQueueStore.setState({
-    queue: [...playerService.queue],
-    currentTrack: playerService.currentTrack,
-    queueLength: playerService.queueLength,
-    isFm: playerService.isFm,
-    fmExitWillEmpty: playerService.fmExitWillEmpty,
-    canPrev: playerService.canPrev,
-  });
+/** Rust 引擎：invoke 获取 PlayUrlInfo → 本地 AudioCore load + play（复用 playerService 的 audioCore 单例）。 */
+async function rustLoadAndPlay(command: string, args?: Record<string, unknown>): Promise<void> {
+  // 切歌前上报旧曲目最终进度/状态（引擎随后重置位置）
+  await playerService.flushPosition();
+  const result = await invoke<PlayUrlInfo>(command, args);
+  await playerService.audioCore.load(result.url);
+  await playerService.audioCore.play();
 }
 
 // ── Store ──
@@ -46,102 +44,70 @@ export interface QueueStore {
 }
 
 export const useQueueStore = create<QueueStore>()(
-  persist(
-    (): QueueStore => {
-      // Auto-sync derived queue state whenever the service mutates the queue
-      // (including auto-advance when the current track ends).
-      playerService.on('queuechange', syncQueueDerived);
+  (): QueueStore => ({
+    queue: [],
+    currentTrack: null,
+    queueLength: 0,
+    isFm: false,
+    fmExitWillEmpty: false,
+    canPrev: true,
 
-      return {
-        queue: [],
-        currentTrack: null,
-        queueLength: 0,
-        isFm: false,
-        fmExitWillEmpty: false,
-        canPrev: true,
-
-        play: async (track) => {
-          await playerService.play(track);
-          syncQueueDerived();
-        },
-
-        replaceAndPlay: async (tracks, startIndex = 0) => {
-          await playerService.replaceAndPlay(tracks, startIndex);
-          syncQueueDerived();
-        },
-
-        next: async () => {
-          await playerService.next();
-          syncQueueDerived();
-        },
-
-        prev: async () => {
-          await playerService.prev();
-          syncQueueDerived();
-        },
-
-        addToQueue: async (track) => {
-          await playerService.addToQueue(track);
-          syncQueueDerived();
-        },
-
-        playNext: async (track) => {
-          await playerService.playNext(track);
-          syncQueueDerived();
-        },
-
-        playFromIndex: async (index) => {
-          await playerService.playFromIndex(index);
-          syncQueueDerived();
-        },
-
-        removeFromQueue: async (index) => {
-          await playerService.removeFromQueue(index);
-          syncQueueDerived();
-        },
-
-        clearQueue: () => {
-          playerService.clearQueue();
-          syncQueueDerived();
-        },
-
-        enterFm: async (tracks) => {
-          await playerService.enterFm(tracks);
-          syncQueueDerived();
-        },
-
-        exitFm: async () => {
-          await playerService.exitFm();
-          syncQueueDerived();
-        },
-
-        fmTrash: async () => {
-          await playerService.fmTrash();
-          syncQueueDerived();
-        },
-      };
+    play: async (track) => {
+      await rustLoadAndPlay('play_track', { track: songToQueueItem(track) });
     },
-    {
-      name: 'player-queue',
-      storage: createJSONStorage(() => TauriStorage),
-      partialize: (state) =>
-        playerService.isFm
-          ? { queue: [], index: -1, currentTime: 0 } // 漫游会话不落盘
-          : {
-              queue: state.queue,
-              index: playerService.currentIndex,
-              currentTime: 0, // placeholder — currentTime lives in player store
-            },
-      onRehydrateStorage: () => (state) => {
-        const data = state as
-          | { queue?: Track[]; index?: number }
-          | undefined;
-        if (data?.queue?.length) {
-          playerService.restoreQueue(data.queue, data.index ?? 0);
-          // Re-sync Zustand from the service
-          syncQueueDerived();
-        }
-      },
+
+    replaceAndPlay: async (tracks, startIndex = 0) => {
+      await rustLoadAndPlay('replace_and_play', {
+        tracks: tracks.map(songToQueueItem),
+        startIndex,
+      });
     },
-  ),
+
+    next: async () => {
+      await rustLoadAndPlay('play_next');
+    },
+
+    prev: async () => {
+      await rustLoadAndPlay('play_prev');
+    },
+
+    addToQueue: async (track) => {
+      await invoke<void>('append_to_queue', { tracks: [songToQueueItem(track)] });
+    },
+
+    playNext: async (track) => {
+      await invoke<void>('insert_next', { track: songToQueueItem(track) });
+    },
+
+    playFromIndex: async (index) => {
+      await rustLoadAndPlay('play_queue_at', { index });
+    },
+
+    removeFromQueue: async (index) => {
+      await invoke<void>('remove_from_queue', { index });
+    },
+
+    clearQueue: () => {
+      void invoke<void>('clear_queue');
+    },
+
+    enterFm: async (_tracks) => {
+      // Rust 自动取歌（enter_fm 无参数），预请求候选歌暂不使用
+      await rustLoadAndPlay('enter_fm');
+    },
+
+    exitFm: async () => {
+      // 切回原队列前上报 FM 曲目最终进度/状态
+      await playerService.flushPosition();
+      const result = await invoke<PlayUrlInfo>('exit_fm');
+      if (result.track) {
+        await playerService.audioCore.load(result.url);
+        await playerService.audioCore.play();
+      }
+    },
+
+    fmTrash: async () => {
+      await rustLoadAndPlay('fm_trash');
+    },
+  }),
 );
