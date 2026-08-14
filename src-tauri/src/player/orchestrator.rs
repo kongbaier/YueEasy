@@ -178,28 +178,18 @@ pub(crate) async fn play_current_track(
     Ok(())
 }
 
-/// 启动 ended 检测 + 位置持久化后台任务：
-/// 1. ended 检测：周期检查音频是否播完，播完则自动推进。
-/// 2. 位置持久化：周期把真实音频位置/状态写入引擎快照 + SQLite（崩溃续播）。
-///    节流：每 10 tick（≈5s）或位移 ≥1s 写一次。
+/// 启动 ended 检测后台任务：周期检查音频是否播完，播完则自动推进。
 pub(crate) fn start_ended_watcher(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_millis(500));
-        let mut tick_count: u64 = 0;
-        let mut last_persisted_pos: f64 = -1.0;
         loop {
             interval.tick().await;
-            tick_count += 1;
             let player = app.state::<PlayerState>();
-            let (should_advance, pos, playing) = {
+            let should_advance = {
                 let audio = player.audio.lock().unwrap();
                 let pos = audio.get_pos().as_secs_f64();
                 let playing = audio.status() == AudioStatus::Playing;
-                (
-                    playing && audio.duration().is_some_and(|d| pos >= d.as_secs_f64()),
-                    pos,
-                    playing,
-                )
+                playing && audio.duration().is_some_and(|d| pos >= d.as_secs_f64())
             };
             if should_advance {
                 {
@@ -213,17 +203,6 @@ pub(crate) fn start_ended_watcher(app: AppHandle) {
                         log::warn!("[ended watcher] 自动推进失败: {e}");
                     }
                 }
-                continue;
-            }
-            let should_persist =
-                tick_count.is_multiple_of(10) || (pos - last_persisted_pos).abs() >= 1.0;
-            if should_persist {
-                last_persisted_pos = pos;
-                {
-                    let mut engine = player.engine.lock().unwrap();
-                    engine.report_position(pos, playing);
-                }
-                persist_snapshot(&app, &player);
             }
         }
     });

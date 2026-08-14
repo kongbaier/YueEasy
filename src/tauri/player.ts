@@ -101,11 +101,6 @@ export function getPosition(): Promise<[number, boolean]> {
   return invoke('get_position');
 }
 
-/** 启动恢复：Rust 端恢复上次快照对应的音频播放（resolve URL + seek）。 */
-export function restorePlayback(): Promise<void> {
-  return invoke('restore_playback');
-}
-
 /** 全量播放器状态（快照 + 当前曲目，启动恢复用）。 */
 export function getFullPlayerState(): Promise<FullPlayerState> {
   return invoke('get_full_player_state');

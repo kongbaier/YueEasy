@@ -62,11 +62,4 @@ pub struct PlayerSnapshot {
     pub content_source: ContentSource,
     /// FM 已播 id 列表（FM 未激活时为空）。
     pub fm_played_ids: Vec<u64>,
-    /// 最近已知播放位置（秒）。仅供重启恢复；AudioCore 才是权威。
-    /// `#[serde(default)]`：兼容旧版落盘快照（无此字段）。
-    #[serde(default)]
-    pub position_secs: f64,
-    /// 最近已知播放/暂停状态（上次已知）。仅供重启恢复。
-    #[serde(default)]
-    pub playing: bool,
 }

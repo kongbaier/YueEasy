@@ -143,7 +143,6 @@ pub fn run() {
             cmd::query::get_player_snapshot,
             cmd::query::get_queue,
             cmd::query::get_full_player_state,
-            cmd::player::restore_playback,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

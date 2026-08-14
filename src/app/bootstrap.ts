@@ -1,11 +1,7 @@
 import { useSettingsStore } from "@/stores/settings";
 import { initAuth } from "@/modules/auth/stores/authStore";
 import { usePlayerStore } from "@/stores/player";
-import {
-  getFullPlayerState,
-  getPosition,
-  restorePlayback,
-} from "@/tauri/player";
+import { getFullPlayerState } from "@/tauri/player";
 
 /**
  * Application-level initialization that must complete before React mounts.
@@ -29,8 +25,7 @@ function applyPlayerSettings(): void {
 }
 
 /**
- * 启动恢复：从 Rust 拉取全量快照填充 store，再由 Rust `restore_playback` 恢复
- * 音频播放（若上次播放中），最后拉取实际位置校准进度。
+ * 启动恢复：从 Rust 拉取全量快照填充 store（队列/模式/当前曲目），不自动播放。
  */
 async function restorePlayerState(): Promise<void> {
   try {
@@ -45,21 +40,9 @@ async function restorePlayerState(): Promise<void> {
     });
 
     if (current_track) {
-      usePlayerStore.setState({
-        duration: current_track.duration_secs,
-        playing: snapshot.playing,
-      });
+      usePlayerStore.setState({ duration: current_track.duration_secs });
     }
-
-    await restorePlayback();
-
-    const [pos, playing] = await getPosition();
-    usePlayerStore.setState({
-      currentTime: pos,
-      currentTimeHigh: pos,
-      playing,
-    });
   } catch (err) {
-    console.warn("[restorePlayerState] 恢复播放器状态失败（保持暂停）:", err);
+    console.warn("[restorePlayerState] 恢复播放器状态失败:", err);
   }
 }

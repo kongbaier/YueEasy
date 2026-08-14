@@ -781,24 +781,6 @@ fn fm_record_played_non_fm_is_noop() {
 // ── 快照（§7 + 评审要求：含 played_ids） ──
 
 #[test]
-fn report_position_persists_and_restores_playback_state() {
-    // 崩溃续播链路（音频迁移 Rust 后）：watcher 周期 report_position → snapshot → from_snapshot。
-    // 断言位置/状态经快照往返一致（restore_playback 依赖此值决定 seek + 恢复播放）。
-    let mut e = setup(3);
-    e.play_queue_at(1);
-    e.report_position(42.5, true);
-    let snap = e.snapshot();
-    assert_eq!(snap.position_secs, 42.5);
-    assert!(snap.playing);
-    let restored = QueueEngine::from_snapshot(snap);
-    assert_eq!(restored.snapshot().position_secs, 42.5);
-    assert!(restored.snapshot().playing);
-    // 切歌重置位置：旧曲目的位置对新曲目无效（reset_reported_position 语义）
-    e.play_queue_at(2);
-    assert_eq!(e.snapshot().position_secs, 0.0);
-}
-
-#[test]
 fn snapshot_roundtrip_restores_state() {
     let mut e = setup(4);
     e.play_queue_at(2);
@@ -854,8 +836,6 @@ fn from_snapshot_out_of_range_index_is_clamped() {
         repeat: Repeat::Off,
         content_source: ContentSource::Queue,
         fm_played_ids: Vec::new(),
-        position_secs: 42.0,
-        playing: true,
     };
     let e = QueueEngine::from_snapshot(snap);
     assert_eq!(e.current_index(), None);

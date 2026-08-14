@@ -58,7 +58,7 @@ pub struct FullPlayerState {
 }
 
 /// 全量播放器状态（WebView 启动/重载恢复用）。快照内含 queue/current_index/mode/
-/// fm_active/fm_played_ids/position_secs/playing；current_track 为便捷字段。
+/// fm_active/fm_played_ids；current_track 为便捷字段。
 /// 比事件推送更可靠：事件在 setup 期发射时前端监听尚未挂载。
 #[tauri::command]
 pub(crate) async fn get_full_player_state(

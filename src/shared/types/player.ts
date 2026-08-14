@@ -31,10 +31,6 @@ export interface PlayerSnapshot {
   content_source: RustContentSource;
   /** FM 已播 id 列表（content_source == 'personal_fm' 时累计；其他源时为空）。 */
   fm_played_ids: number[];
-  /** 最近已知播放位置（秒）。由 Rust `start_ended_watcher` 周期写入，仅供重启恢复。 */
-  position_secs: number;
-  /** 最近已知播放/暂停状态（由 Rust watcher 周期写入）。仅供重启恢复。 */
-  playing: boolean;
 }
 
 /** `get_full_player_state` 返回：快照 + 当前曲目（启动恢复用，设计 §7）。 */

@@ -401,44 +401,6 @@ pub(crate) async fn clear_queue(
     Ok(())
 }
 
-// ── 位置持久化 ─────────────────
-
-/// 启动恢复：若上次播放中，则解析当前曲目 URL 并恢复播放（seek 到上次位置）。
-#[tauri::command]
-pub(crate) async fn restore_playback(
-    app: AppHandle,
-    player: State<'_, PlayerState>,
-    ncm: State<'_, NcmState>,
-) -> Result<(), String> {
-    let (track, position_secs, playing) = {
-        let engine = player.engine.lock().unwrap();
-        let snapshot = engine.snapshot();
-        (
-            engine.current_track().cloned(),
-            snapshot.position_secs,
-            snapshot.playing,
-        )
-    };
-    let Some(track) = track else {
-        return Ok(());
-    };
-    let url = resolve_url(&app, &ncm, &track, None).await?;
-    *player.last_url.lock().unwrap() = Some((track.track_id, url.clone()));
-    prepare_and_load(&player, &url, track.duration_secs).await?;
-    if position_secs > 0.0 {
-        let mut audio = player.audio.lock().unwrap();
-        audio.seek(position_secs);
-    }
-    if playing {
-        emit_playing(&app, true);
-    } else {
-        let mut audio = player.audio.lock().unwrap();
-        audio.pause();
-        emit_playing(&app, false);
-    }
-    Ok(())
-}
-
 /// 漫游垃圾桶 / 「不感兴趣」：上报当前 FM 曲到 NCM 垃圾桶 + 从 FM 队列移除 + 播下一首。
 #[tauri::command]
 pub(crate) async fn fm_trash(

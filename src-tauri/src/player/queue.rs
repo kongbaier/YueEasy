@@ -37,10 +37,6 @@ pub struct QueueEngine {
     fm_saved: Option<SavedContext>,
     /// FM 已播 id 列表（从原 FmState 拆出；Queue 源时为空）。
     fm_played_ids: Vec<u64>,
-    /// 最近已知播放位置（秒）——位置持久化用（Phase F，快照仅存此值）。
-    last_position: f64,
-    /// 最近已知播放/暂停状态——位置持久化用（Phase F）。
-    last_playing: bool,
 }
 
 impl Default for QueueEngine {
@@ -71,8 +67,6 @@ impl QueueEngine {
             strategy: PlayStrategy::new(Order::Sequential, Repeat::Off, seed),
             fm_saved: None,
             fm_played_ids: Vec::new(),
-            last_position: 0.0,
-            last_playing: false,
         }
     }
 
@@ -88,8 +82,6 @@ impl QueueEngine {
         };
         engine.fm_played_ids = snapshot.fm_played_ids;
         engine.source = snapshot.content_source;
-        engine.last_position = snapshot.position_secs;
-        engine.last_playing = snapshot.playing;
         // 导航策略始终跟随 order/repeat（Shuffle 排列惰性重建，不持久化）
         engine.strategy = PlayStrategy::new(snapshot.order, snapshot.repeat, random_seed());
         engine
@@ -102,7 +94,6 @@ impl QueueEngine {
         self.discard_fm();
         if let Some(pos) = self.queue.iter().position(|t| t.track_id == track.track_id) {
             self.current_index = Some(pos);
-            self.reset_reported_position();
             return &self.queue[pos];
         }
         // 替换为单曲上下文
@@ -135,7 +126,6 @@ impl QueueEngine {
             return None;
         }
         self.current_index = Some(index);
-        self.reset_reported_position();
         self.current_track()
     }
 
@@ -148,7 +138,6 @@ impl QueueEngine {
         let step = self.strategy.manual_next(current, len);
         if let Step::Play(idx) = step {
             self.current_index = Some(idx);
-            self.reset_reported_position();
         }
         step
     }
@@ -161,7 +150,6 @@ impl QueueEngine {
         let step = self.strategy.on_track_end(current, len);
         if let Step::Play(idx) = step {
             self.current_index = Some(idx);
-            self.reset_reported_position();
         }
         step
     }
@@ -172,7 +160,6 @@ impl QueueEngine {
         let len = self.queue.len();
         let idx = self.strategy.manual_prev(current, len)?;
         self.current_index = Some(idx);
-        self.reset_reported_position();
         self.current_track()
     }
 
@@ -256,7 +243,6 @@ impl QueueEngine {
                     self.current_index = ctx.index;
                     self.strategy.set_order(ctx.order);
                     self.strategy.set_repeat(ctx.repeat);
-                    self.reset_reported_position();
                     self.current_track()
                 } else {
                     // FM 激活但无快照（from_snapshot 恢复场景）→ 清空是合理行为（§2.5）
@@ -341,15 +327,7 @@ impl QueueEngine {
             repeat: self.strategy.repeat(),
             content_source: self.source,
             fm_played_ids: self.fm_played_ids.clone(),
-            position_secs: self.last_position,
-            playing: self.last_playing,
         }
-    }
-
-    /// 上报播放进度/状态（`start_ended_watcher` 周期写入；仅持久化用途）。
-    pub fn report_position(&mut self, position_secs: f64, playing: bool) {
-        self.last_position = position_secs.max(0.0);
-        self.last_playing = playing;
     }
 
     // ── 内部 ──
@@ -371,7 +349,6 @@ impl QueueEngine {
         }
         if added && self.current_index.is_none() && !self.queue.is_empty() {
             self.current_index = Some(0);
-            self.reset_reported_position();
         }
         added
     }
@@ -400,7 +377,6 @@ impl QueueEngine {
         };
         if old_ci == Some(index) {
             // 删除的是当前曲 → 当前曲变化，重置位置
-            self.reset_reported_position();
         }
         Some(removed)
     }
@@ -409,7 +385,6 @@ impl QueueEngine {
     fn queue_clear(&mut self) {
         self.queue.clear();
         self.current_index = None;
-        self.reset_reported_position();
     }
 
     /// 基础替换：替换整个队列并从 start 位置起播。空队列 → 清空；start 越界钳制到尾。
@@ -421,7 +396,6 @@ impl QueueEngine {
         let idx = start.unwrap_or(0).min(tracks.len() - 1);
         self.queue = tracks;
         self.current_index = Some(idx);
-        self.reset_reported_position();
     }
 
     /// 退出 FM 并丢弃快照（play_track / clear / replace_play 用，对齐 TS「主动操作放弃漫游快照」）。
@@ -429,11 +403,6 @@ impl QueueEngine {
         self.source = ContentSource::Queue;
         self.fm_saved = None;
         self.fm_played_ids.clear();
-    }
-
-    /// 当前曲目变化：重置已上报位置（位置按曲目归属，切歌后旧曲目的位置对新曲目无效）。
-    fn reset_reported_position(&mut self) {
-        self.last_position = 0.0;
     }
 }
 
