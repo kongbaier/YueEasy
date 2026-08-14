@@ -2,7 +2,7 @@
 
 import { ContextMenu as ContextMenuPrimitive } from '@base-ui/react/context-menu';
 
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
 
 function ContextMenu({ ...props }: ContextMenuPrimitive.Root.Props) {
   return <ContextMenuPrimitive.Root {...props} />;

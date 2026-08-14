@@ -1,6 +1,6 @@
 import { Shuffle } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/utils/cn";
 import { usePlayer } from "@/modules/player/hooks/usePlayer";
 
 /**

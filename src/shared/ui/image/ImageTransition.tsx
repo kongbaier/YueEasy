@@ -1,4 +1,4 @@
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
 import { Skeleton } from '@/shared/ui/skeleton';
 import {
   useEffect,

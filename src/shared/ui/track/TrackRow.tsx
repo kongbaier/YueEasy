@@ -10,7 +10,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { SmartImage } from '@/shared/ui/image';
 import type { Song } from '@/shared/types/entities';
 import { formatDuration } from '@/shared/utils/format';
-import { getNcmImageUrl } from '@/shared/lib/utils';
+import { getNcmImageUrl } from '@/shared/utils/image';
 import { useLikeAction } from '@/modules/like/hooks/useLikeAction';
 import { LikeButton } from '@/modules/like/components/LikeButton';
 import { useTrackActions } from '@/modules/player/hooks/useTrackActions';

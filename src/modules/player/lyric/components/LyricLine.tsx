@@ -1,6 +1,6 @@
 import { memo, useCallback } from 'react';
 import type { LyricLine as LyricLineType } from '@/modules/player/lyric/parser';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
 import { useLyricsContext } from './Lyrics';
 import { Word } from './Word';
 import { useLyricViewModel } from '../hooks/useLyricViewModel';

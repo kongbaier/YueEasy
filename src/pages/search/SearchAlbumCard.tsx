@@ -2,7 +2,7 @@ import { Disc } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { SmartImage } from '@/shared/ui/image';
-import { getNcmImageUrl } from '@/shared/lib/utils';
+import { getNcmImageUrl } from '@/shared/utils/image';
 import type { Album } from '@/shared/types/entities';
 
 interface SearchAlbumCardProps {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/shared/lib/toast';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
 import { Button } from '@/shared/ui/button';
 import {
   Dialog,

@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
 
 interface FollowTooltipProps {
   open: boolean;

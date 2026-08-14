@@ -13,7 +13,8 @@ import {
 import { useLayoutEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
+import { getNcmImageUrl } from '@/shared/utils/image';
 import {
   Sidebar,
   SidebarContent,
@@ -256,7 +257,7 @@ export const AppSidebar = () => {
                               alt=""
                               className="size-full object-cover"
                               containerClassName="h-5 w-5 shrink-0 rounded-sm group-data-[collapsible=icon]:size-4"
-                              src={p.coverUrl}
+                              src={getNcmImageUrl(p.coverUrl, 50)}
                             />
                           ) : (
                             <Music className="h-4 w-4 shrink-0" />
@@ -303,7 +304,7 @@ export const AppSidebar = () => {
                               alt=""
                               className="size-full object-cover"
                               containerClassName="h-5 w-5 shrink-0 rounded-sm group-data-[collapsible=icon]:size-4"
-                              src={p.coverUrl}
+                              src={getNcmImageUrl(p.coverUrl, 50)}
                             />
                           ) : (
                             <Library className="h-4 w-4 shrink-0" />

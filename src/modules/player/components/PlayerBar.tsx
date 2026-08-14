@@ -18,7 +18,8 @@ import { useProgress } from "@/modules/player/hooks/useProgress";
 import { usePlayer } from "@/modules/player/hooks/usePlayer";
 import { formatDuration } from "@/shared/utils/format";
 import { toast } from "@/shared/lib/toast";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/utils/cn";
+import { getNcmImageUrl } from "@/shared/utils/image";
 import { formatQueueCount } from "@/shared/utils/format";
 import { usePlayerPage } from "@/modules/player/contexts/PlayerPageContext";
 import { RepeatButton } from "./RepeatButton";
@@ -186,7 +187,7 @@ const PlayerInfo = ({ currentTrack }: { currentTrack: Track | null }) => {
               className="size-full"
               foregroundClassName="rounded-md border-[0.5px]  border-border"
               alt={currentTrack.album.name}
-              src={currentTrack.album.picUrl}
+              src={getNcmImageUrl(currentTrack.album.picUrl, 50)}
             />
           ) : (
             <div className="flex items-center justify-center size-full bg-accent">

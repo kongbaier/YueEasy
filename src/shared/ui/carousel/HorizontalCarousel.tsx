@@ -10,7 +10,7 @@ import {
   useCarousel,
 } from "@/shared/ui/carousel-base";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/utils/cn";
 
 const SKELETON_COUNT = 8;
 

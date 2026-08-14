@@ -16,7 +16,8 @@ import { VirtuosoScroller } from '@/shared/ui/virtuoso';
 import { SmartImage } from '@/shared/ui/image';
 import type { Track } from '@/shared/types/player';
 import { toast } from '@/shared/lib/toast';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
+import { getNcmImageUrl } from '@/shared/utils/image';
 import { formatQueueCount } from '@/shared/utils/format';
 import { usePlayer } from '@/modules/player/hooks/usePlayer';
 
@@ -51,7 +52,7 @@ const QueueItem = ({
             alt={track.album.name}
             className="size-full object-cover"
             containerClassName="size-full"
-            src={track.album.picUrl}
+            src={getNcmImageUrl(track.album.picUrl, 50)}
           />
         ) : (
           <Music className="size-3.5 text-text-muted" />
@@ -244,7 +245,7 @@ export const QueuePanel = ({
                           alt={currentTrack.album.name}
                           className="size-full object-cover"
                           containerClassName="size-full"
-                          src={currentTrack.album.picUrl}
+                          src={getNcmImageUrl(currentTrack.album.picUrl, 200)}
                         />
                       ) : (
                         <div className="flex items-center justify-center size-full bg-accent">

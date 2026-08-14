@@ -5,7 +5,8 @@ import { VirtuosoScroller } from '@/shared/ui/virtuoso';
 import { SmartImage } from '@/shared/ui/image';
 import { formatCount } from '@/shared/utils/format';
 import { toast } from '@/shared/lib/toast';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
+import { getNcmImageUrl } from '@/shared/utils/image';
 import { useComments } from '@/modules/comment/hooks/useComments';
 import type { Comment } from '@/shared/types/entities';
 
@@ -39,7 +40,7 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
             alt={comment.user.nickname}
             className="size-full object-cover"
             containerClassName="size-full"
-            src={comment.user.avatarUrl}
+            src={getNcmImageUrl(comment.user.avatarUrl, 50)}
           />
         ) : (
           <MessageSquare className="size-3.5 text-muted-foreground" />

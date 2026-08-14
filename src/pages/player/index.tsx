@@ -19,7 +19,7 @@ import { useWindowState } from '@/shared/hooks/useWindowState';
 import { Button } from '@/shared/ui/button';
 import { Cover } from '@/shared/ui/image';
 import type { Track } from '@/shared/types/player';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
 import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
 import { Lyrics } from '@/modules/player/lyric/components/Lyrics';
 import { PlayerPageComments } from './PlayerPageComments';

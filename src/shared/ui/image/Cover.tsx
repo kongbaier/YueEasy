@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { ImageTransition } from "./ImageTransition";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/utils/cn";
 
 interface CoverProps {
   src: string | undefined;

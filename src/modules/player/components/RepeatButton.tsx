@@ -1,6 +1,6 @@
 import { Infinity as InfinityIcon, Repeat, Repeat1 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/utils/cn";
 import { usePlayer } from "@/modules/player/hooks/usePlayer";
 import type { RepeatMode } from "@/shared/types/player";
 

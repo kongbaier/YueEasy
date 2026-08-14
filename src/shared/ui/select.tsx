@@ -1,7 +1,7 @@
 import { Select as SelectPrimitive } from '@base-ui/react/select';
 import { ChevronDown } from 'lucide-react';
 
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
 
 function Root<T>({ ...props }: SelectPrimitive.Root.Props<T, false>) {
   return <SelectPrimitive.Root {...props} />;

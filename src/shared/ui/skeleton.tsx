@@ -1,4 +1,4 @@
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/utils/cn";
 import React from "react";
 
 interface SkeletonProps extends React.ComponentProps<"div"> {

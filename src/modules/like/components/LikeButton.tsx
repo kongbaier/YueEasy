@@ -1,6 +1,6 @@
 import type { Track } from "@/shared/types/player";
 import { useLikeAction } from "@/modules/like/hooks/useLikeAction";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/utils/cn";
 import { Button } from "@/shared/ui/button";
 import { Heart } from "lucide-react";
 

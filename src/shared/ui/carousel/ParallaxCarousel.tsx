@@ -7,7 +7,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from '@/shared/ui/carousel-base';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
 
 interface ParallaxCarouselProps<T> {
   className?: string;

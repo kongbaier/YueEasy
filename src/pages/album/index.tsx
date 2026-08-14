@@ -7,7 +7,7 @@ import { usePageTitle } from '@/app/layout/PageTitleContext';
 import { TrackRow, TrackRowSkeleton } from '@/shared/ui/track';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { getNcmImageUrl } from '@/shared/lib/utils';
+import { getNcmImageUrl } from '@/shared/utils/image';
 import { useAlbumViewModel } from './useAlbumViewModel';
 
 /* ------------------------------------------------------------------ */

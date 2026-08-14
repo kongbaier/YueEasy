@@ -1,7 +1,7 @@
 import { Loader2, Music } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { createContext, use } from 'react';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
 import { LyricLine } from './LyricLine';
 import { useLyricScroll } from '../hooks/useLyricScroll';
 import { useLyricViewModel } from '../hooks/useLyricViewModel';

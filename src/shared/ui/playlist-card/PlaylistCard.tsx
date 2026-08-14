@@ -1,7 +1,8 @@
 import { ListMusic, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatCount } from '@/shared/utils/format';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
+import { getNcmImageUrl } from '@/shared/utils/image';
 import { SmartImage } from '@/shared/ui/image';
 import type { Playlist } from '@/shared/types/entities';
 import { AspectRatio } from '../aspect-ratio';
@@ -35,7 +36,7 @@ export const PlaylistCard = ({
           alt={playlist.name}
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           containerClassName="h-full w-full"
-          src={playlist.coverUrl}
+          src={getNcmImageUrl(playlist.coverUrl, 200)}
         />
         <div className="absolute inset-x-0 bottom-0 z-10 h-1/2 bg-linear-to-t from-black/60 to-transparent pointer-events-none" />
         {showPlayCount && (

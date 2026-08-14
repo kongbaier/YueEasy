@@ -4,7 +4,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { ScrollContainerContext } from '@/shared/hooks/useLoadMore';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
 import { SEARCH_TABS } from './constants';
 import { HotDropdown } from './HotDropdown';
 import { SearchResults } from './SearchResults';

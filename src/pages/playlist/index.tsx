@@ -8,7 +8,8 @@ import { TrackRow, TrackRowSkeleton } from "@/shared/ui/track";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { formatCount } from "@/shared/utils/format";
-import { cn, getNcmImageUrl } from "@/shared/lib/utils";
+import { cn } from "@/shared/utils/cn";
+import { getNcmImageUrl } from "@/shared/utils/image";
 import { usePlaylistViewModel } from "./usePlaylistViewModel";
 
 /* ------------------------------------------------------------------ */

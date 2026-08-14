@@ -2,7 +2,7 @@ import { User as UserIcon } from 'lucide-react';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { SmartImage } from '@/shared/ui/image';
 import { formatCount } from '@/shared/utils/format';
-import { getNcmImageUrl } from '@/shared/lib/utils';
+import { getNcmImageUrl } from '@/shared/utils/image';
 import type { User } from '@/shared/types/entities';
 
 interface SearchUserCardProps {

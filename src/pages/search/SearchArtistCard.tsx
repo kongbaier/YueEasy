@@ -1,7 +1,7 @@
 import { Mic } from 'lucide-react';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { SmartImage } from '@/shared/ui/image';
-import { getNcmImageUrl } from '@/shared/lib/utils';
+import { getNcmImageUrl } from '@/shared/utils/image';
 import type { Artist } from '@/shared/types/entities';
 
 interface SearchArtistCardProps {

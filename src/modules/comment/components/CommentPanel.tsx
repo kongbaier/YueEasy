@@ -2,7 +2,8 @@ import { MessageCircle, ThumbsUp } from 'lucide-react';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { SmartImage } from '@/shared/ui/image';
 import { formatCount } from '@/shared/utils/format';
-import { cn, getNcmImageUrl } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils/cn';
+import { getNcmImageUrl } from '@/shared/utils/image';
 import { useComments } from '@/modules/comment/hooks/useComments';
 import type { Comment } from '@/shared/types/entities';
 
