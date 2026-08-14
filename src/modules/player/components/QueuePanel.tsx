@@ -94,6 +94,7 @@ export const QueuePanel = ({
     queue,
     queueLength,
     currentTrack,
+    currentIndex,
     playFromIndex,
     removeFromQueue,
     clearQueue,
@@ -161,12 +162,8 @@ export const QueuePanel = ({
     }
   };
 
-  const currentIndex = currentTrack
-    ? queue.findIndex((item) => item.id === currentTrack.id)
-    : -1;
-
   const scrollToCurrent = useCallback(() => {
-    if (currentIndex >= 0) {
+    if (currentIndex !== null) {
       setTimeout(() => {
         virtuosoRef.current?.scrollToIndex({
           index: currentIndex,
@@ -329,7 +326,7 @@ export const QueuePanel = ({
                       itemContent={(index) => (
                         <QueueItem
                           index={index}
-                          isCurrent={currentTrack?.id === queue[index]?.id}
+                          isCurrent={index === currentIndex}
                           onPlay={handlePlayTrack}
                           onRemove={handleRemove}
                           track={queue[index]}
@@ -338,7 +335,7 @@ export const QueuePanel = ({
                       overscan={100}
                       ref={(ref) => {
                         virtuosoRef.current = ref;
-                        if (ref && !scrolledOnceRef.current && currentIndex >= 0) {
+                        if (ref && !scrolledOnceRef.current && currentIndex !== null) {
                           scrolledOnceRef.current = true;
                           scrollToCurrent();
                         }

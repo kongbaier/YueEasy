@@ -353,11 +353,12 @@ pub(crate) async fn insert_next(
     Ok(())
 }
 
-/// 移除指定位置曲目。
+/// 移除指定位置曲目。删到当前曲时重载音频（下一首滑入；删光则停止）。
 #[tauri::command]
 pub(crate) async fn remove_from_queue(
     app: AppHandle,
     player: State<'_, PlayerState>,
+    ncm: State<'_, NcmState>,
     index: usize,
 ) -> Result<(), String> {
     let before_track_id = {
@@ -374,9 +375,15 @@ pub(crate) async fn remove_from_queue(
         engine.current_track().cloned()
     };
     if after.as_ref().map(|t| t.track_id) != before_track_id {
-        emit_current(&app, &player);
+        // 删的是当前曲 → 重载音频；"queue ended"（删光队列）是预期结果，非错误
+        if let Err(e) = play_current_track(&app, &player, &ncm).await {
+            if e != "queue ended" {
+                return Err(e);
+            }
+        }
+    } else {
+        persist_snapshot(&app, &player);
     }
-    persist_snapshot(&app, &player);
     Ok(())
 }
 

@@ -85,7 +85,7 @@ export const PlayerPageQueue = () => {
   const {
     queue,
     queueLength,
-    currentTrack,
+    currentIndex,
     playFromIndex,
     isFm,
     clearQueue,
@@ -97,12 +97,8 @@ export const PlayerPageQueue = () => {
 
   const { close } = usePlayerPage();
 
-  const currentIndex = currentTrack
-    ? queue.findIndex((item) => item.id === currentTrack.id)
-    : -1;
-
   const scrollToCurrent = useCallback(() => {
-    if (currentIndex >= 0) {
+    if (currentIndex !== null) {
       setTimeout(() => {
         virtuosoRef.current?.scrollToIndex({
           index: currentIndex,
@@ -183,7 +179,7 @@ export const PlayerPageQueue = () => {
               itemContent={(index) => (
                 <QueueItem
                   index={index}
-                  isCurrent={currentTrack?.id === queue[index]?.id}
+                  isCurrent={index === currentIndex}
                   onPlay={playFromIndex}
                   onRemove={handleRemove}
                   track={queue[index]}
@@ -192,7 +188,7 @@ export const PlayerPageQueue = () => {
               overscan={50}
               ref={(ref) => {
                 virtuosoRef.current = ref;
-                if (ref && !scrolledOnceRef.current && currentIndex >= 0) {
+                if (ref && !scrolledOnceRef.current && currentIndex !== null) {
                   scrolledOnceRef.current = true;
                   scrollToCurrent();
                 }
