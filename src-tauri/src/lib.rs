@@ -37,6 +37,7 @@ pub fn run() {
         .manage(CacheState::default())
         .manage(NcmState::default())
         .manage(state::PlayerState::default())
+        .manage(state::LikeState::default())
         .setup(|app| {
             let handle = app.handle();
 
@@ -61,6 +62,10 @@ pub fn run() {
             infra::platform::window::setup(handle)?;
             infra::platform::tray::setup(handle)?;
             infra::platform::accent_color::watch_accent_color(handle.clone());
+
+            // 音频迁移 Rust：启动 ended 检测后台任务（歌曲播完自动切下一首）
+            cmd::player::start_ended_watcher(handle.clone());
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -108,6 +113,9 @@ pub fn run() {
             cmd::history::history_add,
             cmd::history::history_get,
             cmd::history::history_mark_synced,
+            cmd::like::like_init,
+            cmd::like::like_toggle,
+            cmd::like::like_get_ids,
             cmd::media_session::update_media_session_metadata,
             cmd::media_session::update_media_session_status,
             cmd::media_session::update_media_session_position,
@@ -116,21 +124,24 @@ pub fn run() {
             cmd::player::play_queue_at,
             cmd::player::play_next,
             cmd::player::play_prev,
-            cmd::player::decide_after_end,
             cmd::player::fm_trash,
+            cmd::player::enter_heartbeat,
             cmd::player::set_iteration_strategy,
             cmd::player::set_content_source,
             cmd::player::seek,
+            cmd::player::play,
+            cmd::player::pause,
+            cmd::player::set_volume,
+            cmd::player::get_position,
             cmd::player::append_to_queue,
             cmd::player::insert_next,
             cmd::player::remove_from_queue,
             cmd::player::clear_queue,
-            cmd::player::shuffle_queue,
             cmd::query::resolve_play_url,
             cmd::query::get_player_snapshot,
             cmd::query::get_queue,
             cmd::query::get_full_player_state,
-            cmd::player::report_position,
+            cmd::player::restore_playback,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

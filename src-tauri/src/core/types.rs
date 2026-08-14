@@ -17,23 +17,27 @@ pub struct QueueItem {
 }
 
 /// 内容来源（设计 §2.6：与「迭代策略」正交的两条分类轴之一）。
-/// `Queue` 走本地队列；`PersonalFm` 走 NCM 个性推荐（SDK 推送）。
+/// 决定「队尾如何续歌」——三种来源本质是三种队列补给策略。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ContentSource {
-    /// 本地队列（受 `IterationStrategy` 控制）。
+    /// 本地队列（由用户操作填充；队尾行为交导航策略决定）。
     Queue,
-    /// 私人漫游（FM，SDK 推送；策略字段被忽略）。
+    /// 私人漫游（FM，流式逐首续接；`personal_fm` 取歌）。
     PersonalFm,
+    /// 心动模式（Heartbeat，`playmode/intelligence/list` 一次性生成推荐队列）。
+    Heartbeat,
 }
 
 /// 迭代策略（设计 §2.4 + §2.6：与「内容来源」正交的另一条分类轴）。
 /// 仅当 `ContentSource == Queue` 时生效；FM 模式强制忽略策略。
 /// `snake_case` 序列化（IPC 模式字符串与事件 wire 对齐，设计 §4.1/§4.2）。
+///
+/// 导航逻辑见 `core/strategy.rs` 的 `PlayStrategy`（每个模式一个策略，区分手动切歌 manual_next/manual_prev 与自然结束 on_track_end）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PlayMode {
-    /// 顺序播放。队尾不环绕。
+    /// 顺序播放。队尾停止。
     Sequential,
     /// 列表循环。队尾自动绕回首。
     LoopAll,
@@ -41,32 +45,6 @@ pub enum PlayMode {
     LoopOne,
     /// 随机播放。按内部排列循环前进。
     Shuffle,
-}
-
-/// 推进结果（设计 §2.2）：把 FM 的异步依赖变成引擎的声明式输出。
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum AdvanceResult {
-    /// 已推进，播放 queue[idx]。
-    PlayTrack(usize),
-    /// FM 模式，需从服务端取歌（cmd 层取歌后调 `set_fm_track`）。
-    NeedFmTrack,
-    /// 队列已尽（Sequential 队尾 / 空队列）。
-    EndOfQueue,
-}
-
-/// 曲目自然结束后的引擎决策（cmd 层据此执行 I/O）。
-/// 与 AdvanceResult 不同：此处不含 URL（URL 是 I/O 产物，应在 cmd 层解析）。
-/// 与 `next()` 的差异：手动 next 在 Sequential 末尾环绕，`on_track_end()` 保持暂停。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AfterEndAction {
-    /// 推进到指定索引（cmd 层 resolve_url 后返回 PlayUrlInfo）。
-    PlayNext(usize),
-    /// 重播当前曲（LoopOne；cmd 层读 last_url 缓存或重新 resolve）。
-    ReplayCurrent,
-    /// FM 模式需要新曲（cmd 层取 personal_fm）。
-    NeedFmTrack,
-    /// 队列耗尽（Sequential 末尾 / 空队列），保持暂停。
-    Stopped,
 }
 
 /// 引擎全量快照（设计 §7 崩溃/重载恢复 + 评审要求含 played_ids）。

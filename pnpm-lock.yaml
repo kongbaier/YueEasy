@@ -74,6 +74,9 @@ importers:
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.6.0
+      xstate:
+        specifier: ^5.32.5
+        version: 5.32.5
       zustand:
         specifier: ^5.0.12
         version: 5.0.13(@types/react@19.2.15)(react@19.2.6)(use-sync-external-store@1.6.0(react@19.2.6))
@@ -1897,6 +1900,9 @@ packages:
     engines: {node: '>=8'}
     hasBin: true
 
+  xstate@5.32.5:
+    resolution: {integrity: sha512-ULazi1oe6wGrXl0Frb6otSlkm5HLifbbVTkMk5kkSKqz4TkxJaVpnl6jOJwKeid3ORPxYyZQgNLUSYX9q65SIA==}
+
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
 
@@ -3283,6 +3289,8 @@ snapshots:
     dependencies:
       siginfo: 2.0.0
       stackback: 0.0.2
+
+  xstate@5.32.5: {}
 
   yallist@3.1.1: {}
 

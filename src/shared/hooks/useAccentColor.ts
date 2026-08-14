@@ -1,14 +1,9 @@
 import { useEffect } from 'react';
-
-interface SystemAccentColors {
-  accent: string;
-  accent_dark1: string;
-  accent_dark2: string;
-  accent_dark3: string;
-  accent_light1: string;
-  accent_light2: string;
-  accent_light3: string;
-}
+import {
+  getAccentColor,
+  subscribeAccentColor,
+  type SystemAccentColors,
+} from '@/shared/services/SystemService';
 
 // 注入物理色阶变量（主题无关）；语义角色映射在 theme.css 中按主题完成
 const mappings: Record<keyof SystemAccentColors, string> = {
@@ -34,21 +29,14 @@ export const useAccentColor = () => {
   useEffect(() => {
     let unlisten: (() => void) | undefined;
 
-    Promise.all([
-      import('@tauri-apps/api/core'),
-      import('@tauri-apps/api/event'),
-    ]).then(([{ invoke }, { listen }]) => {
-      invoke<SystemAccentColors>('get_accent_color')
-        .then(apply)
-        .catch(() => {
-          // Non-Windows or API failure — keep defaults
-        });
-
-      listen<SystemAccentColors>('accent-color-changed', (event) => {
-        apply(event.payload);
-      }).then((fn) => {
-        unlisten = fn;
+    getAccentColor()
+      .then(apply)
+      .catch(() => {
+        // Non-Windows or API failure — keep defaults
       });
+
+    subscribeAccentColor(apply).then((fn) => {
+      unlisten = fn;
     });
 
     return () => {

@@ -2,17 +2,17 @@ import { lazy } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./layout";
 import { PlayerPageProvider } from "@/modules/player/contexts/PlayerPageContext";
-import { LoginDialog } from "@/modules/auth/LoginDialog";
+import { LoginDialog } from "@/modules/auth/components/LoginDialog";
 
-const Home = lazy(() => import("@/modules/home/Home"));
-const Search = lazy(() => import("@/modules/search"));
-const Playlist = lazy(() => import("@/modules/playlist/Playlist"));
-const Album = lazy(() => import("@/modules/album/Album"));
-const DailyRecommend = lazy(() => import("@/modules/daily/DailyRecommend"));
-const LikedSongs = lazy(() => import("@/modules/liked/LikedSongs"));
-const RecentPlays = lazy(() => import("@/modules/recent/RecentPlays"));
-const Settings = lazy(() => import("@/modules/settings/Settings"));
-const PlayerPage = lazy(() => import("@/modules/player/pages/PlayerPage"));
+const Home = lazy(() => import("@/pages/home"));
+const Search = lazy(() => import("@/pages/search"));
+const Playlist = lazy(() => import("@/pages/playlist"));
+const Album = lazy(() => import("@/pages/album"));
+const DailyRecommend = lazy(() => import("@/pages/daily"));
+const LikedSongs = lazy(() => import("@/pages/liked"));
+const RecentPlays = lazy(() => import("@/pages/recent"));
+const Settings = lazy(() => import("@/pages/settings"));
+const PlayerPage = lazy(() => import("@/pages/player"));
 
 export function AppRouter() {
   return (

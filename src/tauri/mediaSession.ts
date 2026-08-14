@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 
 export interface MediaSessionMetadata {
   title: string;
@@ -7,6 +8,19 @@ export interface MediaSessionMetadata {
   durationSecs: number;
   artworkUrl?: string;
 }
+
+/** OS 媒体键事件（Rust `infra/platform/media_session` 推送）。 */
+export type MediaSessionEvent =
+  | { event: 'play' }
+  | { event: 'pause' }
+  | { event: 'toggle' }
+  | { event: 'next' }
+  | { event: 'previous' }
+  | { event: 'stop' }
+  | { event: 'fastForward' }
+  | { event: 'rewind' }
+  | { event: 'seekTo'; position: number }
+  | { event: 'setPlaybackRate'; rate: number };
 
 export async function updateMediaSessionMetadata(
   meta: MediaSessionMetadata,
@@ -24,4 +38,13 @@ export async function updateMediaSessionPosition(
   positionSecs: number,
 ): Promise<void> {
   return invoke('update_media_session_position', { positionSecs });
+}
+
+/** 订阅 OS 媒体键事件（Rust `media-session-event` 推送）。返回取消订阅函数。 */
+export function onMediaSessionEvent(
+  cb: (event: MediaSessionEvent) => void,
+): Promise<UnlistenFn> {
+  return listen<MediaSessionEvent>('media-session-event', (event) => {
+    cb(event.payload);
+  });
 }

@@ -33,7 +33,7 @@ import {
 import { SmartImage } from '@/shared/ui/image';
 import { useLocalStorageState } from '@/shared/hooks/useLocalStorageState';
 import { useSidebarPlaylists } from './useSidebarPlaylists';
-import { useAuthViewModel } from '@/shared/hooks/useAuthViewModel';
+import { useAuthViewModel } from '@/modules/auth/hooks/useAuthViewModel';
 
 const items = [
   { to: '/', icon: Home, label: '发现' },

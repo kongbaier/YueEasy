@@ -1,30 +1,29 @@
 import { create } from 'zustand';
-import { invoke } from '@tauri-apps/api/core';
+import * as playerApi from '@/tauri/player';
 import type { RustContentSource, Track } from '@/shared/types/player';
-import { playerService } from '../services/PlayerService';
-import { isQueueEnded } from '../services/PlayerService';
+import { usePlayerStore } from './player';
 import { songToQueueItem } from '@/shared/utils/mappers';
-import type { PlayUrlInfo } from '@/shared/types/player';
 
 // ── Helpers ──
 
 export { formatQueueCount } from '@/shared/utils/format';
 
-/** Rust 引擎：invoke 获取 PlayUrlInfo → 本地 AudioCore load + play（复用 playerService 的 audioCore 单例）。 */
-async function rustLoadAndPlay(command: string, args?: Record<string, unknown>): Promise<void> {
-  // 切歌前上报旧曲目最终进度/状态（引擎随后重置位置）
-  await playerService.flushPosition();
-  let result: PlayUrlInfo;
+/** Rust 引擎「队列已尽」哨兵（advance 语义 play_next / fm_trash 正常结束）—— 非错误。 */
+export function isQueueEnded(err: unknown): boolean {
+  if (err instanceof Error) return err.message === 'queue ended';
+  return String(err) === 'queue ended';
+}
+
+/** 播放命令统一包装：置 loading 态；「队列已尽」吞掉不抛（正常结束语义）。 */
+async function withLoading(op: () => Promise<unknown>): Promise<void> {
+  usePlayerStore.setState({ loading: true });
   try {
-    result = await invoke<PlayUrlInfo>(command, args);
+    await op();
   } catch (err) {
-    // Rust 引擎正常态：advance 语义（play_next / fm_trash）在队列耗尽时返回
-    // `Err("queue ended")`，视为自然结束、保持暂停即可；其余错误上抛由调用方处理。
+    usePlayerStore.setState({ loading: false });
     if (isQueueEnded(err)) return;
     throw err;
   }
-  await playerService.audioCore.load(result.url);
-  await playerService.audioCore.play();
 }
 
 // ── Store ──
@@ -62,50 +61,49 @@ export const useQueueStore = create<QueueStore>()(
     canPrev: true,
 
     play: async (track) => {
-      await rustLoadAndPlay('play_track', { track: songToQueueItem(track) });
+      await withLoading(() => playerApi.playTrack(songToQueueItem(track)));
     },
 
     replaceAndPlay: async (tracks, startIndex = 0) => {
-      await rustLoadAndPlay('replace_and_play', {
-        tracks: tracks.map(songToQueueItem),
-        startIndex,
-      });
+      await withLoading(() =>
+        playerApi.replaceAndPlay(tracks.map(songToQueueItem), startIndex),
+      );
     },
 
     next: async () => {
-      await rustLoadAndPlay('play_next');
+      await withLoading(() => playerApi.playNext());
     },
 
     prev: async () => {
-      await rustLoadAndPlay('play_prev');
+      await withLoading(() => playerApi.playPrev());
     },
 
     addToQueue: async (track) => {
-      await invoke<void>('append_to_queue', { tracks: [songToQueueItem(track)] });
+      await playerApi.appendToQueue([songToQueueItem(track)]);
     },
 
     playNext: async (track) => {
-      await invoke<void>('insert_next', { track: songToQueueItem(track) });
+      await playerApi.insertNext(songToQueueItem(track));
     },
 
     playFromIndex: async (index) => {
-      await rustLoadAndPlay('play_queue_at', { index });
+      await withLoading(() => playerApi.playQueueAt(index));
     },
 
     removeFromQueue: async (index) => {
-      await invoke<void>('remove_from_queue', { index });
+      await playerApi.removeFromQueue(index);
     },
 
     clearQueue: () => {
-      void invoke<void>('clear_queue');
+      void playerApi.clearQueue();
     },
 
     setContentSource: async (source) => {
-      await rustLoadAndPlay('set_content_source', { source });
+      await withLoading(() => playerApi.setContentSource(source));
     },
 
     fmTrash: async () => {
-      await rustLoadAndPlay('fm_trash');
+      await withLoading(() => playerApi.fmTrash());
     },
   }),
 );

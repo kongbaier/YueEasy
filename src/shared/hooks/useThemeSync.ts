@@ -1,5 +1,5 @@
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useCallback, useEffect, useRef } from 'react';
+import * as windowApi from '@/shared/services/WindowService';
 import { useSettingsStore } from '@/stores/settings';
 
 function getSystemTheme(): 'light' | 'dark' {
@@ -29,13 +29,13 @@ export const useThemeSync = () => {
 
     const sync = async () => {
       if (theme === 'system') {
-        await getCurrentWindow().setTheme(null);
+        await windowApi.setTheme(null);
         syncThemeClass(getSystemTheme());
-        unlisten = await getCurrentWindow().onThemeChanged(({ payload }) => {
-          syncThemeClass(payload);
+        unlisten = await windowApi.onThemeChanged((resolved) => {
+          syncThemeClass(resolved);
         });
       } else {
-        await getCurrentWindow().setTheme(theme);
+        await windowApi.setTheme(theme);
         syncThemeClass(theme);
       }
     };

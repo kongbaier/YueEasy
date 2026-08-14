@@ -59,7 +59,7 @@ src-tauri/src/
 | `use_case` 编排层 | Phase A 否决；Phase H 实施后验证：cmd 直连 service 无任何编排缺口，FM 取歌 4 行 match 确实够用。 |
 | `service` 层 | Phase A 否决 pass-through 死壳；Phase H 落地后验证：service 非空壳——ncm_service 含 song_to_queue_item 等归一逻辑，cmd 直接调用，抽象成立。 |
 | Repository trait + 多实现 | 只有一个存储后端（SQLite），trait 抽象今天不产生任何多态价值。如果将来换存储后端（极低概率），届时再抽 trait——YAGNI。 |
-| 策略模式（PlayMode trait） | 只有 3 种模式，match 分支 = 3。策略模式需要 trait + 3 struct + 动态分发，代码量加倍，可读性反而下降——所有分支散落在 3 个文件里。 |
+| 策略模式（PlayMode trait） | 早期否决；2026-08-13 重构后**采用**：导航逻辑收敛为 `core/strategy.rs` 的 `PlayStrategy` trait + 5 个策略实现（Sequential/LoopAll/LoopOne/Shuffle/Fm），统一 next/prev，消除了散落的 mode 匹配与 AdvanceResult/AfterEndAction 双枚举。 |
 
 ---
 
@@ -190,7 +190,25 @@ impl PlayerEngine {
 - `enter_fm` / `exit_fm` 承担了上下文保存/恢复的全部责任，调用方不需要知道 SavedContext 的存在。
 - `AdvanceResult::NeedFmTrack` 把 FM 的异步依赖变成引擎的声明式输出，cmd 层据此做 I/O。
 
-### 2.4 PlayMode：枚举 + match（不用策略 trait）
+### 2.4 PlayMode：策略模式（`core/strategy.rs`）
+
+> **2026-08-14 修订（最新）**：本节（2026-08-13 策略模式）随后又经两轮重构——①正交化：FM 从策略剥离为内容来源（`docs/playmode-design.md`）；②手动/自动入口拆分：`next` 拆为 `manual_next`/`on_track_end`，`Advance` → `Step{Play,ReplayCurrent,End}`，LoopOne 手动切歌切走、自然结束重播当前；删除 `reshuffle` 与 `engine.shuffle()`。详见本文件附录 I。
+
+> **2026-08-13 重构**：本节早期采用「枚举 + match」，后因 next/prev/on_track_end 四处 match + AdvanceResult/AfterEndAction 双枚举过于复杂，改为策略模式。
+> 每个 PlayMode（Sequential/LoopAll/LoopOne/Shuffle）及 FM 各一个 `PlayStrategy` 实现，统一提供
+> `next(current, len) -> Advance`（Play(idx) / End / FetchFm）与 `prev(current, len) -> Option<usize>`；
+> 手动切歌与「曲目自然结束」共用同一计算（Sequential 队尾停止、LoopAll 环绕、LoopOne 保持、Shuffle 前进）。
+> Shuffle 持有自身排列状态（`order`/`pos`/`rng`），队列突变后经 `on_queue_changed` 重建并锚定当前曲目。
+
+```rust
+// core/strategy.rs 内部实现（示意）
+pub trait PlayStrategy: Send + Sync {
+    fn next(&mut self, current: Option<usize>, len: usize) -> Advance;
+    fn prev(&mut self, current: Option<usize>, len: usize) -> Option<usize>;
+    fn on_queue_changed(&mut self, current: Option<usize>, len: usize) {}
+    fn is_fm(&self) -> bool { false }
+}
+```
 
 ```rust
 // engine.rs 内部实现
@@ -384,6 +402,13 @@ async fn advance_on_end(state: State<'_, AppState>) -> Result<PlayUrlInfo, Strin
 | `get_player_snapshot` | — | `PlayerSnapshot` | 全量快照（WebView 重载恢复） |
 | `get_full_player_state` | — | `FullPlayerState` | 启动恢复用全量快照 + 当前曲目（Phase F） |
 | `get_queue` | — | `Vec<QueueItem>` | 获取完整队列（可选，通常用事件） |
+
+> **当前实现对照（2026-08-13 音频迁移后，与上表差异）**：
+> - 播放命令（`play_track` / `replace_and_play` / `play_queue_at` / `play_next` / `play_prev`）返回 `()`，Rust 侧内部完成 URL 解析 + 音频加载；`advance_on_end` 已删（ended 由 `start_ended_watcher` 内部处理），`report_position` 已删（位置持久化由 watcher 节流自持）
+> - `set_play_mode` → `set_iteration_strategy`（四策略 sequential/loop_all/loop_one/shuffle）；`enter_fm` / `exit_fm` → `set_content_source("queue" | "personal_fm")`
+> - 新增：`play` / `pause` / `set_volume` / `get_position`（返回 `(position_secs, playing)`，进度校准用）/ `restore_playback`（启动恢复音频）
+> - 事件 `player:seek-to` 已删，新增 `player:status-changed { playing }`；`player:mode-changed` / `player:fm-state-changed` → `player:iteration-strategy-changed` / `player:content-source-changed`
+> - 完整现状见 `player-rust-audio-design.md` 附录 A
 
 ### 4.2 事件清单
 
@@ -666,7 +691,7 @@ Target (Rust owns engine):
 | 分层数量 | 3（core / infra / cmd） | 400 行引擎不需要 5 层 |
 | 不用 use_case 层 | ✅ 否决 | FM 取歌 4 行 match 就完了 |
 | 不用 Repository trait | ✅ 否决 | 只有一个 SQLite 后端，trait 今天没用 |
-| PlayMode 实现 | 枚举 + match | 3 分支 < 策略模式全套 |
+| PlayMode 实现 | 策略模式（`PlayStrategy` trait） | 导航统一为策略的 next/prev，每模式一个实现（含 FM） |
 | FM 状态机 | 枚举 + 内联迁移 | 2 个实质状态不需要框架 |
 | 播放命令返回什么 | PlayUrlInfo（track + URL） | 切歌无间断优先 |
 | queue-changed 事件策略 | 全量 + 100ms 去抖 | 全量简单且不会不一致 |
@@ -838,3 +863,35 @@ Phase B 特性测试锁定 TS 现状后，评审门对 4 处 TS 行为与 Rust �
 
 - **Rust 音频输出**（rodio/symphonia 方案）—— Oracle 评估为「5-8 天净增代码、无功能缺口」，用户接受「保留 AudioCore + 删 src/core」折中
 - **QueueManager.test.ts 已删除**—— Rust engine.rs 的 62 个测试已对齐 TS 行为 spec（7 处 intentional divergence 已在引擎实现注释中标注）
+
+---
+
+## 附录 I：手动/自动入口拆分 + 随机模式内置（2026-08-14）
+
+承接 `docs/playmode-design.md` 的正交化（导航 × 来源分离），将「模式」升级为一等行为单元，消除三处残留的「混」。
+
+### 背景：三个「混」点
+
+1. **手动/自动入口混淆**：`PlayStrategy.next()` 同时服务「用户按下一首」与「曲目自然结束」，导致 LoopOne 下手动切歌也重播当前曲（错误）。
+2. **`shuffle` 泄漏**：`engine.shuffle()` 是引擎通用队列操作，本质是 Shuffle 模式的内置能力，不应干扰队列纯净。
+3. **FM/心动散落**：`enter_fm/exit_fm/enter_heartbeat` 等专用方法平铺在 engine（此点在 playmode-design.md 的 P0 已部分收敛为 source 正交）。
+
+### 落点
+
+- **`core/strategy.rs`**：`Advance{Play,End}` → `Step{Play, ReplayCurrent, End}`；trait 拆为 `manual_next` / `manual_prev` / `on_track_end`（`on_track_end` 默认 = `manual_next`，仅 LoopOne 覆盖）；删除 `reshuffle` 方法。
+- **LoopOne 语义修正**：手动切歌 = 列表循环（切走）；自然结束 = `ReplayCurrent`（重播当前曲）。
+- **`core/engine.rs`**：`next()` → `manual_next()` + `on_track_end()`；删除 `shuffle()` 与 `reshuffle_if_needed()` 空壳及其全部调用。
+- **`cmd/player.rs`**：`advance_once` 增加 `AdvanceEntry{ManualNext, TrackEnd}` 参数（`play_next` 走 ManualNext、ended watcher 走 TrackEnd）；新增 `Step::ReplayCurrent` 分支（重播当前曲，命中 `last_url` 缓存免请求）；删除 `shuffle_queue` 命令。
+- **「重新随机」= 再次 `set_mode(Shuffle)`**：`make_strategy` 每次构造推进 seed → 新排列；Shuffle 排列状态仍内聚于 strategy，惰性重建（无需 `on_queue_changed`）。
+- **前端**：删除 `tauri/player.ts` 的 `shuffleQueue` 导出（无调用者）。
+
+### 加新模式的侵入性
+
+- 加导航模式 = `strategy.rs` 一个 struct（~10 行）+ `strategy_for` 注册一行，零侵入引擎/队列。
+- 加内容来源 = `ContentSource` 一个变体 + `advance_once` 的 `End` 分支一行 match。
+
+### 验证
+
+- `cargo test`：**71/71 全绿**（新增 LoopOne 手动/自动 2 测试 + 重写 3 个）
+- `cargo check`：零警告
+- `tsc --noEmit`：零错误

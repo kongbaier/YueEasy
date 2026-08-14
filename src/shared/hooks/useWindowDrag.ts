@@ -1,5 +1,4 @@
-import type { Window } from '@tauri-apps/api/window';
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { getAppWindow, type Window } from '@/shared/services/WindowService';
 import { useEffect } from 'react';
 
 type UseWindowDragOptions = {
@@ -48,7 +47,7 @@ export function useWindowDrag(
 ) {
   useEffect(() => {
     const attr = `data-${dragAttr}`;
-    const currentWindow = appWindow ?? getCurrentWindow();
+    const currentWindow = appWindow ?? getAppWindow();
 
     const onMouseDown = (e: MouseEvent) => {
       if (disabled) return;
@@ -64,7 +63,7 @@ export function useWindowDrag(
 
       // 双击 → 最大化/还原
       if (doubleClick && e.detail === 2) {
-        currentWindow.toggleMaximize();
+        void currentWindow.toggleMaximize();
         return;
       }
 
@@ -84,7 +83,7 @@ export function useWindowDrag(
             Math.abs(moveEvent.screenY - startY) > threshold
           ) {
             cleanup();
-            currentWindow.startDragging().catch(() => {});
+            void currentWindow.startDragging().catch(() => {});
           }
         };
 

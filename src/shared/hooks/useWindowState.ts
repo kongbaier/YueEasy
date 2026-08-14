@@ -1,5 +1,5 @@
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useEffect, useRef, useState } from 'react';
+import * as windowApi from '@/shared/services/WindowService';
 
 export type WindowState = 'normal' | 'maximized' | 'fullscreen';
 
@@ -20,17 +20,16 @@ function resolveState(max: boolean, full: boolean): WindowState {
  * - fullscreen → maximize: fullscreen → normal → maximize
  */
 export function useWindowState() {
-  const appWindow = getCurrentWindow();
   const [state, setState] = useState<WindowState>('normal');
   const wasMaximizedRef = useRef(false);
 
   useEffect(() => {
-    Promise.all([appWindow.isMaximized(), appWindow.isFullscreen()]).then(
+    Promise.all([windowApi.isMaximized(), windowApi.isFullscreen()]).then(
       ([max, full]) => setState(resolveState(max, full)),
     );
 
-    const unlisten = appWindow.onResized(() => {
-      Promise.all([appWindow.isMaximized(), appWindow.isFullscreen()]).then(
+    const unlisten = windowApi.onResized(() => {
+      Promise.all([windowApi.isMaximized(), windowApi.isFullscreen()]).then(
         ([max, full]) => setState(resolveState(max, full)),
       );
     });
@@ -38,37 +37,37 @@ export function useWindowState() {
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, [appWindow]);
+  }, []);
 
   const toMaximize = async () => {
     if (state === 'fullscreen') {
       wasMaximizedRef.current = false;
-      await appWindow.setFullscreen(false);
-      await appWindow.maximize();
+      await windowApi.setFullscreen(false);
+      await windowApi.maximize();
     } else if (state === 'normal') {
-      await appWindow.maximize();
+      await windowApi.maximize();
     }
   };
 
   const toFullscreen = async () => {
     if (state === 'maximized') {
       wasMaximizedRef.current = true;
-      await appWindow.unmaximize();
-      await appWindow.setFullscreen(true);
+      await windowApi.unmaximize();
+      await windowApi.setFullscreen(true);
     } else if (state === 'normal') {
       wasMaximizedRef.current = false;
-      await appWindow.setFullscreen(true);
+      await windowApi.setFullscreen(true);
     }
   };
 
   const toNormal = async () => {
     if (state === 'maximized') {
-      await appWindow.unmaximize();
+      await windowApi.unmaximize();
     } else if (state === 'fullscreen') {
-      await appWindow.setFullscreen(false);
+      await windowApi.setFullscreen(false);
       if (wasMaximizedRef.current) {
         wasMaximizedRef.current = false;
-        await appWindow.maximize();
+        await windowApi.maximize();
       }
     }
   };
@@ -76,31 +75,39 @@ export function useWindowState() {
   const toggleMaximize = async () => {
     if (state === 'fullscreen') {
       wasMaximizedRef.current = false;
-      await appWindow.setFullscreen(false);
-      await appWindow.maximize();
+      await windowApi.setFullscreen(false);
+      await windowApi.maximize();
     } else if (state === 'maximized') {
-      await appWindow.unmaximize();
+      await windowApi.unmaximize();
     } else {
-      await appWindow.maximize();
+      await windowApi.maximize();
     }
   };
 
   const toggleFullscreen = async () => {
     if (state === 'fullscreen') {
-      await appWindow.setFullscreen(false);
+      await windowApi.setFullscreen(false);
       if (wasMaximizedRef.current) {
         wasMaximizedRef.current = false;
-        await appWindow.maximize();
+        await windowApi.maximize();
       }
     } else {
       if (state === 'maximized') {
         wasMaximizedRef.current = true;
-        await appWindow.unmaximize();
+        await windowApi.unmaximize();
       } else {
         wasMaximizedRef.current = false;
       }
-      await appWindow.setFullscreen(true);
+      await windowApi.setFullscreen(true);
     }
+  };
+
+  const minimize = async () => {
+    await windowApi.minimize();
+  };
+
+  const close = async () => {
+    await windowApi.close();
   };
 
   return {
@@ -110,5 +117,7 @@ export function useWindowState() {
     toNormal,
     toggleMaximize,
     toggleFullscreen,
+    minimize,
+    close,
   };
 }

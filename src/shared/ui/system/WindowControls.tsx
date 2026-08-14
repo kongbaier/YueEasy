@@ -1,14 +1,12 @@
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { Copy, Minus, Square, X } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { useWindowState } from '@/shared/hooks/useWindowState';
 
 export const WindowControls = ({ className }: { className?: string }) => {
-  const appWindow = getCurrentWindow();
-  const { state, toggleMaximize } = useWindowState();
+  const { state, toggleMaximize, minimize, close } = useWindowState();
 
-  const handleMinimize = () => appWindow.minimize();
-  const handleClose = () => appWindow.close();
+  const handleMinimize = () => void minimize();
+  const handleClose = () => void close();
   const handleMaximize = async () => await toggleMaximize();
 
   // Hide all controls when in fullscreen to avoid Tauri maximize/fullscreen conflict.

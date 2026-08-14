@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getUserPlaylists } from './SidebarService';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/modules/auth/stores/authStore';
 import { toast } from '@/shared/lib/toast';
 
 export function useSidebarPlaylists() {

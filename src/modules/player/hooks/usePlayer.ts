@@ -1,32 +1,22 @@
 import { useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/shallow';
-import { invoke } from '@tauri-apps/api/core';
 import { usePlayerStore } from '../stores/player';
 import { useQueueStore } from '../stores/queue';
 import { useSettingsStore } from '@/stores/settings';
-import { useAuthStore } from '@/stores/auth';
-import { useLikeStore } from '@/stores/like';
+import { useAuthStore } from '@/modules/auth/stores/authStore';
+import { useLikeStore } from '@/modules/like/stores/like';
 import { usePlayerMirrorStore } from '@/stores/playerMirror';
-import { playerService } from '../services/PlayerService';
 import { queueItemToSong } from '@/shared/utils/mappers';
-import { rustPlayModeToUi, type RustPlayMode } from '@/shared/types/player';
+import { rustPlayModeToUi } from '@/shared/types/player';
 
 /**
  * Player 域门面 hook（粗粒度）：组合 player/queue/settings/auth/like 5 个 store
  * 为统一响应式输出，供播放器所有 UI 组件消费。组件只 import 本 hook，不直接触碰 store。
  *
- * 注意：这是粗粒度门面，订阅全部 player+mirror+settings 状态。
- * 若后续出现高频重渲染问题，可按需拆分为 usePlayerTransport / usePlayerSettings / usePlayerQueue。
+ * 音频迁移 Rust 后：播放/暂停/seek/音量/策略等命令收敛到 store action
+ * （内部经 `@/tauri/player`），本 hook 不直接 invoke；播放状态经
+ * `player:status-changed` 事件 → usePlayerStore 驱动。
  */
-
-/** Rust 迭代策略循环：sequential → loop_all → loop_one → shuffle → sequential（设计 §2.6 + §4.1）。
- *  仅当 content_source == queue 时生效。 */
-const NEXT_RUST_STRATEGY: Record<RustPlayMode, RustPlayMode> = {
-  sequential: 'loop_all',
-  loop_all: 'loop_one',
-  loop_one: 'shuffle',
-  shuffle: 'sequential',
-};
 
 export function usePlayer() {
   const transport = usePlayerStore(
@@ -38,7 +28,7 @@ export function usePlayer() {
       seek: s.seek,
     })),
   );
-  // 写命令统一收敛到 queue store（其 action 内含 Rust 分支：invoke 获取 URL → 本地 AudioCore load/play）。
+  // 写命令统一收敛到 queue store（其 action 内含 invoke；Rust 内部完成取 URL + 音频播放）。
   // 轻量订阅仅取 12 个 action，不订阅队列状态字段（队列状态一律读 MirrorStore 镜像）。
   const queueActions = useQueueStore(
     useShallow((s) => ({
@@ -56,7 +46,6 @@ export function usePlayer() {
     })),
   );
   // Rust 引擎只读镜像：队列/当前曲目/迭代策略/内容来源等状态一律读此镜像（不读 queue store 状态字段）。
-  // 注意：playing 不在此订阅 —— 播放/暂停是真实 AudioCore 状态，由 usePlayerStore 驱动。
   const mirror = usePlayerMirrorStore(
     useShallow((s) => ({
       currentTrack: s.currentTrack,
@@ -64,6 +53,7 @@ export function usePlayer() {
       queueLength: s.queue.length,
       currentIndex: s.currentIndex,
       isFm: s.contentSource === 'personal_fm',
+      isHeartbeat: s.contentSource === 'heartbeat',
       fmExitWillEmpty: s.contentSource !== 'personal_fm',
       canPrev: s.currentIndex !== null && s.currentIndex > 0,
       iterationStrategy: s.iterationStrategy,
@@ -75,46 +65,32 @@ export function usePlayer() {
     useShallow((s) => ({
       isLiked: s.isLiked,
       likedIds: s.likedIds,
+      likedPlaylistId: s.likedPlaylistId,
     })),
   );
 
-  // ── 播放/暂停：两模式统一走 player store（真实 AudioCore 状态）；Rust 模式本地 AudioCore 切换 ──
+  // ── 播放/暂停/音量/策略：全部经 player store action（内部调 @/tauri/player） ──
 
   const togglePlay = useCallback(() => {
-    if (usePlayerStore.getState().loading) return;
-    // ended 态：队尾/自然结束后点 play → 询问 Rust 该做什么
-    if (playerService.audioCore.state === 'ended') {
-      void playerService.resumeFromEnd();
-      return;
-    }
-    // 不 invoke toggle_play_pause、不做 mirror 乐观翻转：AudioCore 的 play/pause
-    // 事件自然驱动 usePlayerStore.playing（真实音频状态）。
-    void playerService.audioCore.toggle();
+    usePlayerStore.getState().toggle();
   }, []);
 
-  // ── 进度/音量 ──
-
-  /** 进度拖动/松手提交。额外 invoke seek 同步 SMTC（设计 §5.3）。 */
+  /** 进度拖动/松手提交。seek 权威在 Rust（同时同步 SMTC 位置）。 */
   const seek = useCallback((time: number) => {
-    playerService.audioCore.seek(time);
-    // Tauri v2：Rust 参数 position_secs → JS 侧 camelCase `positionSecs`
-    void invoke<void>('seek', { positionSecs: time });
-    // seek 后去抖落盘，重启恢复才能续到新位置
-    playerService.reportPositionDebounced();
+    usePlayerStore.getState().seek(time);
   }, []);
 
   const setVolume = useCallback((volume: number) => {
-    useSettingsStore.getState().updatePlayer({ volume });
-  }, []);
-  const setMuted = useCallback((muted: boolean) => {
-    useSettingsStore.getState().updatePlayer({ isMuted: muted });
+    usePlayerStore.getState().setVolume(volume);
   }, []);
 
-  /** 迭代策略循环：invoke set_iteration_strategy（事件推送更新镜像）。
-   *  仅当 content_source == queue 时调用方启用；FM 模式下策略字段被引擎忽略。 */
+  const setMuted = useCallback((muted: boolean) => {
+    usePlayerStore.getState().setMuted(muted);
+  }, []);
+
+  /** 迭代策略循环（FM 下被引擎忽略，调用方自行禁用）。 */
   const cycleStrategy = useCallback(() => {
-    const current = usePlayerMirrorStore.getState().iterationStrategy;
-    void invoke<void>('set_iteration_strategy', { strategy: NEXT_RUST_STRATEGY[current] });
+    usePlayerStore.getState().cycleStrategy();
   }, []);
 
   return useMemo(
@@ -125,6 +101,7 @@ export function usePlayer() {
       queue: mirror.queue.map(queueItemToSong),
       queueLength: mirror.queue.length,
       isFm: mirror.isFm,
+      isHeartbeat: mirror.isHeartbeat,
       fmExitWillEmpty: mirror.fmExitWillEmpty,
       canPrev: mirror.canPrev,
       playMode: rustPlayModeToUi(mirror.iterationStrategy),
@@ -139,6 +116,7 @@ export function usePlayer() {
       isLoggedIn,
       isLiked: like.isLiked,
       likedIds: like.likedIds,
+      likedPlaylistId: like.likedPlaylistId,
     }),
     [
       transport,
@@ -153,6 +131,7 @@ export function usePlayer() {
       isLoggedIn,
       like.isLiked,
       like.likedIds,
+      like.likedPlaylistId,
     ],
   );
 }

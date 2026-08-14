@@ -12,7 +12,8 @@ import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { FollowTooltip } from "@/modules/player/components/FollowTooltip";
 import { useMediaSession } from "@/modules/player/hooks/useMediaSession";
-import { usePlayerEvents } from "@/shared/hooks/usePlayerEvents";
+import { usePlayerEvents } from "@/modules/player/hooks/usePlayerEvents";
+import { usePlaybackClock } from "@/modules/player/hooks/usePlaybackClock";
 import { usePlayerKeyboard } from "@/modules/player/hooks/usePlayerKeyboard";
 import { useProgress } from "@/modules/player/hooks/useProgress";
 import { usePlayer } from "@/modules/player/hooks/usePlayer";
@@ -21,13 +22,12 @@ import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
 import { formatQueueCount } from "@/shared/utils/format";
 import { usePlayerPage } from "@/modules/player/contexts/PlayerPageContext";
-import { SourceSwitcher } from "./SourceSwitcher";
 import { StrategyCycler } from "./StrategyCycler";
 import { SeekBar } from "./SeekBar";
 import { VolumeControl } from "./VolumeControl";
 import { Cover } from "@/shared/ui/image";
 import type { Track } from "@/shared/types/player";
-import { LikeButton } from "@/modules/liked/components/LikeButton";
+import { LikeButton } from "@/modules/like/components/LikeButton";
 
 const PlayerProgress = () => {
   const { percentage, formatted } = useProgress();
@@ -96,7 +96,6 @@ const PlayerControls = () => {
   return (
     <article className="flex items-center gap-x-6">
       <section className="flex items-center gap-x-1">
-        <SourceSwitcher />
         <StrategyCycler />
       </section>
       <section
@@ -271,6 +270,7 @@ export const PlayerBar = ({
   usePlayerKeyboard();
   useMediaSession();
   usePlayerEvents();
+  usePlaybackClock();
   const { currentTrack } = usePlayer();
   return (
     <div

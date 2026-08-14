@@ -11,8 +11,8 @@ import { SmartImage } from '@/shared/ui/image';
 import type { Song } from '@/shared/types/entities';
 import { formatDuration } from '@/shared/utils/format';
 import { getNcmImageUrl } from '@/shared/lib/utils';
-import { useLikeAction } from '@/shared/hooks/useLikeAction';
-import { useTrackActions } from '@/shared/hooks/useTrackActions';
+import { useLikeAction } from '@/modules/like/hooks/useLikeAction';
+import { useTrackActions } from '@/modules/player/hooks/useTrackActions';
 
 interface TrackRowProps {
   track: Song;
@@ -67,7 +67,7 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
           className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-red-500"
           onClick={(e) => {
             e.stopPropagation();
-            handleLike(track.id, track.name);
+            handleLike(track);
           }}
           title={liked ? '取消收藏' : '收藏'}
           type="button"
@@ -93,7 +93,7 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem
-          onClick={() => handleLike(track.id, track.name)}
+          onClick={() => handleLike(track)}
         >
           <Heart className="h-4 w-4" fill={liked ? '#ef4444' : 'none'} />
           {liked ? '取消收藏' : '收藏'}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useShallow } from "zustand/shallow";
 import { formatDuration } from "@/shared/utils/format";
 import { usePlayerStore } from "../stores/player";
@@ -10,10 +10,6 @@ export const useProgress = () => {
       duration: state.duration,
     })),
   );
-
-  useEffect(() => {
-    console.log(currentTime, duration);
-  }, [currentTime, duration]);
 
   const formattedTime = useMemo(
     () => formatDuration(currentTime),

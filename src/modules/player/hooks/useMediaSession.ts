@@ -1,27 +1,16 @@
-import { listen } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
 import {
-  updateMediaSessionMetadata,
-  updateMediaSessionPosition,
-  updateMediaSessionStatus,
-} from '@/tauri/mediaSession';
+  onMediaSessionEvent,
+  updateMetadata,
+  updatePosition,
+  updateStatus,
+  type MediaSessionEvent,
+} from '../services/MediaSessionService';
 import { usePlayerMirrorStore } from '@/stores/playerMirror';
 import { queueItemToSong } from '@/shared/utils/mappers';
 import { useMediaControls } from './useMediaControls';
 import { usePlayerStore } from '../stores/player';
 import { useQueueStore } from '../stores/queue';
-
-type MediaSessionEvent =
-  | { event: 'play' }
-  | { event: 'pause' }
-  | { event: 'toggle' }
-  | { event: 'next' }
-  | { event: 'previous' }
-  | { event: 'stop' }
-  | { event: 'fastForward' }
-  | { event: 'rewind' }
-  | { event: 'seekTo'; position: number }
-  | { event: 'setPlaybackRate'; rate: number };
 
 export const useMediaSession = () => {
   const { handlePlay, handlePause, handleToggle } = useMediaControls();
@@ -30,10 +19,10 @@ export const useMediaSession = () => {
     const unlisteners: (() => void)[] = [];
     let cancelled = false;
 
-    // 监听系统媒体键事件
-    listen<MediaSessionEvent>('media-session-event', (event) => {
+    // 监听系统媒体键事件（事件封装在 MediaSessionService）
+    onMediaSessionEvent((event: MediaSessionEvent) => {
       const queueStore = useQueueStore.getState();
-      switch (event.payload.event) {
+      switch (event.event) {
         case 'play':
           void handlePlay();
           break;
@@ -57,7 +46,7 @@ export const useMediaSession = () => {
           handlePause();
           break;
         case 'seekTo':
-          usePlayerStore.getState().seek(event.payload.position);
+          usePlayerStore.getState().seek(event.position);
           break;
       }
     }).then((unlisten) => {
@@ -77,7 +66,7 @@ export const useMediaSession = () => {
       const artistNames = track.artists?.map((a) => a.name).join('、') ?? '';
       const albumName = track.album?.name ?? '';
 
-      void updateMediaSessionMetadata({
+      void updateMetadata({
         title: track.name,
         artist: artistNames,
         album: albumName,
@@ -96,8 +85,8 @@ export const useMediaSession = () => {
     // 播放状态变化 → 更新状态 & 位置
     const unsubPlayback = usePlayerStore.subscribe((state, prevState) => {
       if (state.playing === prevState.playing) return;
-      void updateMediaSessionStatus(state.playing);
-      void updateMediaSessionPosition(state.currentTime);
+      void updateStatus(state.playing);
+      void updatePosition(state.currentTime);
     });
 
     // 时长从 0 变为已知 → 补推元数据（让系统端时间轴准确）
@@ -111,7 +100,7 @@ export const useMediaSession = () => {
     const timer = window.setInterval(() => {
       const state = usePlayerStore.getState();
       if (state.playing) {
-        void updateMediaSessionPosition(state.currentTime);
+        void updatePosition(state.currentTime);
       }
     }, 5000);
 

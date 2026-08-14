@@ -23,9 +23,9 @@ export function rustPlayModeToUi(rust: RustPlayMode): PlayMode {
 export type RustPlayMode = 'sequential' | 'loop_all' | 'loop_one' | 'shuffle';
 
 /** Rust `core::types::ContentSource` 的 snake_case wire 名（内容来源）。 */
-export type RustContentSource = 'queue' | 'personal_fm';
+export type RustContentSource = 'queue' | 'personal_fm' | 'heartbeat';
 
-/** 播放命令返回：当前曲目 + 已解析播放地址（设计 §4.4，切歌无间断优先）。 */
+/** 播放查询命令返回：当前曲目 + 已解析播放地址（`resolve_play_url` 预加载用；播放命令已不返回此值）。 */
 export interface PlayUrlInfo {
   track: QueueItem;
   url: string;
@@ -40,9 +40,9 @@ export interface PlayerSnapshot {
   content_source: RustContentSource;
   /** FM 已播 id 列表（content_source == 'personal_fm' 时累计；其他源时为空）。 */
   fm_played_ids: number[];
-  /** 前端上报的当前播放位置（秒）。仅供重启恢复。 */
+  /** 最近已知播放位置（秒）。由 Rust `start_ended_watcher` 周期写入，仅供重启恢复。 */
   position_secs: number;
-  /** 前端上报的播放/暂停状态（上次已知）。仅供重启恢复。 */
+  /** 最近已知播放/暂停状态（由 Rust watcher 周期写入）。仅供重启恢复。 */
   playing: boolean;
 }
 
@@ -54,21 +54,20 @@ export interface FullPlayerState {
 
 /**
  * `player:event` 单通道推送（serde tag+content，`state.rs::PlayerEvent` 精确镜像）。
- * 枚举 tag（即 `player:*`）即事件名，前端按 tag 分发到 MirrorStore。
+ * 精简为 3 条核心：current（当前曲+索引+来源+策略）/ queue（队列全量）/ playing（播放状态）。
  */
 export type PlayerEventPayload =
-  | { event: 'player:track-changed'; data: { track: QueueItem } }
   | {
-      event: 'player:queue-changed';
+      event: 'player:current';
+      data: {
+        track: QueueItem | null;
+        index: number | null;
+        source: RustContentSource;
+        strategy: RustPlayMode;
+      };
+    }
+  | {
+      event: 'player:queue';
       data: { items: QueueItem[]; current_index: number | null };
     }
-  | {
-      event: 'player:iteration-strategy-changed';
-      data: { iteration_strategy: RustPlayMode };
-    }
-  | {
-      event: 'player:content-source-changed';
-      data: { source: RustContentSource };
-    }
-  | { event: 'player:seek-to'; data: { position_secs: number } }
-  | { event: 'player:queue-ended'; data?: never };
+  | { event: 'player:playing'; data: { playing: boolean } };
