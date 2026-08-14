@@ -1,4 +1,4 @@
-//! 播放器领域类型（Phase C：PlayerEngine 领域引擎）
+//! 播放器领域类型（Phase C：QueueEngine 领域引擎）
 //!
 //! 参考 `docs/player-rust-design.md` §2.2。这是引擎自己的领域类型，不是 ncm Entity。
 //! serde 为编译期 derive（Phase D 事件序列化需要）。

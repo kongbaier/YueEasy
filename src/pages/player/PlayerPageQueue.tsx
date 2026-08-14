@@ -84,6 +84,7 @@ export const PlayerPageQueue = () => {
   const { queue, queueLength, currentTrack, playFromIndex, isFm, clearQueue, removeFromQueue } =
     usePlayer();
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const scrolledOnceRef = useRef(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
   const { close } = usePlayerPage();
@@ -183,7 +184,10 @@ export const PlayerPageQueue = () => {
                 overscan={50}
                 ref={(ref) => {
                   virtuosoRef.current = ref;
-                  if (ref && currentIndex >= 0) scrollToCurrent();
+                  if (ref && !scrolledOnceRef.current && currentIndex >= 0) {
+                    scrolledOnceRef.current = true;
+                    scrollToCurrent();
+                  }
                 }}
                 style={{ height: '100%' }}
                 totalCount={queue.length}

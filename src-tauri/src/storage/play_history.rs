@@ -1,6 +1,6 @@
 //! 播放历史领域服务（无命令层）。IPC 命令见 `cmd/history.rs`。
 
-use crate::infra::storage::db::Database;
+use crate::storage::db::Database;
 use serde::Serialize;
 
 #[derive(Serialize)]

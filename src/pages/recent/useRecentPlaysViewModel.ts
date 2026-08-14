@@ -4,15 +4,15 @@ import { getRecentSongs } from './RecentPlaysService';
 import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { toast } from '@/shared/lib/toast';
 import type { Song } from '@/shared/types/entities';
-import { useQueueStore } from '@/modules/player/stores/queue';
+import { usePlayerStore } from '@/stores/player';
 
 /**
  * 最近播放页 viewmodel：组合 React Query 取数 + queue store 动作。
- * 只订阅 useQueueStore 的 play action，避免粗粒度订阅高频字段。
+ * 只订阅 usePlayerStore 的 play action，避免粗粒度订阅高频字段。
  * 页面组件只 import 本 hook，不直接触碰 store / service。
  */
 export function useRecentPlaysViewModel(userId: number) {
-  const play = useQueueStore((s) => s.play);
+  const play = usePlayerStore((s) => s.play);
 
   const { data: tracks } = useSuspenseQuery({
     queryKey: ['recentSongs', userId],

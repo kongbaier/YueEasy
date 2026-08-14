@@ -3,10 +3,11 @@
 use serde::Serialize;
 use tauri::{AppHandle, State};
 
-use crate::cmd::player::{resolve_url, PlayUrlInfo};
-use crate::core::types::{PlayerSnapshot, QueueItem};
-use crate::infra::ncm::NcmState;
-use crate::state::PlayerState;
+use crate::cmd::player::PlayUrlInfo;
+use crate::player::state::{PlayerSnapshot, QueueItem};
+use crate::music::netease::NcmState;
+use crate::app::state::PlayerState;
+use crate::player::resolver::resolve_url;
 
 /// 解析播放 URL（预加载用）。当前曲目匹配 track_id → 用其完整字段；
 /// 否则构造最小 QueueItem（仅 track_id 有效）。

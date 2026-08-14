@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useMediaControls } from './useMediaControls';
-import { usePlayerStore } from '../stores/player';
-import { useQueueStore } from '../stores/queue';
+import { usePlayerStore } from '@/stores/player';
 
 export const usePlayerKeyboard = () => {
   const { handlePlay, handlePause } = useMediaControls();
@@ -22,7 +21,6 @@ export const usePlayerKeyboard = () => {
       }
 
       const playerState = usePlayerStore.getState();
-      const queueState = useQueueStore.getState();
 
       if (e.code === 'Space') {
         e.preventDefault();
@@ -45,13 +43,13 @@ export const usePlayerKeyboard = () => {
 
       if (e.code === 'PageUp') {
         e.preventDefault();
-        queueState.prev();
+        playerState.prev();
         return;
       }
 
       if (e.code === 'PageDown') {
         e.preventDefault();
-        queueState.next();
+        playerState.next();
       }
     };
 

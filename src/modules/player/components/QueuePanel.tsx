@@ -104,6 +104,7 @@ export const QueuePanel = ({
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [trashPending, setTrashPending] = useState(false);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const scrolledOnceRef = useRef(false);
 
   const handleClose = () => onClose();
 
@@ -336,7 +337,10 @@ export const QueuePanel = ({
                       overscan={100}
                       ref={(ref) => {
                         virtuosoRef.current = ref;
-                        if (ref && currentIndex >= 0) scrollToCurrent();
+                        if (ref && !scrolledOnceRef.current && currentIndex >= 0) {
+                          scrolledOnceRef.current = true;
+                          scrollToCurrent();
+                        }
                       }}
                       style={{ height: '100%' }}
                       totalCount={queue.length}

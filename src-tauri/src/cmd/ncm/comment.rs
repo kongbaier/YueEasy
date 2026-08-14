@@ -2,10 +2,10 @@
 
 use tauri::{AppHandle, State};
 
-use crate::infra::ncm::entity::CommentPage;
-use crate::infra::ncm::error::Result;
-use crate::infra::ncm::NcmState;
-use crate::service::ncm_service::NcmService;
+use crate::music::netease::entity::CommentPage;
+use crate::music::netease::error::Result;
+use crate::music::netease::NcmState;
+use crate::music::service::NcmService;
 
 #[tauri::command]
 pub(crate) async fn ncm_comment_playlist(

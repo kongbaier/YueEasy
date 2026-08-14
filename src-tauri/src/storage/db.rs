@@ -2,7 +2,7 @@ use rusqlite::Connection;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use crate::core::types::PlayerSnapshot;
+use crate::player::state::PlayerSnapshot;
 
 use super::paths;
 

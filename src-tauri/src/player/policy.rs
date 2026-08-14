@@ -9,7 +9,7 @@
 //! - **遍历顺序**（`Order`）决定遍历路径：Sequential 按索引、Shuffle 按内部排列（惰性重建）。
 //! - **终止策略**（`Repeat`）决定边界行为：Off 队尾停止、All 环绕、One 重播当前。
 
-use crate::core::types::{Order, Repeat};
+use crate::player::state::{Order, Repeat};
 
 /// 导航决策结果。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

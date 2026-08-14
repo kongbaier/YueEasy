@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { homeService } from '../services/HomeService';
-import { useQueueStore } from '@/modules/player/stores/queue';
-import { usePlayerMirrorStore } from '@/stores/playerMirror';
+import { usePlayerStore } from '@/stores/player';
 import { queueItemToSong } from '@/shared/utils/mappers';
 import { useAuthStore } from '@/modules/auth/stores/authStore';
 import { useLoginDialog } from '@/modules/auth/stores/loginDialogStore';
@@ -16,9 +15,9 @@ import { toast } from '@/shared/lib/toast';
 export function useFmCardViewModel() {
   // Rust 模式下 queue store 的 syncQueueDerived 早退，isFm/currentTrack 恒空值；
   // 内容来源（FM 标志）改读 MirrorStore.contentSource，setContentSource action 仍走 queue store。
-  const isFm = usePlayerMirrorStore((s) => s.contentSource === 'personal_fm');
-  const setContentSource = useQueueStore((s) => s.setContentSource);
-  const currentTrackRaw = usePlayerMirrorStore((s) => s.currentTrack);
+  const isFm = usePlayerStore((s) => s.contentSource === 'personal_fm');
+  const setContentSource = usePlayerStore((s) => s.setContentSource);
+  const currentTrackRaw = usePlayerStore((s) => s.currentTrack);
   const currentTrack = currentTrackRaw ? queueItemToSong(currentTrackRaw) : null;
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);

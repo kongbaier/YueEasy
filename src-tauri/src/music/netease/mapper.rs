@@ -3,8 +3,8 @@
 //! 这里是所有"脏数据归一"的落点：字段改名、双形态合并、缺省值兜底。
 //! 不涉及任何网络/状态，便于单测。
 
-use crate::infra::ncm::entity as ent;
-use crate::infra::ncm::raw;
+use crate::music::netease::entity as ent;
+use crate::music::netease::raw;
 
 fn map_artist(d: raw::ArtistDto) -> ent::Artist {
     ent::Artist {

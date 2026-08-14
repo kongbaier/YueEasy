@@ -1,15 +1,3 @@
-//! AudioEngine —— 音频播放引擎（rodio + stream-download 封装）。
-//!
-//! 职责：持有音频设备输出（`MixerDeviceSink` + `Player`），提供播放/暂停/seek/音量/stop
-//! 与进度读取。**不依赖 tauri**（infra 层），状态变化由上层（service/cmd）读取并推事件。
-//!
-//! 内存/清理模型（对齐 `docs/player-rust-audio-design.md` §6）：
-//! - `StreamDownload` 用 `TempStorageProvider` 落临时文件（磁盘），内存恒定。
-//! - 切歌 drop 旧 source + `Player::clear()` → 临时文件自动释放（tempfile 语义）。
-//!
-//! 注意：`prepare_source` 的下载在 async 上下文（`StreamDownload::new_http`），
-//! 解码为阻塞 IO（`Decoder::try_from`），调用方需 `spawn_blocking`。
-
 use std::io::BufReader;
 use std::time::Duration;
 

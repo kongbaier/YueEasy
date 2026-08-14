@@ -1,14 +1,16 @@
+mod app;
 mod cmd;
-mod core;
-mod infra;
-mod service;
-mod state;
+mod music;
+mod platform;
+mod player;
+mod storage;
 
 use tauri::Manager;
 
-use crate::infra::ncm::NcmState;
-use crate::infra::storage::cache::CacheState;
-use crate::infra::storage::db::Database;
+use crate::app::state::{LikeState, PlayerState};
+use crate::music::netease::NcmState;
+use crate::storage::cache::CacheState;
+use crate::storage::db::Database;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -36,8 +38,8 @@ pub fn run() {
         .manage(Database::default())
         .manage(CacheState::default())
         .manage(NcmState::default())
-        .manage(state::PlayerState::default())
-        .manage(state::LikeState::default())
+        .manage(PlayerState::default())
+        .manage(LikeState::default())
         .setup(|app| {
             let handle = app.handle();
 
@@ -46,7 +48,7 @@ pub fn run() {
             }
 
             // 初始化系统媒体会话（媒体键 + 系统媒体控制）
-            if let Err(e) = infra::platform::media_session::setup(handle) {
+            if let Err(e) = platform::media_session::setup(handle) {
                 eprintln!("Failed to setup media session handler: {}", e);
             }
 
@@ -55,16 +57,16 @@ pub fn run() {
             // Phase F：从 SQLite 恢复上次播放器状态（崩溃/重启续播）
             {
                 let db = app.state::<Database>();
-                let player = app.state::<state::PlayerState>();
+                let player = app.state::<PlayerState>();
                 player.try_restore(&db);
             }
 
-            infra::platform::window::setup(handle)?;
-            infra::platform::tray::setup(handle)?;
-            infra::platform::accent_color::watch_accent_color(handle.clone());
+            platform::window::setup(handle)?;
+            platform::tray::setup(handle)?;
+            platform::accent_color::watch_accent_color(handle.clone());
 
             // 音频迁移 Rust：启动 ended 检测后台任务（歌曲播完自动切下一首）
-            cmd::player::start_ended_watcher(handle.clone());
+            player::orchestrator::start_ended_watcher(handle.clone());
 
             Ok(())
         })

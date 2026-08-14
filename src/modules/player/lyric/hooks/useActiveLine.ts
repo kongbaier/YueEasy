@@ -1,5 +1,5 @@
 import type { LyricLine } from '@/modules/player/lyric/parser';
-import { usePlayerStore } from '@/modules/player/stores/player';
+import { usePlayerStore } from '@/stores/player';
 
 /**
  * Per-frame word state for the ACTIVE lyric line only.

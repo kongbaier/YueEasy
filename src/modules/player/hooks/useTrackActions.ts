@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
-import { useQueueStore } from '@/modules/player/stores/queue';
+import { usePlayerStore } from '@/stores/player';
 import { toast } from '@/shared/lib/toast';
 
 /** TrackRow 等共享组件获取队列操作能力（playNext/addToQueue）的统一入口。 */
 export function useTrackActions() {
-  const playNext = useQueueStore((s) => s.playNext);
-  const addToQueue = useQueueStore((s) => s.addToQueue);
+  const playNext = usePlayerStore((s) => s.playNext);
+  const addToQueue = usePlayerStore((s) => s.addToQueue);
 
   const handlePlayNext = useCallback(
     (track: Parameters<typeof playNext>[0]) => {

@@ -1,18 +1,6 @@
-import {
-  ChevronFirst,
-  ChevronLast,
-  ListMusic,
-  Loader2,
-  Pause,
-  Play,
-  ThumbsDown,
-} from "lucide-react";
-import { useState } from "react";
+import { ChevronFirst, ChevronLast, Loader2, Pause, Play } from "lucide-react";
 import { RepeatButton, ShuffleButton } from "@/modules/player/components";
 import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
-import { toast } from "@/shared/lib/toast";
-import { formatQueueCount } from "@/shared/utils/format";
 import { usePlayer } from "@/modules/player/hooks/usePlayer";
 
 interface PlayerPageControlsProps {
@@ -21,36 +9,15 @@ interface PlayerPageControlsProps {
   onToggleQueue?: () => void;
 }
 
-export const PlayerPageControls = ({
-  className,
-  showQueue = false,
-  onToggleQueue,
-}: PlayerPageControlsProps) => {
+export const PlayerPageControls = ({ className }: PlayerPageControlsProps) => {
   const {
     togglePlay,
     next,
     prev,
-    queueLength,
     canPrev,
-    isFm,
-    fmTrash,
     playing: isPlaying,
     loading: isLoading,
   } = usePlayer();
-  const [trashPending, setTrashPending] = useState(false);
-
-  const handleFmTrash = async () => {
-    if (trashPending) return;
-    setTrashPending(true);
-    try {
-      await fmTrash();
-      toast.success("已减少此类推荐");
-    } catch {
-      toast.error("操作失败，请重试");
-    } finally {
-      setTrashPending(false);
-    }
-  };
 
   return (
     <div
@@ -95,7 +62,6 @@ export const PlayerPageControls = ({
 
       <div className="col-start-9 flex items-center gap-x-1">
         <ShuffleButton />
-          
       </div>
     </div>
   );

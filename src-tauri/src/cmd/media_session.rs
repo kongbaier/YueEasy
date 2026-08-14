@@ -1,10 +1,10 @@
-//! 媒体会话 IPC 命令（薄壳）：透传给 `infra::platform::media_session` 能力。
+//! 媒体会话 IPC 命令（薄壳）：透传给 `platform::media_session` 能力。
 //! OS 媒体键 → 前端的事件监听在 `infra/platform/media_session::setup`（setup 期注册）。
 
 use serde::Deserialize;
 use tauri::{AppHandle, Runtime};
 
-use crate::infra::platform::media_session::{self, MediaSessionMetadata};
+use crate::platform::media_session::{self, MediaSessionMetadata};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]

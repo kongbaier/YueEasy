@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchLyrics } from '../lyricsService';
-import { usePlayerStore } from '@/modules/player/stores/player';
-import { usePlayerMirrorStore } from '@/stores/playerMirror';
+import { usePlayerStore } from '@/stores/player';
 import { useLyrics } from './useLyrics';
 
 /**
@@ -14,7 +13,7 @@ import { useLyrics } from './useLyrics';
  */
 export function useLyricViewModel() {
   // 队列当前曲目读 MirrorStore 镜像（queue store 的 currentTrack 不被 Rust 引擎更新）。
-  const trackId = usePlayerMirrorStore((s) => s.currentTrack?.track_id);
+  const trackId = usePlayerStore((s) => s.currentTrack?.track_id);
   const seek = usePlayerStore((s) => s.seek);
 
   const { data, isLoading } = useQuery({

@@ -3,7 +3,7 @@ use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}
 use tauri::Manager;
 
 pub fn setup(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let icon_bytes = include_bytes!("../../../icons/32x32.png");
+    let icon_bytes = include_bytes!("../../icons/32x32.png");
     let icon_img = image::load_from_memory(icon_bytes)
         .expect("failed to load tray icon")
         .to_rgba8();

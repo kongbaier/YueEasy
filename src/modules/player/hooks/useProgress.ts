@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useShallow } from "zustand/shallow";
 import { formatDuration } from "@/shared/utils/format";
-import { usePlayerStore } from "../stores/player";
+import { usePlayerStore } from "@/stores/player";
 
 export const useProgress = () => {
   const { currentTime, duration } = usePlayerStore(

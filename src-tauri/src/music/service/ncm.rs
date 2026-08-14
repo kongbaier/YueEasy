@@ -1,21 +1,21 @@
-//! NCM 领域服务：浅包 `infra::ncm`（客户端取数 + 归一 + 业务 code 校验）。
+//! NCM 领域服务：浅包 `music::netease`（客户端取数 + 归一 + 业务 code 校验）。
 //! 服务层不感知 IPC；cmd 薄壳直接调本服务。
 
 use ncm_api_rs::Query;
 use tauri::AppHandle;
 
-use crate::core::types::QueueItem;
-use crate::infra::ncm::client::{self, run_dto};
-use crate::infra::ncm::cookie::{merge_cookies, persist_cookie};
-use crate::infra::ncm::entity::{
+use crate::player::state::QueueItem;
+use crate::music::netease::client::{self, run_dto};
+use crate::music::netease::cookie::{merge_cookies, persist_cookie};
+use crate::music::netease::entity::{
     AlbumDetail, AuthSession, Banner, CommentPage, DragonBallItem, HotSearchItem, IntelligenceSong,
     LikeList, LoginStatus, Lyric, Playlist, PlaylistHotTag, PlaylistPage, QrCheck, QrCreate, QrKey,
     RecentSongs, SearchResult, Song, SongUrlResult, SuggestResult,
 };
-use crate::infra::ncm::error::{check_code, NcmApiError, Result};
-use crate::infra::ncm::mapper;
-use crate::infra::ncm::raw;
-use crate::infra::ncm::NcmState;
+use crate::music::netease::error::{check_code, NcmApiError, Result};
+use crate::music::netease::mapper;
+use crate::music::netease::raw;
+use crate::music::netease::NcmState;
 
 pub struct NcmService;
 

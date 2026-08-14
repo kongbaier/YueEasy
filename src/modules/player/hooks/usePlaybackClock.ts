@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { usePlayerStore } from '../stores/player';
-import { getPosition } from '../services/PlayerService';
+import { usePlayerStore } from '@/stores/player';
+import { getPosition } from '@/tauri/player';
 
 /**
  * 播放进度时钟：rAF 60fps 本地插值 currentTime/currentTimeHigh（歌词逐字高亮用），
