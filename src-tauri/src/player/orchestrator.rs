@@ -187,9 +187,8 @@ pub(crate) fn start_ended_watcher(app: AppHandle) {
             let player = app.state::<PlayerState>();
             let should_advance = {
                 let audio = player.audio.lock().unwrap();
-                let pos = audio.get_pos().as_secs_f64();
                 let playing = audio.status() == AudioStatus::Playing;
-                playing && audio.duration().is_some_and(|d| pos >= d.as_secs_f64())
+                playing && audio.is_empty()
             };
             if should_advance {
                 {

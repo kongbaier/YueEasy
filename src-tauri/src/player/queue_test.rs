@@ -65,13 +65,38 @@ fn sequential_next_moves_forward() {
 }
 
 #[test]
-fn sequential_next_at_end_returns_end() {
-    // 统一语义：Sequential 手动 next 在队尾停止（不再环绕；与 LoopAll 区分）
+fn sequential_manual_next_wraps_at_end() {
+    // 手动下一首始终环绕（Repeat::Off 只影响自然结束）
     let mut e = setup(4);
     e.play_queue_at(3);
-    assert!(matches!(e.manual_next(), Step::End));
-    assert_eq!(e.current_index(), Some(3)); // 位置不变，保持当前曲
-    assert_eq!(e.current_track().unwrap().track_id, 3);
+    assert!(matches!(e.manual_next(), Step::Play(0)));
+    assert_eq!(e.current_index(), Some(0));
+    assert_eq!(e.current_track().unwrap().track_id, 0);
+}
+
+#[test]
+fn sequential_natural_end_marks_ended_and_restart_plays_from_start() {
+    // 顺序播放到队尾（自然结束）→ ended=true；restart 回到 index 0 并清除 ended
+    let mut e = setup(3);
+    e.play_queue_at(2);
+    assert!(matches!(e.on_track_end(), Step::End));
+    assert!(e.is_ended());
+    assert_eq!(e.current_index(), Some(2)); // 仍停在队尾
+    assert_eq!(e.restart().unwrap().track_id, 0);
+    assert!(!e.is_ended());
+    assert_eq!(e.current_index(), Some(0));
+}
+
+#[test]
+fn manual_next_after_end_resets_ended() {
+    // 自然结束后手动下一首环绕回 0，并清除 ended
+    let mut e = setup(3);
+    e.play_queue_at(2);
+    assert!(matches!(e.on_track_end(), Step::End));
+    assert!(e.is_ended());
+    assert!(matches!(e.manual_next(), Step::Play(0)));
+    assert!(!e.is_ended());
+    assert_eq!(e.current_index(), Some(0));
 }
 
 #[test]
@@ -163,8 +188,8 @@ fn set_mode_loop_one_manual_next_advances() {
 // ── Shuffle 模式导航（固定种子 → 确定性排列） ──
 
 #[test]
-fn shuffle_off_covers_each_index_once_then_ends() {
-    // 随机遍历 + 终止策略 off：覆盖全部索引一次后队尾停止（不环绕）
+fn shuffle_off_covers_each_index_once_then_wraps() {
+    // 随机遍历 + 终止策略 off：覆盖全部索引一次后，手动下一首环绕回起点
     let mut e = setup(4);
     e.set_order(Order::Shuffle);
     let mut seen = vec![e.current_index().unwrap()]; // 起点 = 当前曲
@@ -175,8 +200,9 @@ fn shuffle_off_covers_each_index_once_then_ends() {
     let mut sorted = seen.clone();
     sorted.sort();
     assert_eq!(sorted, vec![0, 1, 2, 3]);
-    // off：遍历完一轮后队尾停止
-    assert!(matches!(e.manual_next(), Step::End));
+    // 手动下一首环绕回起点（shuffled[0] = 起点曲目 0）
+    assert!(matches!(e.manual_next(), Step::Play(0)));
+    assert_eq!(e.current_track().unwrap().track_id, 0);
 }
 
 #[test]
@@ -271,8 +297,8 @@ fn reshuffle_play_new_track_in_shuffle_keeps_navigation_valid() {
     e.set_order(Order::Shuffle);
     e.play_track(make_item(99));
     assert_eq!(e.current_index(), Some(0));
-    // 单曲随机 + off → 队尾停止（不再环绕回自己），导航不越界不 panic
-    assert!(matches!(e.manual_next(), Step::End));
+    // 单曲随机 + off → 手动下一首环绕回自己，导航不越界不 panic
+    assert!(matches!(e.manual_next(), Step::Play(0)));
     assert!(e.current_track().is_some());
 }
 
@@ -874,12 +900,12 @@ fn empty_queue_any_mode_ends() {
 }
 
 #[test]
-fn single_track_sequential_next_returns_end() {
-    // 统一语义：单曲 Sequential 队尾停止（不再环绕回自己）；prev 环绕回自己
+fn single_track_sequential_next_wraps_to_self() {
+    // 单曲 Sequential：手动下一首环绕回自己；prev 环绕回自己
     let mut e = setup(1);
     assert_eq!(e.current_index(), Some(0));
-    assert!(matches!(e.manual_next(), Step::End));
-    assert_eq!(e.current_index(), Some(0)); // 位置不变
+    assert!(matches!(e.manual_next(), Step::Play(0)));
+    assert_eq!(e.current_index(), Some(0));
     assert_eq!(e.prev().unwrap().track_id, 0);
 }
 

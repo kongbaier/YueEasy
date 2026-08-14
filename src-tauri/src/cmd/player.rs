@@ -192,6 +192,19 @@ pub(crate) async fn play(
     player: State<'_, PlayerState>,
     ncm: State<'_, NcmState>,
 ) -> Result<(), String> {
+    let ended = {
+        let engine = player.engine.lock().unwrap();
+        engine.is_ended()
+    };
+    if ended {
+        // 顺序播放 ended 后点播放 → 从头播放队列
+        {
+            let mut engine = player.engine.lock().unwrap();
+            engine.restart();
+        }
+        return play_current_track(&app, &player, &ncm).await;
+    }
+
     let empty = {
         let audio = player.audio.lock().unwrap();
         audio.is_empty()

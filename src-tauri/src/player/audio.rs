@@ -148,7 +148,6 @@ impl AudioEngine {
     }
 
     /// 队列是否已空（当前曲目播放完毕）—— 上层据此判断 ended。
-    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.player.empty()
     }

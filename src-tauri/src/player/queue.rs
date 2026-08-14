@@ -9,7 +9,7 @@
 //! 导航决策下沉到 `core/strategy.rs` 的 `PlayStrategy`（遍历顺序 `Order` × 终止策略 `Repeat`），
 //! 「队尾如何续歌」由 `source`（`ContentSource`）决定，两者正交——引擎持有「导航策略」与「内容来源」两个独立维度。
 //! 导航区分「手动切歌」（manual_next/manual_prev）与「自然结束」（on_track_end）两个独立入口：
-//! Repeat::One 下手动切歌切走、自然结束重播当前曲；其余模式两者一致。
+//! 手动切歌始终环绕，`Repeat` 只影响自然结束（Off 停止 / All 环绕 / One 重播）。
 
 use crate::player::policy::{PlayStrategy, Step};
 use crate::player::state::{ContentSource, Order, PlayerSnapshot, QueueItem, Repeat};
@@ -37,6 +37,8 @@ pub struct QueueEngine {
     fm_saved: Option<SavedContext>,
     /// FM 已播 id 列表（从原 FmState 拆出；Queue 源时为空）。
     fm_played_ids: Vec<u64>,
+    /// 队列是否已自然耗尽（顺序播放 Off 到队尾后为 true；手动操作/重启后复位）。
+    ended: bool,
 }
 
 impl Default for QueueEngine {
@@ -67,6 +69,7 @@ impl QueueEngine {
             strategy: PlayStrategy::new(Order::Sequential, Repeat::Off, seed),
             fm_saved: None,
             fm_played_ids: Vec::new(),
+            ended: false,
         }
     }
 
@@ -91,6 +94,7 @@ impl QueueEngine {
     /// （对齐 TS `replace` 语义，任务规格明示；与 TS `play(new)` 的 insert-after 不同）。
     /// 退出 FM 并丢弃快照（对齐 TS `play`：用户主动点歌放弃漫游快照）。
     pub fn play_track(&mut self, track: QueueItem) -> &QueueItem {
+        self.ended = false;
         self.discard_fm();
         if let Some(pos) = self.queue.iter().position(|t| t.track_id == track.track_id) {
             self.current_index = Some(pos);
@@ -108,6 +112,7 @@ impl QueueEngine {
         tracks: Vec<QueueItem>,
         start_index: Option<usize>,
     ) -> Option<&QueueItem> {
+        self.ended = false;
         if self.source == ContentSource::PersonalFm {
             self.discard_fm();
         }
@@ -119,6 +124,7 @@ impl QueueEngine {
     /// 从队列指定位置播放。越界返回 None（对齐 TS `select`）。
     /// FM 激活时先退出 FM（恢复快照）再按恢复后的队列执行。
     pub fn play_queue_at(&mut self, index: usize) -> Option<&QueueItem> {
+        self.ended = false;
         if self.is_fm_active() {
             self.exit_fm(); // FM 守卫：先恢复快照再按原队列执行
         }
@@ -133,9 +139,16 @@ impl QueueEngine {
     /// 返回 `Play(idx)` / `ReplayCurrent` / `End`。`End` 后续行为由 `source` 决定
     /// （cmd 层：Queue 停止、PersonalFm 续歌）。
     pub fn manual_next(&mut self) -> Step {
+        self.ended = false;
         let current = self.current_index;
         let len = self.queue.len();
-        let step = self.strategy.manual_next(current, len);
+        let step = if self.is_fm_active() {
+            // FM 流式：队尾返回 End 触发续歌，不环绕
+            self.strategy.manual_next_streaming(current, len)
+        } else {
+            // Queue：手动切歌始终环绕（与 Repeat::Off 只影响自然结束正交）
+            self.strategy.manual_next(current, len)
+        };
         if let Step::Play(idx) = step {
             self.current_index = Some(idx);
         }
@@ -151,15 +164,30 @@ impl QueueEngine {
         if let Step::Play(idx) = step {
             self.current_index = Some(idx);
         }
+        if step == Step::End && self.source == ContentSource::Queue {
+            self.ended = true;
+        }
         step
     }
 
     /// 手动切上一首。无上一首返回 None。
     pub fn prev(&mut self) -> Option<&QueueItem> {
+        self.ended = false;
         let current = self.current_index;
         let len = self.queue.len();
         let idx = self.strategy.manual_prev(current, len)?;
         self.current_index = Some(idx);
+        self.current_track()
+    }
+
+    /// 从队列开头重新播放（顺序播放 ended 后点播放的语义）。空队列返回 None。
+    pub fn restart(&mut self) -> Option<&QueueItem> {
+        self.ended = false;
+        if self.queue.is_empty() {
+            self.current_index = None;
+            return None;
+        }
+        self.current_index = Some(0);
         self.current_track()
     }
 
@@ -195,6 +223,7 @@ impl QueueEngine {
 
     /// 清空队列并重置索引。退出 FM 并丢弃快照（对齐 TS `clear`）。
     pub fn clear(&mut self) {
+        self.ended = false;
         self.discard_fm();
         self.queue_clear();
     }
@@ -217,6 +246,7 @@ impl QueueEngine {
     /// 进入 FM（单曲模型，§2.5）。保存当前队列上下文，设置初始曲目，切换到 `PersonalFm` 来源。
     /// 已在 FM 中再次进入不覆盖原快照（对齐 TS `enterFm`）。
     pub fn enter_fm(&mut self, initial_track: QueueItem) {
+        self.ended = false;
         if !self.is_fm_active() {
             self.fm_saved = Some(SavedContext {
                 queue: std::mem::take(&mut self.queue),
@@ -312,6 +342,10 @@ impl QueueEngine {
 
     pub fn is_fm_active(&self) -> bool {
         self.source == ContentSource::PersonalFm
+    }
+
+    pub fn is_ended(&self) -> bool {
+        self.ended
     }
 
     pub fn source(&self) -> ContentSource {

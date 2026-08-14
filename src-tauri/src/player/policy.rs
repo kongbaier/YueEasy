@@ -4,10 +4,10 @@
 //! 「队尾如何续歌」由 cmd 层根据 content_source 决定（Queue 停止、PersonalFm 续歌）。
 //!
 //! 关键语义：
-//! - **手动切歌**（`manual_next`）与**自然结束**（`on_track_end`）是两个独立入口——
-//!   `Repeat::One` 下手动切歌切走（环绕）、自然结束重播当前曲；其余模式两者一致。
+//! - **手动切歌**（`manual_next`/`manual_prev`）始终环绕，与 `Repeat` 无关；
+//!   `Repeat` 只影响**自然结束**（`on_track_end`）：Off 队尾停止、All 环绕、One 重播当前。
 //! - **遍历顺序**（`Order`）决定遍历路径：Sequential 按索引、Shuffle 按内部排列（惰性重建）。
-//! - **终止策略**（`Repeat`）决定边界行为：Off 队尾停止、All 环绕、One 重播当前。
+//! - **终止策略**（`Repeat`）决定自然结束的边界行为。
 
 use crate::player::state::{Order, Repeat};
 
@@ -92,8 +92,13 @@ impl PlayStrategy {
         self.order = order;
     }
 
-    /// 手动按「下一首」：Off 队尾停止；All/One 环绕（One 手动切歌 = 切走）。
+    /// 手动按「下一首」：始终环绕（`Repeat::Off` 只影响自然结束，不影响手动切歌）。
     pub fn manual_next(&mut self, current: Option<usize>, len: usize) -> Step {
+        self.next_index(current, len, true)
+    }
+
+    /// 流式来源（FM）的「下一首」：跟随 `Repeat`（Off 队尾返回 `End` 触发续歌、One 环绕重播）。
+    pub fn manual_next_streaming(&mut self, current: Option<usize>, len: usize) -> Step {
         let wrap = self.repeat != Repeat::Off;
         self.next_index(current, len, wrap)
     }

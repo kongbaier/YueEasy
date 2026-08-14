@@ -85,7 +85,9 @@ export function usePlayer() {
       currentIndex: p.currentIndex,
       isFm: p.contentSource === 'personal_fm',
       fmExitWillEmpty: p.contentSource !== 'personal_fm',
-      canPrev: p.currentIndex !== null && p.currentIndex > 0,
+      canPrev:
+        p.currentIndex !== null &&
+        (p.contentSource !== 'personal_fm' || p.currentIndex > 0),
       order: p.order,
       repeat: p.repeat,
       isShuffle: p.order === 'shuffle',
