@@ -10,9 +10,11 @@ import { usePlayer } from "@/modules/player/hooks/usePlayer";
 export const ShuffleButton = ({
   className,
   size = "icon",
+  iconSize = 5,
 }: {
   className?: string;
   size?: "icon" | "icon-sm" | "icon-lg";
+  iconSize?: number;
 }) => {
   const { isShuffle, isFm, toggleShuffle } = usePlayer();
   const label = "随机播放";
@@ -31,7 +33,7 @@ export const ShuffleButton = ({
         title={label}
         variant="ghost"
       >
-        <Shuffle className="size-5" />
+        <Shuffle className={`size-${iconSize}`} />
       </Button>
       <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-border/20 bg-[#2b2b2b] px-3 py-1.5 text-xs text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100">
         {label}

@@ -229,9 +229,9 @@ const PlayerMenu = ({
   };
 
   return (
-    <div className="flex-1 flex items-center justify-end">
-      {currentTrack && <LikeButton track={currentTrack} />}
-      <ShuffleButton />
+    <div className="flex-1 flex items-center justify-end gap-1 lg:gap-2">
+      {currentTrack && <LikeButton iconSize={4.5} track={currentTrack} />}
+      <ShuffleButton iconSize={4.5} />
       <Button
         className="text-foreground hover:bg-transparent hover:text-primary"
         disabled={trashPending}
