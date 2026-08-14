@@ -1,8 +1,8 @@
-import { Music, Trash2 } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
-import type { VirtuosoHandle } from 'react-virtuoso';
-import { Virtuoso } from 'react-virtuoso';
-import { Button } from '@/shared/ui/button';
+import { Music, Trash2 } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import type { VirtuosoHandle } from "react-virtuoso";
+import { Virtuoso } from "react-virtuoso";
+import { Button } from "@/shared/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,16 +10,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/shared/ui/dialog';
-import { VirtuosoScroller } from '@/shared/ui/virtuoso';
-import { SmartImage } from '@/shared/ui/image';
-import { toast } from '@/shared/lib/toast';
-import { cn } from '@/shared/utils/cn';
-import { getNcmImageUrl } from '@/shared/utils/image';
-import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
-import { formatQueueCount } from '@/shared/utils/format';
-import { usePlayer } from '@/modules/player/hooks/usePlayer';
-import type { Track } from '@/shared/types/player';
+} from "@/shared/ui/dialog";
+import { VirtuosoScroller } from "@/shared/ui/virtuoso";
+import { SmartImage } from "@/shared/ui/image";
+import { toast } from "@/shared/lib/toast";
+import { cn } from "@/shared/utils/cn";
+import { getNcmImageUrl } from "@/shared/utils/image";
+import { usePlayerPage } from "@/modules/player/contexts/PlayerPageContext";
+import { formatQueueCount } from "@/shared/utils/format";
+import { usePlayer } from "@/modules/player/hooks/usePlayer";
+import type { Track } from "@/shared/types/player";
 
 const QueueItem = ({
   track,
@@ -37,8 +37,8 @@ const QueueItem = ({
   return (
     <div
       className={cn(
-        'group flex items-center gap-3 px-2 py-2 w-full text-left cursor-pointer transition-colors hover:bg-accent rounded-md',
-        isCurrent && 'bg-primary/10',
+        "group flex items-center gap-3 px-2 py-2 w-full text-left cursor-pointer transition-colors hover:bg-accent rounded-md",
+        isCurrent && "bg-primary/10",
       )}
       onDoubleClick={() => onPlay(index)}
       onKeyDown={() => onPlay(index)}
@@ -59,11 +59,11 @@ const QueueItem = ({
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className={cn('text-sm truncate', isCurrent && 'text-primary')}>
+        <p className={cn("text-sm truncate", isCurrent && "text-primary")}>
           {track.name}
         </p>
         <p className="text-xs text-muted-foreground truncate">
-          {track.artists?.map((a) => a.name).join(' / ') || ' '}
+          {track.artists?.map((a) => a.name).join(" / ") || " "}
         </p>
       </div>
 
@@ -82,8 +82,15 @@ const QueueItem = ({
 };
 
 export const PlayerPageQueue = () => {
-  const { queue, queueLength, currentTrack, playFromIndex, isFm, clearQueue, removeFromQueue } =
-    usePlayer();
+  const {
+    queue,
+    queueLength,
+    currentTrack,
+    playFromIndex,
+    isFm,
+    clearQueue,
+    removeFromQueue,
+  } = usePlayer();
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const scrolledOnceRef = useRef(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
@@ -99,7 +106,7 @@ export const PlayerPageQueue = () => {
       setTimeout(() => {
         virtuosoRef.current?.scrollToIndex({
           index: currentIndex,
-          align: 'center',
+          align: "center",
         });
       }, 50);
     }
@@ -112,7 +119,7 @@ export const PlayerPageQueue = () => {
       clearQueue();
     });
     setClearConfirmOpen(false);
-    toast.success('播放列表已清空');
+    toast.success("播放列表已清空");
   };
 
   const handleRemove = (index: number) => {
@@ -125,8 +132,8 @@ export const PlayerPageQueue = () => {
   };
 
   return (
-    <div className="h-full w-full flex flex-col">
-      <header className="flex items-center justify-between px-2 py-3 shrink-0">
+    <div className="h-full w-full flex flex-col px-8 lg:px-12">
+      <header className="flex items-center justify-between py-3 shrink-0">
         <h2 className="text-sm font-medium flex items-center gap-1.5">
           播放列表
           {queueLength > 0 && (
@@ -151,49 +158,49 @@ export const PlayerPageQueue = () => {
         <>
           <div
             className={cn(
-                'absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300',
-                queue.length === 0
-                  ? 'opacity-100 scale-100'
-                  : 'opacity-0 scale-95 pointer-events-none',
+              "absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300",
+              queue.length === 0
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-95 pointer-events-none",
+            )}
+          >
+            <Music className="size-10 opacity-30" />
+            <p className="text-xs">播放列表为空</p>
+            <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
+          </div>
+          <div
+            className={cn(
+              "h-full transition-all duration-300",
+              queue.length > 0
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-2 pointer-events-none",
+            )}
+          >
+            <Virtuoso
+              components={{ Scroller: VirtuosoScroller }}
+              computeItemKey={(index) => queue[index]?.id ?? index}
+              fixedItemHeight={48}
+              itemContent={(index) => (
+                <QueueItem
+                  index={index}
+                  isCurrent={currentTrack?.id === queue[index]?.id}
+                  onPlay={playFromIndex}
+                  onRemove={handleRemove}
+                  track={queue[index]}
+                />
               )}
-            >
-              <Music className="size-10 opacity-30" />
-              <p className="text-xs">播放列表为空</p>
-              <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
-            </div>
-            <div
-              className={cn(
-                'h-full transition-all duration-300 px-2 py-1 mr-4',
-                queue.length > 0
-                  ? 'opacity-100 translate-y-0'
-                  : 'opacity-0 translate-y-2 pointer-events-none',
-              )}
-            >
-              <Virtuoso
-                components={{ Scroller: VirtuosoScroller }}
-                computeItemKey={(index) => queue[index]?.id ?? index}
-                fixedItemHeight={48}
-                itemContent={(index) => (
-                  <QueueItem
-                    index={index}
-                    isCurrent={currentTrack?.id === queue[index]?.id}
-                    onPlay={playFromIndex}
-                    onRemove={handleRemove}
-                    track={queue[index]}
-                  />
-                )}
-                overscan={50}
-                ref={(ref) => {
-                  virtuosoRef.current = ref;
-                  if (ref && !scrolledOnceRef.current && currentIndex >= 0) {
-                    scrolledOnceRef.current = true;
-                    scrollToCurrent();
-                  }
-                }}
-                style={{ height: '100%' }}
-                totalCount={queue.length}
-              />
-            </div>
+              overscan={50}
+              ref={(ref) => {
+                virtuosoRef.current = ref;
+                if (ref && !scrolledOnceRef.current && currentIndex >= 0) {
+                  scrolledOnceRef.current = true;
+                  scrollToCurrent();
+                }
+              }}
+              style={{ height: "100%", width: "100%" }}
+              totalCount={queue.length}
+            />
+          </div>
         </>
       </div>
 

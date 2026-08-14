@@ -2,6 +2,7 @@ import {
   ChevronDown,
   Download,
   Ellipsis,
+  ListMusic,
   Maximize,
   MessageCircleMore,
   Minimize,
@@ -93,7 +94,12 @@ export default function PlayerPage() {
                       setShowComments((v) => !v);
                       setShowQueue(false);
                     }}
+                    onToggleQueue={() => {
+                      setShowQueue((v) => !v);
+                      setShowComments(false);
+                    }}
                     showComments={showComments}
+                    showQueue={showQueue}
                   />
                 </React.Fragment>
               )}
@@ -185,11 +191,15 @@ const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
 const PlayerMenu = ({
   currentTrack,
   showComments,
+  showQueue,
   onToggleComments,
+  onToggleQueue,
 }: {
   currentTrack: Track;
   showComments: boolean;
+  showQueue: boolean;
   onToggleComments: () => void;
+  onToggleQueue: () => void;
 }) => {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -220,8 +230,17 @@ const PlayerMenu = ({
       >
         <MessageCircleMore className="size-5" strokeWidth={1.5} />
       </Button>
-      <Button disabled size="icon-lg" variant="ghost">
-        <Share2 className="size-5" strokeWidth={1.5} />
+      <Button
+        className={cn(
+          showQueue
+            ? 'text-primary hover:text-primary'
+            : 'text-foreground hover:bg-transparent hover:text-primary',
+        )}
+        onClick={onToggleQueue}
+        size="icon-lg"
+        variant={showQueue ? 'secondary' : 'ghost'}
+      >
+        <ListMusic className="size-5" strokeWidth={1.5} />
       </Button>
       <div className="relative" ref={moreRef}>
         <Button
@@ -233,6 +252,15 @@ const PlayerMenu = ({
         </Button>
         {moreOpen && (
           <div className="absolute bottom-full right-0 mb-1 bg-popover border border-border rounded-lg shadow-lg py-1 min-w-30 z-50">
+            <Button
+              className="w-full justify-start opacity-60"
+              disabled
+              size="sm"
+              variant="ghost"
+            >
+              <Share2 className="size-4" />
+              分享
+            </Button>
             <Button
               className="w-full justify-start opacity-60"
               size="sm"
