@@ -1,4 +1,5 @@
 export { PlayerBar } from './PlayerBar';
-export { StrategyCycler } from './StrategyCycler';
+export { RepeatButton } from './RepeatButton';
+export { ShuffleButton } from './ShuffleButton';
 export { QueuePanel } from './QueuePanel';
 export { SeekBar } from './SeekBar';

@@ -2,8 +2,8 @@
 //!
 //! 目录结构对应设计 §1.1：
 //! - `engine.rs`   — PlayerEngine：队列管理、FM 状态机
-//! - `strategy.rs` — PlayStrategy：Sequential/LoopAll/LoopOne/Shuffle 的手动切歌（manual_next/manual_prev）与自然结束（on_track_end）导航策略
-//! - `types.rs`    — 领域类型：QueueItem / ContentSource / PlayMode / PlayerSnapshot
+//! - `strategy.rs` — PlayStrategy：遍历顺序（order）× 终止策略（repeat）的导航（manual_next/manual_prev/on_track_end）
+//! - `types.rs`    — 领域类型：QueueItem / ContentSource / Order / Repeat / PlayerSnapshot
 
 pub mod engine;
 pub mod strategy;

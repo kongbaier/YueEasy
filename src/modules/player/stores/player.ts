@@ -2,8 +2,7 @@ import { create } from 'zustand';
 import * as playerApi from '@/tauri/player';
 import { useSettingsStore } from '@/stores/settings';
 import { usePlayerMirrorStore } from '@/stores/playerMirror';
-import { useLikeStore } from '@/modules/like/stores/like';
-import { NEXT_RUST_STRATEGY } from '@/shared/constants/player';
+import { NEXT_REPEAT } from '@/shared/constants/player';
 
 // ── Store ──
 //
@@ -30,8 +29,10 @@ export interface PlayerStore {
   setVolume: (volume: number) => void;
   /** 静音切换（静音 = 音量 0，取消静音 = 恢复原音量）。 */
   setMuted: (muted: boolean) => void;
-  /** 播放模式档位循环（含心动模式与漫游的 LoopOne↔FM）。 */
-  cycleStrategy: () => void;
+  /** 终止策略循环（FM 下 off ↔ one）。 */
+  cycleRepeat: () => void;
+  /** 随机播放开关（FM 下禁用）。 */
+  toggleShuffle: () => void;
 }
 
 export const usePlayerStore = create<PlayerStore>((set, get) => ({
@@ -76,41 +77,21 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
     void playerApi.setVolume(muted ? 0 : player.volume);
   },
 
-  cycleStrategy: () => {
+  cycleRepeat: () => {
     const mirror = usePlayerMirrorStore.getState();
-    const { iterationStrategy, contentSource, currentTrack } = mirror;
+    const { repeat, contentSource } = mirror;
 
     if (contentSource === 'personal_fm') {
-      // 漫游：单曲循环 ↔ 漫游前进（FM 队列顺序播放）。LoopOne = 临时多听几遍。
-      // 退出漫游不在这里 —— 靠其他列表的「播放/播放全部」自动 exit_fm。
-      if (iterationStrategy === 'loop_one') {
-        void playerApi.setIterationStrategy('sequential'); // 切回漫游前进
-      } else {
-        void playerApi.setIterationStrategy('loop_one'); // 单曲循环多听几遍
-      }
+      // 漫游：off（漫游前进）↔ one（单曲循环）
+      void playerApi.setRepeat(repeat === 'one' ? 'off' : 'one');
       return;
     }
+    void playerApi.setRepeat(NEXT_REPEAT[repeat]);
+  },
 
-    if (contentSource === 'heartbeat') {
-      // 心动：切回普通队列
-      void playerApi.setContentSource('queue');
-      return;
-    }
-
-    // queue 源：策略循环，shuffle 后若「当前曲被喜欢 + 有喜欢歌单」插入心动档位
-    const like = useLikeStore.getState();
-    if (
-      iterationStrategy === 'shuffle' &&
-      currentTrack &&
-      like.isLiked(currentTrack.track_id) &&
-      like.likedPlaylistId != null
-    ) {
-      void playerApi.enterHeartbeat(
-        currentTrack.track_id,
-        like.likedPlaylistId,
-      );
-      return;
-    }
-    void playerApi.setIterationStrategy(NEXT_RUST_STRATEGY[iterationStrategy]);
+  toggleShuffle: () => {
+    const mirror = usePlayerMirrorStore.getState();
+    if (mirror.contentSource === 'personal_fm') return;
+    void playerApi.setShuffle(mirror.order !== 'shuffle');
   },
 }));

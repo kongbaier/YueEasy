@@ -8,8 +8,9 @@
 import { create } from "zustand";
 import type { QueueItem } from "@/shared/types/entities";
 import type {
+  Order,
+  RepeatMode,
   RustContentSource,
-  RustPlayMode,
 } from "@/shared/types/player";
 
 export interface PlayerMirrorState {
@@ -19,9 +20,11 @@ export interface PlayerMirrorState {
   queue: QueueItem[];
   /** 当前队列索引。 */
   currentIndex: number | null;
-  /** 迭代策略（Rust `iteration_strategy`，4 种策略：sequential / loop_all / loop_one / shuffle）。 */
-  iterationStrategy: RustPlayMode;
-  /** 内容来源（Rust `content_source`：queue / personal_fm / heartbeat）。 */
+  /** 遍历顺序（Rust `order`：sequential / shuffle）。 */
+  order: Order;
+  /** 终止策略（Rust `repeat`：off / all / one）。 */
+  repeat: RepeatMode;
+  /** 内容来源（Rust `content_source`：queue / personal_fm）。 */
   contentSource: RustContentSource;
 }
 
@@ -30,6 +33,7 @@ export const usePlayerMirrorStore = create<PlayerMirrorState>(() => ({
   currentTrack: null,
   queue: [],
   currentIndex: null,
-  iterationStrategy: "sequential",
+  order: "sequential",
+  repeat: "off",
   contentSource: "queue",
 }));

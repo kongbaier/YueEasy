@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::core::types::{ContentSource, PlayMode, QueueItem};
+use crate::core::types::{ContentSource, Order, QueueItem, Repeat};
 use crate::core::PlayerEngine;
 use crate::infra::audio::engine::AudioEngine;
 use crate::infra::storage::db::Database;
@@ -63,13 +63,14 @@ pub fn persist_snapshot(app: &AppHandle, player: &PlayerState) {
 #[derive(Serialize)]
 #[serde(tag = "event", content = "data")]
 pub enum PlayerEvent {
-    /// 当前曲目 + 索引 + 内容来源 + 迭代策略（合并原 track/strategy/source/index 四类变化）。
+    /// 当前曲目 + 索引 + 内容来源 + 遍历顺序 + 终止策略（合并原 track/strategy/source/index 四类变化）。
     #[serde(rename = "player:current")]
     Current {
         track: Option<QueueItem>,
         index: Option<usize>,
         source: ContentSource,
-        strategy: PlayMode,
+        order: Order,
+        repeat: Repeat,
     },
     /// 队列全量（仅队列结构变化时推，去抖由调用方控制）。
     #[serde(rename = "player:queue")]

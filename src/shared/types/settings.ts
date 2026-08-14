@@ -1,5 +1,4 @@
 import { Effect } from '@tauri-apps/api/window';
-import type { PlayMode } from '@/shared/types/player';
 
 export type Theme = 'light' | 'dark' | 'system';
 export type CloseBehavior = 'quit' | 'hide';
@@ -20,7 +19,6 @@ export interface AppearanceSettings {
 export interface PlayerSettings {
   volume: number;
   isMuted: boolean;
-  playMode: PlayMode;
   playbackRate: number;
 }
 

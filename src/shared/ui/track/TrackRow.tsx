@@ -12,6 +12,7 @@ import type { Song } from '@/shared/types/entities';
 import { formatDuration } from '@/shared/utils/format';
 import { getNcmImageUrl } from '@/shared/lib/utils';
 import { useLikeAction } from '@/modules/like/hooks/useLikeAction';
+import { LikeButton } from '@/modules/like/components/LikeButton';
 import { useTrackActions } from '@/modules/player/hooks/useTrackActions';
 
 interface TrackRowProps {
@@ -63,17 +64,9 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
         <span className="flex-1 min-w-0 truncate text-xs text-muted-foreground">
           {track.album.name || '-'}
         </span>
-        <button
-          className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-red-500"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleLike(track);
-          }}
-          title={liked ? '取消收藏' : '收藏'}
-          type="button"
-        >
-          <Heart className="h-4 w-4" fill={liked ? '#ef4444' : 'none'} />
-        </button>
+        <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
+          <LikeButton track={track} size="icon-sm" />
+        </span>
         <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
           {formatDuration(track.durationMs / 1000)}
         </span>

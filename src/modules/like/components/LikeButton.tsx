@@ -7,9 +7,11 @@ import { Heart } from "lucide-react";
 export const LikeButton = ({
   track,
   className,
+  size = "icon",
 }: {
   track: Track;
   className?: string;
+  size?: "icon" | "icon-sm" | "icon-lg";
 }) => {
   const { handleLike, isLiked } = useLikeAction();
 
@@ -17,9 +19,10 @@ export const LikeButton = ({
 
   return (
     <Button
-      className={cn("", liked && "text-[#ef4444]", className)}
+      className={cn(liked && "text-[#ef4444]", className)}
       onClick={() => handleLike(track)}
-      size="icon"
+      size={size}
+      title={liked ? "取消收藏" : "收藏"}
       variant="svg"
     >
       <Heart className="size-4.5" fill={liked ? "#ef4444" : "none"} />

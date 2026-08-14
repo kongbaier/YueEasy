@@ -1,14 +1,14 @@
 import {
   ChevronFirst,
   ChevronLast,
-  HeartOff,
   ListMusic,
   Loader2,
   Pause,
   Play,
+  ThumbsDown,
 } from "lucide-react";
 import { useState } from "react";
-import { StrategyCycler } from "@/modules/player/components";
+import { RepeatButton, ShuffleButton } from "@/modules/player/components";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "@/shared/lib/toast";
@@ -57,7 +57,7 @@ export const PlayerPageControls = ({
       className={`grid grid-cols-[auto_4fr_auto_3fr_auto_3fr_auto_4fr_auto] items-center ${className ?? ""}`}
     >
       <div className="col-start-1 flex items-center gap-x-1">
-        <StrategyCycler />
+        <RepeatButton />
       </div>
 
       <Button
@@ -93,38 +93,10 @@ export const PlayerPageControls = ({
         <ChevronLast className="size-5" />
       </Button>
 
-      <Button
-        className={cn(
-          "col-start-9",
-          !isFm &&
-            (showQueue
-              ? "text-primary hover:text-primary"
-              : "text-foreground hover:bg-transparent hover:text-primary"),
-          isFm && "text-foreground hover:bg-transparent hover:text-primary",
-        )}
-        disabled={trashPending}
-        onClick={isFm ? handleFmTrash : onToggleQueue}
-        size="icon"
-        title={isFm ? "不感兴趣" : "播放列表"}
-        variant={showQueue && !isFm ? "secondary" : "ghost"}
-      >
-        {isFm ? (
-          trashPending ? (
-            <Loader2 className="size-5 animate-spin" />
-          ) : (
-            <HeartOff className="size-5" />
-          )
-        ) : (
-          <span className="relative">
-            <ListMusic className="size-5" />
-            {queueLength > 0 && (
-              <span className="absolute -top-1 -right-1.5 text-[9px] font-medium tabular-nums">
-                {formatQueueCount(queueLength)}
-              </span>
-            )}
-          </span>
-        )}
-      </Button>
+      <div className="col-start-9 flex items-center gap-x-1">
+        <ShuffleButton />
+          
+      </div>
     </div>
   );
 };

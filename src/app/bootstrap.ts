@@ -41,7 +41,8 @@ async function restorePlayerState(): Promise<void> {
       currentTrack: current_track,
       queue: snapshot.queue,
       currentIndex: snapshot.current_index,
-      iterationStrategy: snapshot.iteration_strategy,
+      order: snapshot.order,
+      repeat: snapshot.repeat,
       contentSource: snapshot.content_source,
     });
 

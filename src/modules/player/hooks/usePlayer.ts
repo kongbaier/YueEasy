@@ -7,7 +7,6 @@ import { useAuthStore } from '@/modules/auth/stores/authStore';
 import { useLikeStore } from '@/modules/like/stores/like';
 import { usePlayerMirrorStore } from '@/stores/playerMirror';
 import { queueItemToSong } from '@/shared/utils/mappers';
-import { rustPlayModeToUi } from '@/shared/types/player';
 
 /**
  * Player 域门面 hook（粗粒度）：组合 player/queue/settings/auth/like 5 个 store
@@ -45,7 +44,7 @@ export function usePlayer() {
       fmTrash: s.fmTrash,
     })),
   );
-  // Rust 引擎只读镜像：队列/当前曲目/迭代策略/内容来源等状态一律读此镜像（不读 queue store 状态字段）。
+  // Rust 引擎只读镜像：队列/当前曲目/遍历顺序/终止策略/内容来源等状态一律读此镜像（不读 queue store 状态字段）。
   const mirror = usePlayerMirrorStore(
     useShallow((s) => ({
       currentTrack: s.currentTrack,
@@ -53,10 +52,10 @@ export function usePlayer() {
       queueLength: s.queue.length,
       currentIndex: s.currentIndex,
       isFm: s.contentSource === 'personal_fm',
-      isHeartbeat: s.contentSource === 'heartbeat',
       fmExitWillEmpty: s.contentSource !== 'personal_fm',
       canPrev: s.currentIndex !== null && s.currentIndex > 0,
-      iterationStrategy: s.iterationStrategy,
+      order: s.order,
+      repeat: s.repeat,
     })),
   );
   const playerSettings = useSettingsStore((s) => s.player);
@@ -65,7 +64,6 @@ export function usePlayer() {
     useShallow((s) => ({
       isLiked: s.isLiked,
       likedIds: s.likedIds,
-      likedPlaylistId: s.likedPlaylistId,
     })),
   );
 
@@ -88,9 +86,14 @@ export function usePlayer() {
     usePlayerStore.getState().setMuted(muted);
   }, []);
 
-  /** 迭代策略循环（FM 下被引擎忽略，调用方自行禁用）。 */
-  const cycleStrategy = useCallback(() => {
-    usePlayerStore.getState().cycleStrategy();
+  /** 终止策略循环（FM 下 off ↔ one）。 */
+  const cycleRepeat = useCallback(() => {
+    usePlayerStore.getState().cycleRepeat();
+  }, []);
+
+  /** 随机播放开关（FM 下禁用）。 */
+  const toggleShuffle = useCallback(() => {
+    usePlayerStore.getState().toggleShuffle();
   }, []);
 
   return useMemo(
@@ -101,22 +104,23 @@ export function usePlayer() {
       queue: mirror.queue.map(queueItemToSong),
       queueLength: mirror.queue.length,
       isFm: mirror.isFm,
-      isHeartbeat: mirror.isHeartbeat,
       fmExitWillEmpty: mirror.fmExitWillEmpty,
       canPrev: mirror.canPrev,
-      playMode: rustPlayModeToUi(mirror.iterationStrategy),
+      order: mirror.order,
+      repeat: mirror.repeat,
+      isShuffle: mirror.order === 'shuffle',
       ...queueActions,
       togglePlay,
       seek,
       setVolume,
       setMuted,
-      cycleStrategy,
+      cycleRepeat,
+      toggleShuffle,
       volume: playerSettings.volume,
       isMuted: playerSettings.isMuted,
       isLoggedIn,
       isLiked: like.isLiked,
       likedIds: like.likedIds,
-      likedPlaylistId: like.likedPlaylistId,
     }),
     [
       transport,
@@ -127,11 +131,11 @@ export function usePlayer() {
       seek,
       setVolume,
       setMuted,
-      cycleStrategy,
+      cycleRepeat,
+      toggleShuffle,
       isLoggedIn,
       like.isLiked,
       like.likedIds,
-      like.likedPlaylistId,
     ],
   );
 }

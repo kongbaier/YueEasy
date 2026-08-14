@@ -22,7 +22,8 @@ export function usePlayerEvents(): void {
           usePlayerMirrorStore.setState({
             currentTrack: nextTrack,
             currentIndex: payload.data.index,
-            iterationStrategy: payload.data.strategy,
+            order: payload.data.order,
+            repeat: payload.data.repeat,
             contentSource: payload.data.source,
           });
           // 仅当曲目变化（含清空到 null）时才重置进度（来源/策略变化不重置）

@@ -6,40 +6,37 @@
 //!
 //! 纯逻辑：零 I/O、零网络、零第三方类型（仅 std + serde derive）。core 无外部依赖。
 //!
-//! 导航决策下沉到 `core/strategy.rs` 的 `PlayStrategy`（Sequential/LoopAll/LoopOne/Shuffle），
+//! 导航决策下沉到 `core/strategy.rs` 的 `PlayStrategy`（遍历顺序 `Order` × 终止策略 `Repeat`），
 //! 「队尾如何续歌」由 `source`（`ContentSource`）决定，两者正交——引擎持有「导航策略」与「内容来源」两个独立维度。
 //! 导航区分「手动切歌」（manual_next/manual_prev）与「自然结束」（on_track_end）两个独立入口：
-//! LoopOne 下手动切歌切走、自然结束重播当前曲；其余模式两者一致。
+//! Repeat::One 下手动切歌切走、自然结束重播当前曲；其余模式两者一致。
 
-use crate::core::strategy::{strategy_for, PlayStrategy, Step};
-use crate::core::types::{ContentSource, PlayMode, PlayerSnapshot, QueueItem};
+use crate::core::strategy::{PlayStrategy, Step};
+use crate::core::types::{ContentSource, Order, PlayerSnapshot, QueueItem, Repeat};
 
 /// FM 进入前保存的原队列上下文（§2.1，enter/exit 的私有实现细节）。
 struct SavedContext {
     queue: Vec<QueueItem>,
     index: Option<usize>,
-    mode: PlayMode,
+    order: Order,
+    repeat: Repeat,
 }
 
-/// 播放器领域引擎：队列管理、内容来源（`source`）× 迭代策略（`mode`）决策（§2.1 + §2.6）。
+/// 播放器领域引擎：队列管理、内容来源（`source`）× 导航策略（`order` × `repeat`）决策（§2.1 + §2.6）。
 pub struct PlayerEngine {
     // === 对外可见状态 ===
     queue: Vec<QueueItem>,
     current_index: Option<usize>,
-    /// 迭代策略（导航，Sequential/LoopAll/LoopOne/Shuffle）。始终有效，不与来源互斥。
-    mode: PlayMode,
 
     // === 内部状态（不对外暴露） ===
-    /// 内容来源（Queue / PersonalFm / Heartbeat）——决定队尾如何续歌。
+    /// 内容来源（Queue / PersonalFm）——决定队尾如何续歌。
     source: ContentSource,
-    /// 当前导航策略（始终为 mode 对应的队列导航策略）。
-    strategy: Box<dyn PlayStrategy>,
+    /// 导航策略（遍历顺序 × 终止策略 + Shuffle 排列状态）。始终有效，不与来源互斥。
+    strategy: PlayStrategy,
     /// FM 进入前保存的原队列上下文（非 FM 时为 None）。
     fm_saved: Option<SavedContext>,
     /// FM 已播 id 列表（从原 FmState 拆出；Queue 源时为空）。
     fm_played_ids: Vec<u64>,
-    /// Shuffle 策略的构造种子（每次构造推进，保证「重新随机」产生新排列；测试注入保证确定性）。
-    seed: u64,
     /// 最近已知播放位置（秒）——位置持久化用（Phase F，快照仅存此值）。
     last_position: f64,
     /// 最近已知播放/暂停状态——位置持久化用（Phase F）。
@@ -70,12 +67,10 @@ impl PlayerEngine {
         Self {
             queue: Vec::new(),
             current_index: None,
-            mode: PlayMode::Sequential,
             source: ContentSource::Queue,
-            strategy: strategy_for(PlayMode::Sequential, seed),
+            strategy: PlayStrategy::new(Order::Sequential, Repeat::Off, seed),
             fm_saved: None,
             fm_played_ids: Vec::new(),
-            seed,
             last_position: 0.0,
             last_playing: false,
         }
@@ -91,13 +86,12 @@ impl PlayerEngine {
         } else {
             snapshot.current_index.filter(|&i| i < engine.queue.len())
         };
-        engine.mode = snapshot.iteration_strategy;
         engine.fm_played_ids = snapshot.fm_played_ids;
         engine.source = snapshot.content_source;
         engine.last_position = snapshot.position_secs;
         engine.last_playing = snapshot.playing;
-        // 导航策略始终跟随 mode（FM 不再抢占 strategy 槽位）
-        engine.strategy = engine.make_strategy(engine.mode);
+        // 导航策略始终跟随 order/repeat（Shuffle 排列惰性重建，不持久化）
+        engine.strategy = PlayStrategy::new(snapshot.order, snapshot.repeat, random_seed());
         engine
     }
 
@@ -146,7 +140,7 @@ impl PlayerEngine {
 
     /// 手动切下一首（用户点「下一首」按钮 / 媒体键 / SMTC）。
     /// 返回 `Play(idx)` / `ReplayCurrent` / `End`。`End` 后续行为由 `source` 决定
-    /// （cmd 层：Queue 停止、PersonalFm 续歌、Heartbeat 同 Queue）。
+    /// （cmd 层：Queue 停止、PersonalFm 续歌）。
     pub fn manual_next(&mut self) -> Step {
         let current = self.current_index;
         let len = self.queue.len();
@@ -217,13 +211,17 @@ impl PlayerEngine {
         self.queue_clear();
     }
 
-    // ── 模式 ──
+    // ── 模式（order × repeat） ──
 
-    /// 设置播放模式。切到 Shuffle 时重建随机序列并锚定当前位置（对齐 TS `setMode`）。
-    /// 来源与策略正交：改 mode 不影响 source（FM 期间改 mode = 退出后恢复的队列模式 / 漫游下的 LoopOne）。
-    pub fn set_mode(&mut self, mode: PlayMode) {
-        self.mode = mode;
-        self.strategy = self.make_strategy(mode);
+    /// 设置终止策略（off/all/one）。不影响遍历顺序与已生成的随机排列。
+    pub fn set_repeat(&mut self, repeat: Repeat) {
+        self.strategy.set_repeat(repeat);
+    }
+
+    /// 设置遍历顺序（sequential/shuffle）。进入 Shuffle 时重建随机序列并锚定当前位置。
+    /// 来源与策略正交：改 order/repeat 不影响 source。
+    pub fn set_order(&mut self, order: Order) {
+        self.strategy.set_order(order);
     }
 
     // ── FM ──
@@ -235,7 +233,8 @@ impl PlayerEngine {
             self.fm_saved = Some(SavedContext {
                 queue: std::mem::take(&mut self.queue),
                 index: self.current_index,
-                mode: self.mode,
+                order: self.strategy.order(),
+                repeat: self.strategy.repeat(),
             });
         }
         self.source = ContentSource::PersonalFm;
@@ -245,8 +244,7 @@ impl PlayerEngine {
     }
 
     /// 退出内容来源回到 `Queue`：
-    /// - PersonalFm：恢复进入前保存的原队列上下文；无快照则清空（§2.5）。
-    /// - Heartbeat：队列保持推荐队列不变，仅 source 归 Queue。
+    /// - PersonalFm：恢复进入前保存的原队列上下文（含 order/repeat）；无快照则清空（§2.5）。
     /// - Queue：no-op。
     pub fn exit_fm(&mut self) -> Option<&QueueItem> {
         match self.source {
@@ -256,33 +254,18 @@ impl PlayerEngine {
                 if let Some(ctx) = self.fm_saved.take() {
                     self.queue = ctx.queue;
                     self.current_index = ctx.index;
-                    self.mode = ctx.mode;
-                    self.strategy = self.make_strategy(ctx.mode);
+                    self.strategy.set_order(ctx.order);
+                    self.strategy.set_repeat(ctx.repeat);
                     self.reset_reported_position();
                     self.current_track()
                 } else {
                     // FM 激活但无快照（from_snapshot 恢复场景）→ 清空是合理行为（§2.5）
                     self.queue_clear();
-                    self.strategy = self.make_strategy(self.mode);
                     None
                 }
             }
-            ContentSource::Heartbeat => {
-                self.source = ContentSource::Queue;
-                self.current_track()
-            }
             ContentSource::Queue => self.current_track(),
         }
-    }
-
-    /// 进入心动模式（Heartbeat）：保持当前曲不变（当前歌即心动序列第一首），
-    /// 将推荐曲目去重插入到当前曲之后，source=Heartbeat。丢弃 FM 上下文（若有）。
-    /// 不改变 current_index → 正在播放的歌继续播（无割裂），播完无缝进入推荐歌。
-    pub fn enter_heartbeat(&mut self, tracks: Vec<QueueItem>) {
-        self.discard_fm(); // 清 FM 上下文 + 先归 Queue
-        self.source = ContentSource::Heartbeat;
-        let at = self.current_index.map_or(self.queue.len(), |ci| ci + 1);
-        self.queue_add(at, &tracks); // 去重插入当前曲之后；空队列自动 Some(0)
     }
 
     /// FM 续歌（流式）：向 FM 队列尾部追加曲目（按 track_id 去重）。非 FM 调用为 no-op。
@@ -332,8 +315,14 @@ impl PlayerEngine {
 
     /// 仅测试使用（wire 判别见 snapshot/事件）。
     #[allow(dead_code)]
-    pub fn mode(&self) -> PlayMode {
-        self.mode
+    pub fn order(&self) -> Order {
+        self.strategy.order()
+    }
+
+    /// 仅测试使用（wire 判别见 snapshot/事件）。
+    #[allow(dead_code)]
+    pub fn repeat(&self) -> Repeat {
+        self.strategy.repeat()
     }
 
     pub fn is_fm_active(&self) -> bool {
@@ -349,7 +338,8 @@ impl PlayerEngine {
         PlayerSnapshot {
             queue: self.queue.clone(),
             current_index: self.current_index,
-            iteration_strategy: self.mode,
+            order: self.strategy.order(),
+            repeat: self.strategy.repeat(),
             content_source: self.source,
             fm_played_ids: self.fm_played_ids.clone(),
             position_secs: self.last_position,
@@ -435,13 +425,6 @@ impl PlayerEngine {
         self.reset_reported_position();
     }
 
-    /// 由 mode 构造队列策略，并推进种子（保证每次「重新随机」产生新排列）。
-    fn make_strategy(&mut self, mode: PlayMode) -> Box<dyn PlayStrategy> {
-        let seed = self.seed;
-        self.seed = self.seed.wrapping_add(0x9E37_79B9_7F4A_7C15);
-        strategy_for(mode, seed)
-    }
-
     /// 退出 FM 并丢弃快照（play_track / clear / replace_play 用，对齐 TS「主动操作放弃漫游快照」）。
     fn discard_fm(&mut self) {
         self.source = ContentSource::Queue;
@@ -523,7 +506,8 @@ mod tests {
         assert_eq!(e.queue_items().len(), 3);
         assert_eq!(e.current_index(), Some(0));
         assert_eq!(e.current_track().unwrap().track_id, 0);
-        assert_eq!(e.mode(), PlayMode::Sequential);
+        assert_eq!(e.order(), Order::Sequential);
+        assert_eq!(e.repeat(), Repeat::Off);
         assert!(!e.is_fm_active());
     }
 
@@ -553,7 +537,7 @@ mod tests {
         // LoopAll：队尾自动环绕回 0
         let mut e = setup(4);
         e.play_queue_at(3);
-        e.set_mode(PlayMode::LoopAll);
+        e.set_repeat(Repeat::All);
         assert!(matches!(e.manual_next(), Step::Play(0)));
         assert_eq!(e.current_index(), Some(0));
         assert_eq!(e.current_track().unwrap().track_id, 0);
@@ -564,7 +548,7 @@ mod tests {
         // LoopOne 手动下一首 = 列表循环（切走），与 LoopAll 一致
         let mut e = setup(4);
         e.play_queue_at(2);
-        e.set_mode(PlayMode::LoopOne);
+        e.set_repeat(Repeat::One);
         assert!(matches!(e.manual_next(), Step::Play(3)));
         assert_eq!(e.current_index(), Some(3));
         assert_eq!(e.current_track().unwrap().track_id, 3);
@@ -575,7 +559,7 @@ mod tests {
         // LoopOne 自然结束 = 重播当前曲（不切走）
         let mut e = setup(4);
         e.play_queue_at(2);
-        e.set_mode(PlayMode::LoopOne);
+        e.set_repeat(Repeat::One);
         assert!(matches!(e.on_track_end(), Step::ReplayCurrent));
         assert_eq!(e.current_index(), Some(2));
         assert_eq!(e.current_track().unwrap().track_id, 2);
@@ -613,7 +597,7 @@ mod tests {
         // 对齐 TS line 116-130（更新语义：手动切歌切走，自然结束重播当前）
         let mut e = setup(4);
         e.play_queue_at(2);
-        e.set_mode(PlayMode::LoopOne);
+        e.set_repeat(Repeat::One);
         assert!(matches!(e.manual_next(), Step::Play(3))); // 手动切走
         assert_eq!(e.prev().unwrap().track_id, 2); // prev 回到切歌前
         e.play_queue_at(2);
@@ -626,8 +610,8 @@ mod tests {
         // 对齐 TS line 132-138（更新语义）
         let mut e = setup(4);
         e.play_queue_at(1);
-        e.set_mode(PlayMode::LoopOne);
-        assert_eq!(e.mode(), PlayMode::LoopOne);
+        e.set_repeat(Repeat::One);
+        assert_eq!(e.repeat(), Repeat::One);
         assert!(matches!(e.manual_next(), Step::Play(2))); // 手动切到下一首
         assert_eq!(e.prev().unwrap().track_id, 1); // prev 回到上一首
         e.play_queue_at(1);
@@ -637,29 +621,59 @@ mod tests {
     // ── Shuffle 模式导航（固定种子 → 确定性排列） ──
 
     #[test]
-    fn shuffle_advance_follows_permutation_without_revisit_and_wraps() {
-        // 对齐 TS line 144-166（确定性排列 + 不重复不变式 + 一轮后环绕）
+    fn shuffle_off_covers_each_index_once_then_ends() {
+        // 随机遍历 + 终止策略 off：覆盖全部索引一次后队尾停止（不环绕）
         let mut e = setup(4);
-        e.set_mode(PlayMode::Shuffle);
+        e.set_order(Order::Shuffle);
+        let mut seen = vec![e.current_index().unwrap()]; // 起点 = 当前曲
+        for _ in 0..3 {
+            seen.push(next_index(&mut e));
+        }
+        // 无重复、覆盖全部 4 个索引（起点 + 3 次前进）
+        let mut sorted = seen.clone();
+        sorted.sort();
+        assert_eq!(sorted, vec![0, 1, 2, 3]);
+        // off：遍历完一轮后队尾停止
+        assert!(matches!(e.manual_next(), Step::End));
+    }
+
+    #[test]
+    fn shuffle_all_wraps_to_first() {
+        // 随机遍历 + 列表循环：一轮后环绕回第一首
+        let mut e = setup(4);
+        e.set_order(Order::Shuffle);
+        e.set_repeat(Repeat::All);
         let mut seen = Vec::new();
         for _ in 0..4 {
             seen.push(next_index(&mut e));
         }
-        // 恰好是同一组曲目的一种排列：无重复、覆盖全部 4 个索引
         let mut sorted = seen.clone();
         sorted.sort();
         assert_eq!(sorted, vec![0, 1, 2, 3]);
-        // 环绕：第 5 次回到第 1 次的结果（新一轮）
-        assert_eq!(next_index(&mut e), seen[0]);
+        assert_eq!(next_index(&mut e), seen[0]); // 环绕新一轮
+    }
+
+    #[test]
+    fn shuffle_one_replays_current_on_end() {
+        // 随机遍历 + 单曲循环：自然结束重播当前
+        let mut e = setup(4);
+        e.set_order(Order::Shuffle);
+        e.set_repeat(Repeat::One);
+        let _ = next_index(&mut e);
+        let current = e.current_index();
+        assert!(matches!(e.on_track_end(), Step::ReplayCurrent));
+        assert_eq!(e.current_index(), current);
     }
 
     #[test]
     fn shuffle_is_deterministic_for_same_seed() {
         // Rust 新行为：固定种子 → 两个引擎产生相同导航序列
         let mut e1 = setup(4);
-        e1.set_mode(PlayMode::Shuffle);
+        e1.set_order(Order::Shuffle);
+        e1.set_repeat(Repeat::All);
         let mut e2 = setup(4);
-        e2.set_mode(PlayMode::Shuffle);
+        e2.set_order(Order::Shuffle);
+        e2.set_repeat(Repeat::All);
         for _ in 0..4 {
             assert_eq!(next_index(&mut e1), next_index(&mut e2));
         }
@@ -669,7 +683,7 @@ mod tests {
     fn shuffle_prev_returns_previously_played() {
         // 对齐 TS line 168-175
         let mut e = setup(4);
-        e.set_mode(PlayMode::Shuffle);
+        e.set_order(Order::Shuffle);
         let first = next_index(&mut e);
         let _second = next_index(&mut e);
         assert_eq!(e.prev().unwrap().track_id, first as u64); // 回到上一首
@@ -681,7 +695,7 @@ mod tests {
         // 对齐 TS line 177-183
         let mut e = setup(4);
         let _ = e.manual_next(); // sequential: 0 → 1
-        e.set_mode(PlayMode::Shuffle); // 锚定在 index 1
+        e.set_order(Order::Shuffle); // 锚定在 index 1
         let idx = next_index(&mut e);
         assert!(idx < 4);
         assert_ne!(idx, 1);
@@ -690,10 +704,11 @@ mod tests {
 
     #[test]
     fn set_mode_shuffle_again_rebuilds_navigation_in_range() {
-        // 重新随机 = 再次 set_mode(Shuffle)（make_strategy 推进 seed → 新排列）
+        // 重新随机 = 再次 set_order(Shuffle)（set_order 推进 seed → 新排列）
         let mut e = setup(4);
-        e.set_mode(PlayMode::Shuffle);
-        e.set_mode(PlayMode::Shuffle); // 重新随机
+        e.set_order(Order::Shuffle);
+        e.set_repeat(Repeat::All);
+        e.set_order(Order::Shuffle); // 重新随机
         let mut seen = Vec::new();
         for _ in 0..4 {
             seen.push(next_index(&mut e));
@@ -711,10 +726,11 @@ mod tests {
         // TS line 194-204 的 bug 场景（next 返回 undefined / currentTrack null）：
         // Rust 中 play_track(新曲) 替换为单曲上下文并 reshuffle → 导航不越界不 undefined
         let mut e = setup(4);
-        e.set_mode(PlayMode::Shuffle);
+        e.set_order(Order::Shuffle);
         e.play_track(make_item(99));
         assert_eq!(e.current_index(), Some(0));
-        assert!(matches!(e.manual_next(), Step::Play(0)));
+        // 单曲随机 + off → 队尾停止（不再环绕回自己），导航不越界不 panic
+        assert!(matches!(e.manual_next(), Step::End));
         assert!(e.current_track().is_some());
     }
 
@@ -723,7 +739,7 @@ mod tests {
         // TS line 206-213 的 bug 场景（跳转 index 后 shuffle 位置不同步 → next 返回陈旧位置）：
         // Rust reshuffle 以新 current_index 为锚，next 从新位置继续，prev 回到跳转曲目
         let mut e = setup(4);
-        e.set_mode(PlayMode::Shuffle);
+        e.set_order(Order::Shuffle);
         e.play_track(make_item(2));
         assert_eq!(e.current_index(), Some(2));
         let idx = next_index(&mut e);
@@ -737,7 +753,7 @@ mod tests {
         // TS line 215-224 的 bug 场景（shuffle 序列越界 → currentTrack null）：
         // Rust remove_at 后 reshuffle → 后续 next 索引始终在队列范围内
         let mut e = setup(4);
-        e.set_mode(PlayMode::Shuffle);
+        e.set_order(Order::Shuffle);
         let _ = next_index(&mut e); // 前进（结果必 ≠ 0，见排列不变量）
         let ci = e.current_index().unwrap();
         assert_ne!(ci, 0);
@@ -752,7 +768,7 @@ mod tests {
     fn reshuffle_append_in_shuffle_stays_in_bounds() {
         // Rust 新行为（修复场景扩展）：append 后 shuffle 序列保持有效
         let mut e = setup(4);
-        e.set_mode(PlayMode::Shuffle);
+        e.set_order(Order::Shuffle);
         e.append(vec![make_item(4)]);
         assert_eq!(e.queue_items().len(), 5);
         let idx = next_index(&mut e);
@@ -889,10 +905,10 @@ mod tests {
     #[test]
     fn replace_play_in_shuffle_navigates_after_call() {
         let mut e = setup(4);
-        e.set_mode(PlayMode::Shuffle);
+        e.set_order(Order::Shuffle);
         let played = e.replace_play(items(5), Some(0));
         assert_eq!(played.unwrap().track_id, 0);
-        assert_eq!(e.mode(), PlayMode::Shuffle); // 模式保留
+        assert_eq!(e.order(), Order::Shuffle); // 遍历顺序保留
         assert_eq!(e.queue_items().len(), 5);
         let idx = next_index(&mut e);
         assert!(idx < 5, "shuffle idx {} out of bounds", idx);
@@ -1095,7 +1111,7 @@ mod tests {
         let restored = e.exit_fm().expect("restored track");
         assert_eq!(restored.track_id, 1);
         assert!(!e.is_fm_active());
-        assert_eq!(e.mode(), PlayMode::Sequential);
+        assert_eq!(e.order(), Order::Sequential);
         assert_eq!(e.current_index(), Some(1));
         assert_eq!(ids_of(&e), vec![0, 1, 2]);
     }
@@ -1105,7 +1121,7 @@ mod tests {
         // 正交化新语义：FM 下 mode=LoopOne → 自然结束重播当前曲（漫游中「单曲循环多听几遍」），不前进。
         let mut e = setup(3);
         e.play_queue_at(1);
-        e.set_mode(PlayMode::LoopOne);
+        e.set_repeat(Repeat::One);
         e.enter_fm(make_item(100));
         assert!(e.is_fm_active());
         // 手动下一首：单曲 FM 队列环绕回自己（Play(0)）；自然结束：重播当前（ReplayCurrent）
@@ -1116,54 +1132,8 @@ mod tests {
         let restored = e.exit_fm().expect("restored");
         assert_eq!(restored.track_id, 1);
         assert!(!e.is_fm_active());
-        assert_eq!(e.mode(), PlayMode::LoopOne);
+        assert_eq!(e.repeat(), Repeat::One);
         assert_eq!(e.current_index(), Some(1));
-    }
-
-    #[test]
-    fn heartbeat_inserts_after_current() {
-        // 心动模式：推荐曲插入当前曲之后，当前曲保持不变（天然是心动序列第一首）。
-        let mut e = setup(3); // [0,1,2]@0，current=0
-        e.play_queue_at(1); // current=1
-        e.enter_heartbeat(vec![make_item(100), make_item(101)]);
-        assert!(!e.is_fm_active());
-        assert_eq!(e.snapshot().content_source, ContentSource::Heartbeat);
-        assert_eq!(e.current_index(), Some(1)); // 当前曲不变
-        assert_eq!(e.current_track().unwrap().track_id, 1);
-        // 推荐曲插入到当前曲(1)之后：[0,1,100,101,2]
-        assert_eq!(ids_of(&e), vec![0, 1, 100, 101, 2]);
-        // 退出心动：source 归 Queue，队列保持
-        let t = e.exit_fm().expect("current");
-        assert_eq!(t.track_id, 1);
-        assert_eq!(e.snapshot().content_source, ContentSource::Queue);
-        assert_eq!(ids_of(&e), vec![0, 1, 100, 101, 2]);
-    }
-
-    #[test]
-    fn heartbeat_empty_and_dedup() {
-        // 空推荐 / 全去重 → 队列与当前曲保持不变
-        let mut e = setup(3);
-        e.play_queue_at(1);
-        e.enter_heartbeat(vec![]);
-        assert_eq!(e.snapshot().content_source, ContentSource::Heartbeat);
-        assert_eq!(e.current_index(), Some(1));
-        assert_eq!(ids_of(&e), vec![0, 1, 2]);
-        // 已存在的曲不重复插入
-        e.enter_heartbeat(vec![make_item(1), make_item(2)]);
-        assert_eq!(ids_of(&e), vec![0, 1, 2]);
-    }
-
-    #[test]
-    fn heartbeat_from_empty_queue_sets_index() {
-        // 空队列进入心动：自动退出 None 状态，定位到推荐第一首
-        let mut e = setup(3);
-        e.clear(); // current_index=None, queue=[]
-        assert_eq!(e.current_index(), None);
-        e.enter_heartbeat(vec![make_item(100), make_item(101)]);
-        assert_eq!(e.snapshot().content_source, ContentSource::Heartbeat);
-        assert_eq!(e.current_index(), Some(0));
-        assert_eq!(e.current_track().unwrap().track_id, 100);
-        assert_eq!(ids_of(&e), vec![100, 101]);
     }
 
     #[test]
@@ -1290,13 +1260,13 @@ mod tests {
     fn snapshot_roundtrip_restores_state() {
         let mut e = setup(4);
         e.play_queue_at(2);
-        e.set_mode(PlayMode::Shuffle);
+        e.set_order(Order::Shuffle);
         let snap = e.snapshot();
         let mut restored = PlayerEngine::from_snapshot(snap);
         assert_eq!(restored.snapshot(), e.snapshot()); // 往返一致
         assert_eq!(restored.current_index(), Some(2));
         assert_eq!(restored.current_track().unwrap().track_id, 2);
-        assert_eq!(restored.mode(), PlayMode::Shuffle);
+        assert_eq!(restored.order(), Order::Shuffle);
         assert!(!restored.is_fm_active());
         // 恢复后 shuffle 导航仍有效、不越界
         let idx = next_index(&mut restored);
@@ -1325,7 +1295,7 @@ mod tests {
         // serde derive 为编译期（Phase D 事件序列化），JSON 往返一致性验证
         let mut e = setup(3);
         e.play_queue_at(1);
-        e.set_mode(PlayMode::LoopOne);
+        e.set_repeat(Repeat::One);
         let snap = e.snapshot();
         let json = serde_json::to_string(&snap).unwrap();
         let back: PlayerSnapshot = serde_json::from_str(&json).unwrap();
@@ -1338,7 +1308,8 @@ mod tests {
         let snap = PlayerSnapshot {
             queue: items(2),
             current_index: Some(5),
-            iteration_strategy: PlayMode::Sequential,
+            order: Order::Sequential,
+            repeat: Repeat::Off,
             content_source: ContentSource::Queue,
             fm_played_ids: Vec::new(),
             position_secs: 42.0,
@@ -1364,15 +1335,19 @@ mod tests {
 
     #[test]
     fn empty_queue_any_mode_ends() {
-        // 决策③：空队列任何模式 next → End
-        for mode in [PlayMode::Sequential, PlayMode::LoopOne, PlayMode::Shuffle] {
-            let mut e = setup(0);
-            e.set_mode(mode);
-            assert!(
-                matches!(e.manual_next(), Step::End),
-                "empty queue next in mode {:?} should End",
-                mode
-            );
+        // 决策③：空队列任何 order × repeat 组合 next → End
+        for order in [Order::Sequential, Order::Shuffle] {
+            for repeat in [Repeat::Off, Repeat::All, Repeat::One] {
+                let mut e = setup(0);
+                e.set_order(order);
+                e.set_repeat(repeat);
+                assert!(
+                    matches!(e.manual_next(), Step::End),
+                    "empty queue next ({:?} x {:?}) should End",
+                    order,
+                    repeat
+                );
+            }
         }
     }
 
@@ -1390,17 +1365,18 @@ mod tests {
     fn single_track_loop_one_keeps_current() {
         // 单曲 LoopOne：手动切歌环绕回自己（Play(0)）；自然结束重播当前（ReplayCurrent）
         let mut e = setup(1);
-        e.set_mode(PlayMode::LoopOne);
+        e.set_repeat(Repeat::One);
         assert!(matches!(e.manual_next(), Step::Play(0)));
         assert!(matches!(e.on_track_end(), Step::ReplayCurrent));
         assert_eq!(e.prev().unwrap().track_id, 0);
     }
 
     #[test]
-    fn single_track_shuffle_stays_on_only_track() {
-        // 对齐 TS line 610-615
+    fn single_track_shuffle_all_wraps_to_self() {
+        // 单曲随机 + 列表循环：手动切歌环绕回唯一曲
         let mut e = setup(1);
-        e.set_mode(PlayMode::Shuffle);
+        e.set_order(Order::Shuffle);
+        e.set_repeat(Repeat::All);
         assert!(matches!(e.manual_next(), Step::Play(0)));
         assert_eq!(e.current_track().unwrap().track_id, 0);
     }

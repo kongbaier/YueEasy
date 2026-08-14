@@ -1,27 +1,29 @@
-//! 播放模式导航策略：统一「手动切歌」与「自然结束」两个入口的导航计算（纯逻辑，零 I/O）。
+//! 播放导航策略：正交组合「遍历顺序（`Order`）」×「终止策略（`Repeat`）」（纯逻辑，零 I/O）。
 //!
 //! 与「内容来源」（`ContentSource`）正交——导航策略只管「有限列表内 current → 下一个 index」，
-//! 「队尾如何续歌」由 cmd 层根据 content_source 决定（Queue 停止、PersonalFm 续歌、Heartbeat 同 Queue）。
+//! 「队尾如何续歌」由 cmd 层根据 content_source 决定（Queue 停止、PersonalFm 续歌）。
 //!
-//! 关键语义（2026-08 重构）：**手动切歌与自然结束是两个独立入口**——
-//! - `manual_next(current, len) -> Step`：手动按「下一首」
-//! - `manual_prev(current, len) -> Option<usize>`：手动按「上一首」
-//! - `on_track_end(current, len) -> Step`：曲目自然播完（默认与手动切歌一致，LoopOne 覆盖为重播当前）
-//!
-//! Shuffle 持有排列状态，`manual_next`/`manual_prev` 内按需惰性重建（无需 `on_queue_changed` 回调）。
+//! 关键语义：
+//! - **手动切歌**（`manual_next`）与**自然结束**（`on_track_end`）是两个独立入口——
+//!   `Repeat::One` 下手动切歌切走（环绕）、自然结束重播当前曲；其余模式两者一致。
+//! - **遍历顺序**（`Order`）决定遍历路径：Sequential 按索引、Shuffle 按内部排列（惰性重建）。
+//! - **终止策略**（`Repeat`）决定边界行为：Off 队尾停止、All 环绕、One 重播当前。
 
-use crate::core::types::PlayMode;
+use crate::core::types::{Order, Repeat};
 
 /// 导航决策结果。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Step {
     /// 播放 queue[idx]。
     Play(usize),
-    /// 重播当前曲目（LoopOne 自然结束）。
+    /// 重播当前曲目（Repeat::One 自然结束）。
     ReplayCurrent,
-    /// 队列尽头（Sequential 末尾 / 空队列）——结束（是否续歌由内容来源决定）。
+    /// 队列尽头（Off 末尾 / 空队列）——结束（是否续歌由内容来源决定）。
     End,
 }
+
+/// 种子推进常数（每次进入 Shuffle 推进，保证「重新随机」产生新排列）。
+const SEED_ADVANCE: u64 = 0x9E37_79B9_7F4A_7C15;
 
 /// 内部小型 PRNG（xorshift64）—— core 零外部依赖，构造时注入种子保证测试确定性。
 pub(crate) struct XorShift64 {
@@ -31,11 +33,7 @@ pub(crate) struct XorShift64 {
 impl XorShift64 {
     pub(crate) fn new(seed: u64) -> Self {
         // 状态为 0 时 xorshift 退化为全零输出，规避之
-        let state = if seed == 0 {
-            0x9E37_79B9_7F4A_7C15
-        } else {
-            seed
-        };
+        let state = if seed == 0 { SEED_ADVANCE } else { seed };
         Self { state }
     }
 
@@ -51,154 +49,138 @@ impl XorShift64 {
     }
 }
 
-/// 播放导航策略：统一手动/自动导航。每个 PlayMode 一个实现（FM 已从策略中剥离为内容来源）。
-pub trait PlayStrategy: Send + Sync {
-    /// 手动按「下一首」。
-    fn manual_next(&mut self, current: Option<usize>, len: usize) -> Step;
-    /// 手动按「上一首」。
-    fn manual_prev(&mut self, current: Option<usize>, len: usize) -> Option<usize>;
-    /// 曲目自然播完——默认与手动切歌一致（LoopOne 覆盖为重播当前）。
-    fn on_track_end(&mut self, current: Option<usize>, len: usize) -> Step {
-        self.manual_next(current, len)
-    }
+/// 播放导航策略：持有遍历顺序 + 终止策略 + Shuffle 排列状态。
+/// 单一具体实现（不再按模式分 struct），正交组合两轴。
+pub struct PlayStrategy {
+    order: Order,
+    repeat: Repeat,
+    /// Shuffle 排列（仅 order == Shuffle 时使用；惰性重建，同一 seed 下排列稳定）。
+    shuffled: Vec<usize>,
+    /// Shuffle 排列的构造种子（进入 Shuffle 时推进，保证「重新随机」产生新排列）。
+    seed: u64,
 }
 
-// ── Sequential：顺序播放，队尾停止 ──
-
-pub struct Sequential;
-
-impl PlayStrategy for Sequential {
-    fn manual_next(&mut self, current: Option<usize>, len: usize) -> Step {
-        match current {
-            Some(ci) if ci + 1 < len => Step::Play(ci + 1),
-            _ => Step::End,
-        }
-    }
-
-    fn manual_prev(&mut self, current: Option<usize>, len: usize) -> Option<usize> {
-        if len == 0 {
-            return None;
-        }
-        current.map(|ci| if ci == 0 { len - 1 } else { ci - 1 })
-    }
-}
-
-// ── LoopAll：列表循环，队尾绕回首 ──
-
-pub struct LoopAll;
-
-impl PlayStrategy for LoopAll {
-    fn manual_next(&mut self, current: Option<usize>, len: usize) -> Step {
-        match current {
-            Some(ci) if len > 0 => Step::Play(if ci + 1 < len { ci + 1 } else { 0 }),
-            _ => Step::End,
-        }
-    }
-
-    fn manual_prev(&mut self, current: Option<usize>, len: usize) -> Option<usize> {
-        if len == 0 {
-            return None;
-        }
-        current.map(|ci| if ci == 0 { len - 1 } else { ci - 1 })
-    }
-}
-
-// ── LoopOne：单曲循环。手动切歌 = 列表循环（切走）；自然结束 = 重播当前 ──
-
-pub struct LoopOne;
-
-impl PlayStrategy for LoopOne {
-    // 手动下一首：与 LoopAll 一致（切到下一首，队尾环绕）
-    fn manual_next(&mut self, current: Option<usize>, len: usize) -> Step {
-        match current {
-            Some(ci) if len > 0 => Step::Play(if ci + 1 < len { ci + 1 } else { 0 }),
-            _ => Step::End,
-        }
-    }
-
-    // 自然结束：重播当前曲（单曲循环语义）
-    fn on_track_end(&mut self, current: Option<usize>, _len: usize) -> Step {
-        current.map_or(Step::End, |_| Step::ReplayCurrent)
-    }
-
-    fn manual_prev(&mut self, current: Option<usize>, len: usize) -> Option<usize> {
-        if len == 0 {
-            return None;
-        }
-        current.map(|ci| if ci == 0 { len - 1 } else { ci - 1 })
-    }
-}
-
-// ── Shuffle：随机排列循环（持有排列状态，惰性重建） ──
-
-pub struct Shuffle {
-    order: Vec<usize>,
-    pos: usize,
-    rng: XorShift64,
-}
-
-impl Shuffle {
-    pub(crate) fn new(seed: u64) -> Self {
+impl PlayStrategy {
+    pub fn new(order: Order, repeat: Repeat, seed: u64) -> Self {
         Self {
-            order: Vec::new(),
-            pos: 0,
-            rng: XorShift64::new(seed),
+            order,
+            repeat,
+            shuffled: Vec::new(),
+            seed,
         }
     }
 
-    /// Fisher-Yates 重建排列，并以 current 为锚定位 pos（惰性：len 不符才重建）。
-    fn rebuild(&mut self, current: Option<usize>, len: usize) {
-        if len == 0 {
-            self.order.clear();
-            self.pos = 0;
-            return;
+    pub fn order(&self) -> Order {
+        self.order
+    }
+
+    pub fn repeat(&self) -> Repeat {
+        self.repeat
+    }
+
+    /// 设置终止策略（不影响遍历顺序与已生成的随机排列）。
+    pub fn set_repeat(&mut self, repeat: Repeat) {
+        self.repeat = repeat;
+    }
+
+    /// 设置遍历顺序。进入 Shuffle 时推进种子并清空排列 → 下次导航生成全新排列。
+    pub fn set_order(&mut self, order: Order) {
+        if order == Order::Shuffle {
+            self.seed = self.seed.wrapping_add(SEED_ADVANCE);
+            self.shuffled.clear();
         }
-        let mut order: Vec<usize> = (0..len).collect();
-        for i in (1..len).rev() {
-            let j = self.rng.next_usize(i + 1);
-            order.swap(i, j);
-        }
-        self.pos = current
-            .and_then(|ci| order.iter().position(|&x| x == ci))
-            .unwrap_or(0);
         self.order = order;
     }
-}
 
-impl PlayStrategy for Shuffle {
-    fn manual_next(&mut self, current: Option<usize>, len: usize) -> Step {
+    /// 手动按「下一首」：Off 队尾停止；All/One 环绕（One 手动切歌 = 切走）。
+    pub fn manual_next(&mut self, current: Option<usize>, len: usize) -> Step {
+        let wrap = self.repeat != Repeat::Off;
+        self.next_index(current, len, wrap)
+    }
+
+    /// 曲目自然播完：One 重播当前；All 环绕；Off 队尾停止。
+    pub fn on_track_end(&mut self, current: Option<usize>, len: usize) -> Step {
+        if self.repeat == Repeat::One {
+            return current.map_or(Step::End, |_| Step::ReplayCurrent);
+        }
+        self.next_index(current, len, self.repeat == Repeat::All)
+    }
+
+    /// 手动按「上一首」：环绕（Sequential 与 Shuffle 均环绕）。
+    pub fn manual_prev(&mut self, current: Option<usize>, len: usize) -> Option<usize> {
+        if len == 0 {
+            return None;
+        }
+        match self.order {
+            Order::Sequential => current.map(|ci| if ci == 0 { len - 1 } else { ci - 1 }),
+            Order::Shuffle => {
+                if self.shuffled.len() != len {
+                    self.rebuild(current, len);
+                }
+                let cur_pos = self.current_pos(current);
+                let prev_pos = if cur_pos == 0 { len - 1 } else { cur_pos - 1 };
+                Some(self.shuffled[prev_pos])
+            }
+        }
+    }
+
+    /// 计算下一个队列索引（wrap 控制队尾是否环绕）。
+    fn next_index(&mut self, current: Option<usize>, len: usize, wrap: bool) -> Step {
         if len == 0 {
             return Step::End;
         }
-        if self.order.len() != len {
-            self.rebuild(current, len);
-        }
-        self.pos = (self.pos + 1) % self.order.len();
-        Step::Play(self.order[self.pos])
-    }
-
-    fn manual_prev(&mut self, current: Option<usize>, len: usize) -> Option<usize> {
-        if len == 0 {
-            return None;
-        }
-        if self.order.len() != len {
-            self.rebuild(current, len);
-        }
-        self.pos = if self.pos == 0 {
-            self.order.len() - 1
-        } else {
-            self.pos - 1
+        let idx = match self.order {
+            Order::Sequential => match current {
+                Some(ci) if ci + 1 < len => Some(ci + 1),
+                Some(_) if wrap => Some(0),
+                _ => None,
+            },
+            Order::Shuffle => {
+                if self.shuffled.len() != len {
+                    self.rebuild(current, len);
+                }
+                let cur_pos = self.current_pos(current);
+                let next_pos = cur_pos + 1;
+                if next_pos < len {
+                    Some(self.shuffled[next_pos])
+                } else if wrap {
+                    Some(self.shuffled[0])
+                } else {
+                    None
+                }
+            }
         };
-        Some(self.order[self.pos])
+        match idx {
+            Some(i) => Step::Play(i),
+            None => Step::End,
+        }
     }
-}
 
-/// 由 PlayMode 构造队列导航策略（Shuffle 用 seed 初始化随机源）。
-pub fn strategy_for(mode: PlayMode, seed: u64) -> Box<dyn PlayStrategy> {
-    match mode {
-        PlayMode::Sequential => Box::new(Sequential),
-        PlayMode::LoopAll => Box::new(LoopAll),
-        PlayMode::LoopOne => Box::new(LoopOne),
-        PlayMode::Shuffle => Box::new(Shuffle::new(seed)),
+    /// 当前队列索引在排列中的位置（未命中则回退 0）。
+    fn current_pos(&self, current: Option<usize>) -> usize {
+        current
+            .and_then(|ci| self.shuffled.iter().position(|&x| x == ci))
+            .unwrap_or(0)
+    }
+
+    /// Fisher-Yates 重建排列，并把 current 旋转到首位（线性遍历起点，对齐 player.js shuffle 语义）。
+    /// 惰性：len 不符才重建。
+    fn rebuild(&mut self, current: Option<usize>, len: usize) {
+        if len == 0 {
+            self.shuffled.clear();
+            return;
+        }
+        let mut order: Vec<usize> = (0..len).collect();
+        let mut rng = XorShift64::new(self.seed);
+        for i in (1..len).rev() {
+            let j = rng.next_usize(i + 1);
+            order.swap(i, j);
+        }
+        if let Some(ci) = current {
+            if let Some(idx) = order.iter().position(|&x| x == ci) {
+                order.rotate_left(idx);
+            }
+        }
+        self.shuffled = order;
     }
 }

@@ -3,27 +3,17 @@
 
 import type { QueueItem, Song } from './entities';
 
-// ── UI 概念（与 Rust wire 严格区分）──
-
-/** UI 显示用迭代策略。故意与 RustPlayMode 不同：UI 用 camelCase 名，wire 用 snake_case。 */
-export const PlayModes = ['sequential', 'shuffle', 'repeatOne', 'repeatAll'] as const;
-export type PlayMode = (typeof PlayModes)[number];
-
 /** Track = Song 实体的别名（兼容旧 import）。 */
 export type Track = Song;
 
-/** Rust wire → UI 映射。loop_one → repeatOne；loop_all → repeatAll；sequential/shuffle 直通。 */
-export function rustPlayModeToUi(rust: RustPlayMode): PlayMode {
-  if (rust === 'loop_one') return 'repeatOne';
-  if (rust === 'loop_all') return 'repeatAll';
-  return rust;
-}
+/** Rust `core::types::Order`：遍历顺序（正交轴 1）。 */
+export type Order = 'sequential' | 'shuffle';
 
-/** Rust `core::types::PlayMode` 的 snake_case wire 名（4 种迭代策略）。 */
-export type RustPlayMode = 'sequential' | 'loop_all' | 'loop_one' | 'shuffle';
+/** Rust `core::types::Repeat`：终止策略（正交轴 2）。 */
+export type RepeatMode = 'off' | 'all' | 'one';
 
-/** Rust `core::types::ContentSource` 的 snake_case wire 名（内容来源）。 */
-export type RustContentSource = 'queue' | 'personal_fm' | 'heartbeat';
+/** Rust `core::types::ContentSource` 的 snake_case wire 名（内容来源，正交轴 3）。 */
+export type RustContentSource = 'queue' | 'personal_fm';
 
 /** 播放查询命令返回：当前曲目 + 已解析播放地址（`resolve_play_url` 预加载用；播放命令已不返回此值）。 */
 export interface PlayUrlInfo {
@@ -32,11 +22,12 @@ export interface PlayUrlInfo {
 }
 
 /** Rust `core::types::PlayerSnapshot` wire 镜像（get_player_snapshot / get_full_player_state）。
- *  硬切换：旧 `mode` / `fm_active` 字段删除，新字段 `iteration_strategy` + `content_source`。 */
+ *  正交化：`order`（遍历顺序）+ `repeat`（终止策略）+ `content_source`（内容来源）。 */
 export interface PlayerSnapshot {
   queue: QueueItem[];
   current_index: number | null;
-  iteration_strategy: RustPlayMode;
+  order: Order;
+  repeat: RepeatMode;
   content_source: RustContentSource;
   /** FM 已播 id 列表（content_source == 'personal_fm' 时累计；其他源时为空）。 */
   fm_played_ids: number[];
@@ -54,7 +45,7 @@ export interface FullPlayerState {
 
 /**
  * `player:event` 单通道推送（serde tag+content，`state.rs::PlayerEvent` 精确镜像）。
- * 精简为 3 条核心：current（当前曲+索引+来源+策略）/ queue（队列全量）/ playing（播放状态）。
+ * 精简为 3 条核心：current（当前曲+索引+来源+顺序+策略）/ queue（队列全量）/ playing（播放状态）。
  */
 export type PlayerEventPayload =
   | {
@@ -63,7 +54,8 @@ export type PlayerEventPayload =
         track: QueueItem | null;
         index: number | null;
         source: RustContentSource;
-        strategy: RustPlayMode;
+        order: Order;
+        repeat: RepeatMode;
       };
     }
   | {

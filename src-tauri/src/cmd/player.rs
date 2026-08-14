@@ -11,7 +11,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Manager, State};
 
 use crate::core::strategy::Step;
-use crate::core::types::{ContentSource, PlayMode, QueueItem};
+use crate::core::types::{ContentSource, Order, QueueItem, Repeat};
 use crate::infra::audio::engine::{prepare_source, AudioStatus};
 use crate::infra::ncm::entity::SongUrlResult;
 use crate::infra::ncm::NcmState;
@@ -70,18 +70,19 @@ async fn prepare_and_load(player: &PlayerState, url: &str, duration_secs: f64) -
     Ok(())
 }
 
-/// 推「当前状态」：track + index + source + strategy（切歌 / 档位变化时）。
+/// 推「当前状态」：track + index + source + order + repeat（切歌 / 档位变化时）。
 fn emit_current(app: &AppHandle, player: &PlayerState) {
-    let (track, index, source, strategy) = {
+    let (track, index, source, order, repeat) = {
         let engine = player.engine.lock().unwrap();
         (
             engine.current_track().cloned(),
             engine.current_index(),
             engine.source(),
-            engine.mode(),
+            engine.order(),
+            engine.repeat(),
         )
     };
-    emit_player_event(app, PlayerEvent::Current { track, index, source, strategy });
+    emit_player_event(app, PlayerEvent::Current { track, index, source, order, repeat });
 }
 
 /// 队列突变后推全量（设计 §4.3：全量保证前后端一致；不做 100ms 去抖）。
@@ -190,7 +191,7 @@ async fn advance_once(
                         continue; // 重新推进到新追加的曲目
                     }
                     _ => {
-                        // Queue / Heartbeat：队列耗尽，真正停止音源（pause 停 rodio + 状态 Paused），
+                        // Queue：队列耗尽，真正停止音源（pause 停 rodio + 状态 Paused），
                         // 否则仅改枚举会让 rodio 继续播到末尾、get_pos 越过 duration。
                         emit_playing(app, false);
                         {
@@ -340,24 +341,42 @@ pub(crate) async fn play_prev(
     Ok(())
 }
 
-/// 设置迭代策略（"sequential" / "loop_all" / "loop_one" / "shuffle"）。非法值 → Err。
-/// FM 模式下策略字段被引擎忽略（§2.6：content_source 决定行为来源）。
+/// 设置终止策略（"off" / "all" / "one"）。非法值 → Err。
 #[tauri::command]
-pub(crate) async fn set_iteration_strategy(
+pub(crate) async fn set_repeat(
     app: AppHandle,
     player: State<'_, PlayerState>,
-    strategy: String,
+    repeat: String,
 ) -> Result<(), String> {
-    let strategy = match strategy.as_str() {
-        "sequential" => PlayMode::Sequential,
-        "loop_all" => PlayMode::LoopAll,
-        "loop_one" => PlayMode::LoopOne,
-        "shuffle" => PlayMode::Shuffle,
-        _ => return Err(format!("未知迭代策略：{strategy}")),
+    let repeat = match repeat.as_str() {
+        "off" => Repeat::Off,
+        "all" => Repeat::All,
+        "one" => Repeat::One,
+        _ => return Err(format!("未知终止策略：{repeat}")),
     };
     {
         let mut engine = player.engine.lock().unwrap();
-        engine.set_mode(strategy);
+        engine.set_repeat(repeat);
+    }
+    emit_current(&app, &player);
+    persist_snapshot(&app, &player);
+    Ok(())
+}
+
+/// 设置遍历顺序（随机播放开关）。true = shuffle，false = sequential。
+#[tauri::command]
+pub(crate) async fn set_shuffle(
+    app: AppHandle,
+    player: State<'_, PlayerState>,
+    shuffle: bool,
+) -> Result<(), String> {
+    {
+        let mut engine = player.engine.lock().unwrap();
+        engine.set_order(if shuffle {
+            Order::Shuffle
+        } else {
+            Order::Sequential
+        });
     }
     emit_current(&app, &player);
     persist_snapshot(&app, &player);
@@ -512,10 +531,6 @@ pub(crate) async fn set_content_source(
             emit_playing(&app, true);
             persist_snapshot(&app, &player);
             Ok(())
-        }
-        ContentSource::Heartbeat => {
-            // 心动模式需经 `enter_heartbeat(song_id, pid, sid)` 命令进入（P2），不经 set_content_source。
-            Err("心动模式请通过 enter_heartbeat 进入".to_string())
         }
     }
 }
@@ -682,41 +697,6 @@ pub(crate) async fn fm_trash(
         .await
         .map_err(|e| e.to_string())?;
     play_current_track(&app, &player, &ncm).await
-}
-
-/// 进入心动模式（Heartbeat）：以当前歌（songId）为种子调 `playmode/intelligence/list` 生成推荐队列，
-/// 去重追加到播放列表（不改变当前播放的歌），source=Heartbeat。`pid` 为「我喜欢」歌单 id。
-#[tauri::command]
-pub(crate) async fn enter_heartbeat(
-    app: AppHandle,
-    player: State<'_, PlayerState>,
-    ncm: State<'_, NcmState>,
-    song_id: u64,
-    pid: u64,
-) -> Result<(), String> {
-    let songs = NcmService::playmode_intelligence_list(
-        &app,
-        &ncm,
-        song_id as i64,
-        pid as i64,
-        None,
-    )
-    .await
-    .map_err(|e| e.to_string())?;
-    let tracks: Vec<QueueItem> = songs
-        .iter()
-        .map(|is| NcmService::song_to_queue_item(&is.song))
-        .collect();
-    if tracks.is_empty() {
-        return Err("心动推荐为空".to_string());
-    }
-    {
-        let mut engine = player.engine.lock().unwrap();
-        engine.enter_heartbeat(tracks);
-    }
-    emit_queue(&app, &player);
-    emit_current(&app, &player); // source 变为 heartbeat
-    Ok(())
 }
 
 /// 启动 ended 检测 + 位置持久化后台任务：

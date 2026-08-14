@@ -1,12 +1,12 @@
 import {
   ChevronFirst,
   ChevronLast,
-  HeartOff,
   ListMusic,
   Loader2,
   Music,
   Pause,
   Play,
+  ThumbsDown,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
@@ -22,7 +22,8 @@ import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/lib/utils";
 import { formatQueueCount } from "@/shared/utils/format";
 import { usePlayerPage } from "@/modules/player/contexts/PlayerPageContext";
-import { StrategyCycler } from "./StrategyCycler";
+import { RepeatButton } from "./RepeatButton";
+import { ShuffleButton } from "./ShuffleButton";
 import { SeekBar } from "./SeekBar";
 import { VolumeControl } from "./VolumeControl";
 import { Cover } from "@/shared/ui/image";
@@ -96,7 +97,7 @@ const PlayerControls = () => {
   return (
     <article className="flex items-center gap-x-6">
       <section className="flex items-center gap-x-1">
-        <StrategyCycler />
+        <RepeatButton />
       </section>
       <section
         className={cn(
@@ -231,6 +232,7 @@ const PlayerMenu = ({
   return (
     <div className="flex-1 flex items-center justify-end">
       {currentTrack && <LikeButton track={currentTrack} />}
+      <ShuffleButton />
       <Button
         className="text-foreground hover:bg-transparent hover:text-primary"
         disabled={trashPending}
@@ -243,7 +245,7 @@ const PlayerMenu = ({
           trashPending ? (
             <Loader2 className="size-4.5 animate-spin" />
           ) : (
-            <HeartOff className="size-4.5" />
+            <ThumbsDown className="size-4.5" />
           )
         ) : (
           <span className="relative">

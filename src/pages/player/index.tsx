@@ -2,7 +2,6 @@ import {
   ChevronDown,
   Download,
   Ellipsis,
-  Heart,
   Maximize,
   MessageCircleMore,
   Minimize,
@@ -31,7 +30,7 @@ import { PlayerPageVolume } from './PlayerPageVolume';
 import { AnimatePresence, motion } from 'motion/react';
 import { AspectFit } from '@/shared/ui/aspect-fit';
 import { usePlayer } from '@/modules/player/hooks/usePlayer';
-import { useLikeAction } from '@/modules/like/hooks/useLikeAction';
+import { LikeButton } from '@/modules/like/components/LikeButton';
 
 export default function PlayerPage() {
   const { currentTrack, queue } = usePlayer();
@@ -86,13 +85,7 @@ export default function PlayerPage() {
                   <PlayerTitle currentTrack={currentTrack} />
                   <PlayerCover currentTrack={currentTrack} />
                   <PlayerPageProgress />
-                  <PlayerPageControls
-                    onToggleQueue={() => {
-                      setShowQueue((v) => !v);
-                      setShowComments(false);
-                    }}
-                    showQueue={showQueue}
-                  />
+                  <PlayerPageControls />
                   <PlayerPageVolume />
                   <PlayerMenu
                     currentTrack={currentTrack}
@@ -198,12 +191,8 @@ const PlayerMenu = ({
   showComments: boolean;
   onToggleComments: () => void;
 }) => {
-  const { isLiked } = usePlayer();
-  const liked = isLiked(currentTrack.id);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
-
-  const { handleLike } = useLikeAction();
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -218,19 +207,7 @@ const PlayerMenu = ({
 
   return (
     <div className="w-full shrink-0 h-1/10 flex justify-between items-center gap-1 text-foreground">
-      <Button
-        onClick={() => handleLike(currentTrack)}
-        size="icon-lg"
-        variant="ghost"
-      >
-        <Heart
-          className={cn(
-            'size-5',
-            liked ? 'text-red-500 fill-red-500' : 'hover:text-primary',
-          )}
-          strokeWidth={1.5}
-        />
-      </Button>
+      <LikeButton track={currentTrack} size="icon-lg" />
       <Button
         className={cn(
           showComments

@@ -9,8 +9,8 @@ import type {
   PlayUrlInfo,
   PlayerEventPayload,
   PlayerSnapshot,
+  RepeatMode,
   RustContentSource,
-  RustPlayMode,
 } from '@/shared/types/player';
 
 // ── 播放控制 ──
@@ -61,22 +61,19 @@ export function setVolume(volume: number): Promise<void> {
   return invoke('set_volume', { volume });
 }
 
-export function setIterationStrategy(strategy: RustPlayMode): Promise<void> {
-  return invoke('set_iteration_strategy', { strategy });
+/** 设置终止策略（"off" / "all" / "one"）。 */
+export function setRepeat(repeat: RepeatMode): Promise<void> {
+  return invoke('set_repeat', { repeat });
+}
+
+/** 设置遍历顺序（随机播放开关）。 */
+export function setShuffle(shuffle: boolean): Promise<void> {
+  return invoke('set_shuffle', { shuffle });
 }
 
 /** 切换内容来源（"queue" / "personal_fm"）。 */
 export function setContentSource(source: RustContentSource): Promise<void> {
   return invoke('set_content_source', { source });
-}
-
-/** 进入心动模式：以当前歌（songId）为种子 + 我喜欢歌单（pid）生成推荐队列，
- *  去重插入当前曲之后（当前歌保持播放、成为心动序列第一首）。 */
-export function enterHeartbeat(
-  songId: number,
-  pid: number,
-): Promise<void> {
-  return invoke('enter_heartbeat', { songId, pid });
 }
 
 // ── 队列操作 ──
