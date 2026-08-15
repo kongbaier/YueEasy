@@ -21,6 +21,8 @@ import { toast } from "@/shared/lib/toast";
 import { cn } from "@/shared/utils/cn";
 import { getNcmImageUrl } from "@/shared/utils/image";
 import { formatQueueCount } from "@/shared/utils/format";
+import { snapToDevicePixel } from "@/shared/utils/snap";
+import { useDevicePixelRatio } from "@/shared/hooks/useDevicePixelRatio";
 import { usePlayerPage } from "@/modules/player/contexts/PlayerPageContext";
 import { RepeatButton } from "./RepeatButton";
 import { ShuffleButton } from "./ShuffleButton";
@@ -33,6 +35,7 @@ import { LikeButton } from "@/modules/like/components/LikeButton";
 const PlayerProgress = () => {
   const { percentage, formatted } = useProgress();
   const { seek, duration } = usePlayer();
+  const dpr = useDevicePixelRatio();
 
   return (
     <SeekBar
@@ -45,10 +48,16 @@ const PlayerProgress = () => {
       {({
         displayPercentage,
         barRef,
+        barWidth,
         isHovering,
         hoverBarX,
         hoverPercentage,
       }) => {
+        // 对齐设备像素网格，消除透明窗口/Mica 合成下的亚像素色散（红色晕染点）
+        const snappedWidth = snapToDevicePixel(
+          (displayPercentage / 100) * barWidth,
+          dpr,
+        );
         const hoverTime =
           hoverPercentage !== null && duration > 0
             ? (hoverPercentage / 100) * duration
@@ -57,7 +66,7 @@ const PlayerProgress = () => {
           <>
             <div
               className="h-full bg-primary rounded-r-full"
-              style={{ width: `${displayPercentage}%` }}
+              style={{ width: `${snappedWidth}px` }}
             />
             <FollowTooltip anchorRef={barRef} open={isHovering} x={hoverBarX}>
               <span className="inline-block min-w-[11ch] text-center">

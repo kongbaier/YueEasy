@@ -62,3 +62,14 @@ export function onThemeChanged(
 ): Promise<UnlistenFn> {
   return getAppWindow().onThemeChanged(({ payload }) => cb(payload));
 }
+
+/**
+ * 监听系统缩放率变化（改系统缩放 / 拖到不同缩放副屏）。
+ * JS 侧 onScaleChanged 是 Rust `WindowEvent::ScaleFactorChanged` 的桥接，语义精确，
+ * 不像 window resize 那样会因窗口尺寸变化而频繁误触发。
+ */
+export function onScaleChanged(
+  cb: (scaleFactor: number) => void,
+): Promise<UnlistenFn> {
+  return getAppWindow().onScaleChanged(({ payload }) => cb(payload.scaleFactor));
+}

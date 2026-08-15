@@ -3,10 +3,13 @@ import { FollowTooltip } from '@/modules/player/components/FollowTooltip';
 import { useProgress } from '@/modules/player/hooks/useProgress';
 import { usePlayer } from '@/modules/player/hooks/usePlayer';
 import { formatDuration } from '@/shared/utils/format';
+import { snapToDevicePixel } from '@/shared/utils/snap';
+import { useDevicePixelRatio } from '@/shared/hooks/useDevicePixelRatio';
 
 export const PlayerPageProgress = ({ className }: { className?: string }) => {
   const { percentage, formatted } = useProgress();
   const { seek, duration } = usePlayer();
+  const dpr = useDevicePixelRatio();
 
   return (
     <div className={className}>
@@ -25,9 +28,10 @@ export const PlayerPageProgress = ({ className }: { className?: string }) => {
           hoverBarX,
           hoverPercentage,
         }) => {
-          const rawX = (displayPercentage / 100) * barWidth;
-          const dpr = window.devicePixelRatio || 1;
-          const snappedX = Math.round(rawX * dpr) / dpr;
+          const snappedX = snapToDevicePixel(
+            (displayPercentage / 100) * barWidth,
+            dpr,
+          );
 
           const hoverTime =
             hoverPercentage !== null && duration > 0
@@ -39,7 +43,7 @@ export const PlayerPageProgress = ({ className }: { className?: string }) => {
               <div
                 className="absolute inset-0 rounded-full"
                 style={{
-                  background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${displayPercentage}%, var(--color-secondary) ${displayPercentage}%, var(--color-secondary) 100%)`,
+                  background: `linear-gradient(to right, var(--color-primary) 0px, var(--color-primary) ${snappedX}px, var(--color-secondary) ${snappedX}px, var(--color-secondary) 100%)`,
                 }}
               />
               <div
