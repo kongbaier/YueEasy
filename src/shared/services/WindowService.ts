@@ -1,10 +1,7 @@
 // 窗口能力服务（跨域共享）：拖拽/最大化/全屏/最小化/关闭/主题同步的窗口操作统一入口。
 // 薄转发 `@/tauri/window`（infra），hooks 不再直接接触 Tauri 窗口 API。
 
-import {
-  getAppWindow as tauriGetAppWindow,
-  type Window,
-} from '@/tauri/window';
+import { getAppWindow as tauriGetAppWindow, type Window } from '@/tauri/window';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 
 export type { Window };
@@ -71,5 +68,7 @@ export function onThemeChanged(
 export function onScaleChanged(
   cb: (scaleFactor: number) => void,
 ): Promise<UnlistenFn> {
-  return getAppWindow().onScaleChanged(({ payload }) => cb(payload.scaleFactor));
+  return getAppWindow().onScaleChanged(({ payload }) =>
+    cb(payload.scaleFactor),
+  );
 }

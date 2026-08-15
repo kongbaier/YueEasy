@@ -66,4 +66,3 @@ export const authService = {
     useAuthStore.getState().logout();
   },
 };
-

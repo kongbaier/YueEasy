@@ -4,7 +4,6 @@ import { discoverSlice } from './discover.slice';
 import { playlistSlice } from './playlist.slice';
 import { songSlice } from './song.slice';
 
-
 export const ncm = {
   ...authSlice,
   ...commentSlice,
@@ -14,4 +13,3 @@ export const ncm = {
 };
 
 export { clearNcmCookie, getNcmCookie, setNcmCookie } from './cookie';
-

@@ -15,10 +15,7 @@ interface LyricsState {
  * Synchronously compute active line index from the given time and lyric data.
  * Pure function — no side effects, safe for lazy state init and subscriber callbacks.
  */
-function computeActiveLine(
-  currentTime: number,
-  lines: LyricLine[],
-): number {
+function computeActiveLine(currentTime: number, lines: LyricLine[]): number {
   if (lines.length === 0) return -1;
 
   const ms = currentTime * 1000;

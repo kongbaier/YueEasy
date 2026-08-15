@@ -65,7 +65,8 @@ const AlbumContent = () => {
 
   const metaParts: string[] = [];
   if (album.artist?.name) metaParts.push(album.artist.name);
-  if (album.publishTimeMs) metaParts.push(`${formatDate(album.publishTimeMs)}发行`);
+  if (album.publishTimeMs)
+    metaParts.push(`${formatDate(album.publishTimeMs)}发行`);
   if (album.company) metaParts.push(album.company);
 
   return (

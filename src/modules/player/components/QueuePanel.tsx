@@ -152,7 +152,9 @@ export const QueuePanel = ({
 
   const handleExitFm = () => {
     const run = () => {
-      void setContentSource('queue').catch(() => toast.error('操作失败，请重试'));
+      void setContentSource('queue').catch(() =>
+        toast.error('操作失败，请重试'),
+      );
     };
     if (fmExitWillEmpty) {
       closeAfter(run);
@@ -335,7 +337,11 @@ export const QueuePanel = ({
                       overscan={100}
                       ref={(ref) => {
                         virtuosoRef.current = ref;
-                        if (ref && !scrolledOnceRef.current && currentIndex !== null) {
+                        if (
+                          ref &&
+                          !scrolledOnceRef.current &&
+                          currentIndex !== null
+                        ) {
                           scrolledOnceRef.current = true;
                           scrollToCurrent();
                         }

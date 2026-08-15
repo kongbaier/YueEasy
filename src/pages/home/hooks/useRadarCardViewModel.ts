@@ -24,9 +24,7 @@ export function useRadarCardViewModel() {
     retry: 1,
   });
 
-  const radar = dragonBalls?.find(
-    (item) => item.name === '私人雷达',
-  );
+  const radar = dragonBalls?.find((item) => item.name === '私人雷达');
   const resourceId = radar?.resourceId ? Number(radar.resourceId) : null;
   const hasResource = resourceId !== null && Number.isFinite(resourceId);
 
@@ -75,5 +73,3 @@ export function useRadarCardViewModel() {
     [isLoggedIn, coverUrl, playlistName, showRadarSkeleton, goRadar],
   );
 }
-
-

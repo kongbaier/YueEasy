@@ -1,6 +1,6 @@
-import { useId } from "react";
-import { ImageTransition } from "./ImageTransition";
-import { cn } from "@/shared/utils/cn";
+import { useId } from 'react';
+import { ImageTransition } from './ImageTransition';
+import { cn } from '@/shared/utils/cn';
 
 interface CoverProps {
   src: string | undefined;
@@ -19,11 +19,11 @@ export const Cover = ({
 
   return (
     <div
-      className={cn("isolate relative", className)}
+      className={cn('isolate relative', className)}
       style={src ? { filter: `url(#${filterId})` } : undefined}
     >
       {/* SVG 滤镜定义：光晕作用于根容器，跟随 ImageTransition 的过渡 */}
-      <svg style={{ position: "absolute", width: 0, height: 0 }}>
+      <svg style={{ position: 'absolute', width: 0, height: 0 }}>
         <defs>
           <filter id={filterId} x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="8" result="blur" />
@@ -41,7 +41,7 @@ export const Cover = ({
       {src && (
         <ImageTransition
           alt={alt}
-          containerClassName={cn("size-full", foregroundClassName)}
+          containerClassName={cn('size-full', foregroundClassName)}
           src={src}
         />
       )}

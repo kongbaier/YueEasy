@@ -18,7 +18,9 @@ export function useFmCardViewModel() {
   const isFm = usePlayerStore((s) => s.contentSource === 'personal_fm');
   const setContentSource = usePlayerStore((s) => s.setContentSource);
   const currentTrackRaw = usePlayerStore((s) => s.currentTrack);
-  const currentTrack = currentTrackRaw ? queueItemToSong(currentTrackRaw) : null;
+  const currentTrack = currentTrackRaw
+    ? queueItemToSong(currentTrackRaw)
+    : null;
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
   const { open: openPlayerPage } = usePlayerPage();

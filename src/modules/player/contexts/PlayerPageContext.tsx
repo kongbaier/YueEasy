@@ -46,7 +46,9 @@ export function PlayerPageProvider({
   );
 
   return (
-    <PlayerPageContext.Provider value={value}>{children}</PlayerPageContext.Provider>
+    <PlayerPageContext.Provider value={value}>
+      {children}
+    </PlayerPageContext.Provider>
   );
 }
 

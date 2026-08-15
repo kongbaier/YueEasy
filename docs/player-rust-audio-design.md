@@ -11,11 +11,11 @@
 
 当前播放器是「双端分裂」架构：
 
-| 权威 | 位置 | 内容 |
-|---|---|---|
-| 音频播放 | 前端 WebView `lib/audio/AudioCore.ts` | HTMLAudioElement + Web Audio，播放/暂停/进度/ended 真实状态 |
-| 队列/导航/策略 | Rust `PlayerEngine` | Sequential/LoopAll/LoopOne/Shuffle/Fm |
-| URL 解析 / FM 取歌 / 持久化 / 媒体键 | Rust | `NcmService` / SQLite / `platform::media_session` |
+| 权威                                 | 位置                                  | 内容                                                        |
+| ------------------------------------ | ------------------------------------- | ----------------------------------------------------------- |
+| 音频播放                             | 前端 WebView `lib/audio/AudioCore.ts` | HTMLAudioElement + Web Audio，播放/暂停/进度/ended 真实状态 |
+| 队列/导航/策略                       | Rust `PlayerEngine`                   | Sequential/LoopAll/LoopOne/Shuffle/Fm                       |
+| URL 解析 / FM 取歌 / 持久化 / 媒体键 | Rust                                  | `NcmService` / SQLite / `platform::media_session`           |
 
 分裂带来的问题：
 
@@ -34,22 +34,22 @@
 
 三方案对比后选定 **方案 2：全迁 Rust**。
 
-| 方案 | 结论 |
-|---|---|
-| 1. 播放系统全迁前端 lib | 否。FM 取歌、URL 解析、持久化、媒体键仍必须走 Rust，「状态单一」是伪优势，且放弃 Rust 62 测试。 |
-| 2. **全迁 Rust（含音频）** | **采用**。满足「统一」诉求 + 未来后台播放需求。 |
-| 3. 保持双端 | 否。即现状痛点。 |
+| 方案                       | 结论                                                                                            |
+| -------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1. 播放系统全迁前端 lib    | 否。FM 取歌、URL 解析、持久化、媒体键仍必须走 Rust，「状态单一」是伪优势，且放弃 Rust 62 测试。 |
+| 2. **全迁 Rust（含音频）** | **采用**。满足「统一」诉求 + 未来后台播放需求。                                                 |
+| 3. 保持双端                | 否。即现状痛点。                                                                                |
 
 ## 3. 技术选型
 
 ### 3.1 采用
 
-| 职责 | 库 | 版本 | 理由 |
-|---|---|---|---|
-| HTTP 流下载 + 临时缓存 + seek | `stream-download` | 0.24 | 输出 `Read+Seek` 源，分块落临时文件（内存恒定），下载未完成时 seek 自动 range 重请求 |
-| 解码 mp3/flac/aac/alac | rodio 内置 symphonia backend | 0.22 `symphonia-all` | `Decoder::try_from(reader)` 直接吃 `Read+Seek` |
-| 输出/队列/暂停/音量/seek | `rodio` `Sink` | 0.22 | `append/play/pause/stop/set_volume/try_seek/get_pos/len` |
-| 取消/并发 | tokio（已有） | — | `StreamDownload` 的 `StreamHandle` |
+| 职责                          | 库                           | 版本                 | 理由                                                                                 |
+| ----------------------------- | ---------------------------- | -------------------- | ------------------------------------------------------------------------------------ |
+| HTTP 流下载 + 临时缓存 + seek | `stream-download`            | 0.24                 | 输出 `Read+Seek` 源，分块落临时文件（内存恒定），下载未完成时 seek 自动 range 重请求 |
+| 解码 mp3/flac/aac/alac        | rodio 内置 symphonia backend | 0.22 `symphonia-all` | `Decoder::try_from(reader)` 直接吃 `Read+Seek`                                       |
+| 输出/队列/暂停/音量/seek      | `rodio` `Sink`               | 0.22                 | `append/play/pause/stop/set_volume/try_seek/get_pos/len`                             |
+| 取消/并发                     | tokio（已有）                | —                    | `StreamDownload` 的 `StreamHandle`                                                   |
 
 ### 3.2 排除 kithara
 
@@ -85,13 +85,13 @@ Rust（播放器唯一权威）
 
 ### 4.1 TS lib/core → Rust 映射（实现思路对齐）
 
-| 前端 `lib/core` | Rust | 动作 |
-|---|---|---|
-| `strategy.ts`（4 策略） | `core/strategy.rs`（5 策略含 Fm） | 已有 |
-| `queue.ts` + `QueueFeeder` | `core/engine.rs` + 推荐钩子 | 已有队列；推荐取数在 `player_service` 的 End 分支 |
-| `audio.ts` `AudioCore` | `infra/audio/engine.rs` | 新增 |
-| `machine.ts`（xstate） | `enum AudioStatus` + 转换方法 | 新增（无第三方） |
-| 预留 `#context/#analyser/#gain` | symphonia PCM 输出 + 未来 FFT/EQ | 预留，暂不接线 |
+| 前端 `lib/core`                 | Rust                              | 动作                                              |
+| ------------------------------- | --------------------------------- | ------------------------------------------------- |
+| `strategy.ts`（4 策略）         | `core/strategy.rs`（5 策略含 Fm） | 已有                                              |
+| `queue.ts` + `QueueFeeder`      | `core/engine.rs` + 推荐钩子       | 已有队列；推荐取数在 `player_service` 的 End 分支 |
+| `audio.ts` `AudioCore`          | `infra/audio/engine.rs`           | 新增                                              |
+| `machine.ts`（xstate）          | `enum AudioStatus` + 转换方法     | 新增（无第三方）                                  |
+| 预留 `#context/#analyser/#gain` | symphonia PCM 输出 + 未来 FFT/EQ  | 预留，暂不接线                                    |
 
 ## 5. 音频引擎设计
 
@@ -165,15 +165,15 @@ Rust 周期推粗粒度 position 事件（~250ms）+ 前端 `requestAnimationFra
 
 ### 与设计 §4-7 的偏离
 
-| # | 设计 | 落地 | 原因 |
-|---|---|---|---|
-| 1 | 播放命令返回 `PlayUrlInfo`（前端 load URL） | 播放命令返回 `()`，Rust 内部完成下载+加载 | 音频权威在 Rust 后，URL 不再需要出 Rust；`resolve_play_url` 保留供预加载 |
-| 2 | 进度：Rust 周期推 position 事件（~250ms） | 前端 `usePlaybackClock` rAF 插值 + 500ms `get_position` 校准 | 校准式拉取比推送更简单，避免事件洪泛；沿用 `useCurrentTimeHigh` 思路 |
-| 3 | ended 由 rodio 事件驱动 | `start_ended_watcher` 500ms 轮询 `pos >= duration` 判定 | rodio 无可靠 ended 回调；500ms 轮询延迟可接受且实现最简 |
-| 4 | `duration` 从解码 source 读 | 从 `QueueItem.duration_secs`（NCM 元数据）读 | 避免同步解码阻塞；元数据本就准确 |
-| 5 | `player:seek-to` 事件 | 删除（seek 命令同步 SMTC 位置即可，前端无需响应） | 前端 seek 是唯一入口，无 SMTC 回传路径需要事件 |
-| 6 | 点赞迁移与音频迁移同批实施 | `cmd/like.rs` + `LikeState` | 同属「前端退役、Rust 权威」批量迁移，事件协议独立（`liked-*` 前缀，不走 `player:event`） |
-| 7 | 播放/暂停状态 | `player:status-changed` 事件（playing: bool）驱动 usePlayerStore | 取代前端 audio 事件权威；Rust `AudioStatus` 为唯一真源 |
+| #   | 设计                                        | 落地                                                             | 原因                                                                                     |
+| --- | ------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| 1   | 播放命令返回 `PlayUrlInfo`（前端 load URL） | 播放命令返回 `()`，Rust 内部完成下载+加载                        | 音频权威在 Rust 后，URL 不再需要出 Rust；`resolve_play_url` 保留供预加载                 |
+| 2   | 进度：Rust 周期推 position 事件（~250ms）   | 前端 `usePlaybackClock` rAF 插值 + 500ms `get_position` 校准     | 校准式拉取比推送更简单，避免事件洪泛；沿用 `useCurrentTimeHigh` 思路                     |
+| 3   | ended 由 rodio 事件驱动                     | `start_ended_watcher` 500ms 轮询 `pos >= duration` 判定          | rodio 无可靠 ended 回调；500ms 轮询延迟可接受且实现最简                                  |
+| 4   | `duration` 从解码 source 读                 | 从 `QueueItem.duration_secs`（NCM 元数据）读                     | 避免同步解码阻塞；元数据本就准确                                                         |
+| 5   | `player:seek-to` 事件                       | 删除（seek 命令同步 SMTC 位置即可，前端无需响应）                | 前端 seek 是唯一入口，无 SMTC 回传路径需要事件                                           |
+| 6   | 点赞迁移与音频迁移同批实施                  | `cmd/like.rs` + `LikeState`                                      | 同属「前端退役、Rust 权威」批量迁移，事件协议独立（`liked-*` 前缀，不走 `player:event`） |
+| 7   | 播放/暂停状态                               | `player:status-changed` 事件（playing: bool）驱动 usePlayerStore | 取代前端 audio 事件权威；Rust `AudioStatus` 为唯一真源                                   |
 
 ### 验证
 

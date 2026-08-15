@@ -1,7 +1,7 @@
-import { Volume2, VolumeX } from "lucide-react";
-import { useRef, useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { usePlayer } from "@/modules/player/hooks/usePlayer";
+import { Volume2, VolumeX } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Button } from '@/shared/ui/button';
+import { usePlayer } from '@/modules/player/hooks/usePlayer';
 
 const DELAY_MS = 200;
 
@@ -38,13 +38,13 @@ export const VolumeControl = () => {
 
     const handlePointerUp = () => {
       bar.releasePointerCapture(e.pointerId);
-      bar.removeEventListener("pointermove", handlePointerMove);
-      bar.removeEventListener("pointerup", handlePointerUp);
+      bar.removeEventListener('pointermove', handlePointerMove);
+      bar.removeEventListener('pointerup', handlePointerUp);
     };
 
     bar.setPointerCapture(e.pointerId);
-    bar.addEventListener("pointermove", handlePointerMove);
-    bar.addEventListener("pointerup", handlePointerUp);
+    bar.addEventListener('pointermove', handlePointerMove);
+    bar.addEventListener('pointerup', handlePointerUp);
   };
 
   const toggleMute = () => applyMuted(!isMuted);
@@ -97,7 +97,7 @@ export const VolumeControl = () => {
             className="w-5 h-24 cursor-pointer flex items-center justify-center"
             onPointerDown={handlePointerDown}
             ref={barRef}
-            style={{ touchAction: "none" }}
+            style={{ touchAction: 'none' }}
           >
             <div className="w-1 h-full bg-secondary rounded-full relative">
               <div

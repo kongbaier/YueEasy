@@ -1,12 +1,12 @@
-import { Loader2, Play, Radar, Radio } from "lucide-react";
-import React, { useEffect, useRef } from "react";
-import { useContainerWidth } from "@/shared/hooks/useContainerWidth";
-import { ParallaxCarousel } from "@/shared/ui/carousel";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { SmartImage } from "@/shared/ui/image";
-import { useFmCardViewModel } from "../hooks/useFmCardViewModel";
-import { useHomeBannerViewModel } from "../hooks/useHomeBannerViewModel";
-import { useRadarCardViewModel } from "../hooks/useRadarCardViewModel";
+import { Loader2, Play, Radar, Radio } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { useContainerWidth } from '@/shared/hooks/useContainerWidth';
+import { ParallaxCarousel } from '@/shared/ui/carousel';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { SmartImage } from '@/shared/ui/image';
+import { useFmCardViewModel } from '../hooks/useFmCardViewModel';
+import { useHomeBannerViewModel } from '../hooks/useHomeBannerViewModel';
+import { useRadarCardViewModel } from '../hooks/useRadarCardViewModel';
 
 const WIDE_BREAKPOINT = 672; // 与 CSS @min-2xl: 对齐（64rem = 1024px，按默认 16px 根字号）
 
@@ -53,14 +53,14 @@ const FmCard = () => {
     useFmCardViewModel();
   const coverUrl = displaySong?.album?.picUrl;
   const songName = displaySong?.name;
-  const artistNames = displaySong?.artists?.map((a) => a.name).join(" / ");
+  const artistNames = displaySong?.artists?.map((a) => a.name).join(' / ');
 
   return (
     <div
       className="row-span-1 col-span-2 group relative cursor-pointer overflow-hidden rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       onClick={() => startFm(true)}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
+        if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           startFm(true);
         }
@@ -76,7 +76,7 @@ const FmCard = () => {
             <>
               {/* 封面清晰铺底：object-cover 完整展示，不加整体 blur */}
               <SmartImage
-                alt={songName ?? "私人漫游"}
+                alt={songName ?? '私人漫游'}
                 className="size-full object-cover"
                 containerClassName="absolute inset-0"
                 decoding="async"
@@ -103,7 +103,7 @@ const FmCard = () => {
                 私人漫游
               </h3>
               <p className="text-xs text-white/60">
-                {isFm ? "正在为你播放…" : "为你持续推荐喜欢的音乐"}
+                {isFm ? '正在为你播放…' : '为你持续推荐喜欢的音乐'}
               </p>
             </div>
           )}
@@ -125,7 +125,7 @@ const FmCard = () => {
 
           {/* 右下角播放键 */}
           <button
-            aria-label={isFm ? "打开私人漫游" : "开始私人漫游"}
+            aria-label={isFm ? '打开私人漫游' : '开始私人漫游'}
             className="absolute right-3 bottom-3 flex size-10 md:size-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 ring-1 ring-white/20 transition-transform duration-200 hover:scale-110 active:scale-95 disabled:pointer-events-none disabled:opacity-70"
             disabled={pending}
             onClick={(e) => {
@@ -170,7 +170,7 @@ const RadarCard = () => {
       className="row-span-1 col-span-1 group relative cursor-pointer overflow-hidden rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       onClick={goRadar}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
+        if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           goRadar();
         }
@@ -221,7 +221,7 @@ const RadarCard = () => {
                 私人雷达
               </h3>
               <p className="text-xs text-white/60">
-                {isLoggedIn ? "为你定制专属歌单" : "登录后使用"}
+                {isLoggedIn ? '为你定制专属歌单' : '登录后使用'}
               </p>
             </div>
           )}

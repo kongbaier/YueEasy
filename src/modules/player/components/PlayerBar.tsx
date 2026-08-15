@@ -7,30 +7,30 @@ import {
   Pause,
   Play,
   ThumbsDown,
-} from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { FollowTooltip } from "@/modules/player/components/FollowTooltip";
-import { useMediaSession } from "@/modules/player/hooks/useMediaSession";
-import { usePlaybackClock } from "@/modules/player/hooks/usePlaybackClock";
-import { usePlayerKeyboard } from "@/modules/player/hooks/usePlayerKeyboard";
-import { useProgress } from "@/modules/player/hooks/useProgress";
-import { usePlayer } from "@/modules/player/hooks/usePlayer";
-import { formatDuration } from "@/shared/utils/format";
-import { toast } from "@/shared/lib/toast";
-import { cn } from "@/shared/utils/cn";
-import { getNcmImageUrl } from "@/shared/utils/image";
-import { formatQueueCount } from "@/shared/utils/format";
-import { snapToDevicePixel } from "@/shared/utils/snap";
-import { useDevicePixelRatio } from "@/shared/hooks/useDevicePixelRatio";
-import { usePlayerPage } from "@/modules/player/contexts/PlayerPageContext";
-import { RepeatButton } from "./RepeatButton";
-import { ShuffleButton } from "./ShuffleButton";
-import { SeekBar } from "./SeekBar";
-import { VolumeControl } from "./VolumeControl";
-import { Cover } from "@/shared/ui/image";
-import type { Track } from "@/shared/types/player";
-import { LikeButton } from "@/modules/like/components/LikeButton";
+} from 'lucide-react';
+import { useState } from 'react';
+import { Button } from '@/shared/ui/button';
+import { FollowTooltip } from '@/modules/player/components/FollowTooltip';
+import { useMediaSession } from '@/modules/player/hooks/useMediaSession';
+import { usePlaybackClock } from '@/modules/player/hooks/usePlaybackClock';
+import { usePlayerKeyboard } from '@/modules/player/hooks/usePlayerKeyboard';
+import { useProgress } from '@/modules/player/hooks/useProgress';
+import { usePlayer } from '@/modules/player/hooks/usePlayer';
+import { formatDuration } from '@/shared/utils/format';
+import { toast } from '@/shared/lib/toast';
+import { cn } from '@/shared/utils/cn';
+import { getNcmImageUrl } from '@/shared/utils/image';
+import { formatQueueCount } from '@/shared/utils/format';
+import { snapToDevicePixel } from '@/shared/utils/snap';
+import { useDevicePixelRatio } from '@/shared/hooks/useDevicePixelRatio';
+import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
+import { RepeatButton } from './RepeatButton';
+import { ShuffleButton } from './ShuffleButton';
+import { SeekBar } from './SeekBar';
+import { VolumeControl } from './VolumeControl';
+import { Cover } from '@/shared/ui/image';
+import type { Track } from '@/shared/types/player';
+import { LikeButton } from '@/modules/like/components/LikeButton';
 
 const PlayerProgress = () => {
   const { percentage, formatted } = useProgress();
@@ -110,8 +110,8 @@ const PlayerControls = () => {
       </section>
       <section
         className={cn(
-          "flex text-4xl gap-x-3 justify-center items-center-safe transition-opacity duration-300",
-          !hasTrack && "opacity-30 pointer-events-none",
+          'flex text-4xl gap-x-3 justify-center items-center-safe transition-opacity duration-300',
+          !hasTrack && 'opacity-30 pointer-events-none',
         )}
       >
         <Button
@@ -156,10 +156,10 @@ const PlayerInfo = ({ currentTrack }: { currentTrack: Track | null }) => {
     <div className="flex-1 min-w-0 relative flex items-center">
       <div
         className={cn(
-          "flex items-center gap-3 transition-all duration-300",
+          'flex items-center gap-3 transition-all duration-300',
           !currentTrack
-            ? "opacity-100"
-            : "opacity-0 pointer-events-none absolute inset-0",
+            ? 'opacity-100'
+            : 'opacity-0 pointer-events-none absolute inset-0',
         )}
       >
         <div className="flex items-center justify-center size-10 shrink-0 rounded-md bg-accent/40 ring-1 ring-border/40">
@@ -177,16 +177,16 @@ const PlayerInfo = ({ currentTrack }: { currentTrack: Track | null }) => {
 
       <div
         className={cn(
-          "flex items-center gap-3 min-w-0 transition-all duration-300",
+          'flex items-center gap-3 min-w-0 transition-all duration-300',
           currentTrack
-            ? "opacity-100"
-            : "opacity-0 pointer-events-none absolute inset-0",
+            ? 'opacity-100'
+            : 'opacity-0 pointer-events-none absolute inset-0',
         )}
       >
         <button
           className={cn(
-            "size-10 shrink-0 transition-colors",
-            "transition-transform duration-100 origin-bottom-left hover:brightness-95 hover:scale-110",
+            'size-10 shrink-0 transition-colors',
+            'transition-transform duration-100 origin-bottom-left hover:brightness-95 hover:scale-110',
           )}
           onClick={openPlayerPage}
           type="button"
@@ -206,10 +206,10 @@ const PlayerInfo = ({ currentTrack }: { currentTrack: Track | null }) => {
         </button>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">
-            {currentTrack?.name ?? ""}
+            {currentTrack?.name ?? ''}
           </p>
           <p className="truncate text-xs text-muted-foreground">
-            {currentTrack?.artists?.map((a) => a.name).join("/") || " "}
+            {currentTrack?.artists?.map((a) => a.name).join('/') || ' '}
           </p>
         </div>
       </div>
@@ -230,9 +230,9 @@ const PlayerMenu = ({
     setTrashPending(true);
     try {
       await fmTrash();
-      toast.success("已减少此类推荐");
+      toast.success('已减少此类推荐');
     } catch {
-      toast.error("操作失败，请重试");
+      toast.error('操作失败，请重试');
     } finally {
       setTrashPending(false);
     }
@@ -247,7 +247,7 @@ const PlayerMenu = ({
         disabled={trashPending}
         onClick={isFm ? handleFmTrash : onToggleQueuePanel}
         size="icon"
-        title={isFm ? "不感兴趣" : undefined}
+        title={isFm ? '不感兴趣' : undefined}
         variant="ghost"
       >
         {isFm ? (
@@ -285,7 +285,7 @@ export const PlayerBar = ({
   return (
     <div
       className={cn(
-        "relative bg-card px-4 flex items-center justify-between",
+        'relative bg-card px-4 flex items-center justify-between',
         className,
       )}
     >

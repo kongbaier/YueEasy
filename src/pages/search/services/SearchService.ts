@@ -63,4 +63,3 @@ export const searchService = {
     return r.data.map((h) => h.keyword);
   },
 };
-

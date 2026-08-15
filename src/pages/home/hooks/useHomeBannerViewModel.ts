@@ -1,5 +1,5 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { homeService } from "../services/HomeService";
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { homeService } from '../services/HomeService';
 
 /**
  * 首页 Banner viewmodel：只负责取数（service → infra）。
@@ -7,10 +7,10 @@ import { homeService } from "../services/HomeService";
  */
 export function useHomeBannerViewModel() {
   const { data: banners } = useSuspenseQuery({
-    queryKey: ["home_carousel"],
+    queryKey: ['home_carousel'],
     queryFn: () =>
       homeService.banner().catch(() => {
-        console.log("出现异常");
+        console.log('出现异常');
         return [];
       }),
   });

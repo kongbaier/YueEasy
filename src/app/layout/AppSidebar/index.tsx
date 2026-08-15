@@ -178,8 +178,7 @@ export const AppSidebar = () => {
                     >
                       <item.icon
                         className={cn(
-                          isActive &&
-                            'fill-primary text-primary-strong',
+                          isActive && 'fill-primary text-primary-strong',
                         )}
                       />
                       <span>{item.label}</span>
@@ -208,8 +207,7 @@ export const AppSidebar = () => {
                     >
                       <item.icon
                         className={cn(
-                          isActive &&
-                            'fill-primary text-primary-strong',
+                          isActive && 'fill-primary text-primary-strong',
                         )}
                       />
                       <span>{item.label}</span>
@@ -325,10 +323,7 @@ export const AppSidebar = () => {
         <SidebarMenu className="space-y-0.5">
           {!isLoggedIn && (
             <SidebarMenuItem>
-              <SidebarMenuButton
-                className="gap-x-2"
-                onClick={openLogin}
-              >
+              <SidebarMenuButton className="gap-x-2" onClick={openLogin}>
                 <LogIn />
                 <span>登录</span>
               </SidebarMenuButton>
@@ -345,8 +340,7 @@ export const AppSidebar = () => {
                 >
                   <item.icon
                     className={cn(
-                      isActive &&
-                        'fill-primary text-primary-strong',
+                      isActive && 'fill-primary text-primary-strong',
                     )}
                   />
                   <span>{item.label}</span>

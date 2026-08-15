@@ -2,6 +2,8 @@
 //!
 //! 锁纪律：任何 `.await` 之前必须释放 engine/audio 锁。
 
+use std::sync::atomic::Ordering;
+
 use tauri::{AppHandle, Manager};
 
 use crate::app::state::{persist_snapshot, PlayerState};
@@ -178,6 +180,18 @@ pub(crate) async fn play_current_track(
     Ok(())
 }
 
+/// 音频输出设备丢失/变更后重建：只重开输出设备，保留已解码 source 续播。
+/// 设备仍缺失时 `reopen_device` 快速失败（不发网络请求），由 watcher 周期重试。
+pub(crate) fn recover_audio_device(player: &PlayerState) -> Result<(), String> {
+    let mut audio = player.audio.lock().unwrap();
+    if !audio.device_changed() {
+        return Ok(());
+    }
+    audio.reopen_device()?;
+    player.device_changed.store(false, Ordering::SeqCst);
+    Ok(())
+}
+
 /// 启动 ended 检测后台任务：周期检查音频是否播完，播完则自动推进。
 pub(crate) fn start_ended_watcher(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
@@ -185,6 +199,16 @@ pub(crate) fn start_ended_watcher(app: AppHandle) {
         loop {
             interval.tick().await;
             let player = app.state::<PlayerState>();
+            let ncm = app.state::<NcmState>();
+
+            // 设备丢失（睡眠唤醒 / 拔出）或默认设备变更 → 重开设备续播，先于 ended 检测。
+            if player.audio.lock().unwrap().device_changed() {
+                if let Err(e) = recover_audio_device(&player) {
+                    log::warn!("[audio] 设备恢复失败: {e}");
+                }
+                continue;
+            }
+
             let should_advance = {
                 let audio = player.audio.lock().unwrap();
                 let playing = audio.status() == AudioStatus::Playing;
@@ -196,7 +220,6 @@ pub(crate) fn start_ended_watcher(app: AppHandle) {
                     audio.pause();
                 }
                 emit_playing(&app, false);
-                let ncm = app.state::<NcmState>();
                 if let Err(e) = advance_once(&app, &player, &ncm, AdvanceEntry::TrackEnd).await {
                     if e != "queue ended" {
                         log::warn!("[ended watcher] 自动推进失败: {e}");

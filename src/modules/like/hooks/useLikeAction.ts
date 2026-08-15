@@ -48,7 +48,9 @@ export function useLikeAction() {
       }
       try {
         await toggleLikeRemote(track.id, next);
-        toast.success(next ? `已收藏 ${track.name}` : `已取消收藏 ${track.name}`);
+        toast.success(
+          next ? `已收藏 ${track.name}` : `已取消收藏 ${track.name}`,
+        );
       } catch {
         if (next) {
           removeLikedSongCache(track.id);

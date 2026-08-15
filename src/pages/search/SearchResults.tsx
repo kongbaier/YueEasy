@@ -123,33 +123,27 @@ export function SearchResults({
           {/* Album results */}
           {searchType === '10' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {(results as Album[])
-                .slice(0, visibleCount)
-                .map((item) => (
-                  <SearchAlbumCard item={item} key={item.id} />
-                ))}
+              {(results as Album[]).slice(0, visibleCount).map((item) => (
+                <SearchAlbumCard item={item} key={item.id} />
+              ))}
             </div>
           )}
 
           {/* Artist results */}
           {searchType === '100' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {(results as Artist[])
-                .slice(0, visibleCount)
-                .map((item) => (
-                  <SearchArtistCard item={item} key={item.id} />
-                ))}
+              {(results as Artist[]).slice(0, visibleCount).map((item) => (
+                <SearchArtistCard item={item} key={item.id} />
+              ))}
             </div>
           )}
 
           {/* User results */}
           {searchType === '1002' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {(results as User[])
-                .slice(0, visibleCount)
-                .map((item) => (
-                  <SearchUserCard item={item} key={item.id} />
-                ))}
+              {(results as User[]).slice(0, visibleCount).map((item) => (
+                <SearchUserCard item={item} key={item.id} />
+              ))}
             </div>
           )}
         </>
@@ -168,5 +162,3 @@ export function SearchResults({
     </>
   );
 }
-
-

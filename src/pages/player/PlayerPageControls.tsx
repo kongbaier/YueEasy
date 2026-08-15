@@ -1,7 +1,7 @@
-import { ChevronFirst, ChevronLast, Loader2, Pause, Play } from "lucide-react";
-import { RepeatButton, ShuffleButton } from "@/modules/player/components";
-import { Button } from "@/shared/ui/button";
-import { usePlayer } from "@/modules/player/hooks/usePlayer";
+import { ChevronFirst, ChevronLast, Loader2, Pause, Play } from 'lucide-react';
+import { RepeatButton, ShuffleButton } from '@/modules/player/components';
+import { Button } from '@/shared/ui/button';
+import { usePlayer } from '@/modules/player/hooks/usePlayer';
 
 interface PlayerPageControlsProps {
   className?: string;
@@ -21,7 +21,7 @@ export const PlayerPageControls = ({ className }: PlayerPageControlsProps) => {
 
   return (
     <div
-      className={`grid grid-cols-[auto_4fr_auto_3fr_auto_3fr_auto_4fr_auto] items-center ${className ?? ""}`}
+      className={`grid grid-cols-[auto_4fr_auto_3fr_auto_3fr_auto_4fr_auto] items-center ${className ?? ''}`}
     >
       <div className="col-start-1 flex items-center gap-x-1">
         <RepeatButton />

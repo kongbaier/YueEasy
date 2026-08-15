@@ -1,4 +1,5 @@
 use std::future::Future;
+use std::time::Duration;
 
 use ncm_api_rs::{ApiClient, Query};
 use serde::de::DeserializeOwned;
@@ -37,7 +38,12 @@ where
         (inner.client.clone(), query)
     };
 
-    let mut resp = call(client, query).await.map_err(from_ncm)?;
+    let mut resp = tokio::time::timeout(Duration::from_secs(10), call(client, query))
+        .await
+        .map_err(|_| NcmApiError::Network {
+            message: "请求超时".to_string(),
+        })?
+        .map_err(from_ncm)?;
 
     if !resp.cookie.is_empty() {
         let new_cookie = {

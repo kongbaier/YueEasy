@@ -1,6 +1,7 @@
 //! 应用共享状态：播放器状态（引擎 + 音频 + URL 缓存）+ 点赞状态。
 
 use std::collections::HashSet;
+use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 
 use tauri::{AppHandle, Manager};
@@ -14,16 +15,21 @@ pub struct PlayerState {
     pub engine: Arc<Mutex<QueueEngine>>,
     pub audio: Arc<Mutex<AudioEngine>>,
     pub last_url: Arc<Mutex<Option<(u64, String)>>>,
+    /// 音频输出设备需要重建（丢失 / 默认设备变更）——由 rodio 错误回调与 WASAPI 通知共同置位。
+    pub device_changed: Arc<AtomicBool>,
 }
 
 impl Default for PlayerState {
     fn default() -> Self {
+        let device_changed = Arc::new(AtomicBool::new(false));
         Self {
             engine: Arc::new(Mutex::new(QueueEngine::new())),
             audio: Arc::new(Mutex::new(
-                AudioEngine::new().expect("failed to init audio device"),
+                AudioEngine::new(device_changed.clone())
+                    .expect("failed to init audio device"),
             )),
             last_url: Arc::new(Mutex::new(None)),
+            device_changed,
         }
     }
 }

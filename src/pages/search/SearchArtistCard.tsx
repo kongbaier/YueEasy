@@ -59,7 +59,3 @@ export function SearchArtistCardSkeleton() {
     </div>
   );
 }
-
-
-
-

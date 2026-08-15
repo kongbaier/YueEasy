@@ -1,7 +1,7 @@
-import { useEffectOnActive } from "keepalive-for-react";
-import type { ReactNode } from "react";
-import { useCallback, useRef, useState } from "react";
-import { ScrollContainerContext } from "@/shared/hooks/useLoadMore";
+import { useEffectOnActive } from 'keepalive-for-react';
+import type { ReactNode } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { ScrollContainerContext } from '@/shared/hooks/useLoadMore';
 
 interface PageScrollerProps {
   children: ReactNode;

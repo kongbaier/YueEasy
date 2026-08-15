@@ -85,9 +85,7 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
           添加到播放列表
         </ContextMenuItem>
         <ContextMenuSeparator />
-        <ContextMenuItem
-          onClick={() => handleLike(track)}
-        >
+        <ContextMenuItem onClick={() => handleLike(track)}>
           <Heart className="h-4 w-4" fill={liked ? '#ef4444' : 'none'} />
           {liked ? '取消收藏' : '收藏'}
         </ContextMenuItem>
@@ -113,5 +111,3 @@ export const TrackRowSkeleton = ({ index }: { index: number }) => {
     </div>
   );
 };
-
-

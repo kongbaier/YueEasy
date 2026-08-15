@@ -3,10 +3,10 @@ import type {
   DragonBallItem,
   Playlist,
   Song,
-} from "@/shared/types/entities";
-import { BannerType } from "@/shared/types/entities";
-import { ncm } from "@/tauri/ncm";
-import { CacheKeys, cachedFetch } from "@/tauri/cache";
+} from '@/shared/types/entities';
+import { BannerType } from '@/shared/types/entities';
+import { ncm } from '@/tauri/ncm';
+import { CacheKeys, cachedFetch } from '@/tauri/cache';
 
 export const homeService = {
   /** 首页 banner（过滤广告） */
@@ -24,7 +24,7 @@ export const homeService = {
   },
 
   /** 热门歌单 */
-  topPlaylists: async (cat = "全部", limit = 20): Promise<Playlist[]> => {
+  topPlaylists: async (cat = '全部', limit = 20): Promise<Playlist[]> => {
     const r = await cachedFetch(CacheKeys.topPlaylists(cat), () =>
       ncm.topPlaylist(cat, limit),
     );
@@ -41,4 +41,3 @@ export const homeService = {
   playlistDetail: async (id: number): Promise<Playlist> =>
     ncm.playlistDetail(id),
 };
-

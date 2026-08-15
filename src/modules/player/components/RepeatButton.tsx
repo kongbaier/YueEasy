@@ -1,13 +1,13 @@
-import { Infinity as InfinityIcon, Repeat, Repeat1 } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/utils/cn";
-import { usePlayer } from "@/modules/player/hooks/usePlayer";
-import type { RepeatMode } from "@/shared/types/player";
+import { Infinity as InfinityIcon, Repeat, Repeat1 } from 'lucide-react';
+import { Button } from '@/shared/ui/button';
+import { cn } from '@/shared/utils/cn';
+import { usePlayer } from '@/modules/player/hooks/usePlayer';
+import type { RepeatMode } from '@/shared/types/player';
 
 const repeatLabel: Record<RepeatMode, string> = {
-  off: "顺序播放",
-  all: "列表循环",
-  one: "单曲循环",
+  off: '顺序播放',
+  all: '列表循环',
+  one: '单曲循环',
 };
 
 /**
@@ -19,22 +19,22 @@ const repeatLabel: Record<RepeatMode, string> = {
 export const RepeatButton = ({ className }: { className?: string }) => {
   const { repeat, cycleRepeat, isFm } = usePlayer();
 
-  let Icon: typeof Repeat = repeat === "one" ? Repeat1 : Repeat;
+  let Icon: typeof Repeat = repeat === 'one' ? Repeat1 : Repeat;
   let label = repeatLabel[repeat];
-  if (isFm && repeat !== "one") {
+  if (isFm && repeat !== 'one') {
     Icon = InfinityIcon;
-    label = "私人漫游";
+    label = '私人漫游';
   }
 
-  const enabled = repeat !== "off";
+  const enabled = repeat !== 'off';
 
   return (
-    <div className={cn("relative group", className)}>
+    <div className={cn('relative group', className)}>
       <Button
         aria-label={label}
         className={cn(
-          "hover:bg-transparent",
-          enabled && "text-primary hover:text-primary",
+          'hover:bg-transparent',
+          enabled && 'text-primary hover:text-primary',
         )}
         onClick={cycleRepeat}
         size="icon"

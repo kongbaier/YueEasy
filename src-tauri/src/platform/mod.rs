@@ -3,3 +3,4 @@ pub mod tray;
 pub mod window;
 
 pub mod accent_color;
+pub mod audio_device;

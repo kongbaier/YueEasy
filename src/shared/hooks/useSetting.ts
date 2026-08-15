@@ -9,7 +9,9 @@ export function useAppearanceSetting<K extends keyof AppearanceSettings>(
 ): [AppearanceSettings[K], (value: AppearanceSettings[K]) => void] {
   const value = useSettingsStore((s) => s.appearance[key]);
   const setValue = (v: AppearanceSettings[K]) => {
-    useSettingsStore.getState().updateAppearance({ [key]: v } as Partial<AppearanceSettings>);
+    useSettingsStore
+      .getState()
+      .updateAppearance({ [key]: v } as Partial<AppearanceSettings>);
   };
   return [value, setValue];
 }

@@ -1,7 +1,7 @@
-import { Shuffle } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/utils/cn";
-import { usePlayer } from "@/modules/player/hooks/usePlayer";
+import { Shuffle } from 'lucide-react';
+import { Button } from '@/shared/ui/button';
+import { cn } from '@/shared/utils/cn';
+import { usePlayer } from '@/modules/player/hooks/usePlayer';
 
 /**
  * 遍历顺序开关（正交轴 1：sequential / shuffle）。
@@ -9,23 +9,23 @@ import { usePlayer } from "@/modules/player/hooks/usePlayer";
  */
 export const ShuffleButton = ({
   className,
-  size = "icon",
+  size = 'icon',
   iconSize = 5,
 }: {
   className?: string;
-  size?: "icon" | "icon-sm" | "icon-lg";
+  size?: 'icon' | 'icon-sm' | 'icon-lg';
   iconSize?: number;
 }) => {
   const { isShuffle, isFm, toggleShuffle } = usePlayer();
-  const label = "随机播放";
+  const label = '随机播放';
 
   return (
-    <div className={cn("relative group", className)}>
+    <div className={cn('relative group', className)}>
       <Button
         aria-label={label}
         className={cn(
-          "hover:bg-transparent",
-          isShuffle && "text-primary hover:text-primary",
+          'hover:bg-transparent',
+          isShuffle && 'text-primary hover:text-primary',
         )}
         disabled={isFm}
         onClick={toggleShuffle}

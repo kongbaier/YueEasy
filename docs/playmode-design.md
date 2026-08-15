@@ -9,9 +9,9 @@
 
 `core/types.rs` 里声明了**两个正交轴**：
 
-| 轴 | 类型 | 语义 |
-|---|---|---|
-| 内容来源 | `ContentSource`（Queue / PersonalFm） | 「曲目从哪来」 |
+| 轴       | 类型                                                   | 语义                   |
+| -------- | ------------------------------------------------------ | ---------------------- |
+| 内容来源 | `ContentSource`（Queue / PersonalFm）                  | 「曲目从哪来」         |
 | 导航策略 | `PlayMode`（Sequential / LoopAll / LoopOne / Shuffle） | 「在已有列表内怎么走」 |
 
 但实现层把这个正交关系**折叠**了：`Fm` 被做成一个 `PlayStrategy`（`core/strategy.rs` 的 `Fm`），并通过 `PlayerEngine.strategy: Box<dyn PlayStrategy>` 抢占唯一的 strategy 槽位。后果：
@@ -44,11 +44,11 @@
 
 ### 2.3 领域真相：三种「内容来源」本质是三种「队列补给策略」
 
-| 来源 | 队列填充 | 队尾行为 | 可用导航策略 |
-|---|---|---|---|
-| `Queue` | 用户操作（append / replace / insert） | 停（Sequential）/ 环绕（LoopAll）/ 冻结（LoopOne）/ 随机（Shuffle） | 全部 |
-| `Heartbeat` | 进入时一次性 `intelligence/list` 生成 | 同 Queue（列表语义） | 全部 |
-| `PersonalFm` | `personal_fm` 流式逐首 | 自动续接（无限流） | 仅 LoopOne / Fm 前进 |
+| 来源         | 队列填充                              | 队尾行为                                                            | 可用导航策略         |
+| ------------ | ------------------------------------- | ------------------------------------------------------------------- | -------------------- |
+| `Queue`      | 用户操作（append / replace / insert） | 停（Sequential）/ 环绕（LoopAll）/ 冻结（LoopOne）/ 随机（Shuffle） | 全部                 |
+| `Heartbeat`  | 进入时一次性 `intelligence/list` 生成 | 同 Queue（列表语义）                                                | 全部                 |
+| `PersonalFm` | `personal_fm` 流式逐首                | 自动续接（无限流）                                                  | 仅 LoopOne / Fm 前进 |
 
 ---
 
@@ -105,14 +105,14 @@ enum SourceEvent { More, Stop, Replace(Vec<QueueItem>) }
 
 当前 `player:event` 单通道 6 个 tag：
 
-| 事件 | 现状问题 |
-|---|---|
+| 事件                                | 现状问题                                                                          |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
 | `queue-changed`（全量队列 + index） | FM 单曲模型下只有 1 首也推全量；与 track-changed 切歌时**成对**发出，前端处理两次 |
-| `track-changed` | 单条全量；与 queue-changed 语义重叠 |
-| `iteration-strategy-changed` | 单值，与 content-source-changed 同属「模式档位」变化 |
-| `content-source-changed` | 同上 |
-| `status-changed`（playing） | 布尔，与 queue-ended 语义部分重叠 |
-| `queue-ended` | 队列尽头；FM 流式下「尽头」消失，意义弱化 |
+| `track-changed`                     | 单条全量；与 queue-changed 语义重叠                                               |
+| `iteration-strategy-changed`        | 单值，与 content-source-changed 同属「模式档位」变化                              |
+| `content-source-changed`            | 同上                                                                              |
+| `status-changed`（playing）         | 布尔，与 queue-ended 语义部分重叠                                                 |
+| `queue-ended`                       | 队列尽头；FM 流式下「尽头」消失，意义弱化                                         |
 
 **精简方向**（贴合业务 = 「当前播什么 + 队列是什么 + 档位是什么」）：
 
@@ -136,7 +136,7 @@ player:ended       流尽头（仅非流式来源，或统一为 playing=false �
 - **P2 · 心动模式**：`Heartbeat` 源 + `intelligence/list` 接入（复用已封装的 `NcmService::playmode_intelligence_list(id, pid, count)` 与 `ncm_playmode_intelligence_list` 命令）。新增 `enter_heartbeat(song_id, pid, sid?)` 命令（Rust 取推荐列表 → 「Replace 队列 + 播 sid/首曲」）。前端：PlayMode 循环在「当前曲目被喜欢」时动态插入 Heartbeat 档位（需后端/前端判定当前曲是否 liked——前端已有 `likedIds` 镜像，判当前曲 `isLiked` 即可）。
 - **P3 · 文档与回归**：更新本设计文档为「已实施」+ 落地注记；`cargo test` + `tsc --noEmit` + `pnpm build` + 手动冒烟（四导航 × 三来源组合、心动出现/消失、漫游续接 + 不感兴趣、重启恢复）。
 
-> **工作量粗估**：P0（重构）约 1~1.5 天，P1 / P2 各约 0.5~1 天，P3 半天。总计 3~4 天，可与当前未提交的「音频迁移 + 架构分层重构」一并推进。
+> **工作量粗估**：P0（重构）约 1~~1.5 天，P1 / P2 各约 0.5~~1 天，P3 半天。总计 3~4 天，可与当前未提交的「音频迁移 + 架构分层重构」一并推进。
 
 ---
 
@@ -169,13 +169,13 @@ player:ended       流尽头（仅非流式来源，或统一为 playing=false �
 
 ### 与设计的偏离
 
-| # | 设计 | 落地 | 原因 |
-|---|---|---|---|
-| 1 | `NavigateStrategy` 改名 | 保留原名 `PlayStrategy` | 减少 churn；语义已纯化 |
-| 2 | 心动模式需「来源歌单 pid」 | pid = 「我喜欢」歌单 id（specialType===5），登录拉 user_playlist 时同步记录到 like store | 用户明确「喜欢 = 普通 Playlist，pid 即它的 id」 |
-| 3 | 事件「去抖 100ms」 | 保持立即全量推送 | 操作频率低；去抖留待需要时评估 |
-| 4 | `fm_played_ids` 删除 | 保留（`#[allow(dead_code)]` + 快照契约） | 删除需动 snapshot/前端/恢复，独立清理项 |
-| 5 | 事件 `player:ended` | 并入 `player:playing(false)` | playing 布尔已表达结束 |
+| #   | 设计                       | 落地                                                                                     | 原因                                            |
+| --- | -------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| 1   | `NavigateStrategy` 改名    | 保留原名 `PlayStrategy`                                                                  | 减少 churn；语义已纯化                          |
+| 2   | 心动模式需「来源歌单 pid」 | pid = 「我喜欢」歌单 id（specialType===5），登录拉 user_playlist 时同步记录到 like store | 用户明确「喜欢 = 普通 Playlist，pid 即它的 id」 |
+| 3   | 事件「去抖 100ms」         | 保持立即全量推送                                                                         | 操作频率低；去抖留待需要时评估                  |
+| 4   | `fm_played_ids` 删除       | 保留（`#[allow(dead_code)]` + 快照契约）                                                 | 删除需动 snapshot/前端/恢复，独立清理项         |
+| 5   | 事件 `player:ended`        | 并入 `player:playing(false)`                                                             | playing 布尔已表达结束                          |
 
 ### 验证
 
@@ -192,11 +192,11 @@ player:ended       流尽头（仅非流式来源，或统一为 playing=false �
 
 承接 P0 正交化（导航 × 来源分离），进一步把「模式」升级为一等行为单元，消除三处残留的「混」：
 
-| 病灶 | P0 后现状 | 修订 |
-|---|---|---|
-| 手动/自动入口混淆 | `PlayStrategy.next()` 同时承载手动切歌与自然结束，LoopOne 下手动「下一首」也重播当前曲 | 拆 `next` 为 `manual_next`/`on_track_end`（+ `manual_prev`），`Advance{Play,End}` → `Step{Play,ReplayCurrent,End}` |
-| LoopOne 语义错误 | 手动切歌 = 冻结当前曲 | **手动切歌 = 列表循环（切走）；自然结束 = `ReplayCurrent`（重播当前）**——`on_track_end` 默认 = manual_next，仅 LoopOne 覆盖 |
-| `shuffle` 污染队列 | `engine.shuffle()` 是引擎通用队列操作，泄漏 Shuffle 模式能力 | 删除 `engine.shuffle()` + trait `reshuffle` + `reshuffle_if_needed()` 空壳；「重新随机」统一走 `set_mode(Shuffle)`（构造时推进 seed） |
+| 病灶               | P0 后现状                                                                              | 修订                                                                                                                                  |
+| ------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 手动/自动入口混淆  | `PlayStrategy.next()` 同时承载手动切歌与自然结束，LoopOne 下手动「下一首」也重播当前曲 | 拆 `next` 为 `manual_next`/`on_track_end`（+ `manual_prev`），`Advance{Play,End}` → `Step{Play,ReplayCurrent,End}`                    |
+| LoopOne 语义错误   | 手动切歌 = 冻结当前曲                                                                  | **手动切歌 = 列表循环（切走）；自然结束 = `ReplayCurrent`（重播当前）**——`on_track_end` 默认 = manual_next，仅 LoopOne 覆盖           |
+| `shuffle` 污染队列 | `engine.shuffle()` 是引擎通用队列操作，泄漏 Shuffle 模式能力                           | 删除 `engine.shuffle()` + trait `reshuffle` + `reshuffle_if_needed()` 空壳；「重新随机」统一走 `set_mode(Shuffle)`（构造时推进 seed） |
 
 **cmd 层**：`advance_once` 增加 `AdvanceEntry{ManualNext, TrackEnd}` 参数——`play_next` 走 `ManualNext`、ended watcher 走 `TrackEnd`；新增 `Step::ReplayCurrent` 分支（重播当前曲，命中 `last_url` 缓存免请求）。删除无调用者的 `shuffle_queue` 命令 + 前端 `shuffleQueue` 导出。
 

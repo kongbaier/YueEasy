@@ -51,7 +51,9 @@ export const LyricLine = memo(function LyricLine({
           ) : (
             line.words?.map((w, wordIndex) => {
               const wordStatus =
-                status === 'past' ? ('past-line' as const) : ('future-line' as const);
+                status === 'past'
+                  ? ('past-line' as const)
+                  : ('future-line' as const);
               return (
                 <Word
                   // oxlint-disable-next-line react/no-array-index-key 歌词的index不会随便改变

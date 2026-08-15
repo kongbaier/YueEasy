@@ -16,4 +16,3 @@ export async function getMusicComments(
 ): Promise<CommentPage> {
   return ncm.commentMusic(songId, limit, 0);
 }
-

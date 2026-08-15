@@ -58,7 +58,9 @@ const CommentItem = ({ comment }: { comment: Comment }) => (
             className="text-[11px] text-muted-foreground leading-relaxed"
             key={reply.id}
           >
-            <span className="text-primary/80">@{reply.user?.nickname ?? ''}</span>{' '}
+            <span className="text-primary/80">
+              @{reply.user?.nickname ?? ''}
+            </span>{' '}
             {reply.content}
           </p>
         ))}
@@ -179,7 +181,3 @@ export const CommentPanel = ({ playlistId }: CommentPanelProps) => {
 };
 
 export { CommentSkeleton };
-
-
-
-

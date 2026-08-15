@@ -50,7 +50,8 @@ export const useLikeStore = create<LikeStore>((set, get) => ({
 
   isLiked: (id) => get().likedIds.has(id),
 
-  clear: () => set({ likedIds: new Set(), isLoaded: false, likedPlaylistId: null }),
+  clear: () =>
+    set({ likedIds: new Set(), isLoaded: false, likedPlaylistId: null }),
 }));
 
 // ── Rust 权威事件校正镜像（幂等；事件封装在 @/tauri/like） ──

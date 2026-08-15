@@ -1,7 +1,7 @@
-import { useSettingsStore } from "@/stores/settings";
-import { initAuth } from "@/modules/auth/stores/authStore";
-import { usePlayerStore } from "@/stores/player";
-import { getFullPlayerState } from "@/tauri/player";
+import { useSettingsStore } from '@/stores/settings';
+import { initAuth } from '@/modules/auth/stores/authStore';
+import { usePlayerStore } from '@/stores/player';
+import { getFullPlayerState } from '@/tauri/player';
 
 /**
  * Application-level initialization that must complete before React mounts.
@@ -43,6 +43,6 @@ async function restorePlayerState(): Promise<void> {
       usePlayerStore.setState({ duration: current_track.duration_secs });
     }
   } catch (err) {
-    console.warn("[restorePlayerState] 恢复播放器状态失败:", err);
+    console.warn('[restorePlayerState] 恢复播放器状态失败:', err);
   }
 }

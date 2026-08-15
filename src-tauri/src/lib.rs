@@ -65,6 +65,11 @@ pub fn run() {
             platform::tray::setup(handle)?;
             platform::accent_color::watch_accent_color(handle.clone());
 
+            // 监听系统默认音频输出设备变更（WASAPI）：变更时置位 device_changed，由 watcher 重建设备。
+            platform::audio_device::watch_default_device(
+                app.state::<PlayerState>().device_changed.clone(),
+            );
+
             // 音频迁移 Rust：启动 ended 检测后台任务（歌曲播完自动切下一首）
             player::orchestrator::start_ended_watcher(handle.clone());
 

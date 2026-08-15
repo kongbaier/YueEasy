@@ -24,4 +24,3 @@ export async function getPlaylistDetail(
     throw new Error('加载歌单失败');
   }
 }
-

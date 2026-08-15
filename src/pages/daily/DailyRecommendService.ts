@@ -9,4 +9,3 @@ export async function getDailyRecommendSongs(): Promise<Song[]> {
   );
   return r.data;
 }
-

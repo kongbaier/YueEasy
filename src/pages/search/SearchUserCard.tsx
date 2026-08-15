@@ -34,7 +34,9 @@ export function SearchUserCard({ item }: SearchUserCardProps) {
         </p>
       ) : (
         <p className="text-xs text-muted-foreground tabular-nums">
-          {(item.followeds ?? 0) > 0 ? `${formatCount(item.followeds ?? 0)} 粉丝` : ''}
+          {(item.followeds ?? 0) > 0
+            ? `${formatCount(item.followeds ?? 0)} 粉丝`
+            : ''}
         </p>
       )}
     </div>
@@ -53,7 +55,3 @@ export function SearchUserCardSkeleton() {
     </div>
   );
 }
-
-
-
-
