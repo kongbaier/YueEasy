@@ -1,25 +1,32 @@
+import { useEffect, useState } from 'react';
 import type { LyricLine } from '@/modules/player/lyric/parser';
-import { usePlayerStore } from '@/stores/player';
+import { audioCore } from '@/shared/lib/audio/AudioCore';
 
 /**
  * Per-frame word state for the ACTIVE lyric line only.
  *
- * Subscribes reactively to currentTimeHigh (the ~60fps rAF-backed store value).
- * This is the single high-frequency React subscription point in the lyric tree —
- * it lives only inside the active line, so non-active lines and non-current words
- * stay out of the per-frame render path (they are memoized and skip).
- *
- * wordIndex and progress are derived from the SAME time source, so there is no
- * boundary mismatch between "which word is current" and its fill ratio.
+ * 60fps 时间不走全局 store：本 hook 用 rAF 本地直读 audioCore.getPosition()，
+ * 只在 active line 组件挂载期间采样（非 active 行不渲染此 hook，故不参与每帧渲染）。
+ * wordIndex 与 progress 由同一时间源推导，避免「当前词」与「填充比例」边界错位。
  */
 export function useActiveLine(line: LyricLine): {
   wordIndex: number;
   progress: number;
 } {
-  const currentTimeHigh = usePlayerStore((s) => s.currentTimeHigh);
+  const [currentTime, setCurrentTime] = useState(() => audioCore.getPosition());
+
+  useEffect(() => {
+    let rafId = 0;
+    const tick = () => {
+      setCurrentTime(audioCore.getPosition());
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
 
   const words = line.words ?? [];
-  const elapsed = currentTimeHigh * 1000 - line.startMs;
+  const elapsed = currentTime * 1000 - line.startMs;
 
   let wordIndex = -1;
   let progress = 0;

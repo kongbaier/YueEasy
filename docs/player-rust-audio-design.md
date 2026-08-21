@@ -1,5 +1,9 @@
 # 播放器音频层迁移 Rust 设计
 
+> **⚠️ 已过时（2026-08-21）**：audio 播放已迁回前端（`src/shared/lib/audio/AudioCore.ts`，包装
+> `new Audio()`，同进程 rAF 直读 `getPosition()` 供逐字歌词）。本文件是「音频迁 Rust」的历史记录，
+> rodio/stream_download 依赖已删除。Rust 不再负责音频输出。
+
 > 状态：Phase 1-3 完成（2026-08-13）。Spike 验证 + `infra/audio/engine.rs` + `cmd/player.rs` 编排接线已落地；
 > Phase 4（前端退役）已基本完成（AudioCore/PlayerService 物理删除）。本文是 `player-rust-design.md` 的续篇，
 > 聚焦「音频播放」从 WebView 迁入 Rust。

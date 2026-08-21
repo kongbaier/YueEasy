@@ -2,12 +2,11 @@ mod app;
 mod cmd;
 mod music;
 mod platform;
-mod player;
 mod storage;
 
 use tauri::Manager;
 
-use crate::app::state::{LikeState, PlayerState};
+use crate::app::state::LikeState;
 use crate::music::netease::NcmState;
 use crate::storage::cache::CacheState;
 use crate::storage::db::Database;
@@ -38,7 +37,6 @@ pub fn run() {
         .manage(Database::default())
         .manage(CacheState::default())
         .manage(NcmState::default())
-        .manage(PlayerState::default())
         .manage(LikeState::default())
         .setup(|app| {
             let handle = app.handle();
@@ -54,24 +52,9 @@ pub fn run() {
 
             app.state::<NcmState>().restore_cookie(handle);
 
-            // Phase F：从 SQLite 恢复上次播放器状态（崩溃/重启续播）
-            {
-                let db = app.state::<Database>();
-                let player = app.state::<PlayerState>();
-                player.try_restore(&db);
-            }
-
             platform::window::setup(handle)?;
             platform::tray::setup(handle)?;
             platform::accent_color::watch_accent_color(handle.clone());
-
-            // 监听系统默认音频输出设备变更（WASAPI）：变更时置位 device_changed，由 watcher 重建设备。
-            platform::audio_device::watch_default_device(
-                app.state::<PlayerState>().device_changed.clone(),
-            );
-
-            // 音频迁移 Rust：启动 ended 检测后台任务（歌曲播完自动切下一首）
-            player::orchestrator::start_ended_watcher(handle.clone());
 
             Ok(())
         })
@@ -126,28 +109,7 @@ pub fn run() {
             cmd::media_session::update_media_session_metadata,
             cmd::media_session::update_media_session_status,
             cmd::media_session::update_media_session_position,
-            cmd::player::play_track,
-            cmd::player::replace_and_play,
-            cmd::player::play_queue_at,
-            cmd::player::play_next,
-            cmd::player::play_prev,
-            cmd::player::fm_trash,
-            cmd::player::set_repeat,
-            cmd::player::set_shuffle,
-            cmd::player::set_content_source,
-            cmd::player::seek,
-            cmd::player::play,
-            cmd::player::pause,
-            cmd::player::set_volume,
-            cmd::player::get_position,
-            cmd::player::append_to_queue,
-            cmd::player::insert_next,
-            cmd::player::remove_from_queue,
-            cmd::player::clear_queue,
             cmd::query::resolve_play_url,
-            cmd::query::get_player_snapshot,
-            cmd::query::get_queue,
-            cmd::query::get_full_player_state,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

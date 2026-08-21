@@ -7,5 +7,4 @@ pub mod history;
 pub mod like;
 pub mod media_session;
 pub mod ncm;
-pub mod player;
 pub mod query;

@@ -1,23 +1,28 @@
 import { useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/shallow';
 import { usePlayerStore } from '@/stores/player';
+import { useQueueStore } from '@/stores/queue';
 import { useSettingsStore } from '@/stores/settings';
 import { useAuthStore } from '@/modules/auth/stores/authStore';
 import { useLikeStore } from '@/modules/like/stores/like';
 import { queueItemToSong } from '@/shared/utils/mappers';
 
 /**
- * Player 域门面 hook：组合单一 player store + settings/auth/like 为统一输出。
- * 组件只 import 本 hook，不直接触碰 store。
+ * Player 域门面 hook：组合 queue store（低频队列/模式）+ player store（transport/编排）
+ * + settings/auth/like 为统一输出。组件只 import 本 hook，不直接触碰 store。
  */
 export function usePlayer() {
-  const p = usePlayerStore(
+  const transport = usePlayerStore(
     useShallow((s) => ({
       playing: s.playing,
       loading: s.loading,
       currentTime: s.currentTime,
       duration: s.duration,
       currentTrack: s.currentTrack,
+    })),
+  );
+  const queueView = useQueueStore(
+    useShallow((s) => ({
       queue: s.queue,
       currentIndex: s.currentIndex,
       order: s.order,
@@ -75,22 +80,25 @@ export function usePlayer() {
 
   return useMemo(
     () => ({
-      playing: p.playing,
-      loading: p.loading,
-      currentTime: p.currentTime,
-      duration: p.duration,
-      currentTrack: p.currentTrack ? queueItemToSong(p.currentTrack) : null,
-      queue: p.queue.map(queueItemToSong),
-      queueLength: p.queue.length,
-      currentIndex: p.currentIndex,
-      isFm: p.contentSource === 'personal_fm',
-      fmExitWillEmpty: p.contentSource !== 'personal_fm',
+      playing: transport.playing,
+      loading: transport.loading,
+      currentTime: transport.currentTime,
+      duration: transport.duration,
+      currentTrack: transport.currentTrack
+        ? queueItemToSong(transport.currentTrack)
+        : null,
+      queue: queueView.queue.map(queueItemToSong),
+      queueLength: queueView.queue.length,
+      currentIndex: queueView.currentIndex,
+      isFm: queueView.contentSource === 'personal_fm',
+      fmExitWillEmpty: queueView.contentSource !== 'personal_fm',
       canPrev:
-        p.currentIndex !== null &&
-        (p.contentSource !== 'personal_fm' || p.currentIndex > 0),
-      order: p.order,
-      repeat: p.repeat,
-      isShuffle: p.order === 'shuffle',
+        queueView.currentIndex !== null &&
+        (queueView.contentSource !== 'personal_fm' ||
+          queueView.currentIndex > 0),
+      order: queueView.order,
+      repeat: queueView.repeat,
+      isShuffle: queueView.order === 'shuffle',
       ...actions,
       togglePlay,
       seek,
@@ -105,7 +113,8 @@ export function usePlayer() {
       likedIds: like.likedIds,
     }),
     [
-      p,
+      transport,
+      queueView,
       actions,
       playerSettings,
       isLoggedIn,

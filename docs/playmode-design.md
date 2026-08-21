@@ -1,5 +1,9 @@
 # 播放模式（PlayMode）拓展设计：心动模式 + 私人漫游
 
+> **⚠️ 已过时（2026-08-21）**：队列/导航/FM 已迁前端 `src/modules/player/core/QueueEngine.ts`
+> （queue × mode 正交设计仍有效并被前端沿守：导航只算 Step，`Step::end` 后由 store 按 contentSource 续歌/停）。
+> 本文件是「Rust core 引擎实现」的历史记录。Rust 侧已删引擎，仅留 NCM 网络取数。
+
 > 状态：已实施（2026-08-14，P0 正交化 + P1 漫游多曲化 + P2 心动模式 + 事件精简全部落地，69 测试全绿）。
 > 本文承接 `player-rust-design.md`（队列/策略/FM 迁 Rust）与 `player-rust-audio-design.md`（音频迁 Rust）。
 

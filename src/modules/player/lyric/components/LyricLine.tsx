@@ -74,7 +74,7 @@ export const LyricLine = memo(function LyricLine({
 });
 
 /**
- * Words of the active line. Subscribes to currentTimeHigh (60fps) via useActiveLine
+ * Words of the active line. useActiveLine rAF-samples audioCore.getPosition() at 60fps
  * and re-renders every frame; memoized Word children mean only the current word
  * actually re-renders (its progress prop changes), the rest skip.
  */

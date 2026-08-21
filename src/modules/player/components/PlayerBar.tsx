@@ -12,7 +12,6 @@ import { useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { FollowTooltip } from '@/modules/player/components/FollowTooltip';
 import { useMediaSession } from '@/modules/player/hooks/useMediaSession';
-import { usePlaybackClock } from '@/modules/player/hooks/usePlaybackClock';
 import { usePlayerKeyboard } from '@/modules/player/hooks/usePlayerKeyboard';
 import { useProgress } from '@/modules/player/hooks/useProgress';
 import { usePlayer } from '@/modules/player/hooks/usePlayer';
@@ -280,7 +279,6 @@ export const PlayerBar = ({
 }) => {
   usePlayerKeyboard();
   useMediaSession();
-  usePlaybackClock();
   const { currentTrack } = usePlayer();
   return (
     <div

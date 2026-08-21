@@ -1,5 +1,10 @@
 # Tauri 2 网易云音乐播放器 Rust 架构设计
 
+> **⚠️ 已过时（2026-08-21）**：audio + queue/navigation 已全迁前端（前端唯一权威）。
+> 本文件描述的是「播放器全在 Rust」的历史设计，仅供参考。
+> 现状见 [[player-frontend-migration]] 记忆；播放器实现在前端 `src/shared/lib/audio/AudioCore.ts` +
+> `src/modules/player/core/*`（QueueEngine）+ `src/stores/player.ts`。Rust 只剩纯网络/platform。
+
 > 规模前提：Rust 后端 ~3000 行，播放器引擎 ~400 行，单人维护。所有设计取舍以此为锚。
 > 状态：Phase H 完成（2026-08-12）。Rust PlayerEngine + 前端 MirrorStore 全链路就绪。
 

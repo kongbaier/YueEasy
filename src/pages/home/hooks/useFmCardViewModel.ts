@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { homeService } from '../services/HomeService';
 import { usePlayerStore } from '@/stores/player';
+import { useQueueStore } from '@/stores/queue';
 import { queueItemToSong } from '@/shared/utils/mappers';
 import { useAuthStore } from '@/modules/auth/stores/authStore';
 import { useLoginDialog } from '@/modules/auth/stores/loginDialogStore';
@@ -13,9 +14,8 @@ import { toast } from '@/shared/lib/toast';
  * 只订阅 store / context，组件不再直接触碰它们。
  */
 export function useFmCardViewModel() {
-  // Rust 模式下 queue store 的 syncQueueDerived 早退，isFm/currentTrack 恒空值；
-  // 内容来源（FM 标志）改读 MirrorStore.contentSource，setContentSource action 仍走 queue store。
-  const isFm = usePlayerStore((s) => s.contentSource === 'personal_fm');
+  // 内容来源（FM 标志）在低频 queue store；setContentSource / currentTrack 在 player store。
+  const isFm = useQueueStore((s) => s.contentSource === 'personal_fm');
   const setContentSource = usePlayerStore((s) => s.setContentSource);
   const currentTrackRaw = usePlayerStore((s) => s.currentTrack);
   const currentTrack = currentTrackRaw

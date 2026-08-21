@@ -1,7 +1,7 @@
 import { useSettingsStore } from '@/stores/settings';
-import { initAuth } from '@/modules/auth/stores/authStore';
+import { useQueueStore } from '@/stores/queue';
 import { usePlayerStore } from '@/stores/player';
-import { getFullPlayerState } from '@/tauri/player';
+import { initAuth } from '@/modules/auth/stores/authStore';
 
 /**
  * Application-level initialization that must complete before React mounts.
@@ -17,7 +17,7 @@ export async function bootstrap() {
 }
 
 /**
- * 音频迁移 Rust 后，音量/静音权威仍在前端 settings，需在启动时下发到 Rust 音频引擎。
+ * 启动下发音量/静音到 audioCore（前端权威仍在 settings + AudioCore）。
  */
 function applyPlayerSettings(): void {
   const { volume, isMuted } = useSettingsStore.getState().player;
@@ -25,24 +25,19 @@ function applyPlayerSettings(): void {
 }
 
 /**
- * 启动恢复：从 Rust 拉取全量快照填充 store（队列/模式/当前曲目），不自动播放。
+ * 启动恢复：rehydrate queue store（plugin-store 持久化）→ 从快照重建引擎并回填（不自动播放）。
+ * 队列持久化在低频的 useQueueStore（plugin-store），与 60fps transport 更新解耦。
  */
 async function restorePlayerState(): Promise<void> {
-  try {
-    const { snapshot, current_track } = await getFullPlayerState();
-    usePlayerStore.setState({
-      currentTrack: current_track,
-      queue: snapshot.queue,
-      currentIndex: snapshot.current_index,
-      order: snapshot.order,
-      repeat: snapshot.repeat,
-      contentSource: snapshot.content_source,
-    });
-
-    if (current_track) {
-      usePlayerStore.setState({ duration: current_track.duration_secs });
-    }
-  } catch (err) {
-    console.warn('[restorePlayerState] 恢复播放器状态失败:', err);
-  }
+  await useQueueStore.persist.rehydrate();
+  // rehydrate 后持久化字段在 store state（camelCase），映射为快照以重建引擎
+  const s = useQueueStore.getState();
+  usePlayerStore.getState().restore({
+    queue: s.queue,
+    current_index: s.currentIndex,
+    order: s.order,
+    repeat: s.repeat,
+    content_source: s.contentSource,
+    fm_played_ids: s.fmPlayedIds,
+  });
 }
