@@ -11,6 +11,7 @@ const Album = lazy(() => import('@/pages/album'));
 const DailyRecommend = lazy(() => import('@/pages/daily'));
 const LikedSongs = lazy(() => import('@/pages/liked'));
 const RecentPlays = lazy(() => import('@/pages/recent'));
+const MyPlaylists = lazy(() => import('@/pages/my-playlists'));
 const Settings = lazy(() => import('@/pages/settings'));
 const PlayerPage = lazy(() => import('@/pages/player'));
 
@@ -27,6 +28,7 @@ export function AppRouter() {
             <Route element=<DailyRecommend /> path="daily" />
             <Route element=<LikedSongs /> path="my/liked" />
             <Route element=<RecentPlays /> path="my/recent" />
+            <Route element=<MyPlaylists /> path="my/playlists" />
             <Route element=<Settings /> path="settings" />
           </Route>
         </Routes>

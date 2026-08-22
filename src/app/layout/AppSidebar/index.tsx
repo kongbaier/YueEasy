@@ -1,11 +1,9 @@
 import {
-  ChevronDown,
   Clock,
   Heart,
   Home,
   Library,
   LogIn,
-  Music,
   Search,
   Settings,
   Sparkles,
@@ -14,7 +12,6 @@ import { useLayoutEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '@/shared/utils/cn';
-import { getNcmImageUrl } from '@/shared/utils/image';
 import {
   Sidebar,
   SidebarContent,
@@ -27,13 +24,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarSeparator,
   SidebarTrigger,
   useSidebar,
 } from '@/shared/ui/sidebar';
-import { SmartImage } from '@/shared/ui/image';
-import { useLocalStorageState } from '@/shared/hooks/useLocalStorageState';
-import { useSidebarPlaylists } from './useSidebarPlaylists';
 import { useAuthViewModel } from '@/modules/auth/hooks/useAuthViewModel';
 
 const items = [
@@ -45,6 +38,7 @@ const items = [
 const myItems = [
   { to: '/my/liked', icon: Heart, label: '我的喜欢' },
   { to: '/my/recent', icon: Clock, label: '最近播放' },
+  { to: '/my/playlists', icon: Library, label: '我的歌单' },
 ];
 
 const footerItems = [{ to: '/settings', icon: Settings, label: '设置' }];
@@ -133,24 +127,7 @@ export const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { state } = useSidebar();
-  const { isLoggedIn, userId, openLogin } = useAuthViewModel();
-  const { userPlaylists } = useSidebarPlaylists();
-
-  const [createdCollapsed, setCreatedCollapsed] = useLocalStorageState(
-    'sidebar_created_collapsed',
-    false,
-  );
-  const [favoritedCollapsed, setFavoritedCollapsed] = useLocalStorageState(
-    'sidebar_favorited_collapsed',
-    false,
-  );
-
-  const createdPlaylists = userPlaylists.filter(
-    (p) => p.creator?.id === userId,
-  );
-  const favoritedPlaylists = userPlaylists.filter(
-    (p) => p.creator?.id !== userId,
-  );
+  const { isLoggedIn, openLogin } = useAuthViewModel();
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar">
@@ -219,104 +196,6 @@ export const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isLoggedIn &&
-          (createdPlaylists.length > 0 || favoritedPlaylists.length > 0) && (
-            <SidebarSeparator className="group-data-[collapsible=icon]:mx-1.5" />
-          )}
-
-        {isLoggedIn && createdPlaylists.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel
-              className="cursor-pointer group-data-[collapsible=icon]:hidden"
-              onClick={() => setCreatedCollapsed(!createdCollapsed)}
-            >
-              <span>创建的歌单</span>
-              <ChevronDown
-                className={cn(
-                  'ml-auto h-4 w-4 shrink-0 transition-transform',
-                  createdCollapsed && '-rotate-90',
-                )}
-              />
-            </SidebarGroupLabel>
-            {(state === 'collapsed' || !createdCollapsed) && (
-              <SidebarGroupContent className="max-h-48 overflow-y-auto overflow-x-hidden">
-                <SidebarMenu className="space-y-0.5">
-                  {createdPlaylists.map((p) => {
-                    const isActive = location.pathname === `/playlist/${p.id}`;
-                    return (
-                      <SidebarMenuItem key={p.id}>
-                        <SidebarMenuButton
-                          className="gap-x-2"
-                          isActive={isActive}
-                          onClick={() => navigate(`/playlist/${p.id}`)}
-                        >
-                          {p.coverUrl ? (
-                            <SmartImage
-                              alt=""
-                              className="size-full object-cover"
-                              containerClassName="h-5 w-5 shrink-0 rounded-sm group-data-[collapsible=icon]:size-4"
-                              src={getNcmImageUrl(p.coverUrl, 50)}
-                            />
-                          ) : (
-                            <Music className="h-4 w-4 shrink-0" />
-                          )}
-                          <span className="truncate">{p.name}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            )}
-          </SidebarGroup>
-        )}
-
-        {isLoggedIn && favoritedPlaylists.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel
-              className="cursor-pointer group-data-[collapsible=icon]:hidden"
-              onClick={() => setFavoritedCollapsed(!favoritedCollapsed)}
-            >
-              <span>收藏的歌单</span>
-              <ChevronDown
-                className={cn(
-                  'ml-auto h-4 w-4 shrink-0 transition-transform',
-                  favoritedCollapsed && '-rotate-90',
-                )}
-              />
-            </SidebarGroupLabel>
-            {(state === 'collapsed' || !favoritedCollapsed) && (
-              <SidebarGroupContent className="max-h-48 overflow-y-auto overflow-x-hidden">
-                <SidebarMenu className="space-y-0.5">
-                  {favoritedPlaylists.map((p) => {
-                    const isActive = location.pathname === `/playlist/${p.id}`;
-                    return (
-                      <SidebarMenuItem key={p.id}>
-                        <SidebarMenuButton
-                          className="gap-x-2"
-                          isActive={isActive}
-                          onClick={() => navigate(`/playlist/${p.id}`)}
-                        >
-                          {p.coverUrl ? (
-                            <SmartImage
-                              alt=""
-                              className="size-full object-cover"
-                              containerClassName="h-5 w-5 shrink-0 rounded-sm group-data-[collapsible=icon]:size-4"
-                              src={getNcmImageUrl(p.coverUrl, 50)}
-                            />
-                          ) : (
-                            <Library className="h-4 w-4 shrink-0" />
-                          )}
-                          <span className="truncate">{p.name}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            )}
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       <SidebarFooter>
