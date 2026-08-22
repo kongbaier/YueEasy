@@ -43,6 +43,8 @@ const myItems = [
 
 const footerItems = [{ to: '/settings', icon: Settings, label: '设置' }];
 
+const navKeys = new Set([...items, ...myItems, ...footerItems].map((i) => i.to));
+
 const useNavIndicator = (): React.CSSProperties => {
   const location = useLocation();
   const { state } = useSidebar();
@@ -129,6 +131,16 @@ export const AppSidebar = () => {
   const { state } = useSidebar();
   const { isLoggedIn, openLogin } = useAuthViewModel();
 
+  // 双层路由：一级页更新高亮，二级页（playlist/album 详情）保持来源高亮
+  const [activeKey, setActiveKey] = useState<string | null>(() =>
+    navKeys.has(location.pathname) ? location.pathname : null,
+  );
+
+  const pathname = location.pathname;
+  if (navKeys.has(pathname) && pathname !== activeKey) {
+    setActiveKey(pathname);
+  }
+
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar">
       <SidebarHeader
@@ -145,7 +157,7 @@ export const AppSidebar = () => {
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
               {items.map((item) => {
-                const isActive = location.pathname === item.to;
+                const isActive = activeKey === item.to;
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton
@@ -174,7 +186,7 @@ export const AppSidebar = () => {
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
               {myItems.map((item) => {
-                const isActive = location.pathname === item.to;
+                const isActive = activeKey === item.to;
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton
