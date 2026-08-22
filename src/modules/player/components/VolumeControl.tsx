@@ -1,6 +1,7 @@
 import { Volume2, VolumeX } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Button } from '@/shared/ui/button';
+import { useDragScrub } from '@/modules/player/hooks/useDragScrub';
 import { usePlayer } from '@/modules/player/hooks/usePlayer';
 
 const DELAY_MS = 200;
@@ -21,31 +22,10 @@ export const VolumeControl = () => {
   const barRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    const bar = barRef.current;
-    if (!bar) return;
-    const rect = bar.getBoundingClientRect();
-    const y = Math.max(0, Math.min(rect.bottom - e.clientY, rect.height));
-    const ratio = y / rect.height;
-    applyVolume(ratio);
-
-    const handlePointerMove = (e: PointerEvent) => {
-      const rect = bar.getBoundingClientRect();
-      const y = Math.max(0, Math.min(rect.bottom - e.clientY, rect.height));
-      const ratio = y / rect.height;
-      applyVolume(ratio);
-    };
-
-    const handlePointerUp = () => {
-      bar.releasePointerCapture(e.pointerId);
-      bar.removeEventListener('pointermove', handlePointerMove);
-      bar.removeEventListener('pointerup', handlePointerUp);
-    };
-
-    bar.setPointerCapture(e.pointerId);
-    bar.addEventListener('pointermove', handlePointerMove);
-    bar.addEventListener('pointerup', handlePointerUp);
-  };
+  const handlePointerDown = useDragScrub(barRef, {
+    axis: 'y',
+    onScrub: applyVolume,
+  });
 
   const toggleMute = () => applyMuted(!isMuted);
 

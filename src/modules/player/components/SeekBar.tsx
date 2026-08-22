@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { useDragScrub } from '@/modules/player/hooks/useDragScrub';
 
 interface SeekBarContext {
   displayPercentage: number;
@@ -30,7 +31,6 @@ export const SeekBar = ({
   const barRef = useRef<HTMLDivElement>(null);
   const [barWidth, setBarWidth] = useState(0);
   const [scrubPercentage, setScrubPercentage] = useState<number | null>(null);
-  const scrubRatioRef = useRef(0);
   const displayPercentage = scrubPercentage ?? percentage;
 
   const [hoverPercentage, setHoverPercentage] = useState<number | null>(null);
@@ -59,35 +59,13 @@ export const SeekBar = ({
     return () => observer.disconnect();
   }, []);
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    const bar = barRef.current;
-    if (!bar) return;
-    const rect = bar.getBoundingClientRect();
-    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-    const ratio = x / rect.width;
-    scrubRatioRef.current = ratio;
-    setScrubPercentage(ratio * 100);
-
-    const handlePointerMove = (e: PointerEvent) => {
-      const rect = bar.getBoundingClientRect();
-      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-      const ratio = x / rect.width;
-      scrubRatioRef.current = ratio;
-      setScrubPercentage(ratio * 100);
-    };
-
-    const handlePointerUp = () => {
-      onSeek(scrubRatioRef.current * duration);
+  const handlePointerDown = useDragScrub(barRef, {
+    onScrub: (ratio) => setScrubPercentage(ratio * 100),
+    onCommit: (ratio) => {
+      onSeek(ratio * duration);
       setScrubPercentage(null);
-      bar.releasePointerCapture(e.pointerId);
-      bar.removeEventListener('pointermove', handlePointerMove);
-      bar.removeEventListener('pointerup', handlePointerUp);
-    };
-
-    bar.setPointerCapture(e.pointerId);
-    bar.addEventListener('pointermove', handlePointerMove);
-    bar.addEventListener('pointerup', handlePointerUp);
-  };
+    },
+  });
 
   return (
     <div

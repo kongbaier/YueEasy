@@ -2,6 +2,7 @@ import { Volume1, Volume2 } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { FollowTooltip } from '@/modules/player/components/FollowTooltip';
+import { useDragScrub } from '@/modules/player/hooks/useDragScrub';
 import { usePlayer } from '@/modules/player/hooks/usePlayer';
 
 const STEP = 0.1;
@@ -44,37 +45,13 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
     setIsHovering(false);
   }, []);
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    const bar = barRef.current;
-    if (!bar) return;
-    const rect = bar.getBoundingClientRect();
-    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-    const ratio = x / rect.width;
-    applyVolume(ratio);
-    setScrubVolume(ratio);
-
-    const handleDragMove = (moveEvent: PointerEvent) => {
-      const dragRect = bar.getBoundingClientRect();
-      const dragX = Math.max(
-        0,
-        Math.min(moveEvent.clientX - dragRect.left, dragRect.width),
-      );
-      const dragRatio = dragX / dragRect.width;
-      applyVolume(dragRatio);
-      setScrubVolume(dragRatio);
-    };
-
-    const handlePointerUp = () => {
-      setScrubVolume(null);
-      bar.releasePointerCapture(e.pointerId);
-      bar.removeEventListener('pointermove', handleDragMove);
-      bar.removeEventListener('pointerup', handlePointerUp);
-    };
-
-    bar.setPointerCapture(e.pointerId);
-    bar.addEventListener('pointermove', handleDragMove);
-    bar.addEventListener('pointerup', handlePointerUp);
-  };
+  const handlePointerDown = useDragScrub(barRef, {
+    onScrub: (ratio) => {
+      applyVolume(ratio);
+      setScrubVolume(ratio);
+    },
+    onCommit: () => setScrubVolume(null),
+  });
 
   const adjustVolume = (delta: number) => {
     const next = Math.max(0, Math.min(1, volume + delta));
