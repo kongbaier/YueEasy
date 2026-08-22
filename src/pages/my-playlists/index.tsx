@@ -7,7 +7,13 @@ import { useAuthViewModel } from '@/modules/auth/hooks/useAuthViewModel';
 import type { Playlist } from '@/shared/types/entities';
 import { useMyPlaylistsViewModel } from './useMyPlaylistsViewModel';
 
-const Section = ({ title, playlists }: { title: string; playlists: Playlist[] }) => {
+const Section = ({
+  title,
+  playlists,
+}: {
+  title: string;
+  playlists: Playlist[];
+}) => {
   if (playlists.length === 0) return null;
   return (
     <section>

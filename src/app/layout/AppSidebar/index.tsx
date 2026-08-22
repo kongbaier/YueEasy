@@ -43,7 +43,9 @@ const myItems = [
 
 const footerItems = [{ to: '/settings', icon: Settings, label: '设置' }];
 
-const navKeys = new Set([...items, ...myItems, ...footerItems].map((i) => i.to));
+const navKeys = new Set(
+  [...items, ...myItems, ...footerItems].map((i) => i.to),
+);
 
 const useNavIndicator = (): React.CSSProperties => {
   const location = useLocation();
@@ -100,7 +102,7 @@ const NavIndicator = () => {
   const indicatorStyle = useNavIndicator();
   return (
     <div
-      className="pointer-events-none absolute top-0 z-10 w-0.5 rounded-r-full bg-primary transition-[transform,opacity] duration-250 ease-out"
+      className="pointer-events-none absolute top-0 z-10 w-0.75 rounded-full bg-primary transition-[transform,opacity] duration-250 ease-out"
       style={indicatorStyle}
     />
   );
@@ -207,7 +209,6 @@ export const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
       </SidebarContent>
 
       <SidebarFooter>

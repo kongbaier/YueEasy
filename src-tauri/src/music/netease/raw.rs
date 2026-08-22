@@ -6,13 +6,22 @@
 
 use serde::Deserialize;
 
+/// 网易云部分字符串字段会返回 null，而 `#[serde(default)]` 只兜缺失字段、不兜 null。
+/// 用 `Option<String>` 中转，把 null 归一为空串，避免 decode 失败。
+fn de_string_nullable<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Ok(Option::<String>::deserialize(deserializer)?.unwrap_or_default())
+}
+
 // ── 通用子结构 ──────────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArtistDto {
     pub id: i64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "de_string_nullable")]
     pub name: String,
     #[serde(default)]
     pub pic_url: Option<String>,
@@ -22,7 +31,7 @@ pub struct ArtistDto {
 #[serde(rename_all = "camelCase")]
 pub struct AlbumDto {
     pub id: i64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "de_string_nullable")]
     pub name: String,
     #[serde(default)]
     pub pic_url: Option<String>,
@@ -44,7 +53,7 @@ pub struct AlbumDto {
 #[serde(rename_all = "camelCase")]
 pub struct SongDto {
     pub id: i64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "de_string_nullable")]
     pub name: String,
     #[serde(rename = "ar", alias = "artists", default)]
     pub artists: Vec<ArtistDto>,
@@ -79,7 +88,7 @@ pub struct UserDto {
 #[serde(rename_all = "camelCase")]
 pub struct PlaylistDto {
     pub id: i64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "de_string_nullable")]
     pub name: String,
     #[serde(default)]
     pub cover_img_url: Option<String>,
@@ -290,7 +299,7 @@ pub struct TopPlaylistResponseDto {
 #[serde(rename_all = "camelCase")]
 pub struct PlaylistHotTagDto {
     pub id: i64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "de_string_nullable")]
     pub name: String,
     #[serde(default)]
     pub category: Option<i64>,
@@ -439,7 +448,7 @@ pub struct IntelligenceResponseDto {
 #[serde(rename_all = "camelCase")]
 pub struct SearchAlbumDto {
     pub id: i64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "de_string_nullable")]
     pub name: String,
     #[serde(default)]
     pub pic_url: String,
@@ -457,7 +466,7 @@ pub struct SearchAlbumDto {
 #[serde(rename_all = "camelCase")]
 pub struct SearchArtistDto {
     pub id: i64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "de_string_nullable")]
     pub name: String,
     #[serde(default)]
     pub pic_url: String,
@@ -504,7 +513,7 @@ pub struct CloudsearchResponseDto {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SuggestArtistRefDto {
-    #[serde(default)]
+    #[serde(default, deserialize_with = "de_string_nullable")]
     pub name: String,
 }
 
@@ -512,7 +521,7 @@ pub struct SuggestArtistRefDto {
 #[serde(rename_all = "camelCase")]
 pub struct SuggestSongDto {
     pub id: i64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "de_string_nullable")]
     pub name: String,
     #[serde(default)]
     pub artists: Vec<SuggestArtistRefDto>,
@@ -522,7 +531,7 @@ pub struct SuggestSongDto {
 #[serde(rename_all = "camelCase")]
 pub struct SuggestAlbumDto {
     pub id: i64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "de_string_nullable")]
     pub name: String,
     #[serde(default)]
     pub artist: Option<SuggestArtistRefDto>,
@@ -532,7 +541,7 @@ pub struct SuggestAlbumDto {
 #[serde(rename_all = "camelCase")]
 pub struct SuggestArtistDto {
     pub id: i64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "de_string_nullable")]
     pub name: String,
 }
 
