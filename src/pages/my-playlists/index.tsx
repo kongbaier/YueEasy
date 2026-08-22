@@ -1,11 +1,11 @@
-import { Library } from 'lucide-react';
-import { Suspense } from 'react';
-import { usePageTitle } from '@/app/layout/PageTitleContext';
-import { Button } from '@/shared/ui/button';
-import { PlaylistCard } from '@/shared/ui/playlist-card';
-import { useAuthViewModel } from '@/modules/auth/hooks/useAuthViewModel';
-import type { Playlist } from '@/shared/types/entities';
-import { useMyPlaylistsViewModel } from './useMyPlaylistsViewModel';
+import { Library } from "lucide-react";
+import { Suspense } from "react";
+import { usePageTitle } from "@/app/layout/PageTitleContext";
+import { Button } from "@/shared/ui/button";
+import { PlaylistCard } from "@/shared/components/playlist-card";
+import { useAuthViewModel } from "@/modules/auth/hooks/useAuthViewModel";
+import type { Playlist } from "@/shared/types/entities";
+import { useMyPlaylistsViewModel } from "./useMyPlaylistsViewModel";
 
 const Section = ({
   title,
@@ -29,7 +29,7 @@ const Section = ({
 
 const MyPlaylistsContent = () => {
   const { userId } = useAuthViewModel();
-  if (!userId) throw new Error('未登录');
+  if (!userId) throw new Error("未登录");
 
   const { created, favorited } = useMyPlaylistsViewModel(userId);
 
@@ -51,7 +51,7 @@ const MyPlaylistsContent = () => {
 };
 
 export default function MyPlaylists() {
-  usePageTitle('我的歌单', { root: true });
+  usePageTitle("我的歌单", { root: true });
   const { isLoggedIn, openLogin } = useAuthViewModel();
 
   if (!isLoggedIn) {

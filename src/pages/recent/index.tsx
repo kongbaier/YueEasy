@@ -1,10 +1,10 @@
-import { Clock } from 'lucide-react';
-import { Suspense } from 'react';
-import { usePageTitle } from '@/app/layout/PageTitleContext';
-import { Button } from '@/shared/ui/button';
-import { TrackRow, TrackRowSkeleton } from '@/shared/ui/track';
-import { useAuthViewModel } from '@/modules/auth/hooks/useAuthViewModel';
-import { useRecentPlaysViewModel } from './useRecentPlaysViewModel';
+import { Clock } from "lucide-react";
+import { Suspense } from "react";
+import { usePageTitle } from "@/app/layout/PageTitleContext";
+import { Button } from "@/shared/ui/button";
+import { TrackRow, TrackRowSkeleton } from "@/shared/components/track";
+import { useAuthViewModel } from "@/modules/auth/hooks/useAuthViewModel";
+import { useRecentPlaysViewModel } from "./useRecentPlaysViewModel";
 
 const RecentPlaysSkeleton = () => (
   <div className="p-6">
@@ -20,7 +20,7 @@ const RecentPlaysSkeleton = () => (
 const RecentPlaysContent = () => {
   const { userId } = useAuthViewModel();
 
-  if (!userId) throw new Error('未登录');
+  if (!userId) throw new Error("未登录");
 
   const { tracks, visibleCount, handlePlay } = useRecentPlaysViewModel(userId);
 
@@ -48,7 +48,7 @@ const RecentPlaysContent = () => {
 };
 
 export default function RecentPlays() {
-  usePageTitle('最近播放', { root: true });
+  usePageTitle("最近播放", { root: true });
   const { isLoggedIn, openLogin } = useAuthViewModel();
 
   if (!isLoggedIn) {

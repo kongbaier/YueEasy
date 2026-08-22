@@ -1,17 +1,17 @@
-import { MessageCircle, ThumbsUp } from 'lucide-react';
-import { Skeleton } from '@/shared/ui/skeleton';
-import { SmartImage } from '@/shared/ui/image';
-import { formatCount } from '@/shared/utils/format';
-import { cn } from '@/shared/utils/cn';
-import { getNcmImageUrl } from '@/shared/utils/image';
-import { useComments } from '@/modules/comment/hooks/useComments';
-import type { Comment } from '@/shared/types/entities';
+import { MessageCircle, ThumbsUp } from "lucide-react";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { SmartImage } from "@/shared/ui/image";
+import { formatCount } from "@/shared/utils/format";
+import { cn } from "@/shared/utils/cn";
+import { getNcmImageUrl } from "@/shared/utils/image";
+import { useComments } from "@/modules/comment/hooks/useComments";
+import type { Comment } from "@/shared/types/entities";
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */
 /* ------------------------------------------------------------------ */
 
-const pad = (n: number) => String(n).padStart(2, '0');
+const pad = (n: number) => String(n).padStart(2, "0");
 
 const formatTime = (ts: number) => {
   const d = new Date(ts);
@@ -25,8 +25,8 @@ const formatTime = (ts: number) => {
 const CommentItem = ({ comment }: { comment: Comment }) => (
   <div
     className={cn(
-      'rounded-lg px-3 py-2.5',
-      'hover:bg-accent/50 transition-colors',
+      "rounded-lg px-3 py-2.5",
+      "hover:bg-accent/50 transition-colors",
     )}
   >
     {/* 用户行 */}
@@ -59,8 +59,8 @@ const CommentItem = ({ comment }: { comment: Comment }) => (
             key={reply.id}
           >
             <span className="text-primary/80">
-              @{reply.user?.nickname ?? ''}
-            </span>{' '}
+              @{reply.user?.nickname ?? ""}
+            </span>{" "}
             {reply.content}
           </p>
         ))}
@@ -71,7 +71,7 @@ const CommentItem = ({ comment }: { comment: Comment }) => (
     <div className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground">
       <ThumbsUp className="h-3 w-3" />
       <span>
-        {comment.likedCount > 0 ? formatCount(comment.likedCount) : ''}
+        {comment.likedCount > 0 ? formatCount(comment.likedCount) : ""}
       </span>
     </div>
   </div>
@@ -109,38 +109,26 @@ interface CommentPanelContentProps {
 }
 
 const CommentPanelContent = ({ playlistId }: CommentPanelContentProps) => {
-  const { data, isLoading } = useComments({ type: 'playlist', id: playlistId });
+  const { data, isLoading } = useComments({ type: "playlist", id: playlistId });
 
   if (isLoading) return <CommentSkeleton />;
 
   const comments = data?.comments ?? [];
   const hotComments = data?.hotComments ?? [];
-  const totalCount = data?.total ?? 0;
 
   return (
-    <div className="space-y-4">
-      {/* 标题 */}
-      <div className="flex items-center gap-2 px-1">
-        <MessageCircle className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">评论</span>
-        {totalCount > 0 && (
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {formatCount(totalCount)}
-          </span>
-        )}
-      </div>
-
+    <>
       {!comments.length && !hotComments.length ? (
         <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
           <MessageCircle className="h-8 w-8 opacity-30" />
           <p className="text-xs">暂无评论</p>
         </div>
       ) : (
-        <div className="space-y-0.5">
+        <div className="space-y-4">
           {/* 精彩评论 */}
           {hotComments.length > 0 && (
             <div className="space-y-0.5">
-              <p className="px-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+              <p className="px-1 text-[17px] leading-10 font-semibold text-muted-foreground uppercase tracking-wide">
                 精彩评论
               </p>
               {hotComments.map((c) => (
@@ -153,7 +141,7 @@ const CommentPanelContent = ({ playlistId }: CommentPanelContentProps) => {
           {comments.length > 0 && (
             <div className="space-y-0.5">
               {hotComments.length > 0 && (
-                <p className="px-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wide mt-3">
+                <p className="px-1 text-[17px] leading-10 font-semibold text-muted-foreground uppercase tracking-wide mt-3">
                   最新评论
                 </p>
               )}
@@ -164,7 +152,7 @@ const CommentPanelContent = ({ playlistId }: CommentPanelContentProps) => {
           )}
         </div>
       )}
-    </div>
+    </>
   );
 };
 
