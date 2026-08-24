@@ -1,44 +1,87 @@
 // usePlayerStore —— 播放编排 + transport 状态（不持久化）。
 //
-// 职责：把「引擎决策（useQueueStore）+ 播放 URL + audioCore」编排成播放动作，
-// 并持有 transport 状态（playing/loading/currentTime/duration）与当前曲。
+// 职责不变（port 旧实现）：把「引擎决策（useQueueStore 活动源 policy）+ 播放 URL + 音频」
+// 编排成播放动作，并持有 transport 状态（playing/loading/currentTime/duration）与当前曲。
 // 持久化在 useQueueStore（低频、plugin-store）；本 store 不套 persist。
+//
+// 音频与 URL 解析统一经库 Player 门面：
+//   · `player` = Player(AudioCore + 活动源 policy + resolver)
+//   · resolver 内封装「URL 缓存 + 反竞态 seq」——seq 不匹配返回 null（Player 跳过播放）。
+//   · 导航经 useQueueStore（活动源 policy）算 Step → track → player.loadAndPlay(track)。
+//   · `ended` 由本 store 接管（库 Player 不自动推进），据 contentSource 决定续歌 / 停。
 //
 // playing/loading 采用「乐观更新 + 事件同步兜底」：
 //   - 乐观：resolveAndPlay 开头 loading=true、play 事件 playing=true 即时反馈
-//   - 兜底：audioCore 原生事件（play/playing/waiting/pause/ended/error）权威校正
-// currentTime 由 audioCore timeupdate 事件驱动（~4Hz，够进度条）；逐字歌词的 60fps
-// 时间不走本 store，由 useActiveLine 本地 rAF 直读 audioCore.getPosition()。
+//   - 兜底：audioCore 事件（status/timeupdate/ended/error）权威校正
+// currentTime 由 timeupdate 事件驱动（~4Hz，够进度条）；逐字歌词的 60fps 不走本 store。
 
-import { create } from 'zustand';
-import { useSettingsStore } from '@/stores/settings';
-import { useQueueStore, playerEngine } from '@/stores/queue';
-import type { QueueItem } from '@/shared/types/entities';
-import type {
-  RepeatMode,
-  RustContentSource,
-  Track,
-} from '@/shared/types/player';
-import { NEXT_REPEAT } from '@/shared/constants/player';
-import { songToQueueItem } from '@/shared/utils/mappers';
-import { audioCore } from '@/shared/lib/audio/AudioCore';
-import type { PlayerSnapshot } from '@/modules/player/core/types';
+import { create } from "zustand";
+import { useSettingsStore } from "@/stores/settings";
+import { useQueueStore } from "@/stores/queue";
+import type { QueueItem } from "@/shared/types/entities";
+import type { RepeatMode, Track } from "@/shared/types/player";
+import { NEXT_REPEAT } from "@/shared/constants/player";
+import { songToQueueItem } from "@/shared/utils/mappers";
+import { AudioCore } from "@/shared/lib/player-core/audio";
+import { Player } from "@/shared/lib/player-core/player";
+import type { Track as CoreTrack } from "@/shared/lib/player-core/models/track";
+import { queuePolicy, fmPolicy, type QueueSnapshot } from "@/stores/queue";
 import {
   fetchFm,
   resolveUrl,
   trashFm,
-} from '@/modules/player/services/PlayerService';
+} from "@/modules/player/services/PlayerService";
 
-export { formatQueueCount } from '@/shared/utils/format';
+export { formatQueueCount } from "@/shared/utils/format";
 
-/** track_id → url 缓存（LoopOne 重播 / 同曲重播免再 resolve）。 */
-const lastUrlCache = new Map<number, string>();
-/** 快速切歌竞态防护：新 load 开始则旧 async resolve/play 失效。 */
+/** QueueItem → 库 Track（URL 留空，由 resolver 解析后注入）。 */
+function queueItemToCoreTrack(item: QueueItem): CoreTrack {
+  const { track_id, ...rest } = item;
+  return { id: String(track_id), src: "", ...rest };
+}
+
+// ── URL 解析（缓存 + 反竞态 seq） ──
+const lastUrlCache = new Map<string, string>();
 let playSeq = 0;
-/** FM 续歌防死循环上限（对齐 Rust「续歌无新曲目」停止语义）。 */
+/** FM 续歌防死循环上限（对齐旧实现）。 */
 const FM_CONTINUE_MAX = 8;
 
-/** 播放编排：乐观 loading → resolve URL → load+play。playing/loading 由 audio 事件校正。 */
+// ── 库音频 / Player 门面（共享同一 AudioCore 实例） ──
+// coreAudio：物理层，store 订阅其事件驱动 transport；player：编排层（policy + resolver + load/play）。
+export const audioCore = new AudioCore();
+export const player = new Player(audioCore, queuePolicy, async (track) => {
+  // 反竞态：被更新的切歌取代则返回 null（Player 跳过 load/play）
+  const mySeq = playSeq;
+  const key = track.id;
+  let url = lastUrlCache.get(key);
+  if (!url) {
+    url = await resolveUrl(Number(key));
+    if (mySeq !== playSeq) return null; // 已被更新的切歌取代
+    lastUrlCache.set(key, url);
+  }
+  return url;
+});
+
+// 单次订阅音频事件（模块加载挂载一次）。状态权威来自 AudioCore 状态投影（status）。
+audioCore.on("timeupdate", (pos) => {
+  usePlayerStore.setState({ currentTime: pos });
+});
+audioCore.on("status", (status) => {
+  usePlayerStore.setState({
+    playing: status === "playing" || status === "buffering",
+    loading: status === "loading",
+    buffering: status === "buffering",
+  });
+});
+audioCore.on("ended", () => {
+  void handleEnded();
+});
+audioCore.on("error", () => {
+  usePlayerStore.setState({ playing: false, loading: false });
+  console.warn("[player] audio error");
+});
+
+/** 播放编排：乐观 loading → resolve（经 resolver）→ load+play（经 Player）。 */
 async function resolveAndPlay(item: QueueItem): Promise<void> {
   const seq = ++playSeq;
   usePlayerStore.setState({
@@ -47,41 +90,29 @@ async function resolveAndPlay(item: QueueItem): Promise<void> {
     duration: item.duration_secs,
     loading: true,
   });
-  try {
-    let url = lastUrlCache.get(item.track_id);
-    if (!url) {
-      url = await resolveUrl(item.track_id);
-      if (seq !== playSeq) return; // 已被更新的切歌取代
-      lastUrlCache.set(item.track_id, url);
-    }
-    audioCore.load(url);
-    await audioCore.play();
-  } catch (err) {
-    if (seq === playSeq) {
-      usePlayerStore.setState({ loading: false, playing: false });
-      console.warn('[player] 播放失败:', err);
-    }
-  }
+  await player.loadAndPlay(queueItemToCoreTrack(item));
+  if (seq !== playSeq) return; // 已被更新的切歌取代
 }
 
 /** FM 续歌循环：End + personal_fm → fetch → appendFm → 重推进。带防死循环 guard。 */
 async function fmContinuation(): Promise<void> {
   const q = () => useQueueStore.getState();
   for (let i = 0; i < FM_CONTINUE_MAX; i++) {
-    const before = playerEngine.queueItems().length;
+    const before = fmPolicy.tracks.length;
     const tracks = await fetchFm();
     if (tracks.length === 0) {
       await pauseAudio();
       return;
     }
     q().appendFm(tracks);
-    if (playerEngine.queueItems().length === before) {
+    if (fmPolicy.tracks.length === before) {
       await pauseAudio(); // 无新曲目，停止不空转
       return;
     }
     const step = q().manualNext();
-    if (step.type === 'play') {
-      await resolveAndPlay(playerEngine.queueItems()[step.index]);
+    if (step.type === "play") {
+      const track = q().queue[step.index];
+      if (track) await resolveAndPlay(track);
       return;
     }
     // 仍 End → 继续取；超上限停止
@@ -90,59 +121,36 @@ async function fmContinuation(): Promise<void> {
 }
 
 async function pauseAudio(): Promise<void> {
-  audioCore.pause();
+  player.pause();
   usePlayerStore.setState({ playing: false, loading: false });
 }
 
 /** 自然播放结束：按 repeat 推进 / FM 续歌 / 停。 */
 async function handleEnded(): Promise<void> {
-  if (playerEngine.queueItems().length === 0) {
+  const q = () => useQueueStore.getState();
+  if (q().queue.length === 0) {
     await pauseAudio();
     return;
   }
-  const step = useQueueStore.getState().onTrackEnd();
-  if (step.type === 'play') {
-    await resolveAndPlay(playerEngine.queueItems()[step.index]);
-  } else if (step.type === 'replayCurrent') {
-    const cur = playerEngine.currentTrack();
+  const step = q().onTrackEnd();
+  if (step.type === "play") {
+    const track = q().queue[step.index];
+    if (track) await resolveAndPlay(track);
+  } else if (step.type === "replayCurrent") {
+    const cur = q().currentTrack();
     if (cur) await resolveAndPlay(cur);
-  } else if (useQueueStore.getState().contentSource === 'personal_fm') {
+  } else if (q().isFmActive()) {
     await fmContinuation();
   } else {
     await pauseAudio();
   }
 }
 
-// 单次订阅 AudioCore 事件（模块加载挂载一次）。
-// 状态权威来自 AudioCore 状态机快照（status）；乐观更新已在 action/resolveAndPlay 里先行。
-// loading 只指「加载元数据」（歌曲未知）；buffering 指「歌曲已知、播放中数据跟不上」，
-// 二者分离后 seek 引起的 waiting 不再进 loading（机器内 notSeeking guard 已排除）——不再闪烁。
-audioCore.on('timeupdate', (pos) => {
-  usePlayerStore.setState({ currentTime: pos });
-});
-audioCore.on('status', (status) => {
-  usePlayerStore.setState({
-    playing: status === 'playing' || status === 'buffering',
-    loading: status === 'loading',
-    buffering: status === 'buffering',
-  });
-});
-audioCore.on('ended', () => {
-  void handleEnded();
-});
-audioCore.on('error', (msg) => {
-  usePlayerStore.setState({ playing: false, loading: false });
-  console.warn('[player] audio error:', msg);
-});
-
-// ── Store 定义 ──
-
 export interface PlayerStore {
   // transport / 编排状态
   currentTrack: QueueItem | null;
   playing: boolean;
   loading: boolean;
-  /** 播放中缓冲不足（歌曲已知，数据跟不上）。与 loading（元数据未知）分离。 */
   buffering: boolean;
   currentTime: number;
   duration: number;
@@ -167,11 +175,11 @@ export interface PlayerStore {
   playFromIndex: (index: number) => Promise<void>;
   removeFromQueue: (index: number) => Promise<void>;
   clearQueue: () => void;
-  setContentSource: (source: RustContentSource) => Promise<void>;
+  setContentSource: (source: "queue" | "personal_fm") => Promise<void>;
   fmTrash: () => Promise<void>;
 
-  /** 启动恢复：交给 queue store 重建引擎并回填本 store 当前曲。 */
-  restore: (snapshot: PlayerSnapshot) => void;
+  /** 启动恢复：交给 queue store 重建两条 policy 并回填本 store 当前曲。 */
+  restore: (snapshot: QueueSnapshot) => void;
 }
 
 export const usePlayerStore = create<PlayerStore>((set, get) => ({
@@ -187,19 +195,19 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
     playSeq += 1;
     lastUrlCache.clear();
     usePlayerStore.setState({
-      currentTrack: playerEngine.currentTrack(),
-      duration: playerEngine.currentTrack()?.duration_secs ?? 0,
+      currentTrack: useQueueStore.getState().currentTrack(),
+      duration: useQueueStore.getState().currentTrack()?.duration_secs ?? 0,
       currentTime: 0,
       playing: false,
       loading: false,
       buffering: false,
     });
-    audioCore.reset(); // audio 置空闲（机器回 idle），不自动播放
+    audioCore.reset();
   },
 
   seek: (time) => {
     set({ currentTime: time });
-    audioCore.seek(time);
+    player.seek(time);
   },
   resume: async () => {
     if (get().loading) return;
@@ -210,17 +218,17 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
       if (track) await resolveAndPlay(track);
       return;
     }
-    const cur = playerEngine.currentTrack();
+    const cur = q().currentTrack();
     if (!cur) return;
     // 无已加载 source（恢复/清空后）→ 重载当前曲
-    if (audioCore.getStatus() === 'idle') {
+    if (audioCore.getStatus() === "idle") {
       await resolveAndPlay(cur);
       return;
     }
-    await audioCore.play(); // play → playing/waiting 事件驱动 playing/loading
+    await player.play(); // play → playing 事件驱动 playing/loading
   },
   pause: () => {
-    audioCore.pause(); // pause 事件驱动 playing/loading
+    player.pause();
   },
   toggle: () => {
     if (get().loading) return;
@@ -228,29 +236,29 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   },
   setVolume: (volume) => {
     useSettingsStore.getState().updatePlayer({ volume, isMuted: false });
-    audioCore.setVolume(volume);
+    player.volume = volume;
   },
   setMuted: (muted) => {
-    const player = useSettingsStore.getState().player;
-    if (player.isMuted === muted) return;
+    const p = useSettingsStore.getState().player;
+    if (p.isMuted === muted) return;
     useSettingsStore.getState().updatePlayer({ isMuted: muted });
-    audioCore.setVolume(muted ? 0 : player.volume);
+    player.volume = muted ? 0 : p.volume;
   },
   cycleRepeat: () => {
     const q = () => useQueueStore.getState();
     const { repeat, contentSource } = q();
     const next: RepeatMode =
-      contentSource === 'personal_fm'
-        ? repeat === 'one'
-          ? 'off'
-          : 'one'
+      contentSource === "personal_fm"
+        ? repeat === "one"
+          ? "off"
+          : "one"
         : NEXT_REPEAT[repeat];
     q().setRepeat(next);
   },
   toggleShuffle: () => {
     const q = () => useQueueStore.getState();
-    if (q().contentSource === 'personal_fm') return;
-    q().setOrder(q().order === 'shuffle' ? 'sequential' : 'shuffle');
+    if (q().contentSource === "personal_fm") return;
+    q().setOrder(q().order === "shuffle" ? "sequential" : "shuffle");
   },
 
   play: async (track) => {
@@ -264,12 +272,13 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
     if (cur) await resolveAndPlay(cur);
   },
   next: async () => {
-    const step = useQueueStore.getState().manualNext();
-    if (step.type === 'play') {
-      await resolveAndPlay(playerEngine.queueItems()[step.index]);
-    } else if (step.type === 'end') {
-      if (useQueueStore.getState().contentSource === 'personal_fm')
-        await fmContinuation();
+    const q = () => useQueueStore.getState();
+    const step = q().manualNext();
+    if (step.type === "play") {
+      const track = q().queue[step.index];
+      if (track) await resolveAndPlay(track);
+    } else if (step.type === "end") {
+      if (q().isFmActive()) await fmContinuation();
       else await pauseAudio();
     }
   },
@@ -288,9 +297,10 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
     if (cur) await resolveAndPlay(cur);
   },
   removeFromQueue: async (index) => {
-    const before = playerEngine.currentTrack()?.track_id;
-    useQueueStore.getState().removeAt(index);
-    const after = playerEngine.currentTrack();
+    const q = () => useQueueStore.getState();
+    const before = q().currentTrack()?.track_id;
+    q().removeAt(index);
+    const after = q().currentTrack();
     if (after?.track_id !== before) {
       if (after) await resolveAndPlay(after);
       else await pauseAudio();
@@ -310,11 +320,11 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   },
   setContentSource: async (source) => {
     const q = () => useQueueStore.getState();
-    if (source === 'personal_fm') {
+    if (source === "personal_fm") {
       const tracks = await fetchFm();
       if (tracks.length === 0) return;
       q().enterFm(tracks[0]);
-      const cur = playerEngine.currentTrack();
+      const cur = q().currentTrack();
       if (cur) await resolveAndPlay(cur);
     } else {
       const cur = q().exitFm();
@@ -326,8 +336,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
     if (!q().isFmActive()) return;
     const removed = q().removeFmCurrent();
     if (!removed) return;
-    await trashFm(removed.track_id); // 上报服务端
-    const cur = playerEngine.currentTrack();
+    await trashFm(removed.track_id);
+    const cur = q().currentTrack();
     if (cur) await resolveAndPlay(cur);
     else await pauseAudio();
   },

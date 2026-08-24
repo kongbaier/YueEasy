@@ -1,42 +1,92 @@
 // useQueueStore —— 队列权威 store（低频、持久化）。
-// 持有 QueueEngine（队列/导航/FM 状态机），镜像低频谱队列状态，并经 plugin-store 持久化。
-// 与 usePlayerStore（transport 60fps）分离：本 store 的字段只在真实队列/导航突变时变，
-// 不会被子帧的 currentTime 更新波及 → persist 安全、不被意外触发。
 //
-// usePlayerStore（编排层）经本 store 的 action 驱动引擎并读取 currentTrack / Step。
+// 持有两条独立内容源 policy：QueuePolicy（用户队列）+ FmPolicy（推荐流）+ 活动源标记。
+// 与旧 QueueEngine（单引擎 + stash 存用户队列）不同：两条队列各自独立持状态，切换只换
+// 当前引用，任一方的队列 / 模式都不丢。用库 policy 的 Track 承接，内做 QueueItem ↔ Track 适配。
+//
+// 路由规则（对齐旧行为）：
+//   · 用户队列操作（playTrack/replacePlay/playQueueAt/append/insertNext/removeAt/clear/
+//     setRepeat/setOrder）→ 作用于 queuePolicy；若当前在 FM 先切回 queue（旧 exitFm 语义）。
+//   · 导航（manualNext/onTrackEnd/prev/restart）与只读（currentTrack/currentIndex/repeat）→ 活动源。
+//   · FM 专属（enterFm/exitFm/appendFm/removeFmCurrent）→ fmPolicy。
+//
+// 持久化在低频本 store（plugin-store），与 60fps transport 解耦。
 
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import type { QueueItem } from '@/shared/types/entities';
-import type { Order, RepeatMode } from '@/shared/types/player';
-import type {
-  ContentSource,
-  PlayerSnapshot,
-} from '@/modules/player/core/types';
-import { QueueEngine } from '@/modules/player/core/QueueEngine';
-import { TauriStorage } from '@/tauri/storage';
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import type { QueueItem } from "@/shared/types/entities";
+import { QueuePolicy } from "@/shared/lib/player-core/policy/queue";
+import { FmPolicy } from "@/shared/lib/player-core/policy/fm";
+import type { Track } from "@/shared/lib/player-core/models/track";
+import type { Order, Repeat } from "@/shared/lib/player-core/types";
+import { TauriStorage } from "@/tauri/storage";
 
-// eslint-disable-next-line prefer-const
-export let playerEngine = new QueueEngine();
+/** 内容来源（适配层正交轴，沿用旧语义）。 */
+export type ContentSource = "queue" | "personal_fm";
 
-function fromEnginePartial(): Pick<
-  QueueState,
-  | 'queue'
-  | 'currentIndex'
-  | 'order'
-  | 'repeat'
-  | 'contentSource'
-  | 'fmPlayedIds'
-> {
-  const snap = playerEngine.snapshot();
+/** 导航决策结果（适配层语义，与旧引擎一致：上层据 contentSource 决定 End 后停或续歌）。 */
+export type Step =
+  | { type: "play"; index: number }
+  | { type: "replayCurrent" }
+  | { type: "end" };
+
+// ── 两条来源 policy（模块级单例，切换只换引用，各自持队列） ──
+export const queuePolicy = new QueuePolicy();
+export const fmPolicy = new FmPolicy();
+
+function queueItemToTrack(item: QueueItem): Track {
+  const { track_id, ...rest } = item;
+  return { id: String(track_id), src: "", ...rest };
+}
+
+function trackToQueueItem(t: Track): QueueItem {
   return {
-    queue: snap.queue,
-    currentIndex: snap.current_index,
-    order: snap.order,
-    repeat: snap.repeat,
-    contentSource: snap.content_source,
-    fmPlayedIds: snap.fm_played_ids,
+    track_id: Number(t.id),
+    title: (t.title as string) ?? "",
+    artist: (t.artist as string) ?? "",
+    album: (t.album as string) ?? "",
+    cover_url: (t.cover_url as string) ?? "",
+    duration_secs: (t.duration_secs as number) ?? 0,
   };
+}
+
+// ── 持久化快照（两条队列分别保存，FM 期间用户队列不丢） ──
+export interface QueueSnapshot {
+  contentSource: ContentSource;
+  queue: QueueItem[];
+  currentIndex: number | null;
+  order: Order;
+  repeat: Repeat;
+  fmQueue: QueueItem[];
+  fmIndex: number | null;
+  fmRepeat: Repeat;
+  fmPlayedIds: number[];
+}
+
+/** 从两条 policy 组装快照（纯函数，不引用 store，避免循环初始化）。 */
+function buildSnapshot(contentSource: ContentSource): QueueSnapshot {
+  return {
+    contentSource,
+    queue: queuePolicy.tracks.map(trackToQueueItem),
+    currentIndex: queuePolicy.currentIndex(),
+    order: queuePolicy.order(),
+    repeat: queuePolicy.repeatValue(),
+    fmQueue: fmPolicy.tracks.map(trackToQueueItem),
+    fmIndex: fmPolicy.currentIndex(),
+    fmRepeat: fmPolicy.repeatValue(),
+    fmPlayedIds: [],
+  };
+}
+
+function restoreFrom(snap: QueueSnapshot): void {
+  queuePolicy.replacePlay(
+    snap.queue.map(queueItemToTrack),
+    snap.currentIndex ?? 0,
+  );
+  queuePolicy.setOrder(snap.order);
+  queuePolicy.setRepeat(snap.repeat);
+  fmPolicy.seedFrom(snap.fmQueue.map(queueItemToTrack), snap.fmIndex ?? 0);
+  fmPolicy.setRepeat(snap.fmRepeat);
 }
 
 export interface QueueState {
@@ -44,27 +94,27 @@ export interface QueueState {
   queue: QueueItem[];
   currentIndex: number | null;
   order: Order;
-  repeat: RepeatMode;
+  repeat: Repeat;
   contentSource: ContentSource;
   fmPlayedIds: number[];
 
-  // ── 队列操作（突变引擎 → 镜像 → persist） ──
-  append: (tracks: QueueItem[]) => void;
-  insertNext: (track: QueueItem) => void;
-  removeAt: (index: number) => void;
-  clear: () => void;
-  setRepeat: (repeat: RepeatMode) => void;
-  setOrder: (order: Order) => void;
-
-  // ── 导航（返回「下一步播什么」，供编排层取曲 + 播放） ──
+  // ── 用户队列操作（作用于 queuePolicy，FM 时先切回 queue） ──
   playTrack: (track: QueueItem) => QueueItem | null;
   replacePlay: (
     tracks: QueueItem[],
     startIndex?: number | null,
   ) => QueueItem | null;
   playQueueAt: (index: number) => QueueItem | null;
-  manualNext: () => ReturnType<QueueEngine['manualNext']>;
-  onTrackEnd: () => ReturnType<QueueEngine['onTrackEnd']>;
+  append: (tracks: QueueItem[]) => void;
+  insertNext: (track: QueueItem) => void;
+  removeAt: (index: number) => void;
+  clear: () => void;
+  setRepeat: (repeat: Repeat) => void;
+  setOrder: (order: Order) => void;
+
+  // ── 导航（返回 Step，供编排层取曲 + 播放；作用于活动源） ──
+  manualNext: () => Step;
+  onTrackEnd: () => Step;
   prev: () => QueueItem | null;
   restart: () => QueueItem | null;
 
@@ -78,121 +128,182 @@ export interface QueueState {
   currentTrack: () => QueueItem | null;
   isFmActive: () => boolean;
   isEnded: () => boolean;
-  snapshot: () => PlayerSnapshot;
-  /** 引擎状态同步到 store + 持久化（变化后调用）。 */
-  sync: () => void;
-  /** 启动恢复：从快照重建引擎并回填（不自动播放）。 */
-  restore: (snapshot: PlayerSnapshot) => void;
+  snapshot: () => QueueSnapshot;
+  restore: (snapshot: QueueSnapshot) => void;
+}
+
+/** 活动源 policy（queue / fm）。 */
+function activePolicyOf(source: ContentSource): QueuePolicy | FmPolicy {
+  return source === "personal_fm" ? fmPolicy : queuePolicy;
 }
 
 export const useQueueStore = create<QueueState>()(
   persist(
-    (set, get) => ({
-      ...fromEnginePartial(),
+    (set, get) => {
+      // 把给定 policy 的低频字段镜像进 store（活动源变更 / 导航 / 队列变更后调用）。
+      const mirror = (policy: QueuePolicy | FmPolicy) =>
+        set({
+          queue: policy.tracks.map(trackToQueueItem),
+          currentIndex: policy.currentIndex(),
+          order: policy instanceof FmPolicy ? "sequential" : policy.order(),
+          repeat: policy.repeatValue(),
+        });
 
-      sync: () => set(fromEnginePartial()),
+      // 用户队列操作前置：若在 FM 先切回 queue。
+      const ensureQueue = () => {
+        if (get().contentSource !== "personal_fm") return;
+        set({ contentSource: "queue" });
+        mirror(queuePolicy);
+      };
 
-      append: (tracks) => {
-        playerEngine.append(tracks);
-        get().sync();
-      },
-      insertNext: (track) => {
-        playerEngine.insertNext(track);
-        get().sync();
-      },
-      removeAt: (index) => {
-        playerEngine.removeAt(index);
-        get().sync();
-      },
-      clear: () => {
-        playerEngine.clear();
-        get().sync();
-      },
-      setRepeat: (repeat) => {
-        playerEngine.setRepeat(repeat);
-        get().sync();
-      },
-      setOrder: (order) => {
-        playerEngine.setOrder(order);
-        get().sync();
-      },
+      return {
+        queue: [],
+        currentIndex: null,
+        order: "sequential" as Order,
+        repeat: "off" as Repeat,
+        contentSource: "queue" as ContentSource,
+        fmPlayedIds: [],
 
-      playTrack: (track) => {
-        const t = playerEngine.playTrack(track);
-        get().sync();
-        return t;
-      },
-      replacePlay: (tracks, startIndex) => {
-        const t = playerEngine.replacePlay(tracks, startIndex ?? 0);
-        get().sync();
-        return t;
-      },
-      playQueueAt: (index) => {
-        const t = playerEngine.playQueueAt(index);
-        get().sync();
-        return t;
-      },
-      manualNext: () => {
-        const step = playerEngine.manualNext();
-        get().sync();
-        return step;
-      },
-      onTrackEnd: () => {
-        const step = playerEngine.onTrackEnd();
-        get().sync();
-        return step;
-      },
-      prev: () => {
-        const t = playerEngine.prev();
-        get().sync();
-        return t;
-      },
-      restart: () => {
-        const t = playerEngine.restart();
-        get().sync();
-        return t;
-      },
+        playTrack: (track) => {
+          ensureQueue();
+          const t = queuePolicy.playTrack(queueItemToTrack(track));
+          mirror(queuePolicy);
+          return t ? trackToQueueItem(t) : null;
+        },
+        replacePlay: (tracks, startIndex) => {
+          ensureQueue();
+          const t = queuePolicy.replacePlay(
+            tracks.map(queueItemToTrack),
+            startIndex ?? 0,
+          );
+          mirror(queuePolicy);
+          return t ? trackToQueueItem(t) : null;
+        },
+        playQueueAt: (index) => {
+          ensureQueue();
+          const t = queuePolicy.playQueueAt(index);
+          mirror(queuePolicy);
+          return t ? trackToQueueItem(t) : null;
+        },
+        append: (tracks) => {
+          ensureQueue();
+          queuePolicy.append(tracks.map(queueItemToTrack));
+          mirror(queuePolicy);
+        },
+        insertNext: (track) => {
+          ensureQueue();
+          queuePolicy.insertNext(queueItemToTrack(track));
+          mirror(queuePolicy);
+        },
+        removeAt: (index) => {
+          ensureQueue();
+          queuePolicy.removeAt(index);
+          mirror(queuePolicy);
+        },
+        clear: () => {
+          ensureQueue();
+          queuePolicy.clear();
+          mirror(queuePolicy);
+        },
+        setRepeat: (repeat) => {
+          const p = activePolicyOf(get().contentSource);
+          p.setRepeat(repeat);
+          mirror(p);
+        },
+        setOrder: (order) => {
+          const p = activePolicyOf(get().contentSource);
+          if (p instanceof FmPolicy) return; // FM 强制顺序，禁用随机
+          (p as QueuePolicy).setOrder(order);
+          mirror(p);
+        },
 
-      enterFm: (track) => {
-        playerEngine.enterFm(track);
-        get().sync();
-      },
-      exitFm: () => {
-        const t = playerEngine.exitFm();
-        get().sync();
-        return t;
-      },
-      appendFm: (tracks) => {
-        playerEngine.appendFm(tracks);
-        get().sync();
-      },
-      removeFmCurrent: () => {
-        const t = playerEngine.removeFmCurrent();
-        get().sync();
-        return t;
-      },
+        manualNext: () => {
+          const p = activePolicyOf(get().contentSource);
+          const t = p.next();
+          mirror(p);
+          if (t == null) return { type: "end" };
+          return { type: "play", index: p.currentIndex() ?? 0 };
+        },
+        onTrackEnd: () => {
+          const p = activePolicyOf(get().contentSource);
+          const before = p.currentIndex();
+          const t = p.handleAutoNext();
+          mirror(p);
+          if (t == null) return { type: "end" };
+          if (p.currentIndex() === before) return { type: "replayCurrent" };
+          return { type: "play", index: p.currentIndex() ?? 0 };
+        },
+        prev: () => {
+          const p = activePolicyOf(get().contentSource);
+          const t = p.previous();
+          mirror(p);
+          return t ? trackToQueueItem(t) : null;
+        },
+        restart: () => {
+          const p = activePolicyOf(get().contentSource);
+          const t = p.restart();
+          mirror(p);
+          return t ? trackToQueueItem(t) : null;
+        },
 
-      currentTrack: () => playerEngine.currentTrack(),
-      isFmActive: () => playerEngine.isFmActive(),
-      isEnded: () => playerEngine.isEnded(),
-      snapshot: () => playerEngine.snapshot(),
+        enterFm: (track) => {
+          set({ contentSource: "personal_fm" });
+          fmPolicy.seed(queueItemToTrack(track));
+          mirror(fmPolicy);
+        },
+        exitFm: () => {
+          set({ contentSource: "queue" });
+          mirror(queuePolicy);
+          const cur = queuePolicy.current();
+          return cur ? trackToQueueItem(cur) : null;
+        },
+        appendFm: (tracks) => {
+          if (get().contentSource !== "personal_fm") return;
+          fmPolicy.append(tracks.map(queueItemToTrack));
+          mirror(fmPolicy);
+        },
+        removeFmCurrent: () => {
+          if (get().contentSource !== "personal_fm") return null;
+          const t = fmPolicy.removeCurrent();
+          mirror(fmPolicy);
+          return t ? trackToQueueItem(t) : null;
+        },
 
-      restore: (snapshot) => {
-        // 重建引擎并替换单例引用（各 action 经闭包引用同一 binding，替换后自动生效）
-        playerEngine = QueueEngine.fromSnapshot(snapshot);
-        useQueueStore.setState(fromEnginePartial());
-      },
-    }),
+        currentTrack: () => {
+          const p = activePolicyOf(get().contentSource);
+          const t = p.current();
+          return t ? trackToQueueItem(t) : null;
+        },
+        isFmActive: () => get().contentSource === "personal_fm",
+        isEnded: () => activePolicyOf(get().contentSource).isExhausted,
+        snapshot: () => buildSnapshot(get().contentSource),
+        restore: (snap) => {
+          restoreFrom(snap);
+          set({
+            contentSource: snap.contentSource,
+            queue: snap.queue,
+            currentIndex: snap.currentIndex,
+            order: snap.order,
+            repeat: snap.repeat,
+            fmPlayedIds: snap.fmPlayedIds,
+          });
+        },
+      };
+    },
     {
-      name: 'player_queue',
+      name: "player_queue",
       storage: createJSONStorage(() => TauriStorage),
+      // 持久化两条队列（FM 期间用户队列不丢）。shape 即 QueueSnapshot。
       partialize: (state) => ({
-        queue: state.queue,
-        currentIndex: state.currentIndex,
-        order: state.order,
-        repeat: state.repeat,
         contentSource: state.contentSource,
-        fmPlayedIds: state.fmPlayedIds,
+        queue: queuePolicy.tracks.map(trackToQueueItem),
+        currentIndex: queuePolicy.currentIndex(),
+        order: queuePolicy.order(),
+        repeat: queuePolicy.repeatValue(),
+        fmQueue: fmPolicy.tracks.map(trackToQueueItem),
+        fmIndex: fmPolicy.currentIndex(),
+        fmRepeat: fmPolicy.repeatValue(),
+        fmPlayedIds: [],
       }),
       skipHydration: true,
     },

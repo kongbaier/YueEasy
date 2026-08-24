@@ -90,6 +90,27 @@ export class QueuePolicy implements IPlaybackPolicy {
 
   // ── 具体方法（app 适配层用） ──
 
+  /** 当前曲（= getCurrent 别名）；供只读查询统一使用。 */
+  current(): Track | null {
+    return this.queue.current();
+  }
+
+  /** 当前索引；空队列 null。 */
+  currentIndex(): number | null {
+    return this.queue.currentIdx();
+  }
+
+  /** 从队列开头重新播放（顺序播放耗尽后点播放的语义）。空队列 null。 */
+  restart(): Track | null {
+    this.exhausted = false;
+    if (this.queue.length === 0) {
+      this.queue.goTo(null);
+      return null;
+    }
+    this.queue.goTo(0);
+    return this.queue.current();
+  }
+
   setRepeat(repeat: Repeat): void {
     this.repeat = repeat;
   }

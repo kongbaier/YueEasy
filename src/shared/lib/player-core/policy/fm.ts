@@ -78,10 +78,37 @@ export class FmPolicy implements IPlaybackPolicy {
 
   // ── 具体方法 ──
 
+  /** 当前曲（= getCurrent 别名）。 */
+  current(): Track | null {
+    return this.queue.current();
+  }
+
+  /** 当前索引；空队列 null。 */
+  currentIndex(): number | null {
+    return this.queue.currentIdx();
+  }
+
   /** 进入推荐流：以初始曲目重置队列。 */
   seed(track: Track): void {
     this.exhausted = false;
     this.queue.replace([track], 0);
+  }
+
+  /** 从快照恢复（整批替换 + 定位）。 */
+  seedFrom(tracks: Track[], index = 0): void {
+    this.exhausted = false;
+    this.queue.replace(tracks, index);
+  }
+
+  /** 从开头重新播放（耗尽后点播放）。空队列 null。 */
+  restart(): Track | null {
+    this.exhausted = false;
+    if (this.queue.length === 0) {
+      this.queue.goTo(null);
+      return null;
+    }
+    this.queue.goTo(0);
+    return this.queue.current();
   }
 
   setRepeat(repeat: Repeat): void {

@@ -25,19 +25,22 @@ function applyPlayerSettings(): void {
 }
 
 /**
- * 启动恢复：rehydrate queue store（plugin-store 持久化）→ 从快照重建引擎并回填（不自动播放）。
+ * 启动恢复：rehydrate queue store（plugin-store 持久化）→ 从快照重建两条 policy 并回填（不自动播放）。
  * 队列持久化在低频的 useQueueStore（plugin-store），与 60fps transport 更新解耦。
+ * 持久化 shape 即 QueueSnapshot；rehydrate 后字段在 store state（camelCase）。
  */
 async function restorePlayerState(): Promise<void> {
   await useQueueStore.persist.rehydrate();
-  // rehydrate 后持久化字段在 store state（camelCase），映射为快照以重建引擎
-  const s = useQueueStore.getState();
+  const data = useQueueStore.getState() as any;
   usePlayerStore.getState().restore({
-    queue: s.queue,
-    current_index: s.currentIndex,
-    order: s.order,
-    repeat: s.repeat,
-    content_source: s.contentSource,
-    fm_played_ids: s.fmPlayedIds,
+    contentSource: data.contentSource,
+    queue: data.queue,
+    currentIndex: data.currentIndex,
+    order: data.order,
+    repeat: data.repeat,
+    fmQueue: data.fmQueue ?? [],
+    fmIndex: data.fmIndex ?? null,
+    fmRepeat: data.fmRepeat ?? "off",
+    fmPlayedIds: data.fmPlayedIds ?? [],
   });
 }
