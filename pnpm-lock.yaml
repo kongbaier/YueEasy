@@ -74,6 +74,9 @@ importers:
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.6.0
+      tauri-plugin-cache-api:
+        specifier: ^0.1.6
+        version: 0.1.6
       xstate:
         specifier: ^5.32.5
         version: 5.32.5
@@ -1762,6 +1765,9 @@ packages:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
 
+  tauri-plugin-cache-api@0.1.6:
+    resolution: {integrity: sha512-JjkyoISdJLh1M8+wtz/qUglXMVQiim/VR3bQZxijq7GMiPu1DZScMCmIOxEZEPipkF0Y9cRh+svxR2n6oOZl9w==}
+
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
 
@@ -3202,6 +3208,10 @@ snapshots:
   tailwindcss@4.3.1: {}
 
   tapable@2.3.3: {}
+
+  tauri-plugin-cache-api@0.1.6:
+    dependencies:
+      '@tauri-apps/api': 2.11.0
 
   tinybench@2.9.0: {}
 

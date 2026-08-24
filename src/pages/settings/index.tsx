@@ -47,7 +47,7 @@ export default function Settings() {
     userId,
     logout,
     openLogin,
-    cacheBytes,
+    cacheCount,
     updateStatus,
     update,
     downloadProgress,
@@ -243,20 +243,14 @@ export default function Settings() {
         <SectionCard style={{ animationDelay: '240ms' }}>
           <SectionTitle icon={Database}>缓存</SectionTitle>
           <div className="divide-y divide-border/10">
-            <Row description="本地缓存占用空间" label="缓存大小">
+            <Row description="本地缓存条目数" label="缓存大小">
               <span className="text-sm text-muted-foreground">
-                {cacheBytes === null
-                  ? '--'
-                  : cacheBytes < 1024
-                    ? `${cacheBytes} B`
-                    : cacheBytes < 1024 * 1024
-                      ? `${(cacheBytes / 1024).toFixed(1)} KB`
-                      : `${(cacheBytes / (1024 * 1024)).toFixed(1)} MB`}
+                {cacheCount === null ? '--' : `${cacheCount} 项`}
               </span>
             </Row>
             <Row label="清除缓存">
               <Button
-                disabled={cacheBytes === 0 || cacheBytes === null}
+                disabled={cacheCount === 0 || cacheCount === null}
                 onClick={handleClearCache}
                 size="xs"
                 variant="outline"

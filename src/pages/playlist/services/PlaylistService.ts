@@ -12,14 +12,14 @@ export async function getPlaylistDetail(
   try {
     const fresh = await ncm.playlistDetail(id);
 
-    if (!cached || cached.value.trackCount !== fresh.trackCount) {
+    if (!cached || cached.trackCount !== fresh.trackCount) {
       await cacheSet(key, fresh);
     }
 
     return { playlist: fresh, fromCache: false };
   } catch {
     if (cached) {
-      return { playlist: cached.value, fromCache: true };
+      return { playlist: cached, fromCache: true };
     }
     throw new Error('加载歌单失败');
   }

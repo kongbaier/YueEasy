@@ -114,21 +114,18 @@ async function handleEnded(): Promise<void> {
 }
 
 // 单次订阅 AudioCore 事件（模块加载挂载一次）。
-// playing/loading 权威来自 audio 事件；乐观更新已在 action/resolveAndPlay 里先行。
+// 状态权威来自 AudioCore 状态机快照（status）；乐观更新已在 action/resolveAndPlay 里先行。
+// loading 只指「加载元数据」（歌曲未知）；buffering 指「歌曲已知、播放中数据跟不上」，
+// 二者分离后 seek 引起的 waiting 不再进 loading（机器内 notSeeking guard 已排除）——不再闪烁。
 audioCore.on('timeupdate', (pos) => {
   usePlayerStore.setState({ currentTime: pos });
 });
-audioCore.on('play', () => {
-  usePlayerStore.setState({ playing: true, loading: true });
-});
-audioCore.on('playing', () => {
-  usePlayerStore.setState({ playing: true, loading: false });
-});
-audioCore.on('waiting', () => {
-  usePlayerStore.setState({ loading: true });
-});
-audioCore.on('pause', () => {
-  usePlayerStore.setState({ playing: false, loading: false });
+audioCore.on('status', (status) => {
+  usePlayerStore.setState({
+    playing: status === 'playing' || status === 'buffering',
+    loading: status === 'loading',
+    buffering: status === 'buffering',
+  });
 });
 audioCore.on('ended', () => {
   void handleEnded();
@@ -145,6 +142,8 @@ export interface PlayerStore {
   currentTrack: QueueItem | null;
   playing: boolean;
   loading: boolean;
+  /** 播放中缓冲不足（歌曲已知，数据跟不上）。与 loading（元数据未知）分离。 */
+  buffering: boolean;
   currentTime: number;
   duration: number;
 
@@ -179,6 +178,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   currentTrack: null,
   playing: false,
   loading: false,
+  buffering: false,
   currentTime: 0,
   duration: 0,
 
@@ -192,8 +192,9 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
       currentTime: 0,
       playing: false,
       loading: false,
+      buffering: false,
     });
-    audioCore.pause(); // audio 置空闲，不自动播放
+    audioCore.reset(); // audio 置空闲（机器回 idle），不自动播放
   },
 
   seek: (time) => {
@@ -297,11 +298,12 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   },
   clearQueue: () => {
     useQueueStore.getState().clear();
-    audioCore.pause();
+    audioCore.reset();
     set({
       currentTrack: null,
       playing: false,
       loading: false,
+      buffering: false,
       currentTime: 0,
       duration: 0,
     });

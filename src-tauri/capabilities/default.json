@@ -23,6 +23,7 @@
     "media:default",
     "updater:default",
     "process:allow-restart",
-    "store:default"
+    "store:default",
+    "cache:default"
   ]
 }

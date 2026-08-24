@@ -16,6 +16,7 @@ export function usePlayer() {
     useShallow((s) => ({
       playing: s.playing,
       loading: s.loading,
+      buffering: s.buffering,
       currentTime: s.currentTime,
       duration: s.duration,
       currentTrack: s.currentTrack,
@@ -82,6 +83,7 @@ export function usePlayer() {
     () => ({
       playing: transport.playing,
       loading: transport.loading,
+      buffering: transport.buffering,
       currentTime: transport.currentTime,
       duration: transport.duration,
       currentTrack: transport.currentTrack

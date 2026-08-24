@@ -25,7 +25,7 @@ export function useSettingsViewModel() {
   const { isLoggedIn, nickname, avatarUrl, userId, logout, openLogin } =
     useAuthViewModel();
 
-  const [cacheBytes, setCacheBytes] = useState<number | null>(null);
+  const [cacheCount, setCacheCount] = useState<number | null>(null);
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle');
   const [update, setUpdate] = useState<Update | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
@@ -33,8 +33,8 @@ export function useSettingsViewModel() {
 
   const loadCacheSize = useCallback(() => {
     getCacheSize()
-      .then(setCacheBytes)
-      .catch(() => setCacheBytes(null));
+      .then(setCacheCount)
+      .catch(() => setCacheCount(null));
   }, []);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export function useSettingsViewModel() {
 
   const handleClearCache = useCallback(async () => {
     await clearCache();
-    setCacheBytes(0);
+    setCacheCount(0);
   }, []);
 
   const handleEffectChange = useCallback(
@@ -109,7 +109,7 @@ export function useSettingsViewModel() {
     userId,
     logout,
     openLogin,
-    cacheBytes,
+    cacheCount,
     loadCacheSize,
     handleClearCache,
     updateStatus,

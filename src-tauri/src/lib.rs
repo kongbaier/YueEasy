@@ -8,7 +8,6 @@ use tauri::Manager;
 
 use crate::app::state::LikeState;
 use crate::music::netease::NcmState;
-use crate::storage::cache::CacheState;
 use crate::storage::db::Database;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -34,8 +33,8 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_cache::init())
         .manage(Database::default())
-        .manage(CacheState::default())
         .manage(NcmState::default())
         .manage(LikeState::default())
         .setup(|app| {
@@ -95,11 +94,6 @@ pub fn run() {
             cmd::ncm::comment::ncm_comment_playlist,
             cmd::ncm::comment::ncm_comment_music,
             cmd::accent::get_accent_color,
-            cmd::cache::cache_get,
-            cmd::cache::cache_set,
-            cmd::cache::cache_delete,
-            cmd::cache::cache_clear,
-            cmd::cache::cache_size,
             cmd::history::history_add,
             cmd::history::history_get,
             cmd::history::history_mark_synced,
