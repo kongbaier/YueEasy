@@ -53,3 +53,9 @@ export interface IPlaybackPolicy {
   initialize(): void;
   dispose(): void;
 }
+
+/** 遍历顺序：决定「队列内如何遍历」。 */
+export type Order = "sequential" | "shuffle";
+
+/** 终止策略：决定「队尾 / 曲终如何终止」。FM 仅用 off / one。 */
+export type Repeat = "off" | "all" | "one";

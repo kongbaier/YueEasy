@@ -2,9 +2,11 @@ import type { BaseEventMap, IAudioCore } from "./types";
 
 export interface AudioCoreEventMap extends BaseEventMap {}
 
+// AudioCore —— IAudioCore 的 HTMLAudioElement 实现（平台基元，唯一触碰 DOM 的地方）。
+// 原生 DOM 事件直译到 BaseEventMap；on() 返回取消函数。
+
 export class AudioCore implements IAudioCore<AudioCoreEventMap> {
   readonly #element: HTMLAudioElement;
-  readonly ended: boolean = false;
 
   constructor(element?: HTMLAudioElement) {
     this.#element = element ?? new Audio();
@@ -20,6 +22,10 @@ export class AudioCore implements IAudioCore<AudioCoreEventMap> {
 
   get playing() {
     return !this.#element.paused;
+  }
+
+  get ended() {
+    return this.#element.ended;
   }
 
   get src() {
@@ -71,11 +77,35 @@ export class AudioCore implements IAudioCore<AudioCoreEventMap> {
     event: K,
     callback: AudioCoreEventMap[K],
   ): () => void {
+    const el = this.#element;
+    let handler: EventListener;
     switch (event) {
+      case "timeupdate":
+        handler = () =>
+          (callback as AudioCoreEventMap["timeupdate"])(el.currentTime);
+        break;
+      case "play":
+        handler = () => void (callback as AudioCoreEventMap["play"])();
+        break;
+      case "pause":
+        handler = () => (callback as AudioCoreEventMap["pause"])();
+        break;
+      case "ended":
+        handler = () => (callback as AudioCoreEventMap["ended"])();
+        break;
+      case "error":
+        handler = () =>
+          (callback as AudioCoreEventMap["error"])(
+            el.error ?? ({} as MediaError),
+          );
+        break;
+      case "waiting":
+        handler = () => (callback as AudioCoreEventMap["waiting"])();
+        break;
       default:
-        return () => {
-          return;
-        };
+        return () => {};
     }
+    el.addEventListener(event, handler);
+    return () => el.removeEventListener(event, handler);
   }
 }
