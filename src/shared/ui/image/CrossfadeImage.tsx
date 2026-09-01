@@ -29,7 +29,7 @@ const defaultAnimateOut = (el: HTMLElement, opts: KeyframeAnimationOptions) =>
 const defaultAnimateIn = (el: HTMLElement, opts: KeyframeAnimationOptions) =>
   el.animate([{ opacity: 0 }, { opacity: 1 }], opts);
 
-interface ImageTransitionProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface CrossfadeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
   containerClassName?: string;
   duration?: number;
@@ -40,7 +40,7 @@ interface ImageTransitionProps extends React.ImgHTMLAttributes<HTMLImageElement>
   animateIn?: (el: HTMLElement, opts: KeyframeAnimationOptions) => Animation;
 }
 
-export const ImageTransition = ({
+export const CrossfadeImage = ({
   src,
   containerClassName,
   className,
@@ -49,7 +49,7 @@ export const ImageTransition = ({
   animateOut = defaultAnimateOut,
   animateIn = defaultAnimateIn,
   ...props
-}: ImageTransitionProps) => {
+}: CrossfadeImageProps) => {
   const reduceMotion = usePrefersReducedMotion();
   const [current, setCurrent] = useState<string>();
   const [previous, setPrevious] = useState<string>();

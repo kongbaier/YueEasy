@@ -7,7 +7,7 @@ import {
   ContextMenuTrigger,
 } from "@/shared/ui/context-menu";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { SmartImage } from "@/shared/ui/image";
+import { DecodedImage } from "@/shared/ui/image";
 import type { Song } from "@/shared/types/entities";
 import { formatDuration } from "@/shared/utils/format";
 import { getNcmImageUrl } from "@/shared/utils/image";
@@ -45,7 +45,7 @@ export const TrackRow = ({ track, index, onPlay, badge }: TrackRowProps) => {
           {String(index + 1).padStart(2, "0")}
         </span>
         {track.album.picUrl && (
-          <SmartImage
+          <DecodedImage
             alt={track.album.name}
             className="size-full object-cover"
             containerClassName="h-9 w-9 shrink-0 rounded"

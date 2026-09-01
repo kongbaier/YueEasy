@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@/shared/ui/dialog';
 import { VirtuosoScroller } from '@/shared/ui/virtuoso';
-import { SmartImage } from '@/shared/ui/image';
+import { DecodedImage } from '@/shared/ui/image';
 import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/utils/cn';
 import { getNcmImageUrl } from '@/shared/utils/image';
@@ -47,7 +47,7 @@ const QueueItem = ({
     >
       <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
         {track.album?.picUrl ? (
-          <SmartImage
+          <DecodedImage
             alt={track.album.name}
             className="size-full object-cover"
             containerClassName="size-full"

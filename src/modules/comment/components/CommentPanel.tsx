@@ -1,6 +1,6 @@
 import { MessageCircle, ThumbsUp } from "lucide-react";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { SmartImage } from "@/shared/ui/image";
+import { DecodedImage } from "@/shared/ui/image";
 import { formatCount } from "@/shared/utils/format";
 import { cn } from "@/shared/utils/cn";
 import { getNcmImageUrl } from "@/shared/utils/image";
@@ -31,7 +31,7 @@ const CommentItem = ({ comment }: { comment: Comment }) => (
   >
     {/* 用户行 */}
     <div className="flex items-center gap-2">
-      <SmartImage
+      <DecodedImage
         alt={comment.user.nickname}
         className="size-full object-cover"
         containerClassName="h-7 w-7 shrink-0 rounded-full"

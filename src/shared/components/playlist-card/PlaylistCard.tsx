@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { formatCount } from "@/shared/utils/format";
 import { cn } from "@/shared/utils/cn";
 import { getNcmImageUrl } from "@/shared/utils/image";
-import { SmartImage } from "@/shared/ui/image";
+import { DecodedImage } from "@/shared/ui/image";
 import type { Playlist } from "@/shared/types/entities";
 import { AspectRatio } from "../../ui/aspect-ratio";
 
@@ -32,7 +32,7 @@ export const PlaylistCard = ({
       type="button"
     >
       <AspectRatio className="overflow-hidden rounded-t-lg" ratio={1}>
-        <SmartImage
+        <DecodedImage
           alt={playlist.name}
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           containerClassName="h-full w-full"

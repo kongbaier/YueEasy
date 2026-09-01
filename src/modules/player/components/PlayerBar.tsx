@@ -27,7 +27,7 @@ import { RepeatButton } from './RepeatButton';
 import { ShuffleButton } from './ShuffleButton';
 import { SeekBar } from './SeekBar';
 import { VolumeControl } from './VolumeControl';
-import { Cover } from '@/shared/ui/image';
+import { CrossfadeImage } from '@/shared/ui/image';
 import type { Track } from '@/shared/types/player';
 import { LikeButton } from '@/modules/like/components/LikeButton';
 
@@ -191,9 +191,9 @@ const PlayerInfo = ({ currentTrack }: { currentTrack: Track | null }) => {
           type="button"
         >
           {currentTrack?.album.picUrl ? (
-            <Cover
-              className="size-full"
-              foregroundClassName="rounded-md border-[0.5px]  border-border"
+            // 50px 缩略图：要换源淡出、不要光晕，直接用 CrossfadeImage 基元
+            <CrossfadeImage
+              containerClassName="size-full rounded-md border-[0.5px]  border-border"
               alt={currentTrack.album.name}
               src={getNcmImageUrl(currentTrack.album.picUrl, 50)}
             />

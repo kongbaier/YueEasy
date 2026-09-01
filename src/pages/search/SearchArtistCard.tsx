@@ -1,6 +1,6 @@
 import { Mic } from 'lucide-react';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { SmartImage } from '@/shared/ui/image';
+import { DecodedImage } from '@/shared/ui/image';
 import { getNcmImageUrl } from '@/shared/utils/image';
 import type { Artist } from '@/shared/types/entities';
 
@@ -14,7 +14,7 @@ export function SearchArtistCard({ item }: SearchArtistCardProps) {
     <div className="group cursor-pointer rounded-lg p-3 transition-colors hover:bg-accent text-center">
       <div className="relative mx-auto mb-2 w-full max-w-40 aspect-square overflow-hidden rounded-full">
         {item.picUrl ? (
-          <SmartImage
+          <DecodedImage
             alt={item.name}
             className="h-full w-full object-cover"
             containerClassName="h-full w-full"

@@ -16,7 +16,7 @@ import type { Theme } from '@/shared/types/settings';
 import { Button } from '@/shared/ui/button';
 import { Select } from '@/shared/ui/select';
 import { Switch } from '@/shared/ui/switch';
-import { SmartImage } from '@/shared/ui/image';
+import { DecodedImage } from '@/shared/ui/image';
 import { Effect, type WindowsEffect } from '@/shared/types/effect';
 
 const labels: Record<Theme, string> = {
@@ -186,7 +186,7 @@ export default function Settings() {
                 <Row label="用户">
                   <div className="flex items-center gap-2">
                     {avatarUrl ? (
-                      <SmartImage
+                      <DecodedImage
                         alt={nickname}
                         className="size-full object-cover"
                         containerClassName="size-6 rounded-full"

@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from '@/shared/ui/dialog';
 import { VirtuosoScroller } from '@/shared/ui/virtuoso';
-import { SmartImage } from '@/shared/ui/image';
+import { DecodedImage } from '@/shared/ui/image';
 import type { Track } from '@/shared/types/player';
 import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/utils/cn';
@@ -48,7 +48,7 @@ const QueueItem = ({
     >
       <div className="w-8 h-8 rounded shadow dark:shadow-none dark:ring-1 dark:ring-white/10 flex items-center justify-center shrink-0 overflow-hidden">
         {track.album.picUrl ? (
-          <SmartImage
+          <DecodedImage
             alt={track.album.name}
             className="size-full object-cover"
             containerClassName="size-full"
@@ -240,7 +240,7 @@ export const QueuePanel = ({
                   <div className="w-44">
                     <div className="relative aspect-square w-full overflow-hidden rounded-lg shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
                       {currentTrack?.album.picUrl ? (
-                        <SmartImage
+                        <DecodedImage
                           alt={currentTrack.album.name}
                           className="size-full object-cover"
                           containerClassName="size-full"

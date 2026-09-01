@@ -21,6 +21,7 @@ import { Button } from '@/shared/ui/button';
 import { Cover } from '@/shared/ui/image';
 import type { Track } from '@/shared/types/player';
 import { cn } from '@/shared/utils/cn';
+import { getNcmImageUrl } from '@/shared/utils/image';
 import { usePlayerPage } from '@/modules/player/contexts/PlayerPageContext';
 import { Lyrics } from '@/modules/player/lyric/components/Lyrics';
 import { PlayerPageComments } from './PlayerPageComments';
@@ -53,7 +54,8 @@ export default function PlayerPage() {
     const next = queue[idx + 1];
     if (next?.album?.picUrl) {
       const img = new Image();
-      img.src = next.album.picUrl;
+      // 预加载也限尺寸，避免解码原始大图
+      img.src = getNcmImageUrl(next.album.picUrl, 640);
       img.decode().catch(() => {});
     }
   }, [currentTrack, queue]);
@@ -174,7 +176,8 @@ const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
 };
 
 const PlayerCover = ({ currentTrack }: { currentTrack: Track }) => {
-  const picUrl = currentTrack?.album?.picUrl;
+  // 显示区约 448px（max-w-md），640 足够覆盖高 DPR，避免解码原始大图
+  const picUrl = getNcmImageUrl(currentTrack?.album?.picUrl, 640);
 
   return (
     <AspectFit ratio={1}>

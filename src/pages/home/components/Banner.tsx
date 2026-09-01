@@ -1,9 +1,10 @@
 import { Loader2, Play, Radar, Radio } from 'lucide-react';
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useContainerWidth } from '@/shared/hooks/useContainerWidth';
 import { ParallaxCarousel } from '@/shared/ui/carousel';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { SmartImage } from '@/shared/ui/image';
+import { DecodedImage } from '@/shared/ui/image';
+import { getNcmImageUrl } from '@/shared/utils/image';
 import { useFmCardViewModel } from '../hooks/useFmCardViewModel';
 import { useHomeBannerViewModel } from '../hooks/useHomeBannerViewModel';
 import { useRadarCardViewModel } from '../hooks/useRadarCardViewModel';
@@ -12,9 +13,6 @@ const WIDE_BREAKPOINT = 672; // 与 CSS @min-2xl: 对齐（64rem = 1024px，按�
 
 const BannerCarousel = () => {
   const { banners } = useHomeBannerViewModel();
-  useEffect(() => {
-    console.log(banners);
-  }, [banners]);
   return (
     <>
       <ParallaxCarousel
@@ -25,13 +23,14 @@ const BannerCarousel = () => {
         {(banner) => {
           return (
             <React.Fragment>
-              <SmartImage
+              <DecodedImage
                 alt={banner.typeTitle}
                 className="size-full object-cover"
                 containerClassName="absolute inset-0"
                 decoding="async"
                 loading="eager"
-                src={banner.bigImageUrl}
+                // 9:5 大图，限宽 1280 保留宽高比，避免解码原始大图
+                src={getNcmImageUrl(banner.bigImageUrl, 1280, 712)}
               />
               <div className="absolute right-3 top-3 drop-shadow-2xl text-xs bg-background rounded-sm px-1 py-0.5">
                 {banner.typeTitle}
@@ -75,15 +74,15 @@ const FmCard = () => {
           {coverUrl ? (
             <>
               {/* 封面清晰铺底：object-cover 完整展示，不加整体 blur */}
-              <SmartImage
+              <DecodedImage
                 alt={songName ?? '私人漫游'}
                 className="size-full object-cover"
                 containerClassName="absolute inset-0"
                 decoding="async"
-                src={coverUrl}
+                src={getNcmImageUrl(coverUrl, 640)}
               />
-              {/* 底部 40% 高度遮罩：mask 纵向渐变让 blur 由下至上渐隐，颜色也随渐变融合 */}
-              <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-linear-to-t from-black/80 via-black/40 to-transparent backdrop-blur-sm mask-[linear-gradient(to_top,black,transparent)] `mask-size-[100%_100%]" />
+              {/* 底部 40% 高度遮罩：mask 纵向渐变让文字区颜色渐隐（去掉 backdrop-blur，省一块常驻 GPU 合成层） */}
+              <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-linear-to-t from-black/80 via-black/40 to-transparent mask-[linear-gradient(to_top,black,transparent)] `mask-size-[100%_100%]" />
             </>
           ) : (
             <>
@@ -184,14 +183,15 @@ const RadarCard = () => {
         <>
           {coverUrl ? (
             <>
-              <SmartImage
+              <DecodedImage
                 alt={playlistName}
                 className="size-full object-cover"
                 containerClassName="absolute inset-0"
                 decoding="async"
-                src={coverUrl}
+                src={getNcmImageUrl(coverUrl, 640)}
               />
-              <div className="absolute bottom-0 left-0 right-0 h-[45%] bg-linear-to-t from-black/80 via-black/40 to-transparent backdrop-blur-sm mask-[linear-gradient(to_top,black,transparent)] mask-size-[100%_100%]" />
+              {/* 同 FM 卡：去掉 backdrop-blur，省一块常驻 GPU 合成层 */}
+              <div className="absolute bottom-0 left-0 right-0 h-[45%] bg-linear-to-t from-black/80 via-black/40 to-transparent mask-[linear-gradient(to_top,black,transparent)] mask-size-[100%_100%]" />
             </>
           ) : (
             <>

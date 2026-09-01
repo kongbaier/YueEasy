@@ -1,7 +1,7 @@
 import { Disc } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { SmartImage } from '@/shared/ui/image';
+import { DecodedImage } from '@/shared/ui/image';
 import { getNcmImageUrl } from '@/shared/utils/image';
 import type { Album } from '@/shared/types/entities';
 
@@ -20,7 +20,7 @@ export function SearchAlbumCard({ item }: SearchAlbumCardProps) {
     >
       <div className="relative aspect-square overflow-hidden rounded-md mb-2">
         {item.picUrl ? (
-          <SmartImage
+          <DecodedImage
             alt={item.name}
             className="h-full w-full object-cover"
             containerClassName="h-full w-full"

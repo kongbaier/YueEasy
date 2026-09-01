@@ -1,6 +1,6 @@
 import { User as UserIcon } from 'lucide-react';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { SmartImage } from '@/shared/ui/image';
+import { DecodedImage } from '@/shared/ui/image';
 import { formatCount } from '@/shared/utils/format';
 import { getNcmImageUrl } from '@/shared/utils/image';
 import type { User } from '@/shared/types/entities';
@@ -15,7 +15,7 @@ export function SearchUserCard({ item }: SearchUserCardProps) {
     <div className="group cursor-pointer rounded-lg p-3 transition-colors hover:bg-accent text-center">
       <div className="relative mx-auto mb-2 w-full max-w-40 aspect-square overflow-hidden rounded-full">
         {item.avatarUrl ? (
-          <SmartImage
+          <DecodedImage
             alt={item.nickname}
             className="h-full w-full object-cover"
             containerClassName="h-full w-full"

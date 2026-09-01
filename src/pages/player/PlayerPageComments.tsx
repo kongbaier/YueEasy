@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Heart, MessageSquare } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
 import { VirtuosoScroller } from '@/shared/ui/virtuoso';
-import { SmartImage } from '@/shared/ui/image';
+import { DecodedImage } from '@/shared/ui/image';
 import { formatCount } from '@/shared/utils/format';
 import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/utils/cn';
@@ -36,7 +36,7 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
     <div className="group flex gap-3 px-2 py-3 w-full text-left rounded-md">
       <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
         {comment.user.avatarUrl ? (
-          <SmartImage
+          <DecodedImage
             alt={comment.user.nickname}
             className="size-full object-cover"
             containerClassName="size-full"

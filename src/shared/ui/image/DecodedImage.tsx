@@ -2,7 +2,7 @@ import { cn } from '@/shared/utils/cn';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useEffect, useState } from 'react';
 
-interface SmartImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface DecodedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
   /** 加载中占位内容，默认 shimmer 骨架 */
   placeholder?: React.ReactNode;
@@ -21,7 +21,7 @@ interface SmartImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
  * 出现"从上往下先显示一半"的观感。本组件通过 `new Image()` + `decode()` 等到
  * 整张图解码完毕才替换占位骨架，保证图片一次性完整出现。
  */
-export const SmartImage = ({
+export const DecodedImage = ({
   src,
   className,
   containerClassName,
@@ -29,7 +29,7 @@ export const SmartImage = ({
   shimmer = true,
   fallbackOnError = true,
   ...props
-}: SmartImageProps) => {
+}: DecodedImageProps) => {
   const [loadedSrc, setLoadedSrc] = useState<string>();
 
   useEffect(() => {

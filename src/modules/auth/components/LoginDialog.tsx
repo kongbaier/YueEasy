@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/dialog';
-import { ImageTransition } from '@/shared/ui/image';
+import { CrossfadeImage } from '@/shared/ui/image';
 import { Input } from '@/shared/ui/input';
 import { useAuthViewModel } from '@/modules/auth/hooks/useAuthViewModel';
 
@@ -342,7 +342,7 @@ export const LoginDialog = () => {
               {qrLoading ? (
                 <div className="h-full w-full animate-pulse rounded-lg bg-muted-foreground/10" />
               ) : qrImg ? (
-                <ImageTransition
+                <CrossfadeImage
                   alt="QR code"
                   className="h-48 w-48 rounded-lg"
                   src={qrImg}

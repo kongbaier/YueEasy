@@ -1,3 +1,3 @@
-export { ImageTransition } from './ImageTransition';
-export { SmartImage } from './SmartImage';
-export { Cover } from './Cover';
+export { CrossfadeImage } from './CrossfadeImage';
+export { DecodedImage } from './DecodedImage';
+export { Cover, CoverGlowDefs } from './Cover';

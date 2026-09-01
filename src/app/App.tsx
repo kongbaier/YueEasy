@@ -3,6 +3,7 @@ import { useAccentColor } from "@/shared/hooks/useAccentColor";
 import { useThemeSync } from "@/shared/hooks/useThemeSync";
 import { useWindowDrag } from "@/shared/hooks/useWindowDrag";
 import { useWindowState } from "@/shared/hooks/useWindowState";
+import { CoverGlowDefs } from "@/shared/ui/image";
 import "../assets/css/index.css";
 import { Toaster } from "sonner";
 import { Providers } from "./providers";
@@ -14,6 +15,7 @@ export default function App() {
   useWindowDrag("drag-region", { disabled: state === "fullscreen" });
   return (
     <Providers>
+      <CoverGlowDefs />
       <AppRouter />
       <Toaster position="top-right" richColors style={{ top: "2.5rem" }} />
     </Providers>
