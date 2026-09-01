@@ -41,7 +41,7 @@ export const LyricLine = memo(function LyricLine({
     >
       <p
         className={cn(
-          'text-base lg:text-lg leading-loose w-4/5 transition-[scale] origin-left ease-in-out duration-300',
+          'font-medium text-base lg:text-lg leading-loose w-4/5 transition-[scale] origin-left ease-in-out duration-300',
           'group-data-[status=active]:scale-110',
         )}
       >

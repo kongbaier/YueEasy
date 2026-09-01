@@ -1,6 +1,6 @@
 import { cn } from '@/shared/utils/cn';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface DecodedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
@@ -12,6 +12,12 @@ interface DecodedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   shimmer?: boolean;
   /** 解码/加载失败时仍回退显示原图，避免永久骨架（默认 true） */
   fallbackOnError?: boolean;
+  /**
+   * 延迟到进入视口附近（含轮播相邻 slide）才开始预加载+解码。
+   * 默认 false：挂载即解码。轮播等大量离屏图片传 true，避免全部 slide
+   * 同时解码、白白占用 GPU 纹理；渲染的 <img> 也会带上 loading="lazy"。
+   */
+  lazy?: boolean;
 }
 
 /**
@@ -20,6 +26,8 @@ interface DecodedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
  * 浏览器对渐进式图片（progressive JPEG / 交错 PNG）会在数据流到达时逐行渲染，
  * 出现"从上往下先显示一半"的观感。本组件通过 `new Image()` + `decode()` 等到
  * 整张图解码完毕才替换占位骨架，保证图片一次性完整出现。
+ *
+ * lazy 模式下用 IntersectionObserver 延后触发上面的预加载，离屏 slide 不浪费纹理。
  */
 export const DecodedImage = ({
   src,
@@ -28,43 +36,75 @@ export const DecodedImage = ({
   placeholder,
   shimmer = true,
   fallbackOnError = true,
+  lazy = false,
   ...props
 }: DecodedImageProps) => {
   const [loadedSrc, setLoadedSrc] = useState<string>();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    const img = new Image();
-    img.src = src;
+    const preload = () => {
+      const img = new Image();
+      img.src = src;
 
-    const markLoaded = () => {
-      if (cancelled) return;
-      setLoadedSrc(src);
-    };
-    const markLoadedAnyway = () => {
-      if (cancelled) return;
-      if (fallbackOnError) markLoaded();
+      const markLoaded = () => {
+        if (cancelled) return;
+        setLoadedSrc(src);
+      };
+      const markLoadedAnyway = () => {
+        if (cancelled) return;
+        if (fallbackOnError) markLoaded();
+      };
+
+      // decode() 在图片可安全绘制（完整解码）后才 resolve，
+      // 提前于 load 事件，能杜绝渐进式局部绘制。
+      const decode = (img as HTMLImageElement & { decode?: () => Promise<void> })
+        .decode;
+      if (typeof decode === 'function') {
+        decode.call(img).then(markLoaded).catch(markLoadedAnyway);
+      } else {
+        img.addEventListener('load', markLoaded);
+        img.addEventListener('error', markLoadedAnyway);
+      }
     };
 
-    // decode() 在图片可安全绘制（完整解码）后才 resolve，
-    // 提前于 load 事件，能杜绝渐进式局部绘制。
-    const decode = (img as HTMLImageElement & { decode?: () => Promise<void> })
-      .decode;
-    if (typeof decode === 'function') {
-      decode.call(img).then(markLoaded).catch(markLoadedAnyway);
-    } else {
-      img.addEventListener('load', markLoaded);
-      img.addEventListener('error', markLoadedAnyway);
+    if (!lazy) {
+      preload();
+      return () => {
+        cancelled = true;
+      };
     }
+
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            observer.disconnect();
+            preload();
+          }
+        }
+      },
+      // 200px 提前量：相邻 slide 滑进前就开始解码，保证切到时已就绪
+      { rootMargin: '200px' },
+    );
+    observer.observe(el);
 
     return () => {
       cancelled = true;
+      observer.disconnect();
     };
-  }, [src, fallbackOnError]);
+  }, [src, fallbackOnError, lazy]);
 
   return (
-    <div className={cn('relative overflow-hidden', containerClassName)}>
+    <div
+      ref={containerRef}
+      className={cn('relative overflow-hidden', containerClassName)}
+    >
       {!loadedSrc &&
         (placeholder ?? (
           <Skeleton className="absolute inset-0 size-full" shimmer={shimmer} />
@@ -75,6 +115,7 @@ export const DecodedImage = ({
           className={cn('size-full object-cover', className)}
           src={loadedSrc}
           {...props}
+          loading={lazy ? 'lazy' : props.loading}
         />
       )}
     </div>

@@ -28,8 +28,9 @@ const BannerCarousel = () => {
                 className="size-full object-cover"
                 containerClassName="absolute inset-0"
                 decoding="async"
-                loading="eager"
                 // 9:5 大图，限宽 1280 保留宽高比，避免解码原始大图
+                // lazy：离屏 slide 不预解码，进入视口前 200px 才开始，省掉整轮滑片纹理
+                lazy
                 src={getNcmImageUrl(banner.bigImageUrl, 1280, 712)}
               />
               <div className="absolute right-3 top-3 drop-shadow-2xl text-xs bg-background rounded-sm px-1 py-0.5">
