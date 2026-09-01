@@ -36,41 +36,7 @@
       { "fixStyle": "separate-type-imports" }
     ]
   },
-  "overrides": [
-    {
-      "files": [
-        "src/features/**/*.tsx",
-        "src/pages/**/*.tsx",
-        "src/app/**/*.tsx"
-      ],
-      "rules": {
-        "unicorn/filename-case": ["warn", { "cases": { "pascalCase": true } }]
-      }
-    },
-    {
-      "files": ["src/shared/**/*.tsx"],
-      "excludeFiles": ["src/shared/ui/*.tsx"],
-      "rules": {
-        "unicorn/filename-case": ["warn", { "cases": { "pascalCase": true } }]
-      }
-    },
-    {
-      "files": ["src/shared/ui/*.tsx"],
-      "rules": {
-        "unicorn/filename-case": ["warn", { "cases": { "kebabCase": true } }]
-      }
-    },
-    {
-      "files": ["src/**/*.ts"],
-      "excludeFiles": ["*.d.ts"],
-      "rules": {
-        "unicorn/filename-case": [
-          "warn",
-          { "cases": { "camelCase": true, "pascalCase": true } }
-        ]
-      }
-    }
-  ],
+  "overrides": [],
   "settings": {
     "react": {
       "version": "19.0.0"
