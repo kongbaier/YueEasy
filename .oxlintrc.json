@@ -18,6 +18,10 @@
     "no-shadow": "off",
     "no-unused-vars": "warn",
     "prefer-const": "warn",
+    "unicorn/consistent-function-scoping": [
+      "error",
+      { "checkArrowFunctions": false }
+    ],
     "unicorn/filename-case": "off",
     "react/react-compiler": "error",
     "react/react-in-jsx-scope": "off",

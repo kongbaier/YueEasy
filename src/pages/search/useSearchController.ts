@@ -3,7 +3,7 @@ import { SearchType } from './constants';
 import { useSearchStore } from './store';
 import type { ShowDropdown } from './store';
 import type { Song } from '@/shared/types/entities';
-import { usePlayerStore } from '@/stores/player';
+import { playerService } from '@/modules/player/services/PlayerService';
 import { toast } from '@/shared/lib/toast';
 
 /** search 页面的 ViewModel 控制器：组件只消费它，不直接碰 store。 */
@@ -18,7 +18,7 @@ export function useSearchController() {
   const total = useSearchStore((s) => s.total);
   const loading = useSearchStore((s) => s.loading);
   const error = useSearchStore((s) => s.error);
-  const play = usePlayerStore((s) => s.play);
+  const play = playerService.play;
 
   const setInput = (value: string) => useSearchStore.setState({ input: value });
   const submit = () => {

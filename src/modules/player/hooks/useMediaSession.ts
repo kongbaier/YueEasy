@@ -6,7 +6,8 @@ import {
   updateStatus,
   type MediaSessionEvent,
 } from '../services/MediaSessionService';
-import { usePlayerStore } from '@/stores/player';
+import { usePlayerStore } from '@/modules/player/stores/playerStore';
+import { playerService } from '@/modules/player/services/PlayerService';
 import { queueItemToSong } from '@/shared/utils/mappers';
 import { useMediaControls } from './useMediaControls';
 
@@ -18,7 +19,6 @@ export const useMediaSession = () => {
     let cancelled = false;
 
     onMediaSessionEvent((event: MediaSessionEvent) => {
-      const store = usePlayerStore.getState();
       switch (event.event) {
         case 'play':
           void handlePlay();
@@ -30,16 +30,20 @@ export const useMediaSession = () => {
           handleToggle();
           break;
         case 'next':
-          store.next().catch((e) => console.error('store.next() threw:', e));
+          void playerService
+            .next()
+            .catch((e) => console.error('playerService.next() threw:', e));
           break;
         case 'previous':
-          store.prev().catch((e) => console.error('store.prev() threw:', e));
+          void playerService
+            .prev()
+            .catch((e) => console.error('playerService.prev() threw:', e));
           break;
         case 'stop':
           handlePause();
           break;
         case 'seekTo':
-          usePlayerStore.getState().seek(event.position);
+          playerService.seek(event.position);
           break;
       }
     }).then((unlisten) => {

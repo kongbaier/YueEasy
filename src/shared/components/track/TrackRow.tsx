@@ -19,9 +19,11 @@ interface TrackRowProps {
   track: Song;
   index: number;
   onPlay: (track: Song) => void;
+  /** 可选来源标签（如「本地」），渲染在歌名旁。 */
+  badge?: string;
 }
 
-export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
+export const TrackRow = ({ track, index, onPlay, badge }: TrackRowProps) => {
   const { handleLike, isLiked } = useLikeAction();
   const liked = isLiked(track.id);
 
@@ -56,6 +58,11 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
             {track.fee === 1 && (
               <Crown className="h-3.5 w-3.5 shrink-0 text-amber-400" />
             )}
+            {badge && (
+              <span className="shrink-0 rounded-sm bg-muted px-1 py-0.5 text-[10px] leading-none text-muted-foreground">
+                {badge}
+              </span>
+            )}
           </p>
           <p className="truncate text-xs text-muted-foreground">
             {track.artists.map((a) => a.name).join("/") || "未知歌手"}
@@ -67,7 +74,7 @@ export const TrackRow = ({ track, index, onPlay }: TrackRowProps) => {
         <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
           <LikeButton track={track} size="icon-sm" />
         </span>
-        <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+        <span className="w-10 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
           {formatDuration(track.durationMs / 1000)}
         </span>
       </ContextMenuTrigger>

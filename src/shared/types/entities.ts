@@ -239,6 +239,21 @@ export interface RecentSongs {
 }
 
 /**
+ * 本地播放记录（Rust `storage::play_history::PlayRecord` wire 镜像）。
+ * 字段即 Rust 字段名（snake_case，与 QueueItem 同约定）；由播放器每次实际播放落库。
+ */
+export interface LocalPlayRecord {
+  id: number;
+  song_id: number;
+  song_name: string;
+  artist: string;
+  album: string;
+  cover_url: string;
+  duration_secs: number;
+  played_at_ms: number;
+}
+
+/**
  * 播放器队列条目（Phase E：Rust `core::types::QueueItem` wire 镜像）。
  * 字段即 Rust wire 名（track_id/title/artist/album/cover_url/duration_secs），
  * 与前端 `Track`（Song 实体）通过 `shared/utils/mappers` 互转（queue store 命令层内）。

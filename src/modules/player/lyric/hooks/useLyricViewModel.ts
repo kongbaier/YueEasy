@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchLyrics } from '../lyricsService';
-import { usePlayerStore } from '@/stores/player';
+import { usePlayerStore } from '@/modules/player/stores/playerStore';
+import { playerService } from '@/modules/player/services/PlayerService';
 import { useLyrics } from './useLyrics';
 
 /**
@@ -14,7 +15,7 @@ import { useLyrics } from './useLyrics';
 export function useLyricViewModel() {
   // 当前曲目读 player store（编排层权威）；seek 亦在此。
   const trackId = usePlayerStore((s) => s.currentTrack?.track_id);
-  const seek = usePlayerStore((s) => s.seek);
+  const seek = playerService.seek;
 
   const { data, isLoading } = useQuery({
     queryKey: ['lyrics', trackId],

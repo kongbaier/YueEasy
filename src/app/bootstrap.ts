@@ -1,6 +1,7 @@
-import { useSettingsStore } from '@/stores/settings';
-import { useQueueStore } from '@/stores/queue';
-import { usePlayerStore } from '@/stores/player';
+import { usePlayerSettingsStore } from '@/modules/player/stores/playerSettingsStore';
+import { useQueueStore } from '@/modules/player/stores/queueStore';
+import { playerService } from '@/modules/player/services/PlayerService';
+import { settingsService } from '@/shared/services/SettingsService';
 import { initAuth } from '@/modules/auth/stores/authStore';
 
 /**
@@ -10,7 +11,7 @@ import { initAuth } from '@/modules/auth/stores/authStore';
  * Feature-level initialization lives in each module's store (self-subscribing pattern).
  */
 export async function bootstrap() {
-  await useSettingsStore.persist.rehydrate();
+  await settingsService.load();
   await initAuth();
   applyPlayerSettings();
   await restorePlayerState();
@@ -20,8 +21,8 @@ export async function bootstrap() {
  * 启动下发音量/静音到 audioCore（前端权威仍在 settings + AudioCore）。
  */
 function applyPlayerSettings(): void {
-  const { volume, isMuted } = useSettingsStore.getState().player;
-  usePlayerStore.getState().setVolume(isMuted ? 0 : volume);
+  const { volume, isMuted } = usePlayerSettingsStore.getState().player;
+  playerService.setVolume(isMuted ? 0 : volume);
 }
 
 /**
@@ -32,7 +33,7 @@ function applyPlayerSettings(): void {
 async function restorePlayerState(): Promise<void> {
   await useQueueStore.persist.rehydrate();
   const data = useQueueStore.getState() as any;
-  usePlayerStore.getState().restore({
+  playerService.restore({
     contentSource: data.contentSource,
     queue: data.queue,
     currentIndex: data.currentIndex,

@@ -15,7 +15,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { WindowControls } from '@/shared/ui/system';
+import { WindowControls } from '@/shared/components/WindowControls';
 import { useWindowState } from '@/shared/hooks/useWindowState';
 import { Button } from '@/shared/ui/button';
 import { Cover } from '@/shared/ui/image';

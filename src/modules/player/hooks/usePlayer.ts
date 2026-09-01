@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/shallow';
-import { usePlayerStore } from '@/stores/player';
-import { useQueueStore } from '@/stores/queue';
-import { useSettingsStore } from '@/stores/settings';
+import { usePlayerStore } from '@/modules/player/stores/playerStore';
+import { useQueueStore } from '@/modules/player/stores/queueStore';
+import { playerService } from '@/modules/player/services/PlayerService';
+import { usePlayerSettingsStore } from '@/modules/player/stores/playerSettingsStore';
 import { useAuthStore } from '@/modules/auth/stores/authStore';
 import { useLikeStore } from '@/modules/like/stores/like';
 import { queueItemToSong } from '@/shared/utils/mappers';
@@ -31,22 +32,23 @@ export function usePlayer() {
       contentSource: s.contentSource,
     })),
   );
-  const actions = usePlayerStore(
-    useShallow((s) => ({
-      play: s.play,
-      replaceAndPlay: s.replaceAndPlay,
-      next: s.next,
-      prev: s.prev,
-      addToQueue: s.addToQueue,
-      playNext: s.playNext,
-      playFromIndex: s.playFromIndex,
-      removeFromQueue: s.removeFromQueue,
-      clearQueue: s.clearQueue,
-      setContentSource: s.setContentSource,
-      fmTrash: s.fmTrash,
-    })),
+  const actions = useMemo(
+    () => ({
+      play: playerService.play,
+      replaceAndPlay: playerService.replaceAndPlay,
+      next: playerService.next,
+      prev: playerService.prev,
+      addToQueue: playerService.addToQueue,
+      playNext: playerService.playNext,
+      playFromIndex: playerService.playFromIndex,
+      removeFromQueue: playerService.removeFromQueue,
+      clearQueue: playerService.clearQueue,
+      setContentSource: playerService.setContentSource,
+      fmTrash: playerService.fmTrash,
+    }),
+    [],
   );
-  const playerSettings = useSettingsStore((s) => s.player);
+  const playerSettings = usePlayerSettingsStore((s) => s.player);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const like = useLikeStore(
     useShallow((s) => ({
@@ -56,27 +58,27 @@ export function usePlayer() {
   );
 
   const togglePlay = useCallback(() => {
-    usePlayerStore.getState().toggle();
+    playerService.toggle();
   }, []);
 
   const seek = useCallback((time: number) => {
-    usePlayerStore.getState().seek(time);
+    playerService.seek(time);
   }, []);
 
   const setVolume = useCallback((volume: number) => {
-    usePlayerStore.getState().setVolume(volume);
+    playerService.setVolume(volume);
   }, []);
 
   const setMuted = useCallback((muted: boolean) => {
-    usePlayerStore.getState().setMuted(muted);
+    playerService.setMuted(muted);
   }, []);
 
   const cycleRepeat = useCallback(() => {
-    usePlayerStore.getState().cycleRepeat();
+    playerService.cycleRepeat();
   }, []);
 
   const toggleShuffle = useCallback(() => {
-    usePlayerStore.getState().toggleShuffle();
+    playerService.toggleShuffle();
   }, []);
 
   return useMemo(

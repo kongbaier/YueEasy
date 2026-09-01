@@ -1,14 +1,9 @@
-import type { AppearanceSettings, PlayerSettings } from '../types/settings';
-import { WindowsEffect } from '../types/settings';
+import { Effect } from "../types/effect";
+import type { AppearanceSettings } from "../types/settings";
 
 export const DEFAULTS_APPEARANCE: AppearanceSettings = {
-  window_effect: WindowsEffect.mica,
+  windowEffect: Effect.Mica,
   theme: 'system',
-  close_behavior: 'quit',
+  closeBehavior: "quit",
 };
 
-export const DEFAULTS_PLAYER: PlayerSettings = {
-  volume: 0.5,
-  isMuted: false,
-  playbackRate: 1,
-};

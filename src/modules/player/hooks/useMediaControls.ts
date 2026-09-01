@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { usePlayerStore } from '@/stores/player';
+import { playerService } from '@/modules/player/services/PlayerService';
 
 /**
  * 媒体键 / 键盘 Space 播放控制门面（音频迁移 Rust 后）。
@@ -11,15 +11,15 @@ import { usePlayerStore } from '@/stores/player';
 
 export function useMediaControls() {
   const handlePlay = useCallback(() => {
-    return usePlayerStore.getState().resume();
+    return playerService.resume();
   }, []);
 
   const handlePause = useCallback(() => {
-    usePlayerStore.getState().pause();
+    playerService.pause();
   }, []);
 
   const handleToggle = useCallback(() => {
-    usePlayerStore.getState().toggle();
+    playerService.toggle();
   }, []);
 
   return { handlePlay, handlePause, handleToggle };

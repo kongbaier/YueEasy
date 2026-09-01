@@ -4,6 +4,7 @@ import { usePageTitle } from "@/app/layout/PageTitleContext";
 import { Button } from "@/shared/ui/button";
 import { TrackRow, TrackRowSkeleton } from "@/shared/components/track";
 import { useAuthViewModel } from "@/modules/auth/hooks/useAuthViewModel";
+import { usePlayerSetting } from "@/shared/hooks/useSetting";
 import { useRecentPlaysViewModel } from "./useRecentPlaysViewModel";
 
 const RecentPlaysSkeleton = () => (
@@ -17,28 +18,34 @@ const RecentPlaysSkeleton = () => (
   </div>
 );
 
-const RecentPlaysContent = () => {
-  const { userId } = useAuthViewModel();
-
-  if (!userId) throw new Error("未登录");
-
-  const { tracks, visibleCount, handlePlay } = useRecentPlaysViewModel(userId);
+const RecentPlaysContent = ({
+  userId,
+  localEnabled,
+}: {
+  userId: number | null;
+  localEnabled: boolean;
+}) => {
+  const { items, visibleCount, handlePlay } = useRecentPlaysViewModel(
+    userId,
+    localEnabled,
+  );
 
   return (
     <div className="p-6">
-      {tracks.length === 0 ? (
+      {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-2">
           <Clock className="h-8 w-8 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">还没有播放记录</p>
         </div>
       ) : (
         <div className="space-y-0.5">
-          {tracks.slice(0, visibleCount).map((track, index) => (
+          {items.slice(0, visibleCount).map((item, index) => (
             <TrackRow
+              badge={item.source === "local" ? "本地" : undefined}
               index={index}
-              key={track.id}
+              key={item.song.id}
               onPlay={handlePlay}
-              track={track}
+              track={item.song}
             />
           ))}
         </div>
@@ -49,9 +56,11 @@ const RecentPlaysContent = () => {
 
 export default function RecentPlays() {
   usePageTitle("最近播放", { root: true });
-  const { isLoggedIn, openLogin } = useAuthViewModel();
+  const { isLoggedIn, userId, openLogin } = useAuthViewModel();
+  const [savePlaybackHistory] = usePlayerSetting("savePlaybackHistory");
 
-  if (!isLoggedIn) {
+  // 未登录且未开启本地播放记录时才需要登录；否则可用本地记录兜底。
+  if (!isLoggedIn && !savePlaybackHistory) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
         <Clock className="h-12 w-12 text-muted-foreground" />
@@ -63,7 +72,10 @@ export default function RecentPlays() {
 
   return (
     <Suspense fallback={<RecentPlaysSkeleton />}>
-      <RecentPlaysContent />
+      <RecentPlaysContent
+        localEnabled={savePlaybackHistory}
+        userId={isLoggedIn ? userId : null}
+      />
     </Suspense>
   );
 }

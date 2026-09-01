@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { homeService } from '../services/HomeService';
-import { usePlayerStore } from '@/stores/player';
-import { useQueueStore } from '@/stores/queue';
+import { usePlayerStore } from '@/modules/player/stores/playerStore';
+import { useQueueStore } from '@/modules/player/stores/queueStore';
+import { playerService } from '@/modules/player/services/PlayerService';
 import { queueItemToSong } from '@/shared/utils/mappers';
 import { useAuthStore } from '@/modules/auth/stores/authStore';
 import { useLoginDialog } from '@/modules/auth/stores/loginDialogStore';
@@ -16,7 +17,7 @@ import { toast } from '@/shared/lib/toast';
 export function useFmCardViewModel() {
   // 内容来源（FM 标志）在低频 queue store；setContentSource / currentTrack 在 player store。
   const isFm = useQueueStore((s) => s.contentSource === 'personal_fm');
-  const setContentSource = usePlayerStore((s) => s.setContentSource);
+  const setContentSource = playerService.setContentSource;
   const currentTrackRaw = usePlayerStore((s) => s.currentTrack);
   const currentTrack = currentTrackRaw
     ? queueItemToSong(currentTrackRaw)

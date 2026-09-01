@@ -1,25 +1,38 @@
-import { useCallback, useMemo } from 'react';
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { getRecentSongs } from './RecentPlaysService';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { getCombinedRecent } from './RecentPlaysService';
 import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { toast } from '@/shared/lib/toast';
 import type { Song } from '@/shared/types/entities';
-import { usePlayerStore } from '@/stores/player';
+import { playerService } from '@/modules/player/services/PlayerService';
+import { onLocalHistoryChanged } from '@/modules/player/services/PlayHistoryService';
 
 /**
- * 最近播放页 viewmodel：组合 React Query 取数 + queue store 动作。
- * 只订阅 usePlayerStore 的 play action，避免粗粒度订阅高频字段。
+ * 最近播放页 viewmodel：组合 React Query 取数（云+本地综合）+ queue store 动作。
+ * userId 为空时仅取本地记录；localEnabled 控制本地来源是否并入。
+ * 订阅本地播放记录变更事件，播放后实时失效综合查询（后台重取）。
  * 页面组件只 import 本 hook，不直接触碰 store / service。
  */
-export function useRecentPlaysViewModel(userId: number) {
-  const play = usePlayerStore((s) => s.play);
+export function useRecentPlaysViewModel(
+  userId: number | null,
+  localEnabled: boolean,
+) {
+  const play = playerService.play;
+  const queryClient = useQueryClient();
 
-  const { data: tracks } = useSuspenseQuery({
-    queryKey: ['recentSongs', userId],
-    queryFn: () => getRecentSongs(userId),
+  const { data: items } = useSuspenseQuery({
+    queryKey: ['recentSongs', userId, localEnabled],
+    queryFn: () => getCombinedRecent(userId, localEnabled),
   });
 
-  const visibleCount = useLoadMore(tracks.length);
+  // 本地记录变化（有新的播放落库）→ 失效综合查询，后台重取实现实时更新。
+  useEffect(() => {
+    return onLocalHistoryChanged(() => {
+      void queryClient.invalidateQueries({ queryKey: ['recentSongs'] });
+    });
+  }, [queryClient]);
+
+  const visibleCount = useLoadMore(items.length);
 
   const handlePlay = useCallback(
     async (track: Song) => {
@@ -33,7 +46,7 @@ export function useRecentPlaysViewModel(userId: number) {
   );
 
   return useMemo(
-    () => ({ tracks, visibleCount, handlePlay }),
-    [tracks, visibleCount, handlePlay],
+    () => ({ items, visibleCount, handlePlay }),
+    [items, visibleCount, handlePlay],
   );
 }

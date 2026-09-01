@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import './properties.css';
+@import './theme.css';
+@import './animations.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@keyframes banner-drift {
+  from {
+    transform: translateX(-5%);
+  }
+  to {
+    transform: translateX(0%);
+  }
+}

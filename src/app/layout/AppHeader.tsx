@@ -1,7 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useNavigationType } from "react-router-dom";
-import { WindowControls } from "@/shared/ui/system";
+import { WindowControls } from "@/shared/components/WindowControls";
 import { usePageTitle } from "./PageTitleContext";
 
 function useCanGoBack() {

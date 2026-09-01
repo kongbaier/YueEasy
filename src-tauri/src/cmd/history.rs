@@ -3,16 +3,14 @@
 use tauri::State;
 
 use crate::storage::db::Database;
-use crate::storage::play_history::{self, PlayRecord};
+use crate::storage::play_history::{self, NewPlayRecord, PlayRecord};
 
 #[tauri::command]
 pub(crate) fn history_add(
     db: State<'_, Database>,
-    song_id: i64,
-    song_name: String,
-    artist: String,
+    record: NewPlayRecord,
 ) -> Result<(), String> {
-    play_history::add(&db, song_id, song_name, artist)
+    play_history::add(&db, &record)
 }
 
 #[tauri::command]

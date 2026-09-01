@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import {
   getAccentColor,
-  subscribeAccentColor,
+  onAccentColorChanged,
   type SystemAccentColors,
-} from '@/shared/services/SystemService';
+} from '@/tauri/accent';
 
 // 注入物理色阶变量（主题无关）；语义角色映射在 theme.css 中按主题完成
 const mappings: Record<keyof SystemAccentColors, string> = {
@@ -35,7 +35,7 @@ export const useAccentColor = () => {
         // Non-Windows or API failure — keep defaults
       });
 
-    subscribeAccentColor(apply).then((fn) => {
+    onAccentColorChanged(apply).then((fn) => {
       unlisten = fn;
     });
 

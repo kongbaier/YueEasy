@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as windowApi from '@/shared/services/WindowService';
+import * as windowApi from '@/tauri/window';
 
 /**
  * 返回当前系统缩放率，供纯函数 snapToDevicePixel 注入 dpr。

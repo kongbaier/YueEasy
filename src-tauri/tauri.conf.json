@@ -31,7 +31,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENBREMzMDlGN0RBOEE1NTcKUldSWHBhaDluekRjeXBpNFFmZ2NGTXVMNElQTTlPQzhhL1Q0RWllcGswSTFIOGdoUGFtUGwwSU4K",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVDMTcxQTNBNTk2MDYzNDAKUldSQVkyQlpPaG9YWEt3YlNvcDJzT2ZyTGE2bUprMzZzaFp4WStwSUZ6VTltK1JKcUpIU0k0TzYK",
       "endpoints": [
         "https://github.com/kongbaier/YueEasy/releases/latest/download/latest.json"
       ],
@@ -50,10 +50,7 @@
       "digestAlgorithm": null,
       "minimumWebview2Version": null,
       "nsis": {
-        "languages": [
-          "SimpChinese",
-          "English"
-        ]
+        "languages": ["SimpChinese", "English"]
       },
       "signCommand": null,
       "timestampUrl": null,

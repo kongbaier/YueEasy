@@ -1,41 +1,34 @@
 import { useEffect, useRef, useState } from 'react';
-import * as windowApi from '@/shared/services/WindowService';
+import { useAppSettingsStore } from "@/stores/appSettingsStore";
+import * as windowApi from "@/tauri/window";
 
 export type WindowState = 'normal' | 'maximized' | 'fullscreen';
 
-function resolveState(max: boolean, full: boolean): WindowState {
+const resolveState = (max: boolean, full: boolean): WindowState => {
   if (full) return 'fullscreen';
   if (max) return 'maximized';
   return 'normal';
 }
 
-/**
- * Shared window state machine that handles the Tauri bug where
- * maximize and fullscreen are mutually exclusive.
- *
- * State transitions:
- * - normal → maximize   (direct)
- * - normal → fullscreen  (direct)
- * - maximize → fullscreen: maximize → normal → fullscreen (remembers max to restore)
- * - fullscreen → maximize: fullscreen → normal → maximize
- */
 export function useWindowState() {
   const [state, setState] = useState<WindowState>('normal');
   const wasMaximizedRef = useRef(false);
 
   useEffect(() => {
-    Promise.all([windowApi.isMaximized(), windowApi.isFullscreen()]).then(
-      ([max, full]) => setState(resolveState(max, full)),
-    );
+    const getWindowState = async () => {
+      const [max, full] = await Promise.all([
+        windowApi.isMaximized(),
+        windowApi.isFullscreen(),
+      ]);
+      setState(resolveState(max, full));
+    };
 
-    const unlisten = windowApi.onResized(() => {
-      Promise.all([windowApi.isMaximized(), windowApi.isFullscreen()]).then(
-        ([max, full]) => setState(resolveState(max, full)),
-      );
-    });
+    getWindowState();
+
+    const unlistenPromise = windowApi.onResized(getWindowState);
 
     return () => {
-      unlisten.then((fn) => fn());
+      unlistenPromise.then((fn) => fn());
     };
   }, []);
 
@@ -107,7 +100,12 @@ export function useWindowState() {
   };
 
   const close = async () => {
-    await windowApi.close();
+    const { closeBehavior } = useAppSettingsStore.getState().appearance;
+    if (closeBehavior === "hide") {
+      await windowApi.hide();
+    } else {
+      await windowApi.close();
+    }
   };
 
   return {

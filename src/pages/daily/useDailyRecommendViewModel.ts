@@ -4,7 +4,7 @@ import { getDailyRecommendSongs } from './DailyRecommendService';
 import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { toast } from '@/shared/lib/toast';
 import type { Song } from '@/shared/types/entities';
-import { usePlayerStore } from '@/stores/player';
+import { playerService } from '@/modules/player/services/PlayerService';
 
 /**
  * 每日推荐页 viewmodel：组合 React Query 取数 + queue store 动作。
@@ -12,8 +12,8 @@ import { usePlayerStore } from '@/stores/player';
  * 页面组件只 import 本 hook，不直接触碰 store / service。
  */
 export function useDailyRecommendViewModel() {
-  const play = usePlayerStore((s) => s.play);
-  const replaceAndPlay = usePlayerStore((s) => s.replaceAndPlay);
+  const play = playerService.play;
+  const replaceAndPlay = playerService.replaceAndPlay;
 
   const { data: songs } = useSuspenseQuery({
     queryKey: ['dailyRecommend'],

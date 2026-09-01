@@ -9,7 +9,7 @@ import {
   setEffect,
   type Update,
 } from './services/SettingsService';
-import { WindowsEffect } from '@/shared/types/settings';
+import type { WindowsEffect } from '@/shared/types/effect';
 import { useAuthViewModel } from '@/modules/auth/hooks/useAuthViewModel';
 
 type UpdateStatus =

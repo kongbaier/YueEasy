@@ -9,7 +9,6 @@ export interface MediaSessionMetadata {
   artworkUrl?: string;
 }
 
-/** OS 媒体键事件（Rust `infra/platform/media_session` 推送）。 */
 export type MediaSessionEvent =
   | { event: 'play' }
   | { event: 'pause' }

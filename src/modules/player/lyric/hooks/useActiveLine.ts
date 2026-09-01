@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { LyricLine } from '@/modules/player/lyric/parser';
-import { audioCore } from '@/stores/player';
+import { audioCore } from '@/modules/player/services/PlayerService';
 
 /**
  * Per-frame word state for the ACTIVE lyric line only.

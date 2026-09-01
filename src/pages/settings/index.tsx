@@ -9,15 +9,15 @@ import {
   User,
 } from 'lucide-react';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
-import { useAppearanceSetting } from '@/shared/hooks/useSetting';
+import { useAppearanceSetting, usePlayerSetting } from '@/shared/hooks/useSetting';
 import { useSettingsViewModel } from './useSettingsViewModel';
 import { toast } from '@/shared/lib/toast';
 import type { Theme } from '@/shared/types/settings';
-import { WindowsEffect } from '@/shared/types/settings';
 import { Button } from '@/shared/ui/button';
 import { Select } from '@/shared/ui/select';
 import { Switch } from '@/shared/ui/switch';
 import { SmartImage } from '@/shared/ui/image';
+import { Effect, type WindowsEffect } from '@/shared/types/effect';
 
 const labels: Record<Theme, string> = {
   system: '系统',
@@ -25,21 +25,22 @@ const labels: Record<Theme, string> = {
   dark: '深色',
 };
 
-const windowEffectLabels: Record<WindowsEffect, string> = {
-  [WindowsEffect.mica]: 'Mica',
-  [WindowsEffect.tabbed]: 'Mica Alt',
-  [WindowsEffect.acrylic]: 'Acrylic',
-  [WindowsEffect.blur]: 'Acrylic Thin',
+const windowsEffectLabels: Record<WindowsEffect, string> = {
+  [Effect.Mica]: "Mica",
+  [Effect.Tabbed]: "Mica Alt",
+  [Effect.Acrylic]: "Acrylic",
 };
 
 export default function Settings() {
   usePageTitle('设置', { root: true });
   const [theme, setTheme] = useAppearanceSetting('theme');
   const [windowEffect, setWindowEffectState] =
-    useAppearanceSetting('window_effect');
+    useAppearanceSetting("windowEffect");
   const [closeBehavior, setCloseBehavior] =
-    useAppearanceSetting('close_behavior');
+    useAppearanceSetting("closeBehavior");
   const closeToTray = closeBehavior === 'hide';
+  const [savePlaybackHistory, setSavePlaybackHistory] =
+    usePlayerSetting("savePlaybackHistory");
   const {
     isLoggedIn,
     nickname,
@@ -71,7 +72,7 @@ export default function Settings() {
     setWindowEffectState(effect);
     const ok = await applyWindowEffect(effect);
     if (!ok) {
-      setWindowEffectState(WindowsEffect.mica);
+      setWindowEffectState(Effect.Mica);
       toast.error('该效果不可用，已恢复为 Mica');
     }
   };
@@ -141,14 +142,14 @@ export default function Settings() {
               >
                 <Select.Trigger className="w-30">
                   <Select.Value>
-                    {windowEffectLabels[windowEffect]}
+                    {windowsEffectLabels[windowEffect]}
                   </Select.Value>
                 </Select.Trigger>
                 <Select.Portal>
                   <Select.Positioner>
                     <Select.Popup>
                       <Select.List className="space-y-0.5">
-                        {Object.entries(windowEffectLabels).map(
+                        {Object.entries(windowsEffectLabels).map(
                           ([value, label]) => (
                             <Select.Item key={value} value={value}>
                               <Select.ItemText>{label}</Select.ItemText>
@@ -236,6 +237,12 @@ export default function Settings() {
             </Row>
             <Row description="音频流传输质量" label="播放音质">
               <span className="text-sm text-muted-foreground">极高</span>
+            </Row>
+            <Row description="在最近播放中综合展示本机播放记录" label="本地播放记录">
+              <Switch
+                checked={savePlaybackHistory}
+                onCheckedChange={setSavePlaybackHistory}
+              />
             </Row>
           </div>
         </SectionCard>

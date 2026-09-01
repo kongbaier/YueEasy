@@ -1,17 +1,13 @@
-// 设置页服务（模块就近）：收敛 cache/effect/updater/app-version 的平台能力调用。
-// service 层浅包 infra（@/tauri/*），hook 不再直连。
-
-import type { Effect } from '@tauri-apps/api/window';
 import { getAppVersion as tauriGetAppVersion } from '@/tauri/app';
 import { cacheClearAll, cacheSize } from '@/tauri/cache';
-import { setWindowEffect } from '@/tauri/effect';
+import type { WindowsEffect } from "@/shared/types/effect";
+import { setWindowsEffect } from "@/tauri/effect";
 import {
   checkForUpdate,
   downloadAndInstall,
   installAndRelaunch,
   type Update,
 } from '@/tauri/updater';
-import type { WindowsEffect } from '@/shared/types/settings';
 
 export { type Update };
 
@@ -28,7 +24,7 @@ export function getAppVersion(): Promise<string> {
 }
 
 export function setEffect(effect: WindowsEffect): Promise<void> {
-  return setWindowEffect(effect as unknown as Effect);
+  return setWindowsEffect(effect);
 }
 
 export function checkUpdate(): Promise<Update | null> {

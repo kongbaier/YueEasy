@@ -18,7 +18,10 @@ type NativeHandler = (el: HTMLAudioElement) => void;
 export class AudioCore implements IAudioCore<AudioCoreEventMap> {
   readonly #element: HTMLAudioElement;
   #status: AudioStatus = "idle";
-  #listeners = new Map<keyof AudioCoreEventMap, Set<(...a: unknown[]) => void>>();
+  #listeners = new Map<
+    keyof AudioCoreEventMap,
+    Set<(...a: unknown[]) => void>
+  >();
 
   constructor(element?: HTMLAudioElement) {
     this.#element = element ?? new Audio();
@@ -148,7 +151,6 @@ export class AudioCore implements IAudioCore<AudioCoreEventMap> {
     // play 是异步：结算后广播；waiting/canplay 处理缓冲
     wire("play", () => {
       void (async () => {
-        await a.play();
         this.#setStatus("playing");
         this.#emit("play");
       })();

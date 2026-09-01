@@ -1,4 +1,4 @@
-import { getAppWindow, type Window } from '@/shared/services/WindowService';
+import { getAppWindow, type Window } from '@/tauri/window';
 import { useEffect } from 'react';
 
 type UseWindowDragOptions = {

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useMediaControls } from './useMediaControls';
-import { usePlayerStore } from '@/stores/player';
+import { usePlayerStore } from '@/modules/player/stores/playerStore';
+import { playerService } from '@/modules/player/services/PlayerService';
 
 export const usePlayerKeyboard = () => {
   const { handlePlay, handlePause } = useMediaControls();
@@ -37,19 +38,19 @@ export const usePlayerKeyboard = () => {
         const { currentTime, duration } = playerState;
         if (duration <= 0) return;
         const step = e.code === 'ArrowRight' ? 5 : -5;
-        playerState.seek(Math.max(0, Math.min(currentTime + step, duration)));
+        playerService.seek(Math.max(0, Math.min(currentTime + step, duration)));
         return;
       }
 
       if (e.code === 'PageUp') {
         e.preventDefault();
-        playerState.prev();
+        void playerService.prev();
         return;
       }
 
       if (e.code === 'PageDown') {
         e.preventDefault();
-        playerState.next();
+        void playerService.next();
       }
     };
 
