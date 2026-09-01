@@ -51,6 +51,8 @@ jobs:
           if (-not $msg) {
             $msg = "安装包见下方 Assets"
           }
+          # 保证末尾换行，避免与下方模板粘在一起
+          $msg = $msg.TrimEnd() + "`n"
           # encode newlines so GitHub Actions expressions can pass them through
           $escaped = $msg -replace '%', '%25' -replace "`n", '%0A' -replace "`r", '%0D'
           echo "body=$escaped" >> $env:GITHUB_OUTPUT
@@ -62,6 +64,20 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         with:
           tagName: ${{ inputs.tag || github.ref_name }}
-          releaseName: YueEasy ${{ inputs.tag || github.ref_name }}
-          releaseBody: ${{ steps.tagmsg.outputs.body }}
+          releaseName: "YueEasy ${{ inputs.tag || github.ref_name }}"
+          releaseBody: |
+            ## 🎉 YueEasy ${{ inputs.tag || github.ref_name }}
+
+            ${{ steps.tagmsg.outputs.body }}
+
+            ### 📦 安装包下载
+            - **Windows**: `YueEasy_${{ inputs.tag || github.ref_name }}_x64-setup.exe`
+
+            ### 🔧 安装说明
+            - 下载 .exe 安装包后双击运行安装，安装完成即可使用
+
+            ### 🔄 自动更新
+            - 已安装的用户会在应用内收到更新提示
+          releaseDraft: false
+          prerelease: false
           updaterJsonPreferNsis: true
