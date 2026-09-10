@@ -35,26 +35,26 @@
 
 <div align="center">
   <p>主页</p>
-  <img src="assets/player.png" alt="播放页面" style="width: 100%; max-width: 800px;">
+  <img src="assets/player.png" alt="播放页面" style="width: 100%; max-width: 600px;">
 </div>
 
 <div align="center">
   <p>播放页面</p>
-  <img src="assets/player.png" alt="播放页面" style="width: 100%; max-width: 800px;">
+  <img src="assets/player.png" alt="播放页面" style="width: 100%; max-width: 600px;">
 </div>
 
 <br>
 
 <div align="center">
   <p>歌单</p>
-  <img src="assets/playlist.png" alt="歌单" style="width: 100%; max-width: 800px;">
+  <img src="assets/playlist.png" alt="歌单" style="width: 100%; max-width: 600px;">
 </div>
 
 <br>
 
 <div align="center">
   <p>搜索</p>
-  <img src="assets/search.png" alt="搜索" style="width: 100%; max-width: 800px;">
+  <img src="assets/search.png" alt="搜索" style="width: 100%; max-width: 600px;">
 </div>
 
 ## 安装方式
