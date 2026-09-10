@@ -34,6 +34,11 @@
 ## 软件截图
 
 <div align="center">
+  <p>主页</p>
+  <img src="assets/player.png" alt="播放页面" style="width: 100%; max-width: 800px;">
+</div>
+
+<div align="center">
   <p>播放页面</p>
   <img src="assets/player.png" alt="播放页面" style="width: 100%; max-width: 800px;">
 </div>
