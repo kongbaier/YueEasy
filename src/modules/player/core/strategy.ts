@@ -1,4 +1,4 @@
-import type { Order } from "./types";
+import type { Order } from './types';
 
 /** mulberry32 —— 轻量 32-bit 可种子化 PRNG（仅测试确定性用）。 */
 function mulberry32(seed: number): () => number {
@@ -21,7 +21,7 @@ export class PlayStrategy {
   private shuffled: number[] = [];
 
   constructor(
-    order: Order = "sequential",
+    order: Order = 'sequential',
     seed = Math.floor(Math.random() * 0xffffffff),
   ) {
     this.order = order;
@@ -41,7 +41,7 @@ export class PlayStrategy {
   /** 下一个索引；wrap=false 时队尾返回 null（供「自然结束 / 流式耗尽」用）。 */
   nextIndex(current: number | null, len: number, wrap: boolean): number | null {
     if (len === 0) return null;
-    if (this.order === "sequential") {
+    if (this.order === 'sequential') {
       if (current == null) return 0;
       const n = current + 1;
       if (n < len) return n;
@@ -57,7 +57,7 @@ export class PlayStrategy {
   /** 上一个索引（环绕）。 */
   prevIndex(current: number | null, len: number): number | null {
     if (len === 0) return null;
-    if (this.order === "sequential") {
+    if (this.order === 'sequential') {
       if (current == null) return null;
       return current === 0 ? len - 1 : current - 1;
     }

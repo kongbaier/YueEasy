@@ -14,7 +14,13 @@ const COVER_GLOW_FILTER_ID = 'cover-glow';
 export const CoverGlowDefs = () => (
   <svg style={{ position: 'absolute', width: 0, height: 0 }}>
     <defs>
-      <filter id={COVER_GLOW_FILTER_ID} x="-50%" y="-50%" width="200%" height="200%">
+      <filter
+        id={COVER_GLOW_FILTER_ID}
+        x="-50%"
+        y="-50%"
+        width="200%"
+        height="200%"
+      >
         <feGaussianBlur stdDeviation="8" result="blur" />
         <feComponentTransfer>
           <feFuncA type="linear" slope="0.6" />

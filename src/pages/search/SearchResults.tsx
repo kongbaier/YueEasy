@@ -1,21 +1,21 @@
-import { Search as SearchIcon, SearchX } from "lucide-react";
-import type { Album, Artist, Song, User } from "@/shared/types/entities";
+import { Search as SearchIcon, SearchX } from 'lucide-react';
+import type { Album, Artist, Song, User } from '@/shared/types/entities';
 
-import { TrackRow, TrackRowSkeleton } from "@/shared/components/track";
-import { SearchAlbumCard, SearchAlbumCardSkeleton } from "./SearchAlbumCard";
-import { SearchArtistCard, SearchArtistCardSkeleton } from "./SearchArtistCard";
-import { SearchUserCard, SearchUserCardSkeleton } from "./SearchUserCard";
+import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
+import { SearchAlbumCard, SearchAlbumCardSkeleton } from './SearchAlbumCard';
+import { SearchArtistCard, SearchArtistCardSkeleton } from './SearchArtistCard';
+import { SearchUserCard, SearchUserCardSkeleton } from './SearchUserCard';
 import {
   GRID_SKELETON_COUNT,
   SKELETON_COUNT,
   TYPE_LABEL,
   type SearchType,
-} from "./constants";
+} from './constants';
 
 // ---- internal sub-components ----
 
 function LoadingState({ type }: { type: SearchType }) {
-  if (type === "1") {
+  if (type === '1') {
     return (
       <div className="space-y-0.5">
         {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
@@ -27,9 +27,9 @@ function LoadingState({ type }: { type: SearchType }) {
   }
 
   const SkeletonComponent =
-    type === "10"
+    type === '10'
       ? SearchAlbumCardSkeleton
-      : type === "100"
+      : type === '100'
         ? SearchArtistCardSkeleton
         : SearchUserCardSkeleton;
 
@@ -105,7 +105,7 @@ export function SearchResults({
       {!loading && !error && results.length > 0 && (
         <>
           {/* Song results */}
-          {searchType === "1" && (
+          {searchType === '1' && (
             <div className="space-y-0.5">
               {(results as Song[])
                 .slice(0, visibleCount)
@@ -121,7 +121,7 @@ export function SearchResults({
           )}
 
           {/* Album results */}
-          {searchType === "10" && (
+          {searchType === '10' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
               {(results as Album[]).slice(0, visibleCount).map((item) => (
                 <SearchAlbumCard item={item} key={item.id} />
@@ -130,7 +130,7 @@ export function SearchResults({
           )}
 
           {/* Artist results */}
-          {searchType === "100" && (
+          {searchType === '100' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
               {(results as Artist[]).slice(0, visibleCount).map((item) => (
                 <SearchArtistCard item={item} key={item.id} />
@@ -139,7 +139,7 @@ export function SearchResults({
           )}
 
           {/* User results */}
-          {searchType === "1002" && (
+          {searchType === '1002' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
               {(results as User[]).slice(0, visibleCount).map((item) => (
                 <SearchUserCard item={item} key={item.id} />

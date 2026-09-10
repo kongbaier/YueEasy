@@ -1,4 +1,4 @@
-import type { Track } from "@/shared/lib/player-core/models/track";
+import type { Track } from '@/shared/lib/player-core/models/track';
 /**
  * TrackQueue —— 源无关的曲目队列原语（纯逻辑，对 Track 仅依赖 id）。
  * > 两个 policy 组合使用；增删改后的 current index 一致性在此统一维护。

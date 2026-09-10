@@ -1,6 +1,6 @@
-import { create } from "zustand";
-import { DEFAULTS_APPEARANCE } from "@/shared/constants/settings";
-import type { AppearanceSettings } from "@/shared/types/settings";
+import { create } from 'zustand';
+import { DEFAULTS_APPEARANCE } from '@/shared/constants/settings';
+import type { AppearanceSettings } from '@/shared/types/settings';
 
 // appSettingsStore —— 应用外观运行时状态（纯状态容器，无持久化）。
 //

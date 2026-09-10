@@ -7,18 +7,18 @@
 //
 // 依赖方向：service → stores / infra（TauriStorage）；双 store 互不引用。
 
-import { useAppSettingsStore } from "@/stores/appSettingsStore";
-import { usePlayerSettingsStore } from "@/modules/player/stores/playerSettingsStore";
-import { DEFAULTS_APPEARANCE } from "@/shared/constants/settings";
-import { DEFAULTS_PLAYER } from "@/shared/constants/player";
+import { useAppSettingsStore } from '@/stores/appSettingsStore';
+import { usePlayerSettingsStore } from '@/modules/player/stores/playerSettingsStore';
+import { DEFAULTS_APPEARANCE } from '@/shared/constants/settings';
+import { DEFAULTS_PLAYER } from '@/shared/constants/player';
 import type {
   AppearanceSettings,
   PlayerSettings,
-} from "@/shared/types/settings";
-import { TauriStorage } from "@/tauri/storage";
+} from '@/shared/types/settings';
+import { TauriStorage } from '@/tauri/storage';
 
 /** 持久化 key（沿用旧 persist name，形状不变 → 免迁移）。 */
-const KEY = "settings";
+const KEY = 'settings';
 
 /** zustand persist 包裹格式（历史数据可能无 state 壳，兼容两种）。 */
 interface PersistedSettings {
@@ -45,7 +45,7 @@ async function save(): Promise<void> {
 
 /** 启动加载：读盘 → 播种两 store（merge 默认值，缺字段兜底）。 */
 async function load(): Promise<void> {
-  let state: Pick<PersistedSettings, "appearance" | "player"> = {};
+  let state: Pick<PersistedSettings, 'appearance' | 'player'> = {};
   const raw = await TauriStorage.getItem(KEY);
   if (raw) {
     try {

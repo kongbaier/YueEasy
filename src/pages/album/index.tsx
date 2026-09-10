@@ -1,14 +1,14 @@
-import { Disc, Music, Play } from "lucide-react";
-import { Suspense } from "react";
-import { useParams } from "react-router-dom";
-import { Cover } from "@/shared/ui/image";
-import { ExpandableText } from "@/shared/ui/expandable-text";
-import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { TrackRow, TrackRowSkeleton } from "@/shared/components/track";
-import { Button } from "@/shared/ui/button";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { getNcmImageUrl } from "@/shared/utils/image";
-import { useAlbumViewModel } from "./useAlbumViewModel";
+import { Disc, Music, Play } from 'lucide-react';
+import { Suspense } from 'react';
+import { useParams } from 'react-router-dom';
+import { Cover } from '@/shared/ui/image';
+import { ExpandableText } from '@/shared/ui/expandable-text';
+import { usePageTitle } from '@/app/layout/PageTitleContext';
+import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
+import { Button } from '@/shared/ui/button';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { getNcmImageUrl } from '@/shared/utils/image';
+import { useAlbumViewModel } from './useAlbumViewModel';
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */
@@ -57,7 +57,7 @@ const AlbumSkeleton = () => (
 const AlbumContent = () => {
   const { id } = useParams<{ id: string }>();
 
-  if (!id) throw new Error("无效的专辑 ID");
+  if (!id) throw new Error('无效的专辑 ID');
 
   const { album, tracks, visibleCount, handlePlay, handlePlayAll } =
     useAlbumViewModel(Number(id));
@@ -91,7 +91,7 @@ const AlbumContent = () => {
 
           {metaParts.length > 0 && (
             <p className="text-sm text-muted-foreground/80">
-              {metaParts.join("  ·  ")}
+              {metaParts.join('  ·  ')}
             </p>
           )}
 

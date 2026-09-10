@@ -1,6 +1,6 @@
-import type { IAudioCore } from "@/shared/lib/player-core/types";
-import type { Track } from "@/shared/lib/player-core/models/track";
-import type { IPlaybackPolicy } from "./types";
+import type { IAudioCore } from '@/shared/lib/player-core/types';
+import type { Track } from '@/shared/lib/player-core/models/track';
+import type { IPlaybackPolicy } from './types';
 
 export type ResolveUrl = (track: Track) => Promise<string | null>;
 

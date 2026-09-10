@@ -4,13 +4,13 @@
 // 语义：流式续歌 —— 手动 next 与自然结束都在已取曲内推进；耗尽（isExhausted）由外部
 // 适配层 fetch 后 append 续歌。曲目身份经 currentId 暴露给服务端「不感兴趣」上报。
 
-import type { Track } from "@/shared/lib/player-core/models/track";
-import type { IPlaybackPolicy, Repeat } from "../types";
-import { TrackQueue } from "../TrackQueue";
+import type { Track } from '@/shared/lib/player-core/models/track';
+import type { IPlaybackPolicy, Repeat } from '../types';
+import { TrackQueue } from '../TrackQueue';
 
 export class FmPolicy implements IPlaybackPolicy {
   private readonly queue = new TrackQueue();
-  private repeat: Repeat = "off";
+  private repeat: Repeat = 'off';
   private exhausted = false;
 
   getCurrent(): Track | null {
@@ -18,7 +18,7 @@ export class FmPolicy implements IPlaybackPolicy {
   }
 
   next(): Track | null {
-    if (this.repeat === "one") return this.queue.current();
+    if (this.repeat === 'one') return this.queue.current();
     const cur = this.queue.currentIdx();
     if (cur == null) {
       this.exhausted = true;
@@ -113,7 +113,7 @@ export class FmPolicy implements IPlaybackPolicy {
 
   setRepeat(repeat: Repeat): void {
     // FM 无「整队循环」，all 归一为 off
-    this.repeat = repeat === "all" ? "off" : repeat;
+    this.repeat = repeat === 'all' ? 'off' : repeat;
   }
 
   repeatValue(): Repeat {

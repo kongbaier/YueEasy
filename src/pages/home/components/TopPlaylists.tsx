@@ -1,6 +1,6 @@
-import { HorizontalCarousel } from "@/shared/ui/carousel";
-import { PlaylistCard } from "@/shared/components/playlist-card";
-import { useTopPlaylistsViewModel } from "../hooks/useTopPlaylistsViewModel";
+import { HorizontalCarousel } from '@/shared/ui/carousel';
+import { PlaylistCard } from '@/shared/components/playlist-card';
+import { useTopPlaylistsViewModel } from '../hooks/useTopPlaylistsViewModel';
 
 export const TopPlaylists = () => {
   const { topPlaylists } = useTopPlaylistsViewModel();

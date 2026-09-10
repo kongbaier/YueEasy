@@ -11,13 +11,13 @@ export type BaseEventMap = {
 
 /** 音频状态投影（供 orchestration / UI 作 playing/loading/buffering 真源）。 */
 export type AudioStatus =
-  | "idle"
-  | "loading"
-  | "playing"
-  | "paused"
-  | "buffering"
-  | "ended"
-  | "error";
+  | 'idle'
+  | 'loading'
+  | 'playing'
+  | 'paused'
+  | 'buffering'
+  | 'ended'
+  | 'error';
 
 /**
  * 音频播放设施

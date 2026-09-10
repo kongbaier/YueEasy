@@ -1,7 +1,7 @@
 import type { WindowsEffect } from './effect';
 
-export type Theme = "light" | "dark" | "system";
-export type CloseBehavior = "quit" | "hide";
+export type Theme = 'light' | 'dark' | 'system';
+export type CloseBehavior = 'quit' | 'hide';
 
 /** 应用外观设置（appearance namespace）。 */
 export interface AppearanceSettings {

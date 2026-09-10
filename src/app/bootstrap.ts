@@ -41,7 +41,7 @@ async function restorePlayerState(): Promise<void> {
     repeat: data.repeat,
     fmQueue: data.fmQueue ?? [],
     fmIndex: data.fmIndex ?? null,
-    fmRepeat: data.fmRepeat ?? "off",
+    fmRepeat: data.fmRepeat ?? 'off',
     fmPlayedIds: data.fmPlayedIds ?? [],
   });
 }

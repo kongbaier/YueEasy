@@ -1,17 +1,17 @@
-import { MessageCircle, ThumbsUp } from "lucide-react";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { DecodedImage } from "@/shared/ui/image";
-import { formatCount } from "@/shared/utils/format";
-import { cn } from "@/shared/utils/cn";
-import { getNcmImageUrl } from "@/shared/utils/image";
-import { useComments } from "@/modules/comment/hooks/useComments";
-import type { Comment } from "@/shared/types/entities";
+import { MessageCircle, ThumbsUp } from 'lucide-react';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { DecodedImage } from '@/shared/ui/image';
+import { formatCount } from '@/shared/utils/format';
+import { cn } from '@/shared/utils/cn';
+import { getNcmImageUrl } from '@/shared/utils/image';
+import { useComments } from '@/modules/comment/hooks/useComments';
+import type { Comment } from '@/shared/types/entities';
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */
 /* ------------------------------------------------------------------ */
 
-const pad = (n: number) => String(n).padStart(2, "0");
+const pad = (n: number) => String(n).padStart(2, '0');
 
 const formatTime = (ts: number) => {
   const d = new Date(ts);
@@ -25,8 +25,8 @@ const formatTime = (ts: number) => {
 const CommentItem = ({ comment }: { comment: Comment }) => (
   <div
     className={cn(
-      "rounded-lg px-3 py-2.5",
-      "hover:bg-accent/50 transition-colors",
+      'rounded-lg px-3 py-2.5',
+      'hover:bg-accent/50 transition-colors',
     )}
   >
     {/* 用户行 */}
@@ -59,8 +59,8 @@ const CommentItem = ({ comment }: { comment: Comment }) => (
             key={reply.id}
           >
             <span className="text-primary/80">
-              @{reply.user?.nickname ?? ""}
-            </span>{" "}
+              @{reply.user?.nickname ?? ''}
+            </span>{' '}
             {reply.content}
           </p>
         ))}
@@ -71,7 +71,7 @@ const CommentItem = ({ comment }: { comment: Comment }) => (
     <div className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground">
       <ThumbsUp className="h-3 w-3" />
       <span>
-        {comment.likedCount > 0 ? formatCount(comment.likedCount) : ""}
+        {comment.likedCount > 0 ? formatCount(comment.likedCount) : ''}
       </span>
     </div>
   </div>
@@ -109,7 +109,7 @@ interface CommentPanelContentProps {
 }
 
 const CommentPanelContent = ({ playlistId }: CommentPanelContentProps) => {
-  const { data, isLoading } = useComments({ type: "playlist", id: playlistId });
+  const { data, isLoading } = useComments({ type: 'playlist', id: playlistId });
 
   if (isLoading) return <CommentSkeleton />;
 

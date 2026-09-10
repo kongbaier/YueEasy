@@ -1,16 +1,16 @@
-import { Play } from "lucide-react";
-import { Suspense, useState } from "react";
-import { useParams } from "react-router-dom";
-import { CommentPanel, CommentSkeleton } from "@/modules/comment/components";
-import { Cover } from "@/shared/ui/image";
-import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { TrackRow, TrackRowSkeleton } from "@/shared/components/track";
-import { Button } from "@/shared/ui/button";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { formatCount } from "@/shared/utils/format";
-import { cn } from "@/shared/utils/cn";
-import { getNcmImageUrl } from "@/shared/utils/image";
-import { usePlaylistViewModel } from "./usePlaylistViewModel";
+import { Play } from 'lucide-react';
+import { Suspense, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { CommentPanel, CommentSkeleton } from '@/modules/comment/components';
+import { Cover } from '@/shared/ui/image';
+import { usePageTitle } from '@/app/layout/PageTitleContext';
+import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
+import { Button } from '@/shared/ui/button';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { formatCount } from '@/shared/utils/format';
+import { cn } from '@/shared/utils/cn';
+import { getNcmImageUrl } from '@/shared/utils/image';
+import { usePlaylistViewModel } from './usePlaylistViewModel';
 
 /* ------------------------------------------------------------------ */
 /*  工具                                                               */
@@ -25,11 +25,11 @@ const formatDate = (ts: number) => {
 /*  Tab 切换                                                            */
 /* ------------------------------------------------------------------ */
 
-type TabKey = "songs" | "comments";
+type TabKey = 'songs' | 'comments';
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: "songs", label: "歌曲" },
-  { key: "comments", label: "评论" },
+  { key: 'songs', label: '歌曲' },
+  { key: 'comments', label: '评论' },
 ];
 
 interface TabBarProps {
@@ -42,16 +42,16 @@ interface TabBarProps {
 const TabBar = ({ active, onChange, songCount, commentCount }: TabBarProps) => (
   <div className="flex border-b border-border/40 space-x-4">
     {TABS.map((tab) => {
-      const count = tab.key === "songs" ? songCount : commentCount;
+      const count = tab.key === 'songs' ? songCount : commentCount;
       const showCount =
-        tab.key === "songs" ? count != null : count != null && count > 0;
+        tab.key === 'songs' ? count != null : count != null && count > 0;
       return (
         <Button
           className={cn(
-            "px-0 text-[17px] font-medium transition-colors",
+            'px-0 text-[17px] font-medium transition-colors',
             active === tab.key
-              ? "text-foreground font-medium"
-              : "text-muted-foreground hover:text-foreground/80",
+              ? 'text-foreground font-medium'
+              : 'text-muted-foreground hover:text-foreground/80',
           )}
           key={tab.key}
           onClick={() => onChange(tab.key)}
@@ -132,11 +132,11 @@ interface PlaylistProps {
 
 const PlaylistContent = ({ playlistId }: PlaylistProps) => {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState<TabKey>("songs");
+  const [activeTab, setActiveTab] = useState<TabKey>('songs');
 
   const resolvedId = playlistId ?? Number(id);
 
-  if (!resolvedId) throw new Error("无效的歌单 ID");
+  if (!resolvedId) throw new Error('无效的歌单 ID');
 
   const { playlist, fromCache, visibleCount, handlePlay, handlePlayAll } =
     usePlaylistViewModel(resolvedId);
@@ -199,7 +199,7 @@ const PlaylistContent = ({ playlistId }: PlaylistProps) => {
 
             {metaParts.length > 0 && (
               <p className="text-sm text-muted-foreground/80 truncate">
-                {metaParts.join("  ·  ")}
+                {metaParts.join('  ·  ')}
               </p>
             )}
           </div>
@@ -231,7 +231,7 @@ const PlaylistContent = ({ playlistId }: PlaylistProps) => {
           onChange={setActiveTab}
           songCount={playlist.trackCount}
         />
-        {activeTab === "songs" ? (
+        {activeTab === 'songs' ? (
           /* 歌曲列表 */
           playlist.tracks &&
           playlist.tracks.length > 0 && (

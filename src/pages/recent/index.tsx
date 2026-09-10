@@ -1,11 +1,11 @@
-import { Clock } from "lucide-react";
-import { Suspense } from "react";
-import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { Button } from "@/shared/ui/button";
-import { TrackRow, TrackRowSkeleton } from "@/shared/components/track";
-import { useAuthViewModel } from "@/modules/auth/hooks/useAuthViewModel";
-import { usePlayerSetting } from "@/shared/hooks/useSetting";
-import { useRecentPlaysViewModel } from "./useRecentPlaysViewModel";
+import { Clock } from 'lucide-react';
+import { Suspense } from 'react';
+import { usePageTitle } from '@/app/layout/PageTitleContext';
+import { Button } from '@/shared/ui/button';
+import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
+import { useAuthViewModel } from '@/modules/auth/hooks/useAuthViewModel';
+import { usePlayerSetting } from '@/shared/hooks/useSetting';
+import { useRecentPlaysViewModel } from './useRecentPlaysViewModel';
 
 const RecentPlaysSkeleton = () => (
   <div className="p-6">
@@ -41,7 +41,7 @@ const RecentPlaysContent = ({
         <div className="space-y-0.5">
           {items.slice(0, visibleCount).map((item, index) => (
             <TrackRow
-              badge={item.source === "local" ? "本地" : undefined}
+              badge={item.source === 'local' ? '本地' : undefined}
               index={index}
               key={item.song.id}
               onPlay={handlePlay}
@@ -55,9 +55,9 @@ const RecentPlaysContent = ({
 };
 
 export default function RecentPlays() {
-  usePageTitle("最近播放", { root: true });
+  usePageTitle('最近播放', { root: true });
   const { isLoggedIn, userId, openLogin } = useAuthViewModel();
-  const [savePlaybackHistory] = usePlayerSetting("savePlaybackHistory");
+  const [savePlaybackHistory] = usePlayerSetting('savePlaybackHistory');
 
   // 未登录且未开启本地播放记录时才需要登录；否则可用本地记录兜底。
   if (!isLoggedIn && !savePlaybackHistory) {

@@ -1,5 +1,5 @@
 import type { RepeatMode } from '@/shared/types/player';
-import type { PlayerSettings } from "../types/settings";
+import type { PlayerSettings } from '../types/settings';
 
 /** 终止策略循环：off → all → one → off。仅当 content_source == queue 时生效。 */
 export const NEXT_REPEAT: Record<RepeatMode, RepeatMode> = {

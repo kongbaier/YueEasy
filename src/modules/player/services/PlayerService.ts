@@ -7,33 +7,33 @@
 //
 // 依赖方向：service → stores / core / data-service / infra（tauri 经 data-service）。
 
-import { usePlayerSettingsStore } from "@/modules/player/stores/playerSettingsStore";
-import { usePlayerStore } from "@/modules/player/stores/playerStore";
+import { usePlayerSettingsStore } from '@/modules/player/stores/playerSettingsStore';
+import { usePlayerStore } from '@/modules/player/stores/playerStore';
 import {
   useQueueStore,
   queuePolicy,
   fmPolicy,
   type QueueSnapshot,
   type ContentSource,
-} from "@/modules/player/stores/queueStore";
-import type { QueueItem } from "@/shared/types/entities";
-import type { RepeatMode, Track } from "@/shared/types/player";
-import { NEXT_REPEAT } from "@/shared/constants/player";
-import { songToQueueItem } from "@/shared/utils/mappers";
-import { AudioCore } from "@/shared/lib/player-core/audio";
-import { Player } from "@/modules/player/core/player";
-import type { Track as CoreTrack } from "@/shared/lib/player-core/models/track";
+} from '@/modules/player/stores/queueStore';
+import type { QueueItem } from '@/shared/types/entities';
+import type { RepeatMode, Track } from '@/shared/types/player';
+import { NEXT_REPEAT } from '@/shared/constants/player';
+import { songToQueueItem } from '@/shared/utils/mappers';
+import { AudioCore } from '@/shared/lib/player-core/audio';
+import { Player } from '@/modules/player/core/player';
+import type { Track as CoreTrack } from '@/shared/lib/player-core/models/track';
 import {
   fetchFm,
   resolveUrl,
   trashFm,
-} from "@/modules/player/services/PlayerDataService";
-import { recordPlay } from "@/modules/player/services/PlayHistoryService";
+} from '@/modules/player/services/PlayerDataService';
+import { recordPlay } from '@/modules/player/services/PlayHistoryService';
 
 /** QueueItem → 库 Track（URL 留空，由 resolver 解析后注入）。 */
 function queueItemToCoreTrack(item: QueueItem): CoreTrack {
   const { track_id, ...rest } = item;
-  return { id: String(track_id), src: "", ...rest };
+  return { id: String(track_id), src: '', ...rest };
 }
 
 // ── URL 解析（缓存 + 反竞态 seq） ──
@@ -59,22 +59,22 @@ const player = new Player(audioCore, queuePolicy, async (track) => {
 });
 
 // 单次订阅音频事件（模块加载挂载一次）。状态权威来自 AudioCore 状态投影（status）。
-audioCore.on("timeupdate", (pos) => {
+audioCore.on('timeupdate', (pos) => {
   usePlayerStore.setState({ currentTime: pos });
 });
-audioCore.on("status", (status) => {
+audioCore.on('status', (status) => {
   usePlayerStore.setState({
-    playing: status === "playing" || status === "buffering",
-    loading: status === "loading",
-    buffering: status === "buffering",
+    playing: status === 'playing' || status === 'buffering',
+    loading: status === 'loading',
+    buffering: status === 'buffering',
   });
 });
-audioCore.on("ended", () => {
+audioCore.on('ended', () => {
   void handleEnded();
 });
-audioCore.on("error", () => {
+audioCore.on('error', () => {
   usePlayerStore.setState({ playing: false, loading: false });
-  console.warn("[player] audio error");
+  console.warn('[player] audio error');
 });
 
 const queueStore = () => useQueueStore.getState();
@@ -108,7 +108,7 @@ async function fmContinuation(): Promise<void> {
       return;
     }
     const step = queueStore().manualNext();
-    if (step.type === "play") {
+    if (step.type === 'play') {
       const track = queueStore().queue[step.index];
       if (track) await resolveAndPlay(track);
       return;
@@ -130,10 +130,10 @@ async function handleEnded(): Promise<void> {
     return;
   }
   const step = queueStore().onTrackEnd();
-  if (step.type === "play") {
+  if (step.type === 'play') {
     const track = queueStore().queue[step.index];
     if (track) await resolveAndPlay(track);
-  } else if (step.type === "replayCurrent") {
+  } else if (step.type === 'replayCurrent') {
     const cur = queueStore().currentTrack();
     if (cur) await resolveAndPlay(cur);
   } else if (queueStore().isFmActive()) {
@@ -203,7 +203,7 @@ export const playerService: PlayerController = {
     const cur = q().currentTrack();
     if (!cur) return;
     // 无已加载 source（恢复/清空后）→ 重载当前曲
-    if (audioCore.getStatus() === "idle") {
+    if (audioCore.getStatus() === 'idle') {
       await resolveAndPlay(cur);
       return;
     }
@@ -214,11 +214,9 @@ export const playerService: PlayerController = {
   },
   toggle: () => {
     if (usePlayerStore.getState().loading) return;
-    void (
-      usePlayerStore.getState().playing
-        ? playerService.pause()
-        : playerService.resume()
-    );
+    void (usePlayerStore.getState().playing
+      ? playerService.pause()
+      : playerService.resume());
   },
   setVolume: (volume) => {
     usePlayerSettingsStore.getState().updatePlayer({ volume, isMuted: false });
@@ -234,17 +232,17 @@ export const playerService: PlayerController = {
     const q = () => useQueueStore.getState();
     const { repeat, contentSource } = q();
     const next: RepeatMode =
-      contentSource === "personal_fm"
-        ? repeat === "one"
-          ? "off"
-          : "one"
+      contentSource === 'personal_fm'
+        ? repeat === 'one'
+          ? 'off'
+          : 'one'
         : NEXT_REPEAT[repeat];
     q().setRepeat(next);
   },
   toggleShuffle: () => {
     const q = () => useQueueStore.getState();
-    if (q().contentSource === "personal_fm") return;
-    q().setOrder(q().order === "shuffle" ? "sequential" : "shuffle");
+    if (q().contentSource === 'personal_fm') return;
+    q().setOrder(q().order === 'shuffle' ? 'sequential' : 'shuffle');
   },
 
   play: async (track) => {
@@ -260,10 +258,10 @@ export const playerService: PlayerController = {
   next: async () => {
     const q = () => useQueueStore.getState();
     const step = q().manualNext();
-    if (step.type === "play") {
+    if (step.type === 'play') {
       const track = q().queue[step.index];
       if (track) await resolveAndPlay(track);
-    } else if (step.type === "end") {
+    } else if (step.type === 'end') {
       if (q().isFmActive()) await fmContinuation();
       else await pauseAudio();
     }
@@ -306,7 +304,7 @@ export const playerService: PlayerController = {
   },
   setContentSource: async (source) => {
     const q = () => useQueueStore.getState();
-    if (source === "personal_fm") {
+    if (source === 'personal_fm') {
       const tracks = await fetchFm();
       if (tracks.length === 0) return;
       q().enterFm(tracks[0]);

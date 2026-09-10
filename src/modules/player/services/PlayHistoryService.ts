@@ -4,9 +4,9 @@
 //       受设置 savePlaybackHistory 开关控制；best-effort，失败仅告警、不打断播放。
 // 读取：最近播放页综合视图取本地记录（getLocalHistory）。
 
-import { usePlayerSettingsStore } from "@/modules/player/stores/playerSettingsStore";
-import type { LocalPlayRecord, QueueItem } from "@/shared/types/entities";
-import { localHistoryAdd, localHistoryGet } from "@/tauri/history";
+import { usePlayerSettingsStore } from '@/modules/player/stores/playerSettingsStore';
+import type { LocalPlayRecord, QueueItem } from '@/shared/types/entities';
+import { localHistoryAdd, localHistoryGet } from '@/tauri/history';
 
 /** 本地记录读取上限（对齐云记录 300 首；Rust 侧 MAX_LOCAL_RECORDS 同为 300）。 */
 export const LOCAL_HISTORY_LIMIT = 300;
@@ -41,7 +41,7 @@ export function recordPlay(item: QueueItem): void {
     played_at_ms: Date.now(),
   })
     .then(() => emitHistoryChanged())
-    .catch((e) => console.warn("[history] record play failed", e));
+    .catch((e) => console.warn('[history] record play failed', e));
 }
 
 /** 读取本地播放记录（去重、played_at_ms 倒序）。 */

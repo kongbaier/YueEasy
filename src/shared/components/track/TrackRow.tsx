@@ -1,19 +1,19 @@
-import { Crown, Heart, ListPlus, Play, SkipForward } from "lucide-react";
+import { Crown, Heart, ListPlus, Play, SkipForward } from 'lucide-react';
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from "@/shared/ui/context-menu";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { DecodedImage } from "@/shared/ui/image";
-import type { Song } from "@/shared/types/entities";
-import { formatDuration } from "@/shared/utils/format";
-import { getNcmImageUrl } from "@/shared/utils/image";
-import { useLikeAction } from "@/modules/like/hooks/useLikeAction";
-import { LikeButton } from "@/modules/like/components/LikeButton";
-import { useTrackActions } from "@/modules/player/hooks/useTrackActions";
+} from '@/shared/ui/context-menu';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { DecodedImage } from '@/shared/ui/image';
+import type { Song } from '@/shared/types/entities';
+import { formatDuration } from '@/shared/utils/format';
+import { getNcmImageUrl } from '@/shared/utils/image';
+import { useLikeAction } from '@/modules/like/hooks/useLikeAction';
+import { LikeButton } from '@/modules/like/components/LikeButton';
+import { useTrackActions } from '@/modules/player/hooks/useTrackActions';
 
 interface TrackRowProps {
   track: Song;
@@ -35,14 +35,14 @@ export const TrackRow = ({ track, index, onPlay, badge }: TrackRowProps) => {
         className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent w-full text-left content-visibility-auto"
         onDoubleClick={() => onPlay(track)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") onPlay(track);
+          if (e.key === 'Enter') onPlay(track);
         }}
         role="button"
-        style={{ containIntrinsicSize: "auto 52px" }}
+        style={{ containIntrinsicSize: 'auto 52px' }}
         tabIndex={0}
       >
         <span className="w-6  text-center text-xs text-muted-foreground">
-          {String(index + 1).padStart(2, "0")}
+          {String(index + 1).padStart(2, '0')}
         </span>
         {track.album.picUrl && (
           <DecodedImage
@@ -65,11 +65,11 @@ export const TrackRow = ({ track, index, onPlay, badge }: TrackRowProps) => {
             )}
           </p>
           <p className="truncate text-xs text-muted-foreground">
-            {track.artists.map((a) => a.name).join("/") || "未知歌手"}
+            {track.artists.map((a) => a.name).join('/') || '未知歌手'}
           </p>
         </div>
         <span className="flex-1 min-w-0 truncate text-xs text-muted-foreground">
-          {track.album.name || "-"}
+          {track.album.name || '-'}
         </span>
         <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
           <LikeButton track={track} size="icon-sm" />
@@ -93,8 +93,8 @@ export const TrackRow = ({ track, index, onPlay, badge }: TrackRowProps) => {
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={() => handleLike(track)}>
-          <Heart className="h-4 w-4" fill={liked ? "#ef4444" : "none"} />
-          {liked ? "取消收藏" : "收藏"}
+          <Heart className="h-4 w-4" fill={liked ? '#ef4444' : 'none'} />
+          {liked ? '取消收藏' : '收藏'}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
@@ -105,7 +105,7 @@ export const TrackRowSkeleton = ({ index }: { index: number }) => {
   return (
     <div className="flex items-center gap-3 rounded-lg px-3 py-2">
       <span className="w-8 text-center text-xs text-muted-foreground">
-        {String(index + 1).padStart(2, "0")}
+        {String(index + 1).padStart(2, '0')}
       </span>
       <Skeleton className="h-9 w-9 shrink-0 rounded" shimmer />
       <div className="flex-1 min-w-0 space-y-1.5">

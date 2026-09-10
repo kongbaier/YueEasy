@@ -9,7 +9,10 @@ import {
   User,
 } from 'lucide-react';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
-import { useAppearanceSetting, usePlayerSetting } from '@/shared/hooks/useSetting';
+import {
+  useAppearanceSetting,
+  usePlayerSetting,
+} from '@/shared/hooks/useSetting';
 import { useSettingsViewModel } from './useSettingsViewModel';
 import { toast } from '@/shared/lib/toast';
 import type { Theme } from '@/shared/types/settings';
@@ -26,21 +29,22 @@ const labels: Record<Theme, string> = {
 };
 
 const windowsEffectLabels: Record<WindowsEffect, string> = {
-  [Effect.Mica]: "Mica",
-  [Effect.Tabbed]: "Mica Alt",
-  [Effect.Acrylic]: "Acrylic",
+  [Effect.Mica]: 'Mica',
+  [Effect.Tabbed]: 'Mica Alt',
+  [Effect.Acrylic]: 'Acrylic',
 };
 
 export default function Settings() {
   usePageTitle('设置', { root: true });
   const [theme, setTheme] = useAppearanceSetting('theme');
   const [windowEffect, setWindowEffectState] =
-    useAppearanceSetting("windowEffect");
+    useAppearanceSetting('windowEffect');
   const [closeBehavior, setCloseBehavior] =
-    useAppearanceSetting("closeBehavior");
+    useAppearanceSetting('closeBehavior');
   const closeToTray = closeBehavior === 'hide';
-  const [savePlaybackHistory, setSavePlaybackHistory] =
-    usePlayerSetting("savePlaybackHistory");
+  const [savePlaybackHistory, setSavePlaybackHistory] = usePlayerSetting(
+    'savePlaybackHistory',
+  );
   const {
     isLoggedIn,
     nickname,
@@ -238,7 +242,10 @@ export default function Settings() {
             <Row description="音频流传输质量" label="播放音质">
               <span className="text-sm text-muted-foreground">极高</span>
             </Row>
-            <Row description="在最近播放中综合展示本机播放记录" label="本地播放记录">
+            <Row
+              description="在最近播放中综合展示本机播放记录"
+              label="本地播放记录"
+            >
               <Switch
                 checked={savePlaybackHistory}
                 onCheckedChange={setSavePlaybackHistory}

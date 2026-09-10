@@ -12,23 +12,23 @@
 //
 // 持久化在低频本 store（plugin-store），与 60fps transport 解耦。
 
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import type { QueueItem } from "@/shared/types/entities";
-import { QueuePolicy } from "@/modules/player/core/policy/queue";
-import { FmPolicy } from "@/modules/player/core/policy/fm";
-import type { Track } from "@/shared/lib/player-core/models/track";
-import type { Order, Repeat } from "@/modules/player/core/types";
-import { TauriStorage } from "@/tauri/storage";
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import type { QueueItem } from '@/shared/types/entities';
+import { QueuePolicy } from '@/modules/player/core/policy/queue';
+import { FmPolicy } from '@/modules/player/core/policy/fm';
+import type { Track } from '@/shared/lib/player-core/models/track';
+import type { Order, Repeat } from '@/modules/player/core/types';
+import { TauriStorage } from '@/tauri/storage';
 
 /** 内容来源（适配层正交轴，沿用旧语义）。 */
-export type ContentSource = "queue" | "personal_fm";
+export type ContentSource = 'queue' | 'personal_fm';
 
 /** 导航决策结果（适配层语义，与旧引擎一致：上层据 contentSource 决定 End 后停或续歌）。 */
 export type Step =
-  | { type: "play"; index: number }
-  | { type: "replayCurrent" }
-  | { type: "end" };
+  | { type: 'play'; index: number }
+  | { type: 'replayCurrent' }
+  | { type: 'end' };
 
 // ── 两条来源 policy（模块级单例，切换只换引用，各自持队列） ──
 export const queuePolicy = new QueuePolicy();
@@ -36,16 +36,16 @@ export const fmPolicy = new FmPolicy();
 
 function queueItemToTrack(item: QueueItem): Track {
   const { track_id, ...rest } = item;
-  return { id: String(track_id), src: "", ...rest };
+  return { id: String(track_id), src: '', ...rest };
 }
 
 function trackToQueueItem(t: Track): QueueItem {
   return {
     track_id: Number(t.id),
-    title: (t.title as string) ?? "",
-    artist: (t.artist as string) ?? "",
-    album: (t.album as string) ?? "",
-    cover_url: (t.cover_url as string) ?? "",
+    title: (t.title as string) ?? '',
+    artist: (t.artist as string) ?? '',
+    album: (t.album as string) ?? '',
+    cover_url: (t.cover_url as string) ?? '',
     duration_secs: (t.duration_secs as number) ?? 0,
   };
 }
@@ -134,7 +134,7 @@ export interface QueueState {
 
 /** 活动源 policy（queue / fm）。 */
 function activePolicyOf(source: ContentSource): QueuePolicy | FmPolicy {
-  return source === "personal_fm" ? fmPolicy : queuePolicy;
+  return source === 'personal_fm' ? fmPolicy : queuePolicy;
 }
 
 export const useQueueStore = create<QueueState>()(
@@ -145,23 +145,23 @@ export const useQueueStore = create<QueueState>()(
         set({
           queue: policy.tracks.map(trackToQueueItem),
           currentIndex: policy.currentIndex(),
-          order: policy instanceof FmPolicy ? "sequential" : policy.order(),
+          order: policy instanceof FmPolicy ? 'sequential' : policy.order(),
           repeat: policy.repeatValue(),
         });
 
       // 用户队列操作前置：若在 FM 先切回 queue。
       const ensureQueue = () => {
-        if (get().contentSource !== "personal_fm") return;
-        set({ contentSource: "queue" });
+        if (get().contentSource !== 'personal_fm') return;
+        set({ contentSource: 'queue' });
         mirror(queuePolicy);
       };
 
       return {
         queue: [],
         currentIndex: null,
-        order: "sequential" as Order,
-        repeat: "off" as Repeat,
-        contentSource: "queue" as ContentSource,
+        order: 'sequential' as Order,
+        repeat: 'off' as Repeat,
+        contentSource: 'queue' as ContentSource,
         fmPlayedIds: [],
 
         playTrack: (track) => {
@@ -221,17 +221,17 @@ export const useQueueStore = create<QueueState>()(
           const p = activePolicyOf(get().contentSource);
           const t = p.next();
           mirror(p);
-          if (t == null) return { type: "end" };
-          return { type: "play", index: p.currentIndex() ?? 0 };
+          if (t == null) return { type: 'end' };
+          return { type: 'play', index: p.currentIndex() ?? 0 };
         },
         onTrackEnd: () => {
           const p = activePolicyOf(get().contentSource);
           const before = p.currentIndex();
           const t = p.handleAutoNext();
           mirror(p);
-          if (t == null) return { type: "end" };
-          if (p.currentIndex() === before) return { type: "replayCurrent" };
-          return { type: "play", index: p.currentIndex() ?? 0 };
+          if (t == null) return { type: 'end' };
+          if (p.currentIndex() === before) return { type: 'replayCurrent' };
+          return { type: 'play', index: p.currentIndex() ?? 0 };
         },
         prev: () => {
           const p = activePolicyOf(get().contentSource);
@@ -247,23 +247,23 @@ export const useQueueStore = create<QueueState>()(
         },
 
         enterFm: (track) => {
-          set({ contentSource: "personal_fm" });
+          set({ contentSource: 'personal_fm' });
           fmPolicy.seed(queueItemToTrack(track));
           mirror(fmPolicy);
         },
         exitFm: () => {
-          set({ contentSource: "queue" });
+          set({ contentSource: 'queue' });
           mirror(queuePolicy);
           const cur = queuePolicy.current();
           return cur ? trackToQueueItem(cur) : null;
         },
         appendFm: (tracks) => {
-          if (get().contentSource !== "personal_fm") return;
+          if (get().contentSource !== 'personal_fm') return;
           fmPolicy.append(tracks.map(queueItemToTrack));
           mirror(fmPolicy);
         },
         removeFmCurrent: () => {
-          if (get().contentSource !== "personal_fm") return null;
+          if (get().contentSource !== 'personal_fm') return null;
           const t = fmPolicy.removeCurrent();
           mirror(fmPolicy);
           return t ? trackToQueueItem(t) : null;
@@ -274,7 +274,7 @@ export const useQueueStore = create<QueueState>()(
           const t = p.current();
           return t ? trackToQueueItem(t) : null;
         },
-        isFmActive: () => get().contentSource === "personal_fm",
+        isFmActive: () => get().contentSource === 'personal_fm',
         isEnded: () => activePolicyOf(get().contentSource).isExhausted,
         snapshot: () => buildSnapshot(get().contentSource),
         restore: (snap) => {
@@ -291,7 +291,7 @@ export const useQueueStore = create<QueueState>()(
       };
     },
     {
-      name: "player_queue",
+      name: 'player_queue',
       storage: createJSONStorage(() => TauriStorage),
       // 持久化两条队列（FM 期间用户队列不丢）。shape 即 QueueSnapshot。
       partialize: (state) => ({

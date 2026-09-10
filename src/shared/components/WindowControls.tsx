@@ -1,6 +1,6 @@
-import { Copy, Minus, Square, X } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { useWindowState } from "@/shared/hooks/useWindowState";
+import { Copy, Minus, Square, X } from 'lucide-react';
+import { Button } from '@/shared/ui/button';
+import { useWindowState } from '@/shared/hooks/useWindowState';
 
 export const WindowControls = ({ className }: { className?: string }) => {
   const { state, toggleMaximize, minimize, close } = useWindowState();
@@ -9,7 +9,7 @@ export const WindowControls = ({ className }: { className?: string }) => {
   const handleClose = () => void close();
   const handleMaximize = async () => await toggleMaximize();
 
-  if (state === "fullscreen") return null;
+  if (state === 'fullscreen') return null;
 
   return (
     <div
@@ -31,7 +31,7 @@ export const WindowControls = ({ className }: { className?: string }) => {
         type="button"
         variant="ghost"
       >
-        {state === "maximized" ? (
+        {state === 'maximized' ? (
           <Copy className="size-3" />
         ) : (
           <Square className="size-3" />

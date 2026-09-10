@@ -1,6 +1,6 @@
-import { create } from "zustand";
-import { DEFAULTS_PLAYER } from "@/shared/constants/player";
-import type { PlayerSettings } from "@/shared/types/settings";
+import { create } from 'zustand';
+import { DEFAULTS_PLAYER } from '@/shared/constants/player';
+import type { PlayerSettings } from '@/shared/types/settings';
 
 // playerSettingsStore —— 播放器偏好运行时状态（纯状态容器，无持久化）。
 //

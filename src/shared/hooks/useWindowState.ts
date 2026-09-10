@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useAppSettingsStore } from "@/stores/appSettingsStore";
-import * as windowApi from "@/tauri/window";
+import { useAppSettingsStore } from '@/stores/appSettingsStore';
+import * as windowApi from '@/tauri/window';
 
 export type WindowState = 'normal' | 'maximized' | 'fullscreen';
 
@@ -8,7 +8,7 @@ const resolveState = (max: boolean, full: boolean): WindowState => {
   if (full) return 'fullscreen';
   if (max) return 'maximized';
   return 'normal';
-}
+};
 
 export function useWindowState() {
   const [state, setState] = useState<WindowState>('normal');
@@ -101,7 +101,7 @@ export function useWindowState() {
 
   const close = async () => {
     const { closeBehavior } = useAppSettingsStore.getState().appearance;
-    if (closeBehavior === "hide") {
+    if (closeBehavior === 'hide') {
       await windowApi.hide();
     } else {
       await windowApi.close();

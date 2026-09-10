@@ -1,4 +1,7 @@
-import type { AppearanceSettings, PlayerSettings } from '@/shared/types/settings';
+import type {
+  AppearanceSettings,
+  PlayerSettings,
+} from '@/shared/types/settings';
 import { useAppSettingsStore } from '@/stores/appSettingsStore';
 import { usePlayerSettingsStore } from '@/modules/player/stores/playerSettingsStore';
 

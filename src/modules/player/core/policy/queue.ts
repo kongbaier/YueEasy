@@ -4,10 +4,10 @@
 // 语义：手动 next / previous 始终环绕；handleAutoNext 按 Repeat（off 队尾耗尽 / all 环绕 / one 重播）。
 // 队列流的「播放整张歌单 / 指定曲目 / 插队」等富操作以具体方法暴露，接口未收。
 
-import type { Track } from "@/shared/lib/player-core/models/track";
-import type { IPlaybackPolicy, Order, Repeat } from "../types";
-import { PlayStrategy } from "../strategy";
-import { TrackQueue } from "../TrackQueue";
+import type { Track } from '@/shared/lib/player-core/models/track';
+import type { IPlaybackPolicy, Order, Repeat } from '../types';
+import { PlayStrategy } from '../strategy';
+import { TrackQueue } from '../TrackQueue';
 
 /**
  * 经典的队列策略
@@ -20,8 +20,8 @@ export class QueuePolicy implements IPlaybackPolicy {
   private exhausted = false;
 
   constructor(
-    order: Order = "sequential",
-    repeat: Repeat = "off",
+    order: Order = 'sequential',
+    repeat: Repeat = 'off',
     seed?: number,
   ) {
     this.strategy = new PlayStrategy(order, seed);
@@ -61,13 +61,13 @@ export class QueuePolicy implements IPlaybackPolicy {
 
   handleAutoNext(): Track | null {
     const cur = this.queue.currentIdx();
-    if (this.repeat === "one") {
+    if (this.repeat === 'one') {
       return cur == null ? null : this.queue.current();
     }
     const idx = this.strategy.nextIndex(
       cur,
       this.queue.length,
-      this.repeat === "all",
+      this.repeat === 'all',
     );
     if (idx == null) {
       this.exhausted = true;

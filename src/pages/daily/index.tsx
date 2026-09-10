@@ -1,10 +1,10 @@
-import { Play, Sparkles } from "lucide-react";
-import { Suspense } from "react";
-import { usePageTitle } from "@/app/layout/PageTitleContext";
-import { Button } from "@/shared/ui/button";
-import { TrackRow, TrackRowSkeleton } from "@/shared/components/track";
-import { useAuthViewModel } from "@/modules/auth/hooks/useAuthViewModel";
-import { useDailyRecommendViewModel } from "./useDailyRecommendViewModel";
+import { Play, Sparkles } from 'lucide-react';
+import { Suspense } from 'react';
+import { usePageTitle } from '@/app/layout/PageTitleContext';
+import { Button } from '@/shared/ui/button';
+import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
+import { useAuthViewModel } from '@/modules/auth/hooks/useAuthViewModel';
+import { useDailyRecommendViewModel } from './useDailyRecommendViewModel';
 
 const DailyRecommendSkeleton = () => (
   <div className="p-6">
@@ -54,7 +54,7 @@ const DailyRecommendContent = () => {
 };
 
 export default function DailyRecommend() {
-  usePageTitle("每日推荐", { root: true });
+  usePageTitle('每日推荐', { root: true });
   const { isLoggedIn, openLogin } = useAuthViewModel();
 
   if (!isLoggedIn) {

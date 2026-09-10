@@ -1,8 +1,8 @@
-import { ChevronLeft } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useNavigationType } from "react-router-dom";
-import { WindowControls } from "@/shared/components/WindowControls";
-import { usePageTitle } from "./PageTitleContext";
+import { ChevronLeft } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useNavigationType } from 'react-router-dom';
+import { WindowControls } from '@/shared/components/WindowControls';
+import { usePageTitle } from './PageTitleContext';
 
 function useCanGoBack() {
   const navigationType = useNavigationType();
@@ -10,9 +10,9 @@ function useCanGoBack() {
   const depthRef = useRef(0);
 
   useEffect(() => {
-    if (navigationType === "PUSH") {
+    if (navigationType === 'PUSH') {
       depthRef.current += 1;
-    } else if (navigationType === "POP" && depthRef.current > 0) {
+    } else if (navigationType === 'POP' && depthRef.current > 0) {
       depthRef.current -= 1;
     }
     setCanGoBack(depthRef.current > 0);

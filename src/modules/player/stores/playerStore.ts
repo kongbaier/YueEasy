@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import type { QueueItem } from "@/shared/types/entities";
+import { create } from 'zustand';
+import type { QueueItem } from '@/shared/types/entities';
 
 // playerStore —— 播放 transport 状态（纯状态容器，无编排）。
 //

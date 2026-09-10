@@ -60,8 +60,9 @@ export const DecodedImage = ({
 
       // decode() 在图片可安全绘制（完整解码）后才 resolve，
       // 提前于 load 事件，能杜绝渐进式局部绘制。
-      const decode = (img as HTMLImageElement & { decode?: () => Promise<void> })
-        .decode;
+      const decode = (
+        img as HTMLImageElement & { decode?: () => Promise<void> }
+      ).decode;
       if (typeof decode === 'function') {
         decode.call(img).then(markLoaded).catch(markLoadedAnyway);
       } else {

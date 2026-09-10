@@ -1,5 +1,5 @@
 import { getCurrentWindow, type Window } from '@tauri-apps/api/window';
-import type { UnlistenFn } from "@tauri-apps/api/event";
+import type { UnlistenFn } from '@tauri-apps/api/event';
 
 export type { Window };
 
@@ -48,7 +48,7 @@ export function setFullscreen(full: boolean): Promise<void> {
   return getAppWindow().setFullscreen(full);
 }
 
-export function setTheme(theme: "light" | "dark" | null): Promise<void> {
+export function setTheme(theme: 'light' | 'dark' | null): Promise<void> {
   return getAppWindow().setTheme(theme);
 }
 
@@ -57,7 +57,7 @@ export function onResized(cb: () => void): Promise<UnlistenFn> {
 }
 
 export function onThemeChanged(
-  cb: (theme: "light" | "dark") => void,
+  cb: (theme: 'light' | 'dark') => void,
 ): Promise<UnlistenFn> {
   return getAppWindow().onThemeChanged(({ payload }) => cb(payload));
 }

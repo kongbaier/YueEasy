@@ -1,9 +1,13 @@
-import { memo } from "react";
+import { memo } from 'react';
 
 interface WordProps {
   text: string;
   status:
-    "past-line" | "past-word" | "current-word" | "future-word" | "future-line";
+    | 'past-line'
+    | 'past-word'
+    | 'current-word'
+    | 'future-word'
+    | 'future-line';
   /** Fill ratio 0..1 for the current word; ignored otherwise. */
   progress?: number;
 }
@@ -17,19 +21,19 @@ export const Word = memo(function Word({
   status,
   progress = 0,
 }: WordProps) {
-  if (status === "past-line") {
+  if (status === 'past-line') {
     return <span>{text}</span>;
   }
 
-  if (status === "future-line" || status === "future-word") {
+  if (status === 'future-line' || status === 'future-word') {
     return <span className="text-muted-foreground">{text}</span>;
   }
 
-  if (status === "past-word") {
+  if (status === 'past-word') {
     return <span className="text-primary">{text}</span>;
   }
 
-  if (status === "current-word") {
+  if (status === 'current-word') {
     // 进度两端退化为普通单层，与 past/future 逐像素一致（同色、同内联渲染、同抗锯齿）
     if (progress <= 0) {
       return <span className="text-muted-foreground">{text}</span>;

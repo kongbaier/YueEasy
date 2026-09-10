@@ -1,7 +1,7 @@
 import { getAppVersion as tauriGetAppVersion } from '@/tauri/app';
 import { cacheClearAll, cacheSize } from '@/tauri/cache';
-import type { WindowsEffect } from "@/shared/types/effect";
-import { setWindowsEffect } from "@/tauri/effect";
+import type { WindowsEffect } from '@/shared/types/effect';
+import { setWindowsEffect } from '@/tauri/effect';
 import {
   checkForUpdate,
   downloadAndInstall,

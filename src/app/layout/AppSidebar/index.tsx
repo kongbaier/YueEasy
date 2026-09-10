@@ -8,7 +8,7 @@ import {
   Settings,
   Sparkles,
 } from 'lucide-react';
-import { useLayoutEffect, useState } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '@/shared/utils/cn';
@@ -23,7 +23,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
   SidebarTrigger,
   useSidebar,
 } from '@/shared/ui/sidebar';
@@ -46,67 +45,6 @@ const footerItems = [{ to: '/settings', icon: Settings, label: '设置' }];
 const navKeys = new Set(
   [...items, ...myItems, ...footerItems].map((i) => i.to),
 );
-
-const useNavIndicator = (): React.CSSProperties => {
-  const location = useLocation();
-  const { state } = useSidebar();
-  const locationPathname = location.pathname;
-
-  // Only store measured position; derived-from-state opacity is handled during render
-  const [position, setPosition] = useState<{
-    left: number;
-    top: number;
-    height: number;
-  } | null>(null);
-
-  useLayoutEffect(() => {
-    if (state === 'collapsed') return;
-
-    const raf = requestAnimationFrame(() => {
-      const sidebar = document.querySelector(
-        '[data-sidebar="sidebar"]',
-      ) as HTMLElement;
-      if (!sidebar) return;
-
-      const activeBtn = sidebar.querySelector('[data-active]') as HTMLElement;
-      if (!activeBtn) return;
-
-      const sidebarRect = sidebar.getBoundingClientRect();
-      const btnRect = activeBtn.getBoundingClientRect();
-      const btnH = btnRect.height;
-
-      setPosition({
-        left: btnRect.left - sidebarRect.left,
-        height: btnH * 0.5,
-        top: btnRect.top - sidebarRect.top + btnH * 0.25,
-      });
-    });
-
-    return () => cancelAnimationFrame(raf);
-  }, [locationPathname, state]);
-
-  // Derive indicator style during render to avoid setState in effect
-  if (state === 'collapsed' || !position) {
-    return { opacity: 0 };
-  }
-
-  return {
-    left: position.left,
-    height: position.height,
-    transform: `translateY(${position.top}px)`,
-    opacity: 1,
-  };
-};
-
-const NavIndicator = () => {
-  const indicatorStyle = useNavIndicator();
-  return (
-    <div
-      className="pointer-events-none absolute top-0 z-10 w-0.75 rounded-full bg-primary transition-[transform,opacity] duration-250 ease-out"
-      style={indicatorStyle}
-    />
-  );
-};
 
 const SidebarBrand = ({ expanded }: { expanded: boolean }) => (
   <AnimatePresence>
@@ -144,7 +82,18 @@ export const AppSidebar = () => {
   }
 
   return (
-    <Sidebar collapsible="icon" side="left" variant="sidebar">
+    <Sidebar
+      style={
+        {
+          '--sidebar-width': '16rem',
+          '--sidebar-width-mobile': '16rem',
+        } as React.CSSProperties
+      }
+      collapsible="icon"
+      side="left"
+      variant="sidebar"
+      className="static h-full"
+    >
       <SidebarHeader
         className="h-10 flex-row items-center shrink-0 justify-between overflow-hidden"
         data-drag-region
@@ -242,9 +191,6 @@ export const AppSidebar = () => {
           })}
         </SidebarMenu>
       </SidebarFooter>
-
-      {state !== 'collapsed' && <SidebarRail />}
-      <NavIndicator />
     </Sidebar>
   );
 };

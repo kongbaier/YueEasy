@@ -1,23 +1,13 @@
-import type { AudioStatus, BaseEventMap, IAudioCore } from "./types";
+import type { AudioStatus, BaseEventMap, IAudioCore } from './types';
 
 export interface AudioCoreEventMap extends BaseEventMap {}
-
-// AudioCore —— IAudioCore 的 HTMLAudioElement 实现（平台基元，唯一触碰 DOM 的地方）。
-//
-// 轻量状态投影（不引 xstate）：由 DOM 原生事件 → 简单状态迁移，输出单一 AudioStatus；
-// 状态变化经 `status` 事件广播，消费方据此派生 playing/loading/buffering。
-// 只投影不会自相矛盾的子集：
-//   · load() 乐观 loading；loadedmetadata → paused（元数据就绪）
-//   · waiting（非 seek）→ buffering；playing/canplay → playing
-//   · pause → paused、ended → ended、error → error
-// 状态是浏览器真值（readyState/paused）的投影像，不在此再建一份正交真值。
 
 /** DOM 原生事件名 → 回调（内部桥接表，被 #emit 转发到订阅者）。 */
 type NativeHandler = (el: HTMLAudioElement) => void;
 
 export class AudioCore implements IAudioCore<AudioCoreEventMap> {
   readonly #element: HTMLAudioElement;
-  #status: AudioStatus = "idle";
+  #status: AudioStatus = 'idle';
   #listeners = new Map<
     keyof AudioCoreEventMap,
     Set<(...a: unknown[]) => void>
@@ -25,7 +15,7 @@ export class AudioCore implements IAudioCore<AudioCoreEventMap> {
 
   constructor(element?: HTMLAudioElement) {
     this.#element = element ?? new Audio();
-    this.#element.preload = "auto";
+    this.#element.preload = 'auto';
     this.#bind();
   }
 
@@ -88,20 +78,20 @@ export class AudioCore implements IAudioCore<AudioCoreEventMap> {
   seek(time: number) {
     if (!Number.isFinite(time) || time < 0) return;
     this.#element.currentTime = time;
-    this.#emit("timeupdate", time);
+    this.#emit('timeupdate', time);
   }
 
   load(src: string) {
     // 乐观先行 loading；DOM loadedmetadata 异步再校正为 paused
-    this.#setStatus("loading");
+    this.#setStatus('loading');
     this.#element.src = src;
     this.#element.load();
   }
 
   reset() {
     this.#element.pause();
-    this.#element.removeAttribute("src");
-    this.#setStatus("idle");
+    this.#element.removeAttribute('src');
+    this.#setStatus('idle');
   }
 
   getStatus(): AudioStatus {
@@ -134,42 +124,42 @@ export class AudioCore implements IAudioCore<AudioCoreEventMap> {
       a.addEventListener(type, fn);
     };
 
-    wire("timeupdate", (el) => this.#emit("timeupdate", el.currentTime));
-    wire("pause", () => {
-      this.#setStatus("paused");
-      this.#emit("pause");
+    wire('timeupdate', (el) => this.#emit('timeupdate', el.currentTime));
+    wire('pause', () => {
+      this.#setStatus('paused');
+      this.#emit('pause');
     });
-    wire("playing", () => this.#setStatus("playing"));
-    wire("ended", () => {
-      this.#setStatus("ended");
-      this.#emit("ended");
+    wire('playing', () => this.#setStatus('playing'));
+    wire('ended', () => {
+      this.#setStatus('ended');
+      this.#emit('ended');
     });
-    wire("error", (el) => {
-      this.#setStatus("error");
-      this.#emit("error", el.error ?? ({} as MediaError));
+    wire('error', (el) => {
+      this.#setStatus('error');
+      this.#emit('error', el.error ?? ({} as MediaError));
     });
     // play 是异步：结算后广播；waiting/canplay 处理缓冲
-    wire("play", () => {
+    wire('play', () => {
       void (async () => {
-        this.#setStatus("playing");
-        this.#emit("play");
+        this.#setStatus('playing');
+        this.#emit('play');
       })();
     });
-    wire("waiting", () => {
-      if (!a.seeking) this.#setStatus("buffering");
+    wire('waiting', () => {
+      if (!a.seeking) this.#setStatus('buffering');
     });
-    wire("canplay", () => {
-      if (this.#status === "buffering") this.#setStatus("playing");
+    wire('canplay', () => {
+      if (this.#status === 'buffering') this.#setStatus('playing');
     });
-    wire("loadedmetadata", () => {
-      if (this.#status === "loading") this.#setStatus("paused");
+    wire('loadedmetadata', () => {
+      if (this.#status === 'loading') this.#setStatus('paused');
     });
   }
 
   #setStatus(status: AudioStatus) {
     if (status === this.#status) return;
     this.#status = status;
-    this.#emit("status", status);
+    this.#emit('status', status);
   }
 
   #emit<K extends keyof AudioCoreEventMap>(
