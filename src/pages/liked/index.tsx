@@ -1,7 +1,7 @@
 import { Heart } from 'lucide-react';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
 import { Button } from '@/shared/ui/button';
-import Playlist from '@/pages/playlist';
+import PlaylistPage from '@/pages/playlist';
 import { useAuthViewModel } from '@/modules/auth/hooks/useAuthViewModel';
 import { useLikeStore } from '@/modules/like/stores/like';
 
@@ -26,5 +26,5 @@ export default function LikedSongs() {
 
   if (!likedPlaylistId) return null;
 
-  return <Playlist playlistId={likedPlaylistId} />;
+  return <PlaylistPage playlistId={likedPlaylistId} />;
 }

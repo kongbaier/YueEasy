@@ -14,3 +14,8 @@ export function formatCount(count: number): string {
 export function formatQueueCount(count: number): string {
   return count > 99 ? '99+' : String(count);
 }
+
+export const formatDate = (ts: number) => {
+  const d = new Date(ts);
+  return `${d.getFullYear()}年${d.getMonth() + 1}月`;
+};
