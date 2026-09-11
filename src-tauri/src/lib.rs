@@ -40,6 +40,10 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle();
 
+            // 先应用窗口特效再显示：材质是 DWM 窗口属性，对隐藏窗口即生效；
+            // 顺序颠倒会让窗口先以「无材质」状态呈现一帧。
+            platform::window::setup(handle)?;
+
             if let Some(w) = handle.get_webview_window("main") {
                 let _ = w.show();
             }
@@ -51,7 +55,6 @@ pub fn run() {
 
             app.state::<NcmState>().restore_cookie(handle);
 
-            platform::window::setup(handle)?;
             platform::tray::setup(handle)?;
             platform::accent_color::watch_accent_color(handle.clone());
 
