@@ -1,7 +1,5 @@
 import { Music, Trash2 } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
-import type { VirtuosoHandle } from 'react-virtuoso';
-import { Virtuoso } from 'react-virtuoso';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import {
   Dialog,
@@ -11,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/dialog';
-import { VirtuosoScroller } from '@/shared/ui/virtuoso';
 import { DecodedImage } from '@/shared/ui/image';
 import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/utils/cn';
@@ -51,6 +48,7 @@ const QueueItem = ({
             alt={track.album.name}
             className="size-full object-cover"
             containerClassName="size-full"
+            lazy
             src={getNcmImageUrl(track.album.picUrl, 50)}
           />
         ) : (
@@ -91,21 +89,33 @@ export const PlayerPageQueue = () => {
     clearQueue,
     removeFromQueue,
   } = usePlayer();
-  const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const scrolledOnceRef = useRef(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
   const { close } = usePlayerPage();
 
-  const scrollToCurrent = useCallback(() => {
-    if (currentIndex !== null) {
-      setTimeout(() => {
-        virtuosoRef.current?.scrollToIndex({
-          index: currentIndex,
-          align: 'center',
-        });
-      }, 50);
-    }
+  // 首次挂载后把当前播放项滚到可视区中间（只做一次）。
+  // 延迟到入场动画结束、布局稳定后再量高度。
+  useEffect(() => {
+    if (scrolledOnceRef.current || currentIndex === null) return;
+    scrolledOnceRef.current = true;
+
+    const timer = setTimeout(() => {
+      const el = listRef.current;
+      const item = el?.children[currentIndex] as HTMLElement | undefined;
+      if (!el || !item) return;
+      const offset =
+        el.scrollTop +
+        item.getBoundingClientRect().top -
+        el.getBoundingClientRect().top;
+      el.scrollTop = Math.max(
+        0,
+        offset - (el.clientHeight - item.offsetHeight) / 2,
+      );
+    }, 50);
+
+    return () => clearTimeout(timer);
   }, [currentIndex]);
 
   const handleClear = () => {
@@ -128,8 +138,8 @@ export const PlayerPageQueue = () => {
   };
 
   return (
-    <div className="h-full w-full flex flex-col px-8 lg:px-12">
-      <header className="flex items-center justify-between py-3 shrink-0">
+    <div className="h-full w-full overflow-y-auto scrollbar-gutter-stable pr-4 xl:pr-8">
+      <header className="sticky top-0 flex items-center justify-between py-3 z-10 bg-[#fafafa] dark:bg-[#0a0a0a]">
         <h2 className="text-sm font-medium flex items-center gap-1.5">
           播放列表
           {queueLength > 0 && (
@@ -150,54 +160,23 @@ export const PlayerPageQueue = () => {
         )}
       </header>
 
-      <div className="flex-1 relative">
-        <>
-          <div
-            className={cn(
-              'absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300',
-              queue.length === 0
-                ? 'opacity-100 scale-100'
-                : 'opacity-0 scale-95 pointer-events-none',
-            )}
-          >
-            <Music className="size-10 opacity-30" />
-            <p className="text-xs">播放列表为空</p>
-            <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
-          </div>
-          <div
-            className={cn(
-              'h-full transition-all duration-300',
-              queue.length > 0
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-2 pointer-events-none',
-            )}
-          >
-            <Virtuoso
-              components={{ Scroller: VirtuosoScroller }}
-              computeItemKey={(index) => queue[index]?.id ?? index}
-              fixedItemHeight={48}
-              itemContent={(index) => (
-                <QueueItem
-                  index={index}
-                  isCurrent={index === currentIndex}
-                  onPlay={playFromIndex}
-                  onRemove={handleRemove}
-                  track={queue[index]}
-                />
-              )}
-              overscan={50}
-              ref={(ref) => {
-                virtuosoRef.current = ref;
-                if (ref && !scrolledOnceRef.current && currentIndex !== null) {
-                  scrolledOnceRef.current = true;
-                  scrollToCurrent();
-                }
-              }}
-              style={{ height: '100%', width: '100%' }}
-              totalCount={queue.length}
+      <div>
+        <div
+          className="h-full w-full"
+          ref={listRef}
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {queue.map((track, index) => (
+            <QueueItem
+              index={index}
+              isCurrent={index === currentIndex}
+              key={track.id}
+              onPlay={playFromIndex}
+              onRemove={handleRemove}
+              track={track}
             />
-          </div>
-        </>
+          ))}
+        </div>
       </div>
 
       {!isFm && (

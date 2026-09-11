@@ -1,7 +1,5 @@
 import { useEffect } from 'react';
 import { Heart, MessageSquare } from 'lucide-react';
-import { Virtuoso } from 'react-virtuoso';
-import { VirtuosoScroller } from '@/shared/ui/virtuoso';
 import { DecodedImage } from '@/shared/ui/image';
 import { formatCount } from '@/shared/utils/format';
 import { toast } from '@/shared/lib/toast';
@@ -40,6 +38,7 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
             alt={comment.user.nickname}
             className="size-full object-cover"
             containerClassName="size-full"
+            lazy
             src={getNcmImageUrl(comment.user.avatarUrl, 50)}
           />
         ) : (
@@ -113,8 +112,8 @@ export const PlayerPageComments = ({ songId }: { songId: number }) => {
   const total = data?.total ?? 0;
 
   return (
-    <div className="h-full w-full flex flex-col">
-      <header className="flex items-center justify-between px-2 py-3 shrink-0">
+    <div className="relative h-full w-full overflow-y-auto scrollbar-gutter-stable pr-4 xl:pr-8">
+      <header className="sticky top-0 flex items-center justify-between px-2 py-3 z-10 bg-[#fafafa] dark:bg-[#0a0a0a]">
         <h2 className="text-sm font-medium">
           评论
           {total > 0 && (
@@ -125,41 +124,28 @@ export const PlayerPageComments = ({ songId }: { songId: number }) => {
         </h2>
       </header>
 
-      <div className="flex-1 relative">
-        <div
-          className={cn(
-            'absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300',
-            allComments.length === 0
-              ? 'opacity-100 scale-100'
-              : 'opacity-0 scale-95 pointer-events-none',
-          )}
-        >
-          <MessageSquare className="size-10 opacity-30" />
-          <p className="text-xs">暂无评论</p>
-        </div>
-
-        <div
-          className={cn(
-            'h-full transition-all duration-300 px-2 mr-4',
-            allComments.length > 0
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-2 pointer-events-none',
-          )}
-        >
-          <Virtuoso
-            components={{ Scroller: VirtuosoScroller }}
-            computeItemKey={(index) => allComments[index]?.id ?? index}
-            itemContent={(index) => (
-              <CommentItem
-                comment={allComments[index]}
-                isHot={index < hotCount}
-              />
+      <div>
+        {allComments.length === 0 ? (
+          <div
+            className={cn(
+              'absolute inset-0',
+              'flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300',
             )}
-            overscan={20}
-            style={{ height: '100%' }}
-            totalCount={allComments.length}
-          />
-        </div>
+          >
+            <MessageSquare className="size-10 opacity-30" />
+            <p className="text-xs">暂无评论</p>
+          </div>
+        ) : (
+          <div>
+            {allComments.map((comment, index) => (
+              <CommentItem
+                comment={comment}
+                isHot={index < hotCount}
+                key={comment.id}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
