@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useNavigationType } from 'react-router-dom';
 import { WindowControls } from '@/shared/components/WindowControls';
 import { usePageTitle } from './PageTitleContext';
+import { Button } from '@/shared/ui/button';
 
 function useCanGoBack() {
   const navigationType = useNavigationType();
@@ -32,14 +33,16 @@ export const AppHeader = () => {
       data-drag-region
     >
       {canGoBack && (
-        <button
+        <Button
           aria-label="返回"
-          className="ml-2 p-1 rounded-md hover:bg-black/10 transition-colors"
+          className="ml-2 size-6 p-0 rounded-md hover:bg-black/10 transition-colors"
           onClick={() => navigate(-1)}
           type="button"
+          variant="ghost"
+          size="sm"
         >
           <ChevronLeft className="size-4" />
-        </button>
+        </Button>
       )}
       {breadcrumbs.length > 0 && (
         <nav className="ml-3 flex items-center gap-1.5 text-xs min-w-0">

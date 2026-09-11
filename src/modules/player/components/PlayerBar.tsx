@@ -182,10 +182,11 @@ const PlayerInfo = ({ currentTrack }: { currentTrack: Track | null }) => {
             : 'opacity-0 pointer-events-none absolute inset-0',
         )}
       >
-        <button
+        <Button
           className={cn(
             'size-10 shrink-0 transition-colors',
-            'transition-transform duration-100 origin-bottom-left hover:brightness-95 hover:scale-110',
+            'transition-transform duration-100 origin-bottom-left hover:brightness-105 hover:scale-110',
+            'p-0 border-none',
           )}
           onClick={openPlayerPage}
           type="button"
@@ -193,7 +194,7 @@ const PlayerInfo = ({ currentTrack }: { currentTrack: Track | null }) => {
           {currentTrack?.album.picUrl ? (
             // 50px 缩略图：要换源淡出、不要光晕，直接用 CrossfadeImage 基元
             <CrossfadeImage
-              containerClassName="size-full rounded-md border-[0.5px]  border-border"
+              containerClassName="size-full rounded-md"
               alt={currentTrack.album.name}
               src={getNcmImageUrl(currentTrack.album.picUrl, 50)}
             />
@@ -202,7 +203,7 @@ const PlayerInfo = ({ currentTrack }: { currentTrack: Track | null }) => {
               <Music className="size-4 text-muted-foreground/60" />
             </div>
           )}
-        </button>
+        </Button>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">
             {currentTrack?.name ?? ''}
@@ -283,7 +284,7 @@ export const PlayerBar = ({
   return (
     <div
       className={cn(
-        'relative bg-card px-4 flex items-center justify-between',
+        'relative px-4 flex items-center justify-between',
         className,
       )}
     >

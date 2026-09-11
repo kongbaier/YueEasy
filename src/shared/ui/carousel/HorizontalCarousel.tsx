@@ -117,7 +117,7 @@ export const HorizontalCarousel = ({
         <CarouselContent>
           {loading
             ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-                // oxlint-disable-next-line react/no-array-index-key
+                //oxlint-disable-next-line react/no-array-index-key
                 <CarouselItem className="basis-auto" key={i}>
                   <CardSkeleton />
                 </CarouselItem>

@@ -102,7 +102,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl lg:max-w-4xl xl:max-w-5xl px-4 sm:px-8 py-6 sm:py-8 animate-content-enter">
+    <div className="mx-auto w-full px-4 sm:px-8 py-6 sm:py-8 animate-content-enter">
       {/* Page heading */}
       <div className="mb-6 sm:mb-8 flex items-center gap-3">
         <div className="h-7 w-1 rounded-full bg-primary" />
@@ -347,7 +347,7 @@ function SectionCard({
 }) {
   return (
     <div
-      className="rounded-lg border border-border/40 bg-card px-5 py-4 animate-content-enter"
+      className="rounded-lg border border-border/40 bg-background px-5 py-4 animate-content-enter"
       style={style}
     >
       {children}

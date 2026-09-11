@@ -25,7 +25,7 @@
   --brand-l3: #fdedec;
 
   /* 语义角色：主题感知映射（浅色主题：深色阶作强调、hover 混黑变深） */
-  --background: transparent;
+  --background: color-mix(in oklch, var(--color-white) 30%, transparent);
   --foreground: #171717;
   --card: color-mix(in oklch, #fdfdfd 68%, transparent);
   --card-foreground: #171717;
@@ -48,13 +48,13 @@
   --radius: 0.25rem;
   --radius-overlay: 0.5rem;
 
-  --sidebar: var(--background);
+  --sidebar: transparent;
   --sidebar-foreground: #171717;
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: color-mix(in oklch, black 6%, transparent);
   --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: color-mix(in oklch, #e5e7eb 8%, transparent);
+  --sidebar-border: rgb(234, 226, 227);
   --sidebar-ring: var(--primary);
   --surface-hover: color-mix(in oklch, black 6%, transparent);
   --surface-active: color-mix(in oklch, var(--primary) 14%, transparent);
@@ -64,10 +64,10 @@
   --font-family:
     'OPPO Sans', system-ui, -apple-system, 'Segoe UI Variable', 'Segoe UI',
     'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
-  --background: color-mix(in oklch, #121212 38%, transparent);
-  --foreground: #f6f6f6;
 
   /* 语义角色：主题感知映射（深色主题：浅色阶作强调、hover 混白变亮） */
+  --background: color-mix(in oklch, var(--color-white) 3%, transparent);
+  --foreground: #f6f6f6;
   --primary: var(--brand);
   --primary-foreground: #ffffff;
   --ring: var(--primary);
@@ -86,7 +86,7 @@
   --destructive: #d13438;
   --destructive-foreground: #ffffff;
 
-  --sidebar: var(--background);
+  --sidebar: transparent;
   --sidebar-foreground: #f6f6f6;
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #ffffff;
@@ -136,63 +136,4 @@
 
 @theme inline {
   --animate-shimmer: shimmer 2s ease-in-out infinite;
-}
-
-@layer base {
-  *:focus:not(:focus-visible) {
-    outline: none;
-  }
-
-  button:not(:disabled),
-  [role='button']:not(:disabled) {
-    cursor: pointer;
-  }
-
-  body {
-    font-family: var(--font-family);
-    color: var(--foreground);
-    background-color: transparent;
-  }
-
-  * {
-    border-color: var(--border);
-  }
-
-  *,
-  *::before,
-  *::after {
-    -webkit-user-select: none;
-    user-select: none;
-  }
-
-  img,
-  a {
-    -webkit-user-drag: none;
-    pointer-events: none;
-  }
-
-  input,
-  textarea,
-  [contenteditable] {
-    -webkit-user-select: text;
-    user-select: text;
-  }
-
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: rgba(128, 128, 128, 0.3);
-    border-radius: 3px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(128, 128, 128, 0.5);
-  }
 }

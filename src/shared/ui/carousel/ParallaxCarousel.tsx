@@ -92,7 +92,7 @@ export const ParallaxCarousel = <T,>({
             <Button
               className={cn(
                 'transition-all duration-150 ease-out',
-                'rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90',
+                'rounded-full bg-card/60 p-1.5 text-foreground hover:bg-card/80 hover:scale-95 active:scale-90',
               )}
               onClick={() => api?.scrollPrev()}
               type="button"
@@ -104,7 +104,7 @@ export const ParallaxCarousel = <T,>({
             <Button
               className={cn(
                 'transition-all duration-150 ease-out',
-                'rounded-full bg-background/60 p-1.5 text-foreground hover:bg-background/80 hover:scale-95 active:scale-90',
+                'rounded-full bg-card/60 p-1.5 text-foreground hover:bg-card/80 hover:scale-95 active:scale-90',
               )}
               onClick={() => api?.scrollNext()}
               type="button"

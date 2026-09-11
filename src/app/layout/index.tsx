@@ -26,7 +26,7 @@ export function AppLayout() {
           </div>
 
           <PlayerBar
-            className="h-18 bg-background"
+            className="h-18"
             onToggleQueuePanel={() => setQueuePanelOpen((v) => !v)}
           />
 

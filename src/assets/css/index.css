@@ -6,6 +6,69 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@layer base {
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+  *:focus-visible {
+    @apply outline-none border border-ring ring-2 ring-ring/40;
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+
+  body {
+    font-family: var(--font-family);
+    color: var(--foreground);
+    background-color: transparent;
+  }
+
+  *,
+  *::before,
+  *::after {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  img {
+    -webkit-user-drag: none;
+    pointer-events: none;
+  }
+
+  /* 锚点只禁原生拖拽（WebView 里 <a href> 默认可拖，会干扰轮播拖动手势），
+     不能禁用指针事件，否则所有 <Link> 都点不动 */
+  a {
+    -webkit-user-drag: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+  }
+}
+
 @keyframes banner-drift {
   from {
     transform: translateX(-5%);

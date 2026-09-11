@@ -85,14 +85,14 @@ export const AppSidebar = () => {
     <Sidebar
       style={
         {
-          '--sidebar-width': '16rem',
-          '--sidebar-width-mobile': '16rem',
+          '--sidebar-width': 'rem',
+          '--sidebar-width-mobile': '20rem',
         } as React.CSSProperties
       }
       collapsible="icon"
       side="left"
       variant="sidebar"
-      className="static h-full"
+      className="static h-full border-sidebar-border"
     >
       <SidebarHeader
         className="h-10 flex-row items-center shrink-0 justify-between overflow-hidden"
@@ -112,15 +112,11 @@ export const AppSidebar = () => {
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton
-                      className="gap-x-2"
+                      className="gap-x-3"
                       isActive={isActive}
                       onClick={() => navigate(item.to)}
                     >
-                      <item.icon
-                        className={cn(
-                          isActive && 'fill-primary text-primary-strong',
-                        )}
-                      />
+                      <item.icon className={cn(isActive && 'fill-primary')} />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -141,15 +137,11 @@ export const AppSidebar = () => {
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton
-                      className="gap-x-2"
+                      className="gap-x-3"
                       isActive={isActive}
                       onClick={() => navigate(item.to)}
                     >
-                      <item.icon
-                        className={cn(
-                          isActive && 'fill-primary text-primary-strong',
-                        )}
-                      />
+                      <item.icon className={cn(isActive && 'fill-primary')} />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -164,7 +156,7 @@ export const AppSidebar = () => {
         <SidebarMenu className="space-y-0.5">
           {!isLoggedIn && (
             <SidebarMenuItem>
-              <SidebarMenuButton className="gap-x-2" onClick={openLogin}>
+              <SidebarMenuButton className="gap-x-3" onClick={openLogin}>
                 <LogIn />
                 <span>登录</span>
               </SidebarMenuButton>
@@ -175,15 +167,11 @@ export const AppSidebar = () => {
             return (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton
-                  className="gap-x-2"
+                  className="gap-x-3"
                   isActive={isActive}
                   onClick={() => navigate(item.to)}
                 >
-                  <item.icon
-                    className={cn(
-                      isActive && 'fill-primary text-primary-strong',
-                    )}
-                  />
+                  <item.icon className={cn(isActive && 'fill-primary')} />
                   <span>{item.label}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
