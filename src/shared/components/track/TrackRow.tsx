@@ -1,4 +1,4 @@
-import { Crown, Heart, ListPlus, Play, SkipForward } from 'lucide-react';
+import { Disc3, Heart, ListPlus, Play, SkipForward } from 'lucide-react';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -53,10 +53,10 @@ export const TrackRow = ({ track, index, onPlay, badge }: TrackRowProps) => {
           />
         )}
         <div className="flex-1 min-w-0">
-          <p className="flex items-center gap-1 min-w-0 font-medium">
+          <p className="flex items-center gap-1 min-w-0">
             <span className="truncate">{track.name}</span>
             {track.fee === 1 && (
-              <Crown className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <Disc3 className="h-3.5 w-3.5 shrink-0 text-amber-400" />
             )}
             {badge && (
               <span className="shrink-0 rounded-sm bg-muted px-1 py-0.5 text-[10px] leading-none text-muted-foreground">
