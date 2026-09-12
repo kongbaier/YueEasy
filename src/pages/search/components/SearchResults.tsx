@@ -1,5 +1,5 @@
 import { Search as SearchIcon, SearchX } from 'lucide-react';
-import type { Album, Artist, Song, User } from '@/shared/types/entities';
+import type { Song } from '@/shared/types/entities';
 
 import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
 import { SearchAlbumCard, SearchAlbumCardSkeleton } from './SearchAlbumCard';
@@ -7,15 +7,16 @@ import { SearchArtistCard, SearchArtistCardSkeleton } from './SearchArtistCard';
 import { SearchUserCard, SearchUserCardSkeleton } from './SearchUserCard';
 import {
   GRID_SKELETON_COUNT,
+  SearchType,
   SKELETON_COUNT,
   TYPE_LABEL,
-  type SearchType,
-} from './constants';
+  type SearchResults,
+} from '../constants';
 
 // ---- internal sub-components ----
 
 function LoadingState({ type }: { type: SearchType }) {
-  if (type === '1') {
+  if (type === SearchType.SONG) {
     return (
       <div className="space-y-0.5">
         {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
@@ -27,9 +28,9 @@ function LoadingState({ type }: { type: SearchType }) {
   }
 
   const SkeletonComponent =
-    type === '10'
+    type === SearchType.ALBUM
       ? SearchAlbumCardSkeleton
-      : type === '100'
+      : type === SearchType.ARTIST
         ? SearchArtistCardSkeleton
         : SearchUserCardSkeleton;
 
@@ -63,8 +64,8 @@ interface SearchResultsProps {
   loading: boolean;
   /** 搜索错误信息（空字符串表示无错误） */
   error: string;
-  /** 搜索结果原始数据（歌曲 / 专辑 / 歌手 / 用户） */
-  results: unknown[];
+  /** 搜索结果（按 type 判别）；未取到时为 null */
+  results: SearchResults | null;
   /** 当前搜索分类 */
   searchType: SearchType;
   /** 当前可见的结果数量（懒加载） */
@@ -91,6 +92,7 @@ export function SearchResults({
   onPlay,
 }: SearchResultsProps) {
   const showInitialPrompt = !hasSearched && !loading && !showDropdown;
+  const items = results?.items ?? [];
 
   return (
     <>
@@ -102,46 +104,44 @@ export function SearchResults({
 
       {loading && <LoadingState type={searchType} />}
 
-      {!loading && !error && results.length > 0 && (
+      {!loading && !error && results && items.length > 0 && (
         <>
           {/* Song results */}
-          {searchType === '1' && (
+          {results.type === SearchType.SONG && (
             <div className="space-y-0.5">
-              {(results as Song[])
-                .slice(0, visibleCount)
-                .map((track, index) => (
-                  <TrackRow
-                    index={index}
-                    key={track.id}
-                    onPlay={onPlay}
-                    track={track}
-                  />
-                ))}
+              {results.items.slice(0, visibleCount).map((track, index) => (
+                <TrackRow
+                  index={index}
+                  key={track.id}
+                  onPlay={onPlay}
+                  track={track}
+                />
+              ))}
             </div>
           )}
 
           {/* Album results */}
-          {searchType === '10' && (
+          {results.type === SearchType.ALBUM && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {(results as Album[]).slice(0, visibleCount).map((item) => (
+              {results.items.slice(0, visibleCount).map((item) => (
                 <SearchAlbumCard item={item} key={item.id} />
               ))}
             </div>
           )}
 
           {/* Artist results */}
-          {searchType === '100' && (
+          {results.type === SearchType.ARTIST && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {(results as Artist[]).slice(0, visibleCount).map((item) => (
+              {results.items.slice(0, visibleCount).map((item) => (
                 <SearchArtistCard item={item} key={item.id} />
               ))}
             </div>
           )}
 
           {/* User results */}
-          {searchType === '1002' && (
+          {results.type === SearchType.USER && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {(results as User[]).slice(0, visibleCount).map((item) => (
+              {results.items.slice(0, visibleCount).map((item) => (
                 <SearchUserCard item={item} key={item.id} />
               ))}
             </div>
@@ -149,7 +149,7 @@ export function SearchResults({
         </>
       )}
 
-      {!loading && !error && hasSearched && results.length === 0 && (
+      {!loading && !error && hasSearched && items.length === 0 && (
         <NoResults keyword={keyword} type={searchType} />
       )}
 

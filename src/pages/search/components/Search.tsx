@@ -5,11 +5,10 @@ import { Input } from '@/shared/ui/input';
 import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { ScrollContainerContext } from '@/shared/hooks/useLoadMore';
 import { cn } from '@/shared/utils/cn';
-import { SEARCH_TABS } from './constants';
-import { HotDropdown } from './HotDropdown';
+import { SEARCH_TABS } from '../constants';
 import { SearchResults } from './SearchResults';
-import { SuggestDropdown } from './SuggestDropdown';
-import { useSearchController } from './useSearchController';
+import { useSearchController } from '../hooks/useSearchController';
+import { useSearchResults } from '../hooks/useSearch';
 
 // ---- layout ----
 
@@ -23,18 +22,21 @@ export function SearchHeader({ children }: { children?: React.ReactNode }) {
 
 // ---- search input ----
 
-export function SearchInput({
-  onFocus,
-  children,
-}: {
-  onFocus?: () => void;
-  children?: React.ReactNode;
-}) {
-  const { input, setInput, submit, clearInput } = useSearchController();
+export function SearchInput({ children }: { children?: React.ReactNode }) {
+  const { input, setInput, setShow, submit } = useSearchController();
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     submit();
+  };
+
+  /** 空输入看向热门，有输入看向建议 */
+  const showDropdownFor = (value: string) =>
+    setShow(value.trim() ? 'suggest' : 'hot');
+
+  const handleClear = () => {
+    setInput('');
+    setShow(null);
   };
 
   return (
@@ -49,19 +51,23 @@ export function SearchInput({
           autoComplete="off"
           autoFocus
           className="pl-10 pr-8 h-9"
-          onChange={(e) => setInput(e.target.value)}
-          onFocus={onFocus}
+          onChange={(e) => {
+            setInput(e.target.value);
+            showDropdownFor(e.target.value);
+          }}
+          onFocus={() => showDropdownFor(input)}
           placeholder="搜索歌曲、歌手、专辑..."
           value={input}
         />
         {input && (
-          <button
+          <Button
             className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            onClick={clearInput}
+            onClick={handleClear}
             type="button"
+            variant="ghost"
           >
             <X className="size-3.5" />
-          </button>
+          </Button>
         )}
         {children}
       </div>
@@ -100,63 +106,30 @@ export function SearchTabs() {
 
 // ---- dropdown ----
 
-export function SearchDropdown() {
-  const { show, input, hots, suggestions, setInput, setShow } =
-    useSearchController();
-
-  return (
-    <>
-      {show === 'hot' && !input.trim() && hots.length > 0 && (
-        <HotDropdown
-          hots={hots}
-          onClose={() => setShow(null)}
-          onPick={(keyword) => setInput(keyword)}
-        />
-      )}
-      {show === 'suggest' && suggestions.length > 0 && (
-        <SuggestDropdown
-          items={suggestions}
-          onClose={() => setShow(null)}
-          onPick={(keyword) => {
-            setInput(keyword);
-            setShow(null);
-          }}
-        />
-      )}
-    </>
-  );
-}
-
 // ---- results ----
 
 export function SearchResultsDisplay() {
-  const {
-    results,
-    loading,
-    error,
-    searchType,
-    searchKeyword,
-    show,
-    handlePlay,
-  } = useSearchController();
+  const { keyword, searchType, show, handlePlay } = useSearchController();
+  const { data, error, isLoading } = useSearchResults();
 
-  const hasSearched = searchKeyword.trim().length > 0;
+  const hasSearched = keyword.trim().length > 0;
+  const results = data ?? null;
 
   const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null);
   const scrollRef = useCallback(
     (el: HTMLDivElement | null) => setScrollEl(el),
     [],
   );
-  const visibleCount = useLoadMore(results.length);
+  const visibleCount = useLoadMore(results?.items.length ?? 0);
 
   return (
     <ScrollContainerContext.Provider value={scrollEl}>
       <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6" ref={scrollRef}>
         <SearchResults
-          error={error}
+          error={error instanceof Error ? error.message : ''}
           hasSearched={hasSearched}
-          keyword={searchKeyword}
-          loading={loading}
+          keyword={keyword}
+          loading={isLoading}
           onPlay={handlePlay}
           results={results}
           searchType={searchType}

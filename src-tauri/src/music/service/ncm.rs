@@ -138,7 +138,8 @@ impl NcmService {
         if let Some(cookie) = qr.cookie.as_deref().filter(|c| !c.is_empty()) {
             let merged = {
                 let mut inner = state.inner.lock().unwrap();
-                let merged = merge_cookies(&inner.cookie, std::slice::from_ref(&cookie.to_string()));
+                let merged =
+                    merge_cookies(&inner.cookie, std::slice::from_ref(&cookie.to_string()));
                 inner.cookie = merged.clone();
                 merged
             };
