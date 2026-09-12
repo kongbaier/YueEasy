@@ -2,7 +2,7 @@
 //!
 //! 这里允许用 `#[serde(rename)]` / `#[serde(alias)]` 对齐 API 的脏字段名（ar/al/dt、
 //! picUrl/coverImgUrl、artists/album/duration 等）；缺字段用 `#[serde(default)]` 兜底。
-//! DTO 只存在于适配层内部，绝不直接返回前端。
+//! DTO 只存在于数据处理层内部，绝不直接返回前端。
 
 use serde::Deserialize;
 
@@ -478,11 +478,29 @@ pub struct SearchArtistDto {
     pub music_size: i64,
 }
 
+/// 搜索结果里的歌曲 = 共享核心 `SongDto` + 搜索场景需要的附加判定。
+///
+/// 用 `flatten` 复用核心，本结构只声明差异——核心 `SongDto` 因此不会随接口数量
+/// 增长成「所有接口字段的并集」。
+///
+/// 搜索是「同一首歌多版本并存」的重灾区（一首歌能搜出十几个翻唱），所以原唱/翻唱
+/// 的判定属于搜索场景。（实测 `originCoverType` 也出现在 `song_detail` /
+/// `playlist_detail`，但不在 `album` 的 songs 与 `/api/search/get` 里。）
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchSongDto {
+    #[serde(flatten)]
+    pub core: SongDto,
+    /// 原唱/翻唱标记，取值见 `mapper::map_origin_cover_type`
+    #[serde(default)]
+    pub origin_cover_type: Option<i64>,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchResultDto {
     #[serde(default)]
-    pub songs: Vec<SongDto>,
+    pub songs: Vec<SearchSongDto>,
     #[serde(default)]
     pub song_count: i64,
     #[serde(default)]
@@ -743,4 +761,94 @@ pub struct LoginStatusResponseDto {
     pub data: Option<LoginStatusDataDto>,
     #[serde(default)]
     pub profile: Option<UserDto>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    /// `SearchSongDto` 用 `flatten` 复用核心，而核心里有
+    /// `deserialize_with = "de_string_nullable"`——flatten 走的是 buffered
+    /// `Content` 反序列化器，这是 serde 的已知易踩点，所以这里锁住它：
+    /// flatten 之后核心字段与 `originCoverType` 都要各就各位。
+    ///
+    /// 输入已按 `client::fetch` 的 `normalize_numbers` 之后的状态给（整数写整数），
+    /// 因为 DTO 只会看到归一后的 `Value`。
+    #[test]
+    fn search_song_merges_flattened_core_and_origin_cover_type() {
+        let value = json!({
+            "id": 186016,
+            "name": "晴天",
+            "ar": [{ "id": 6452, "name": "周杰伦" }],
+            "al": { "id": 185811, "name": "叶惠美", "picUrl": "https://x/p.jpg" },
+            "dt": 269743,
+            "fee": 0,
+            "originCoverType": 1
+        });
+
+        let dto: SearchSongDto = serde_json::from_value(value).expect("decode search song");
+
+        assert_eq!(dto.origin_cover_type, Some(1));
+        assert_eq!(dto.core.id, 186016);
+        assert_eq!(dto.core.name, "晴天");
+        assert_eq!(dto.core.duration_ms, Some(269743));
+        assert_eq!(dto.core.artists.len(), 1);
+        assert_eq!(dto.core.artists[0].name, "周杰伦");
+        assert_eq!(dto.core.album.as_ref().map(|a| a.name.as_str()), Some("叶惠美"));
+    }
+
+    /// `/api/search/get` 与 album 的 songs 不发该字段，`default` 要兜成 None 而不是 decode 失败。
+    #[test]
+    fn search_song_tolerates_missing_origin_cover_type() {
+        let value = json!({
+            "id": 1,
+            "name": "无标记",
+            "ar": [],
+            "al": null,
+            "dt": 1000
+        });
+
+        let dto: SearchSongDto = serde_json::from_value(value).expect("decode without originCoverType");
+
+        assert_eq!(dto.origin_cover_type, None);
+        assert_eq!(dto.core.name, "无标记");
+    }
+
+    /// 核心的 `alias`（`artists`/`album`/`duration`）在 flatten 之后必须照常生效，
+    /// 否则 personal_fm 那一路的命名会退化。
+    #[test]
+    fn search_song_keeps_alias_support_through_flatten() {
+        let value = json!({
+            "id": 2,
+            "name": "FM 曲目",
+            "artists": [{ "id": 7, "name": "某歌手" }],
+            "album": { "id": 8, "name": "某专辑" },
+            "duration": 123456
+        });
+
+        let dto: SearchSongDto = serde_json::from_value(value).expect("decode aliased core");
+
+        assert_eq!(dto.core.duration_ms, Some(123456));
+        assert_eq!(dto.core.artists[0].name, "某歌手");
+        assert_eq!(dto.core.album.as_ref().map(|a| a.id), Some(8));
+    }
+
+    /// 网易云会把字符串字段发成 null，`de_string_nullable` 要把 null 归一成空串
+    /// 而不是 decode 失败——flatten 之后这条保障同样要成立。
+    #[test]
+    fn search_song_nullable_name_becomes_empty_string() {
+        let value = json!({
+            "id": 3,
+            "name": null,
+            "ar": [{ "id": 1, "name": null }],
+            "al": null,
+            "dt": 0
+        });
+
+        let dto: SearchSongDto = serde_json::from_value(value).expect("decode null name");
+
+        assert_eq!(dto.core.name, "");
+        assert_eq!(dto.core.artists[0].name, "");
+    }
 }

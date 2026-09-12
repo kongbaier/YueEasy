@@ -1,13 +1,15 @@
 mod app;
 mod cmd;
-mod music;
+mod model;
+mod netease;
 mod platform;
+mod service;
 mod storage;
 
 use tauri::Manager;
 
 use crate::app::state::LikeState;
-use crate::music::netease::NcmState;
+use crate::netease::NcmState;
 use crate::storage::db::Database;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

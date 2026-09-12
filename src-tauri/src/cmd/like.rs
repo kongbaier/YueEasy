@@ -7,8 +7,8 @@
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 
-use crate::music::netease::NcmState;
-use crate::music::service::NcmService;
+use crate::netease::NcmState;
+use crate::service::NcmService;
 use crate::app::state::LikeState;
 
 /// `liked-ids-changed` 全量事件（`like_init` 推送）。

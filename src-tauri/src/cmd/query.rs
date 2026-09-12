@@ -3,8 +3,8 @@
 
 use tauri::{AppHandle, State};
 
-use crate::music::netease::NcmState;
-use crate::music::service::NcmService;
+use crate::netease::NcmState;
+use crate::service::NcmService;
 
 /// 解析播放 URL（纯网络取数；前端自持曲目元数据，本命令只需 track_id）。
 /// 返回第一条非空 url。

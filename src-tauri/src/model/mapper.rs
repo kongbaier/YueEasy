@@ -1,10 +1,10 @@
-//! DTO → Entity 映射（适配层内纯函数）。
+//! DTO → Entity 映射（数据处理层纯函数）。
 //!
 //! 这里是所有"脏数据归一"的落点：字段改名、双形态合并、缺省值兜底。
 //! 不涉及任何网络/状态，便于单测。
 
-use crate::music::netease::entity as ent;
-use crate::music::netease::raw;
+use crate::model::entity as ent;
+use crate::model::raw;
 
 fn map_artist(d: raw::ArtistDto) -> ent::Artist {
     ent::Artist {
@@ -191,9 +191,29 @@ fn map_search_artist(d: raw::SearchArtistDto) -> ent::Artist {
     }
 }
 
+/// `originCoverType` → 语义枚举。实测取值：1=原唱、2=翻唱、3=其它改编；
+/// 缺失或 0 视为「接口未给出关系」，归一为 `None`（前端据此不展示标签）。
+fn map_origin_cover_type(raw: Option<i64>) -> Option<ent::OriginCoverType> {
+    match raw {
+        Some(1) => Some(ent::OriginCoverType::Original),
+        Some(2) => Some(ent::OriginCoverType::Cover),
+        None | Some(0) => None,
+        Some(_) => Some(ent::OriginCoverType::Other),
+    }
+}
+
+/// 搜索歌曲：核心走共享的 `map_song`，只额外解释原唱/翻唱标记。
+pub fn map_search_song(d: raw::SearchSongDto) -> ent::SearchSong {
+    let origin_cover_type = map_origin_cover_type(d.origin_cover_type);
+    ent::SearchSong {
+        song: map_song(d.core),
+        origin_cover_type,
+    }
+}
+
 pub fn map_search_result(d: raw::SearchResultDto) -> ent::SearchResult {
     ent::SearchResult {
-        songs: d.songs.into_iter().map(map_song).collect(),
+        songs: d.songs.into_iter().map(map_search_song).collect(),
         song_count: d.song_count,
         albums: d.albums.into_iter().map(map_search_album).collect(),
         album_count: d.album_count,
@@ -344,4 +364,82 @@ pub fn map_recent_songs(d: raw::RecentSongResponseDto) -> ent::RecentSongs {
         })
         .unwrap_or_default();
     ent::RecentSongs { list }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::entity::OriginCoverType;
+    use serde_json::json;
+
+    fn search_song(origin_cover_type: Option<i64>) -> ent::SearchSong {
+        let mut value = json!({
+            "id": 287398,
+            "name": "我不难过",
+            "ar": [{ "id": 9272, "name": "孙燕姿" }],
+            "al": { "id": 28539, "name": "未完成" },
+            "dt": 320400,
+            "fee": 1
+        });
+        if let Some(t) = origin_cover_type {
+            value["originCoverType"] = json!(t);
+        }
+        let dto: raw::SearchSongDto = serde_json::from_value(value).expect("decode");
+        map_search_song(dto)
+    }
+
+    /// 实测取值：1=原唱、2=翻唱、3=其它改编。
+    #[test]
+    fn origin_cover_type_known_values() {
+        assert_eq!(
+            search_song(Some(1)).origin_cover_type,
+            Some(OriginCoverType::Original)
+        );
+        assert_eq!(
+            search_song(Some(2)).origin_cover_type,
+            Some(OriginCoverType::Cover)
+        );
+        assert_eq!(
+            search_song(Some(3)).origin_cover_type,
+            Some(OriginCoverType::Other)
+        );
+    }
+
+    /// 0 与缺失都表示「接口没给出关系」，不是 `Other`——否则前端会给正常歌曲挂标签。
+    #[test]
+    fn origin_cover_type_absent_or_zero_is_none() {
+        assert_eq!(search_song(None).origin_cover_type, None);
+        assert_eq!(search_song(Some(0)).origin_cover_type, None);
+    }
+
+    /// 核心仍走共享的 `map_song`，flatten 之后不许漏字段。
+    #[test]
+    fn search_song_keeps_core_intact() {
+        let item = search_song(Some(1));
+        assert_eq!(item.song.id, 287398);
+        assert_eq!(item.song.name, "我不难过");
+        assert_eq!(item.song.duration_ms, 320400);
+        assert_eq!(item.song.fee, Some(1));
+        assert_eq!(item.song.artists[0].name, "孙燕姿");
+        assert_eq!(item.song.album.name, "未完成");
+    }
+
+    /// `flatten` 必须真的把核心摊平到同一层，前端才能继续用 `item.name`。
+    #[test]
+    fn search_song_serializes_flat() {
+        let value = serde_json::to_value(search_song(Some(1))).expect("serialize");
+        let obj = value.as_object().expect("object");
+        assert_eq!(obj.get("name"), Some(&json!("我不难过")));
+        assert_eq!(obj.get("id"), Some(&json!(287398)));
+        assert_eq!(obj.get("originCoverType"), Some(&json!("original")));
+        // 不许出现嵌套的 song 字段
+        assert!(obj.get("song").is_none());
+    }
+
+    /// 未给出关系时该字段应整体省略，前端类型是可选。
+    #[test]
+    fn search_song_omits_absent_origin_cover_type() {
+        let value = serde_json::to_value(search_song(None)).expect("serialize");
+        assert!(value.as_object().expect("object").get("originCoverType").is_none());
+    }
 }

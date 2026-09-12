@@ -1,4 +1,10 @@
-import type { Album, Artist, Song, User } from '@/shared/types/entities';
+import type {
+  Album,
+  Artist,
+  OriginCoverType,
+  SearchSong,
+  User,
+} from '@/shared/types/entities';
 
 export const SKELETON_COUNT = 8;
 export const GRID_SKELETON_COUNT = 12;
@@ -45,10 +51,25 @@ export const suggestionKey = (item: SuggestionItem) =>
 
 /** 各搜索分类对应的实体类型 */
 export interface SearchEntityMap {
-  [SearchType.SONG]: Song;
+  [SearchType.SONG]: SearchSong;
   [SearchType.ALBUM]: Album;
   [SearchType.ARTIST]: Artist;
   [SearchType.USER]: User;
+}
+
+/**
+ * 原唱/翻唱标记 → 歌手名后要展示的标签文案。
+ *
+ * 未列出的值刻意不展示：`other`（DJ 版 / 烟嗓版等改编）打标只会造成噪音，
+ * 而 `cover` 目前也不展示——想开就是加一行 `cover: '翻唱'`。
+ */
+export const ORIGIN_COVER_TAG: Partial<Record<OriginCoverType, string>> = {
+  original: '原唱',
+};
+
+/** 取该歌曲要展示的标记文案；无标记或未配置文案时返回 undefined。 */
+export function originCoverTag(type?: OriginCoverType): string | undefined {
+  return type ? ORIGIN_COVER_TAG[type] : undefined;
 }
 
 /**

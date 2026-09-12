@@ -2,10 +2,10 @@
 
 use tauri::{AppHandle, State};
 
-use crate::music::netease::entity::{Playlist, PlaylistHotTag, PlaylistPage};
-use crate::music::netease::error::Result;
-use crate::music::netease::NcmState;
-use crate::music::service::NcmService;
+use crate::model::entity::{Playlist, PlaylistHotTag, PlaylistPage};
+use crate::model::error::Result;
+use crate::netease::NcmState;
+use crate::service::NcmService;
 
 #[tauri::command]
 pub(crate) async fn ncm_playlist_detail(

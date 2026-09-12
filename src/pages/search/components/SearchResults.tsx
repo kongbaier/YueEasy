@@ -7,6 +7,7 @@ import { SearchArtistCard, SearchArtistCardSkeleton } from './SearchArtistCard';
 import { SearchUserCard, SearchUserCardSkeleton } from './SearchUserCard';
 import {
   GRID_SKELETON_COUNT,
+  originCoverTag,
   SearchType,
   SKELETON_COUNT,
   TYPE_LABEL,
@@ -111,6 +112,7 @@ export function SearchResults({
             <div className="space-y-0.5">
               {results.items.slice(0, visibleCount).map((track, index) => (
                 <TrackRow
+                  artistTag={originCoverTag(track.originCoverType)}
                   index={index}
                   key={track.id}
                   onPlay={onPlay}

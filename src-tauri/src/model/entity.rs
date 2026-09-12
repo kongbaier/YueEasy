@@ -213,10 +213,40 @@ pub struct AlbumDetail {
     pub songs: Vec<Song>,
 }
 
+/// 原唱/翻唱标记，由接口的 `originCoverType` 归一而来。
+///
+/// 取值依据实测：1=原唱、2=翻唱、3=其它改编（DJ 版 / 烟嗓版等）；
+/// 缺失或 0 表示接口没有给出该关系，归一为 `None` 而非 `Other`。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum OriginCoverType {
+    /// 原唱
+    Original,
+    /// 翻唱
+    Cover,
+    /// 其它改编版本
+    Other,
+}
+
+/// 搜索返回的歌曲：`Song` 的**扁平**扩展。
+///
+/// `flatten` 让 wire 形状与裸 `Song` 完全一致（`{id, name, …, originCoverType: "original"}`），
+/// 前端 `item.name` 照旧，只是多一个字段——避免「一首歌」在前端有两种形状，
+/// 也让 `Song` 这个业务模型保持纯净。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchSong {
+    #[serde(flatten)]
+    pub song: Song,
+    /// 原唱/翻唱标记（接口未给出时省略）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin_cover_type: Option<OriginCoverType>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchResult {
-    pub songs: Vec<Song>,
+    pub songs: Vec<SearchSong>,
     pub song_count: i64,
     pub albums: Vec<Album>,
     pub album_count: i64,

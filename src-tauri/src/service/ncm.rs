@@ -1,20 +1,18 @@
-//! NCM 领域服务：浅包 `music::netease`（客户端取数 + 归一 + 业务 code 校验）。
+//! NCM 领域服务：编排「组装 Query → 网络层取数 → 业务 code 校验 → 数据处理层映射」。
 //! 服务层不感知 IPC；cmd 薄壳直接调本服务。
 
 use ncm_api_rs::Query;
 use tauri::AppHandle;
 
-use crate::music::netease::client::{self, run_dto};
-use crate::music::netease::cookie::{merge_cookies, persist_cookie};
-use crate::music::netease::entity::{
+use crate::model::entity::{
     AlbumDetail, AuthSession, Banner, CommentPage, DragonBallItem, HotSearchItem, IntelligenceSong,
     LikeList, LoginStatus, Lyric, Playlist, PlaylistHotTag, PlaylistPage, QrCheck, QrCreate, QrKey,
     RecentSongs, SearchResult, Song, SongUrlResult, SuggestResult,
 };
-use crate::music::netease::error::{check_code, NcmApiError, Result};
-use crate::music::netease::mapper;
-use crate::music::netease::raw;
-use crate::music::netease::NcmState;
+use crate::model::error::{check_code, NcmApiError, Result};
+use crate::model::{mapper, raw};
+use crate::netease::client::{fetch, opt};
+use crate::netease::NcmState;
 
 pub struct NcmService;
 
@@ -34,29 +32,19 @@ impl NcmService {
         countrycode: Option<String>,
     ) -> Result<AuthSession> {
         let mut q = Query::new().param("phone", &phone);
-        q = client::opt(q, "password", password.as_deref());
-        q = client::opt(q, "captcha", captcha.as_deref());
-        q = client::opt(q, "countrycode", countrycode.as_deref());
-        let dto: raw::LoginResponseDto =
-            run_dto(
-                state,
-                app,
-                q,
-                |c, q| async move { c.login_cellphone(&q).await },
-            )
-            .await?;
+        q = opt(q, "password", password.as_deref());
+        q = opt(q, "captcha", captcha.as_deref());
+        q = opt(q, "countrycode", countrycode.as_deref());
+        let client = state.client();
+        let dto: raw::LoginResponseDto = fetch(state, app, client.login_cellphone(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_auth_session(dto))
     }
 
     pub async fn captcha_sent(app: &AppHandle, state: &NcmState, phone: String) -> Result<()> {
-        let dto: raw::CaptchaResponseDto = run_dto(
-            state,
-            app,
-            Query::new().param("phone", &phone),
-            |c, q| async move { c.captcha_sent(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("phone", &phone);
+        let client = state.client();
+        let dto: raw::CaptchaResponseDto = fetch(state, app, client.captcha_sent(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         if dto.data == Some(false) {
             let message = dto
@@ -74,15 +62,9 @@ impl NcmService {
         phone: String,
         captcha: String,
     ) -> Result<()> {
-        let dto: raw::CaptchaResponseDto = run_dto(
-            state,
-            app,
-            Query::new()
-                .param("phone", &phone)
-                .param("captcha", &captcha),
-            |c, q| async move { c.captcha_verify(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("phone", &phone).param("captcha", &captcha);
+        let client = state.client();
+        let dto: raw::CaptchaResponseDto = fetch(state, app, client.captcha_verify(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         if dto.data == Some(false) {
             let message = dto
@@ -95,10 +77,9 @@ impl NcmService {
     }
 
     pub async fn login_qr_key(app: &AppHandle, state: &NcmState) -> Result<QrKey> {
-        let dto: raw::QrKeyResponseDto = run_dto(state, app, Query::new(), |c, q| async move {
-            c.login_qr_key(&q).await
-        })
-        .await?;
+        let q = Query::new();
+        let client = state.client();
+        let dto: raw::QrKeyResponseDto = fetch(state, app, client.login_qr_key(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_qr_key(dto))
     }
@@ -110,78 +91,53 @@ impl NcmService {
         qrimg: Option<String>,
     ) -> Result<QrCreate> {
         let mut q = Query::new().param("key", &key);
-        q = client::opt(q, "qrimg", qrimg.as_deref());
-        let dto: raw::QrCreateResponseDto =
-            run_dto(
-                state,
-                app,
-                q,
-                |c, q| async move { c.login_qr_create(&q).await },
-            )
-            .await?;
+        q = opt(q, "qrimg", qrimg.as_deref());
+        let client = state.client();
+        let dto: raw::QrCreateResponseDto = fetch(state, app, client.login_qr_create(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_qr_create(dto))
     }
 
     /// qr_check 的 800/801/802/803 是轮询状态而非错误，映射为枚举。
     pub async fn login_qr_check(app: &AppHandle, state: &NcmState, key: String) -> Result<QrCheck> {
-        let dto: raw::QrCheckResponseDto = run_dto(
-            state,
-            app,
-            Query::new().param("key", &key),
-            |c, q| async move { c.login_qr_check(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("key", &key);
+        let client = state.client();
+        let dto: raw::QrCheckResponseDto = fetch(state, app, client.login_qr_check(&q)).await?;
         let qr = mapper::map_qr_check(dto);
         // 803 确认后若响应体携带 cookie（Set-Cookie 响应头缺失时是唯一来源），
         // 把它合并进内存态并持久化，避免重启后丢失登录。
         if let Some(cookie) = qr.cookie.as_deref().filter(|c| !c.is_empty()) {
-            let merged = {
-                let mut inner = state.inner.lock().unwrap();
-                let merged =
-                    merge_cookies(&inner.cookie, std::slice::from_ref(&cookie.to_string()));
-                inner.cookie = merged.clone();
-                merged
-            };
-            persist_cookie(app, &merged);
+            state.merge_cookie(app, std::slice::from_ref(&cookie.to_string()));
         }
         Ok(qr)
     }
 
     pub async fn login_status(app: &AppHandle, state: &NcmState) -> Result<LoginStatus> {
-        let dto: raw::LoginStatusResponseDto =
-            run_dto(state, app, Query::new(), |c, q| async move {
-                c.login_status(&q).await
-            })
-            .await?;
+        let q = Query::new();
+        let client = state.client();
+        let dto: raw::LoginStatusResponseDto = fetch(state, app, client.login_status(&q)).await?;
         Ok(mapper::map_login_status(dto))
     }
 
     pub fn set_cookie(state: &NcmState, app: &AppHandle, cookie: String) {
-        state.inner.lock().unwrap().cookie = cookie.clone();
-        persist_cookie(app, &cookie);
+        state.set_cookie(app, cookie);
     }
 
     pub fn get_cookie(state: &NcmState) -> String {
-        state.inner.lock().unwrap().cookie.clone()
+        state.cookie()
     }
 
     pub fn clear_cookie(state: &NcmState, app: &AppHandle) {
         log::info!("[ncm_clear_cookie] clearing cookie from memory and store");
-        state.inner.lock().unwrap().cookie.clear();
-        persist_cookie(app, "");
+        state.set_cookie(app, String::new());
     }
 
     // ── song ────────────────────────────────────────────────────────
 
     pub async fn album(app: &AppHandle, state: &NcmState, id: i64) -> Result<AlbumDetail> {
-        let dto: raw::AlbumDetailResponseDto = run_dto(
-            state,
-            app,
-            Query::new().param("id", &id.to_string()),
-            |c, q| async move { c.album(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("id", &id.to_string());
+        let client = state.client();
+        let dto: raw::AlbumDetailResponseDto = fetch(state, app, client.album(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(AlbumDetail {
             album: mapper::map_album(dto.album),
@@ -196,9 +152,9 @@ impl NcmService {
         level: Option<String>,
     ) -> Result<SongUrlResult> {
         let mut q = Query::new().param("id", &id.to_string());
-        q = client::opt(q, "level", level.as_deref());
-        let dto: raw::SongUrlResponseDto =
-            run_dto(state, app, q, |c, q| async move { c.song_url_v1(&q).await }).await?;
+        q = opt(q, "level", level.as_deref());
+        let client = state.client();
+        let dto: raw::SongUrlResponseDto = fetch(state, app, client.song_url_v1(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_song_url(dto))
     }
@@ -213,37 +169,25 @@ impl NcmService {
             .map(|v| v.to_string())
             .collect::<Vec<_>>()
             .join(",");
-        let dto: raw::SongDetailResponseDto = run_dto(
-            state,
-            app,
-            Query::new().param("ids", &joined),
-            |c, q| async move { c.song_detail(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("ids", &joined);
+        let client = state.client();
+        let dto: raw::SongDetailResponseDto = fetch(state, app, client.song_detail(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(dto.songs.into_iter().map(mapper::map_song).collect())
     }
 
     pub async fn lyric(app: &AppHandle, state: &NcmState, id: i64) -> Result<Lyric> {
-        let dto: raw::LyricResponseDto = run_dto(
-            state,
-            app,
-            Query::new().param("id", &id.to_string()),
-            |c, q| async move { c.lyric(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("id", &id.to_string());
+        let client = state.client();
+        let dto: raw::LyricResponseDto = fetch(state, app, client.lyric(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_lyric(dto))
     }
 
     pub async fn lyric_new(app: &AppHandle, state: &NcmState, id: i64) -> Result<Lyric> {
-        let dto: raw::LyricResponseDto = run_dto(
-            state,
-            app,
-            Query::new().param("id", &id.to_string()),
-            |c, q| async move { c.lyric_new(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("id", &id.to_string());
+        let client = state.client();
+        let dto: raw::LyricResponseDto = fetch(state, app, client.lyric_new(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_lyric(dto))
     }
@@ -255,32 +199,24 @@ impl NcmService {
         like: Option<bool>,
     ) -> Result<()> {
         let mut q = Query::new().param("id", &id.to_string());
-        q = client::opt(q, "like", like.map(|v| v.to_string()).as_deref());
-        let dto: raw::LikeResponseDto =
-            run_dto(state, app, q, |c, q| async move { c.like(&q).await }).await?;
+        q = opt(q, "like", like.map(|v| v.to_string()).as_deref());
+        let client = state.client();
+        let dto: raw::LikeResponseDto = fetch(state, app, client.like(&q)).await?;
         check_code(dto.code, dto.message.as_deref())
     }
 
     pub async fn like_list(app: &AppHandle, state: &NcmState, uid: i64) -> Result<LikeList> {
-        let dto: raw::LikeListResponseDto = run_dto(
-            state,
-            app,
-            Query::new().param("uid", &uid.to_string()),
-            |c, q| async move { c.likelist(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("uid", &uid.to_string());
+        let client = state.client();
+        let dto: raw::LikeListResponseDto = fetch(state, app, client.likelist(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(LikeList { ids: dto.ids })
     }
 
     pub async fn recent_song(app: &AppHandle, state: &NcmState, uid: i64) -> Result<RecentSongs> {
-        let dto: raw::RecentSongResponseDto = run_dto(
-            state,
-            app,
-            Query::new().param("uid", &uid.to_string()),
-            |c, q| async move { c.record_recent_song(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("uid", &uid.to_string());
+        let client = state.client();
+        let dto: raw::RecentSongResponseDto = fetch(state, app, client.record_recent_song(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_recent_songs(dto))
     }
@@ -288,13 +224,9 @@ impl NcmService {
     // ── playlist ────────────────────────────────────────────────────
 
     pub async fn playlist_detail(app: &AppHandle, state: &NcmState, id: i64) -> Result<Playlist> {
-        let dto: raw::PlaylistDetailResponseDto = run_dto(
-            state,
-            app,
-            Query::new().param("id", &id.to_string()),
-            |c, q| async move { c.playlist_detail(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("id", &id.to_string());
+        let client = state.client();
+        let dto: raw::PlaylistDetailResponseDto = fetch(state, app, client.playlist_detail(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         let playlist = dto.playlist.ok_or_else(|| NcmApiError::Decode {
             message: "响应缺少 playlist 字段".to_string(),
@@ -307,13 +239,9 @@ impl NcmService {
         state: &NcmState,
         uid: i64,
     ) -> Result<Vec<Playlist>> {
-        let dto: raw::UserPlaylistResponseDto = run_dto(
-            state,
-            app,
-            Query::new().param("uid", &uid.to_string()),
-            |c, q| async move { c.user_playlist(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("uid", &uid.to_string());
+        let client = state.client();
+        let dto: raw::UserPlaylistResponseDto = fetch(state, app, client.user_playlist(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(Self::map_playlists(dto.playlist))
     }
@@ -324,15 +252,9 @@ impl NcmService {
         limit: Option<i64>,
     ) -> Result<Vec<Playlist>> {
         let mut q = Query::new();
-        q = client::opt(q, "limit", limit.map(|v| v.to_string()).as_deref());
-        let dto: raw::PersonalizedResponseDto =
-            run_dto(
-                state,
-                app,
-                q,
-                |c, q| async move { c.personalized(&q).await },
-            )
-            .await?;
+        q = opt(q, "limit", limit.map(|v| v.to_string()).as_deref());
+        let client = state.client();
+        let dto: raw::PersonalizedResponseDto = fetch(state, app, client.personalized(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(Self::map_playlists(dto.result))
     }
@@ -345,17 +267,11 @@ impl NcmService {
         offset: Option<i64>,
     ) -> Result<PlaylistPage> {
         let mut q = Query::new();
-        q = client::opt(q, "cat", cat.as_deref());
-        q = client::opt(q, "limit", limit.map(|v| v.to_string()).as_deref());
-        q = client::opt(q, "offset", offset.map(|v| v.to_string()).as_deref());
-        let dto: raw::TopPlaylistResponseDto =
-            run_dto(
-                state,
-                app,
-                q,
-                |c, q| async move { c.top_playlist(&q).await },
-            )
-            .await?;
+        q = opt(q, "cat", cat.as_deref());
+        q = opt(q, "limit", limit.map(|v| v.to_string()).as_deref());
+        q = opt(q, "offset", offset.map(|v| v.to_string()).as_deref());
+        let client = state.client();
+        let dto: raw::TopPlaylistResponseDto = fetch(state, app, client.top_playlist(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(PlaylistPage {
             playlists: Self::map_playlists(dto.playlists),
@@ -365,11 +281,9 @@ impl NcmService {
     }
 
     pub async fn playlist_hot(app: &AppHandle, state: &NcmState) -> Result<Vec<PlaylistHotTag>> {
-        let dto: raw::PlaylistHotResponseDto =
-            run_dto(state, app, Query::new(), |c, q| async move {
-                c.playlist_hot(&q).await
-            })
-            .await?;
+        let q = Query::new();
+        let client = state.client();
+        let dto: raw::PlaylistHotResponseDto = fetch(state, app, client.playlist_hot(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(dto
             .tags
@@ -383,11 +297,9 @@ impl NcmService {
     }
 
     pub async fn recommend_resource(app: &AppHandle, state: &NcmState) -> Result<Vec<Playlist>> {
-        let dto: raw::RecommendResourceResponseDto =
-            run_dto(state, app, Query::new(), |c, q| async move {
-                c.recommend_resource(&q).await
-            })
-            .await?;
+        let q = Query::new();
+        let client = state.client();
+        let dto: raw::RecommendResourceResponseDto = fetch(state, app, client.recommend_resource(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(Self::map_playlists(dto.recommend))
     }
@@ -400,9 +312,9 @@ impl NcmService {
         banner_type: Option<i64>,
     ) -> Result<Vec<Banner>> {
         let mut q = Query::new();
-        q = client::opt(q, "type", banner_type.map(|v| v.to_string()).as_deref());
-        let dto: raw::BannerResponseDto =
-            run_dto(state, app, q, |c, q| async move { c.banner(&q).await }).await?;
+        q = opt(q, "type", banner_type.map(|v| v.to_string()).as_deref());
+        let client = state.client();
+        let dto: raw::BannerResponseDto = fetch(state, app, client.banner(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(dto
             .banners
@@ -419,11 +331,9 @@ impl NcmService {
     }
 
     pub async fn recommend_songs(app: &AppHandle, state: &NcmState) -> Result<Vec<Song>> {
-        let dto: raw::RecommendSongsResponseDto =
-            run_dto(state, app, Query::new(), |c, q| async move {
-                c.recommend_songs(&q).await
-            })
-            .await?;
+        let q = Query::new();
+        let client = state.client();
+        let dto: raw::RecommendSongsResponseDto = fetch(state, app, client.recommend_songs(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(dto
             .data
@@ -432,32 +342,24 @@ impl NcmService {
     }
 
     pub async fn personal_fm(app: &AppHandle, state: &NcmState) -> Result<Vec<Song>> {
-        let dto: raw::PersonalFmResponseDto =
-            run_dto(state, app, Query::new(), |c, q| async move {
-                c.personal_fm(&q).await
-            })
-            .await?;
+        let q = Query::new();
+        let client = state.client();
+        let dto: raw::PersonalFmResponseDto = fetch(state, app, client.personal_fm(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(dto.data.into_iter().map(mapper::map_song).collect())
     }
 
     pub async fn fm_trash(app: &AppHandle, state: &NcmState, id: i64) -> Result<()> {
-        let dto: raw::FmTrashResponseDto = run_dto(
-            state,
-            app,
-            Query::new().param("id", &id.to_string()),
-            |c, q| async move { c.fm_trash(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("id", &id.to_string());
+        let client = state.client();
+        let dto: raw::FmTrashResponseDto = fetch(state, app, client.fm_trash(&q)).await?;
         check_code(dto.code, dto.message.as_deref())
     }
 
     pub async fn dragon_ball(app: &AppHandle, state: &NcmState) -> Result<Vec<DragonBallItem>> {
-        let dto: raw::DragonBallResponseDto =
-            run_dto(state, app, Query::new(), |c, q| async move {
-                c.homepage_dragon_ball(&q).await
-            })
-            .await?;
+        let q = Query::new();
+        let client = state.client();
+        let dto: raw::DragonBallResponseDto = fetch(state, app, client.homepage_dragon_ball(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_dragon_ball(dto.data))
     }
@@ -472,11 +374,9 @@ impl NcmService {
         let mut q = Query::new()
             .param("id", &id.to_string())
             .param("pid", &pid.to_string());
-        q = client::opt(q, "count", count.map(|v| v.to_string()).as_deref());
-        let dto: raw::IntelligenceResponseDto = run_dto(state, app, q, |c, q| async move {
-            c.playmode_intelligence_list(&q).await
-        })
-        .await?;
+        q = opt(q, "count", count.map(|v| v.to_string()).as_deref());
+        let client = state.client();
+        let dto: raw::IntelligenceResponseDto = fetch(state, app, client.playmode_intelligence_list(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_intelligence(dto.data))
     }
@@ -492,11 +392,11 @@ impl NcmService {
         offset: Option<i64>,
     ) -> Result<SearchResult> {
         let mut q = Query::new().param("keywords", &keywords);
-        q = client::opt(q, "type", search_type.map(|v| v.to_string()).as_deref());
-        q = client::opt(q, "limit", limit.map(|v| v.to_string()).as_deref());
-        q = client::opt(q, "offset", offset.map(|v| v.to_string()).as_deref());
-        let dto: raw::CloudsearchResponseDto =
-            run_dto(state, app, q, |c, q| async move { c.cloudsearch(&q).await }).await?;
+        q = opt(q, "type", search_type.map(|v| v.to_string()).as_deref());
+        q = opt(q, "limit", limit.map(|v| v.to_string()).as_deref());
+        q = opt(q, "offset", offset.map(|v| v.to_string()).as_deref());
+        let client = state.client();
+        let dto: raw::CloudsearchResponseDto = fetch(state, app, client.cloudsearch(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         let result = dto.result.ok_or_else(|| NcmApiError::Decode {
             message: "搜索响应缺少 result 字段".to_string(),
@@ -509,13 +409,9 @@ impl NcmService {
         state: &NcmState,
         keywords: String,
     ) -> Result<SuggestResult> {
-        let dto: raw::SuggestResponseDto = run_dto(
-            state,
-            app,
-            Query::new().param("keywords", &keywords),
-            |c, q| async move { c.search_suggest(&q).await },
-        )
-        .await?;
+        let q = Query::new().param("keywords", &keywords);
+        let client = state.client();
+        let dto: raw::SuggestResponseDto = fetch(state, app, client.search_suggest(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         let result = dto.result.ok_or_else(|| NcmApiError::Decode {
             message: "搜索建议响应缺少 result 字段".to_string(),
@@ -524,10 +420,9 @@ impl NcmService {
     }
 
     pub async fn search_hot(app: &AppHandle, state: &NcmState) -> Result<Vec<HotSearchItem>> {
-        let dto: raw::SearchHotResponseDto = run_dto(state, app, Query::new(), |c, q| async move {
-            c.search_hot(&q).await
-        })
-        .await?;
+        let q = Query::new();
+        let client = state.client();
+        let dto: raw::SearchHotResponseDto = fetch(state, app, client.search_hot(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_hot_search(dto.result))
     }
@@ -541,16 +436,10 @@ impl NcmService {
         offset: Option<i64>,
     ) -> Result<CommentPage> {
         let mut q = Query::new().param("id", &id.to_string());
-        q = client::opt(q, "limit", limit.map(|v| v.to_string()).as_deref());
-        q = client::opt(q, "offset", offset.map(|v| v.to_string()).as_deref());
-        let dto: raw::CommentPageDto =
-            run_dto(
-                state,
-                app,
-                q,
-                |c, q| async move { c.comment_playlist(&q).await },
-            )
-            .await?;
+        q = opt(q, "limit", limit.map(|v| v.to_string()).as_deref());
+        q = opt(q, "offset", offset.map(|v| v.to_string()).as_deref());
+        let client = state.client();
+        let dto: raw::CommentPageDto = fetch(state, app, client.comment_playlist(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_comment_page(dto))
     }
@@ -563,16 +452,10 @@ impl NcmService {
         offset: Option<i64>,
     ) -> Result<CommentPage> {
         let mut q = Query::new().param("id", &id.to_string());
-        q = client::opt(q, "limit", limit.map(|v| v.to_string()).as_deref());
-        q = client::opt(q, "offset", offset.map(|v| v.to_string()).as_deref());
-        let dto: raw::CommentPageDto =
-            run_dto(
-                state,
-                app,
-                q,
-                |c, q| async move { c.comment_music(&q).await },
-            )
-            .await?;
+        q = opt(q, "limit", limit.map(|v| v.to_string()).as_deref());
+        q = opt(q, "offset", offset.map(|v| v.to_string()).as_deref());
+        let client = state.client();
+        let dto: raw::CommentPageDto = fetch(state, app, client.comment_music(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_comment_page(dto))
     }

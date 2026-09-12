@@ -139,8 +139,20 @@ export interface AlbumDetail {
   songs: Song[];
 }
 
+/** 原唱/翻唱标记（Rust `model::entity::OriginCoverType`）。 */
+export type OriginCoverType = 'original' | 'cover' | 'other';
+
+/**
+ * 搜索返回的歌曲：`Song` 的扁平扩展（Rust 侧 `#[serde(flatten)]`）。
+ * wire 形状与裸 `Song` 一致，只是多一个字段——所以这里用 extends 而非嵌套。
+ */
+export interface SearchSong extends Song {
+  /** 原唱/翻唱标记；接口未给出时省略 */
+  originCoverType?: OriginCoverType;
+}
+
 export interface SearchResult {
-  songs: Song[];
+  songs: SearchSong[];
   songCount: number;
   albums: Album[];
   albumCount: number;

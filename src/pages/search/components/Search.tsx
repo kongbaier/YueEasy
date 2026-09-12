@@ -42,38 +42,39 @@ export function SearchInput({ children }: { children?: React.ReactNode }) {
   return (
     <form
       autoComplete="off"
-      className="flex items-center gap-2"
+      className="h-9 relative flex items-center gap-2"
       onSubmit={handleSubmit}
     >
-      <div className="relative flex-1">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" />
-        <Input
-          autoComplete="off"
-          autoFocus
-          className="pl-10 pr-8 h-9"
-          onChange={(e) => {
-            setInput(e.target.value);
-            showDropdownFor(e.target.value);
-          }}
-          onFocus={() => showDropdownFor(input)}
-          placeholder="搜索歌曲、歌手、专辑..."
-          value={input}
-        />
+      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" />
+      <Input
+        autoComplete="off"
+        autoFocus
+        className="border border-border pl-10 pr-8 h-9"
+        onChange={(e) => {
+          setInput(e.target.value);
+          showDropdownFor(e.target.value);
+        }}
+        onFocus={() => showDropdownFor(input)}
+        placeholder="搜索歌曲、歌手、专辑..."
+        value={input}
+      />
+      <div className={cn('absolute right-0 h-full', 'flex items-center gap-3')}>
         {input && (
           <Button
-            className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="size-5 flex items-center justify-center rounded-full text-muted-foreground transition-colors"
             onClick={handleClear}
             type="button"
             variant="ghost"
           >
-            <X className="size-3.5" />
+            <X className="size-4" />
           </Button>
         )}
-        {children}
+        <Button className="h-full rounded-l-none border-none" type="submit">
+          搜索
+        </Button>
       </div>
-      <Button className="h-9" size="sm" type="submit">
-        搜索
-      </Button>
+
+      {children}
     </form>
   );
 }

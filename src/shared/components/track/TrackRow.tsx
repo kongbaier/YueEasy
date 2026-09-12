@@ -21,9 +21,17 @@ interface TrackRowProps {
   onPlay: (track: Song) => void;
   /** 可选来源标签（如「本地」），渲染在歌名旁。 */
   badge?: string;
+  /** 可选标记（如「原唱」），渲染在歌手名后。语义由调用方解读，此处只负责呈现。 */
+  artistTag?: string;
 }
 
-export const TrackRow = ({ track, index, onPlay, badge }: TrackRowProps) => {
+export const TrackRow = ({
+  track,
+  index,
+  onPlay,
+  badge,
+  artistTag,
+}: TrackRowProps) => {
   const { handleLike, isLiked } = useLikeAction();
   const liked = isLiked(track.id);
 
@@ -64,8 +72,16 @@ export const TrackRow = ({ track, index, onPlay, badge }: TrackRowProps) => {
               </span>
             )}
           </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {track.artists.map((a) => a.name).join('/') || '未知歌手'}
+          {/* 歌手名截断、标记恒显，所以截断加在内层 span 上而非 <p> */}
+          <p className="flex items-center gap-1 min-w-0 text-xs text-muted-foreground">
+            <span className="truncate">
+              {track.artists.map((a) => a.name).join('/') || '未知歌手'}
+            </span>
+            {artistTag && (
+              <span className="shrink-0 rounded-sm border border-primary/35 bg-primary/10 p-0.5 text-[10px] leading-none font-medium text-primary">
+                {artistTag}
+              </span>
+            )}
           </p>
         </div>
         <span className="flex-1 min-w-0 truncate text-xs text-muted-foreground">
