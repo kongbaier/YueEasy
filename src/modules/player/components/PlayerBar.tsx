@@ -30,6 +30,7 @@ import { VolumeControl } from './VolumeControl';
 import { CrossfadeImage } from '@/shared/ui/image';
 import type { Track } from '@/shared/types/player';
 import { LikeButton } from '@/modules/like/components/LikeButton';
+import { LyricsToggle } from '@/modules/desktop-lyrics/LyricsToggle';
 
 const PlayerProgress = () => {
   const { percentage, formatted } = useProgress();
@@ -240,8 +241,12 @@ const PlayerMenu = ({
 
   return (
     <div className="flex-1 flex items-center justify-end gap-1 lg:gap-2">
-      {currentTrack && <LikeButton iconSize={4.5} track={currentTrack} />}
+      <LikeButton iconSize={4.5} track={currentTrack} />
+
       <ShuffleButton iconSize={4.5} />
+
+      <LyricsToggle />
+
       <Button
         className="text-foreground hover:bg-transparent hover:text-primary"
         disabled={trashPending}

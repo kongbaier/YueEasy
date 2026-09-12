@@ -32,11 +32,11 @@ export const TrackRow = ({
   badge,
   artistTag,
 }: TrackRowProps) => {
-  const { handleLike, isLiked } = useLikeAction();
+  const { like, isLiked } = useLikeAction();
   const liked = isLiked(track.id);
 
   const { handlePlayNext, handleAddToQueue } = useTrackActions();
-
+  const handleLike = () => like(track);
   return (
     <ContextMenu>
       <ContextMenuTrigger
@@ -108,7 +108,7 @@ export const TrackRow = ({
           添加到播放列表
         </ContextMenuItem>
         <ContextMenuSeparator />
-        <ContextMenuItem onClick={() => handleLike(track)}>
+        <ContextMenuItem onClick={handleLike}>
           <Heart className="h-4 w-4" fill={liked ? '#ef4444' : 'none'} />
           {liked ? '取消收藏' : '收藏'}
         </ContextMenuItem>

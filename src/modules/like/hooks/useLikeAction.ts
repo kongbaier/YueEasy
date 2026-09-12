@@ -33,7 +33,7 @@ export function useLikeAction() {
   const likedIds = useLikeStore((s) => s.likedIds);
   const isLiked = (id: number) => likedIds.has(id);
 
-  const handleLike = useCallback(
+  const like = useCallback(
     async (track: Song) => {
       if (!isLoggedIn) {
         toast.error('请先登录');
@@ -61,5 +61,5 @@ export function useLikeAction() {
     [isLoggedIn, setLoginDialogOpen, toggleLikeRemote],
   );
 
-  return { handleLike, isLiked };
+  return { like, isLiked };
 }
