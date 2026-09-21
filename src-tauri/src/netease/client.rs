@@ -19,7 +19,7 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 /// 调用方自己取 client 就地构造 future，所以这里不需要闭包：
 /// ```ignore
 /// let client = state.client();
-/// let dto: raw::CloudsearchResponseDto = fetch(state, app, client.cloudsearch(&q)).await?;
+/// let dto: response::CloudsearchResponseDto = fetch(state, app, client.cloudsearch(&q)).await?;
 /// ```
 ///
 /// 本函数只做四件与具体接口无关、但每次请求都躲不掉的事：

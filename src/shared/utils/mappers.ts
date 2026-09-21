@@ -1,10 +1,11 @@
-// 数据映射函数（AGENTS.md §6）：Track(Song) ↔ Rust QueueItem 互转。
-// 与 Rust `service/ncm_service.rs::song_to_queue_item` 对齐（字段即 wire 名）。
+// 数据映射函数（AGENTS.md §6）：Song(Track) ↔ QueueItem 互转。
+// QueueItem 是前端队列持久化的扁平形状（snake_case wire 名，见 shared/types/entities.ts）；
+// 播放器已前端权威化，本模块是 Song 实体与 QueueItem 之间的唯一转换落点。
 
 import type { Track } from '@/shared/types/player';
-import type { QueueItem } from '@/shared/types/entities';
+import type { QueueItem } from '@/shared/types/uiModels';
 
-/** Track(Song) → Rust `core::QueueItem`（供 `play_track`/`append_to_queue` 等 IPC 命令）。 */
+/** Track(Song) → QueueItem：NCM 实体进入前端队列前的扁平化（如 FM 取歌）。 */
 export function songToQueueItem(track: Track): QueueItem {
   return {
     track_id: track.id,
@@ -17,8 +18,8 @@ export function songToQueueItem(track: Track): QueueItem {
 }
 
 /**
- * Rust `core::QueueItem` → Track(Song)（MirrorStore 镜像 → usePlayer 门面 UI 呈现）。
- * Phase F 逐组件替换为 QueueItem 消费后，此反向映射可随旧 UI 一并移除。
+ * QueueItem → Track(Song)：队列持久化形状还原为 Song 实体，
+ * 供 usePlayer 门面向 UI 呈现 currentTrack / queue。
  */
 export function queueItemToSong(item: QueueItem): Track {
   return {

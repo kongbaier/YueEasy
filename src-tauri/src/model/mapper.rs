@@ -4,9 +4,9 @@
 //! 不涉及任何网络/状态，便于单测。
 
 use crate::model::entity as ent;
-use crate::model::raw;
+use crate::model::response;
 
-fn map_artist(d: raw::ArtistDto) -> ent::Artist {
+fn map_artist(d: response::ArtistDto) -> ent::Artist {
     ent::Artist {
         id: d.id,
         name: d.name,
@@ -17,7 +17,7 @@ fn map_artist(d: raw::ArtistDto) -> ent::Artist {
     }
 }
 
-pub fn map_album(d: Option<raw::AlbumDto>) -> ent::Album {
+pub fn map_album(d: Option<response::AlbumDto>) -> ent::Album {
     match d {
         Some(a) => ent::Album {
             id: a.id,
@@ -42,7 +42,7 @@ pub fn map_album(d: Option<raw::AlbumDto>) -> ent::Album {
     }
 }
 
-pub fn map_song(d: raw::SongDto) -> ent::Song {
+pub fn map_song(d: response::SongDto) -> ent::Song {
     ent::Song {
         id: d.id,
         name: d.name,
@@ -53,7 +53,7 @@ pub fn map_song(d: raw::SongDto) -> ent::Song {
     }
 }
 
-fn map_user(d: raw::UserDto) -> ent::User {
+fn map_user(d: response::UserDto) -> ent::User {
     ent::User {
         id: d.user_id,
         nickname: d.nickname,
@@ -78,7 +78,7 @@ fn empty_user() -> ent::User {
 }
 
 /// 统一歌单：把 picUrl / coverImgUrl 归一为 coverUrl。
-pub fn map_playlist(d: raw::PlaylistDto) -> ent::Playlist {
+pub fn map_playlist(d: response::PlaylistDto) -> ent::Playlist {
     let cover_url = d
         .cover_img_url
         .clone()
@@ -103,7 +103,7 @@ pub fn map_playlist(d: raw::PlaylistDto) -> ent::Playlist {
     }
 }
 
-fn map_be_replied(d: raw::BeRepliedDto) -> ent::BeReplied {
+fn map_be_replied(d: response::BeRepliedDto) -> ent::BeReplied {
     ent::BeReplied {
         id: d.be_replied_comment_id,
         user: d.user.map(map_user),
@@ -111,7 +111,7 @@ fn map_be_replied(d: raw::BeRepliedDto) -> ent::BeReplied {
     }
 }
 
-fn map_comment(d: raw::CommentDto) -> ent::Comment {
+fn map_comment(d: response::CommentDto) -> ent::Comment {
     ent::Comment {
         id: d.comment_id,
         user: d.user.map(map_user).unwrap_or_else(empty_user),
@@ -125,7 +125,7 @@ fn map_comment(d: raw::CommentDto) -> ent::Comment {
     }
 }
 
-pub fn map_comment_page(d: raw::CommentPageDto) -> ent::CommentPage {
+pub fn map_comment_page(d: response::CommentPageResponseDto) -> ent::CommentPage {
     ent::CommentPage {
         comments: d.comments.into_iter().map(map_comment).collect(),
         hot_comments: d
@@ -136,7 +136,7 @@ pub fn map_comment_page(d: raw::CommentPageDto) -> ent::CommentPage {
     }
 }
 
-pub fn map_song_url(d: raw::SongUrlResponseDto) -> ent::SongUrlResult {
+pub fn map_song_url(d: response::SongUrlResponseDto) -> ent::SongUrlResult {
     ent::SongUrlResult {
         data: d
             .data
@@ -150,14 +150,14 @@ pub fn map_song_url(d: raw::SongUrlResponseDto) -> ent::SongUrlResult {
     }
 }
 
-fn map_lyric_version(d: Option<raw::LyricVersionDto>) -> Option<ent::LyricVersion> {
+fn map_lyric_version(d: Option<response::LyricVersionDto>) -> Option<ent::LyricVersion> {
     d.map(|v| ent::LyricVersion {
         text: v.lyric,
         version: v.version,
     })
 }
 
-pub fn map_lyric(d: raw::LyricResponseDto) -> ent::Lyric {
+pub fn map_lyric(d: response::LyricResponseDto) -> ent::Lyric {
     ent::Lyric {
         lrc: map_lyric_version(d.lrc),
         tlyric: map_lyric_version(d.tlyric),
@@ -167,7 +167,7 @@ pub fn map_lyric(d: raw::LyricResponseDto) -> ent::Lyric {
     }
 }
 
-fn map_search_album(d: raw::SearchAlbumDto) -> ent::Album {
+fn map_search_album(d: response::SearchAlbumDto) -> ent::Album {
     ent::Album {
         id: d.id,
         name: d.name,
@@ -180,7 +180,7 @@ fn map_search_album(d: raw::SearchAlbumDto) -> ent::Album {
     }
 }
 
-fn map_search_artist(d: raw::SearchArtistDto) -> ent::Artist {
+fn map_search_artist(d: response::SearchArtistDto) -> ent::Artist {
     ent::Artist {
         id: d.id,
         name: d.name,
@@ -203,7 +203,7 @@ fn map_origin_cover_type(raw: Option<i64>) -> Option<ent::OriginCoverType> {
 }
 
 /// 搜索歌曲：核心走共享的 `map_song`，只额外解释原唱/翻唱标记。
-pub fn map_search_song(d: raw::SearchSongDto) -> ent::SearchSong {
+pub fn map_search_song(d: response::SearchSongDto) -> ent::SearchSong {
     let origin_cover_type = map_origin_cover_type(d.origin_cover_type);
     ent::SearchSong {
         song: map_song(d.core),
@@ -211,7 +211,7 @@ pub fn map_search_song(d: raw::SearchSongDto) -> ent::SearchSong {
     }
 }
 
-pub fn map_search_result(d: raw::SearchResultDto) -> ent::SearchResult {
+pub fn map_search_result(d: response::SearchResultDto) -> ent::SearchResult {
     ent::SearchResult {
         songs: d.songs.into_iter().map(map_search_song).collect(),
         song_count: d.song_count,
@@ -224,7 +224,7 @@ pub fn map_search_result(d: raw::SearchResultDto) -> ent::SearchResult {
     }
 }
 
-pub fn map_suggest_result(d: raw::SuggestResultDto) -> ent::SuggestResult {
+pub fn map_suggest_result(d: response::SuggestResultDto) -> ent::SuggestResult {
     ent::SuggestResult {
         songs: d
             .songs
@@ -255,7 +255,7 @@ pub fn map_suggest_result(d: raw::SuggestResultDto) -> ent::SuggestResult {
     }
 }
 
-pub fn map_hot_search(result: Option<raw::SearchHotResultDto>) -> Vec<ent::HotSearchItem> {
+pub fn map_hot_search(result: Option<response::SearchHotResultDto>) -> Vec<ent::HotSearchItem> {
     result
         .map(|r| {
             r.hots
@@ -270,7 +270,7 @@ pub fn map_hot_search(result: Option<raw::SearchHotResultDto>) -> Vec<ent::HotSe
         .unwrap_or_default()
 }
 
-pub fn map_dragon_ball(data: Vec<raw::DragonBallItemDto>) -> Vec<ent::DragonBallItem> {
+pub fn map_dragon_ball(data: Vec<response::DragonBallItemDto>) -> Vec<ent::DragonBallItem> {
     data.into_iter()
         .map(|d| ent::DragonBallItem {
             id: d.id,
@@ -282,7 +282,7 @@ pub fn map_dragon_ball(data: Vec<raw::DragonBallItemDto>) -> Vec<ent::DragonBall
         .collect()
 }
 
-pub fn map_intelligence(data: Vec<raw::IntelligenceItemDto>) -> Vec<ent::IntelligenceSong> {
+pub fn map_intelligence(data: Vec<response::IntelligenceItemDto>) -> Vec<ent::IntelligenceSong> {
     data.into_iter()
         .filter_map(|d| {
             d.song_info.map(|s| ent::IntelligenceSong {
@@ -293,7 +293,7 @@ pub fn map_intelligence(data: Vec<raw::IntelligenceItemDto>) -> Vec<ent::Intelli
         .collect()
 }
 
-pub fn map_auth_session(d: raw::LoginResponseDto) -> ent::AuthSession {
+pub fn map_auth_session(d: response::LoginResponseDto) -> ent::AuthSession {
     ent::AuthSession {
         cookie: d.cookie,
         token: (!d.token.is_empty()).then_some(d.token),
@@ -302,7 +302,7 @@ pub fn map_auth_session(d: raw::LoginResponseDto) -> ent::AuthSession {
     }
 }
 
-pub fn map_login_status(d: raw::LoginStatusResponseDto) -> ent::LoginStatus {
+pub fn map_login_status(d: response::LoginStatusResponseDto) -> ent::LoginStatus {
     let profile = d
         .data
         .filter(|data| data.code == 200)
@@ -319,12 +319,12 @@ pub fn map_login_status(d: raw::LoginStatusResponseDto) -> ent::LoginStatus {
     }
 }
 
-pub fn map_qr_key(d: raw::QrKeyResponseDto) -> ent::QrKey {
+pub fn map_qr_key(d: response::QrKeyResponseDto) -> ent::QrKey {
     ent::QrKey { key: d.unikey }
 }
 
-pub fn map_qr_create(d: raw::QrCreateResponseDto) -> ent::QrCreate {
-    let data = d.data.unwrap_or(raw::QrCreateDataDto {
+pub fn map_qr_create(d: response::QrCreateResponseDto) -> ent::QrCreate {
+    let data = d.data.unwrap_or(response::QrCreateDataDto {
         qrurl: String::new(),
         qrimg: String::new(),
     });
@@ -334,7 +334,7 @@ pub fn map_qr_create(d: raw::QrCreateResponseDto) -> ent::QrCreate {
     }
 }
 
-pub fn map_qr_check(d: raw::QrCheckResponseDto) -> ent::QrCheck {
+pub fn map_qr_check(d: response::QrCheckResponseDto) -> ent::QrCheck {
     let status = match d.code {
         Some(800) => ent::QrCheckStatus::Expired,
         Some(801) => ent::QrCheckStatus::Waiting,
@@ -348,7 +348,7 @@ pub fn map_qr_check(d: raw::QrCheckResponseDto) -> ent::QrCheck {
     }
 }
 
-pub fn map_recent_songs(d: raw::RecentSongResponseDto) -> ent::RecentSongs {
+pub fn map_recent_songs(d: response::RecentSongResponseDto) -> ent::RecentSongs {
     let list = d
         .data
         .map(|data| {
@@ -384,7 +384,7 @@ mod tests {
         if let Some(t) = origin_cover_type {
             value["originCoverType"] = json!(t);
         }
-        let dto: raw::SearchSongDto = serde_json::from_value(value).expect("decode");
+        let dto: response::SearchSongDto = serde_json::from_value(value).expect("decode");
         map_search_song(dto)
     }
 

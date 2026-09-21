@@ -26,7 +26,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/shared/ui/sidebar';
-import { useAuthViewModel } from '@/modules/auth/hooks/useAuthViewModel';
+import { useAuthViewModel } from '@/features/auth/hooks/useAuthViewModel';
 
 const items = [
   { to: '/', icon: Home, label: '发现' },

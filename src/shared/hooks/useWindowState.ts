@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useAppSettingsStore } from '@/stores/appSettingsStore';
+import { useAppSettingsStore } from '@/shared/stores/appSettingsStore';
 import * as windowApi from '@/tauri/window';
 
 export type WindowState = 'normal' | 'maximized' | 'fullscreen';

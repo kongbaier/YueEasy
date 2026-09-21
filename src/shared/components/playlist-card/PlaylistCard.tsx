@@ -4,7 +4,7 @@ import { formatCount } from '@/shared/utils/format';
 import { cn } from '@/shared/utils/cn';
 import { getNcmImageUrl } from '@/shared/utils/image';
 import { DecodedImage } from '@/shared/ui/image';
-import type { Playlist } from '@/shared/types/entities';
+import type { Playlist } from '@/shared/types/uiModels';
 import { AspectRatio } from '../../ui/aspect-ratio';
 
 interface PlaylistCardProps {

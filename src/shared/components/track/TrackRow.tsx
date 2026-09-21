@@ -8,12 +8,12 @@ import {
 } from '@/shared/ui/context-menu';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { DecodedImage } from '@/shared/ui/image';
-import type { Song } from '@/shared/types/entities';
+import type { Song } from '@/shared/types/uiModels';
 import { formatDuration } from '@/shared/utils/format';
 import { getNcmImageUrl } from '@/shared/utils/image';
-import { useLikeAction } from '@/modules/like/hooks/useLikeAction';
-import { LikeButton } from '@/modules/like/components/LikeButton';
-import { useTrackActions } from '@/modules/player/hooks/useTrackActions';
+import { useLikeAction } from '@/features/like/hooks/useLikeAction';
+import { LikeButton } from '@/features/like/components/LikeButton';
+import { useTrackActions } from '@/features/player/hooks/useTrackActions';
 
 interface TrackRowProps {
   track: Song;

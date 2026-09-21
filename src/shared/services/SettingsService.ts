@@ -7,8 +7,7 @@
 //
 // 依赖方向：service → stores / infra（TauriStorage）；双 store 互不引用。
 
-import { useAppSettingsStore } from '@/stores/appSettingsStore';
-import { usePlayerSettingsStore } from '@/modules/player/stores/playerSettingsStore';
+import { useAppSettingsStore } from '@/shared/stores/appSettingsStore';
 import { DEFAULTS_APPEARANCE } from '@/shared/constants/settings';
 import { DEFAULTS_PLAYER } from '@/shared/constants/player';
 import type {
@@ -16,6 +15,7 @@ import type {
   PlayerSettings,
 } from '@/shared/types/settings';
 import { TauriStorage } from '@/tauri/storage';
+import { usePlayerSettingsStore } from '@/features/player/stores/playerSettingsStore';
 
 /** 持久化 key（沿用旧 persist name，形状不变 → 免迁移）。 */
 const KEY = 'settings';

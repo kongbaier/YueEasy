@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import * as windowApi from '@/tauri/window';
-import { useAppSettingsStore } from '@/stores/appSettingsStore';
+import { useAppSettingsStore } from '@/shared/stores/appSettingsStore';
 
 function getSystemTheme(): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches

@@ -1,0 +1,171 @@
+import { MessageCircle, ThumbsUp } from 'lucide-react';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { DecodedImage } from '@/shared/ui/image';
+import { formatCount } from '@/shared/utils/format';
+import { cn } from '@/shared/utils/cn';
+import { getNcmImageUrl } from '@/shared/utils/image';
+import { useComments } from '@/features/comment/hooks/useComments';
+import type { Comment } from '@/shared/types/uiModels';
+
+/* ------------------------------------------------------------------ */
+/*  工具                                                               */
+/* ------------------------------------------------------------------ */
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
+const formatTime = (ts: number) => {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+/* ------------------------------------------------------------------ */
+/*  单条评论                                                           */
+/* ------------------------------------------------------------------ */
+
+const CommentItem = ({ comment }: { comment: Comment }) => (
+  <div
+    className={cn(
+      'rounded-lg px-3 py-2.5',
+      'hover:bg-accent/50 transition-colors',
+    )}
+  >
+    {/* 用户行 */}
+    <div className="flex items-center gap-2">
+      <DecodedImage
+        alt={comment.user.nickname}
+        className="size-full object-cover"
+        containerClassName="h-7 w-7 shrink-0 rounded-full"
+        src={getNcmImageUrl(comment.user.avatarUrl, 50)}
+      />
+      <span className="text-xs font-medium truncate">
+        {comment.user.nickname}
+      </span>
+      <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
+        {formatTime(comment.timeMs)}
+      </span>
+    </div>
+
+    {/* 内容 */}
+    <p className="mt-1.5 text-xs leading-relaxed text-foreground/85">
+      {comment.content}
+    </p>
+
+    {/* 被回复内容（如果有） */}
+    {comment.beReplied && comment.beReplied.length > 0 && (
+      <div className="mt-1.5 ml-2 pl-2 border-l-2 border-border/40 space-y-1">
+        {comment.beReplied.map((reply) => (
+          <p
+            className="text-[11px] text-muted-foreground leading-relaxed"
+            key={reply.id}
+          >
+            <span className="text-primary/80">
+              @{reply.user?.nickname ?? ''}
+            </span>{' '}
+            {reply.content}
+          </p>
+        ))}
+      </div>
+    )}
+
+    {/* 点赞 */}
+    <div className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+      <ThumbsUp className="h-3 w-3" />
+      <span>
+        {comment.likedCount > 0 ? formatCount(comment.likedCount) : ''}
+      </span>
+    </div>
+  </div>
+);
+
+/* ------------------------------------------------------------------ */
+/*  骨架                                                               */
+/* ------------------------------------------------------------------ */
+
+const CommentSkeleton = () => (
+  <div className="space-y-1">
+    {Array.from({ length: 5 }).map((_, i) => (
+      // oxlint-disable-next-line react/no-array-index-key
+      <div className="flex gap-2 rounded-lg px-3 py-2.5" key={`sk-${i}`}>
+        <Skeleton className="h-7 w-7 shrink-0 rounded-full" shimmer />
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-3 w-16 rounded" shimmer />
+            <Skeleton className="h-3 w-20 rounded ml-auto" shimmer />
+          </div>
+          <Skeleton className="h-3 w-full rounded" shimmer />
+          <Skeleton className="h-3 w-3/4 rounded" shimmer />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+/* ------------------------------------------------------------------ */
+/*  评论面板内容                                                        */
+/* ------------------------------------------------------------------ */
+
+interface CommentPanelContentProps {
+  playlistId: number;
+}
+
+const CommentPanelContent = ({ playlistId }: CommentPanelContentProps) => {
+  const { data, isLoading } = useComments({ type: 'playlist', id: playlistId });
+
+  if (isLoading) return <CommentSkeleton />;
+
+  const comments = data?.comments ?? [];
+  const hotComments = data?.hotComments ?? [];
+
+  return (
+    <>
+      {!comments.length && !hotComments.length ? (
+        <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+          <MessageCircle className="h-8 w-8 opacity-30" />
+          <p className="text-xs">暂无评论</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* 精彩评论 */}
+          {hotComments.length > 0 && (
+            <div className="space-y-0.5">
+              <p className="px-1 text-[17px] leading-10 font-semibold text-muted-foreground uppercase tracking-wide">
+                精彩评论
+              </p>
+              {hotComments.map((c) => (
+                <CommentItem comment={c} key={c.id} />
+              ))}
+            </div>
+          )}
+
+          {/* 最新评论 */}
+          {comments.length > 0 && (
+            <div className="space-y-0.5">
+              {hotComments.length > 0 && (
+                <p className="px-1 text-[17px] leading-10 font-semibold text-muted-foreground uppercase tracking-wide mt-3">
+                  最新评论
+                </p>
+              )}
+              {comments.map((c) => (
+                <CommentItem comment={c} key={c.id} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  导出                                                               */
+/* ------------------------------------------------------------------ */
+
+interface CommentPanelProps {
+  playlistId: number;
+}
+
+export const CommentPanel = ({ playlistId }: CommentPanelProps) => {
+  return <CommentPanelContent playlistId={playlistId} />;
+};
+
+export { CommentSkeleton };

@@ -1,7 +1,7 @@
 // 播放器领域 wire 类型（前端唯一权威后，仅保留引擎/UI 实际使用的类型）。
 // 历史 wire 镜像（FullPlayerState / PlayerEventPayload / PlayUrlInfo / 快照）已随前端权威化废弃。
 
-import type { Song } from './entities';
+import type { Song } from './uiModels';
 
 /** Track = Song 实体的别名（兼容旧 import）。 */
 export type Track = Song;

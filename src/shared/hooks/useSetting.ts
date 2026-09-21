@@ -2,8 +2,8 @@ import type {
   AppearanceSettings,
   PlayerSettings,
 } from '@/shared/types/settings';
-import { useAppSettingsStore } from '@/stores/appSettingsStore';
-import { usePlayerSettingsStore } from '@/modules/player/stores/playerSettingsStore';
+import { useAppSettingsStore } from '@/shared/stores/appSettingsStore';
+import { usePlayerSettingsStore } from '@/features/player/stores/playerSettingsStore';
 
 /** 统一设置读取。组件层唯一入口。
  * 数据流：typed hook → useAppSettingsStore.appearance (typed)

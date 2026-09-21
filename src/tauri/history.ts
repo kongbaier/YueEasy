@@ -2,7 +2,7 @@
 // 封装 Rust `cmd/history.rs` 的 history_add / history_get（SQLite yueeasy.db）。
 
 import { invoke } from '@tauri-apps/api/core';
-import type { LocalPlayRecord } from '@/shared/types/entities';
+import type { LocalPlayRecord } from '@/shared/types/uiModels';
 
 /** 写入一条本地播放记录（Rust `history_add`，入参即记录本身）。 */
 export function localHistoryAdd(

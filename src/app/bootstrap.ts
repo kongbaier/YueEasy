@@ -1,8 +1,8 @@
-import { usePlayerSettingsStore } from '@/modules/player/stores/playerSettingsStore';
-import { useQueueStore } from '@/modules/player/stores/queueStore';
-import { playerService } from '@/modules/player/services/PlayerService';
 import { settingsService } from '@/shared/services/SettingsService';
-import { initAuth } from '@/modules/auth/stores/authStore';
+import { initAuth } from '@/features/auth/stores/authStore';
+import { usePlayerSettingsStore } from '@/features/player/stores/playerSettingsStore';
+import { playerService } from '@/features/player/services/PlayerService';
+import { useQueueStore } from '@/features/player/stores/queueStore';
 
 /**
  * Application-level initialization that must complete before React mounts.
