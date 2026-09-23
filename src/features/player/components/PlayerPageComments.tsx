@@ -3,10 +3,15 @@ import { Heart, MessageSquare } from 'lucide-react';
 import { DecodedImage } from '@/shared/ui/image';
 import { formatCount } from '@/shared/utils/format';
 import { toast } from '@/shared/lib/toast';
-import { cn } from '@/shared/utils/cn';
 import { getNcmImageUrl } from '@/shared/utils/image';
 import { useComments } from '@/features/comment/hooks/useComments';
 import type { Comment } from '@/shared/types/uiModels';
+import {
+  PlayerTabBody,
+  PlayerTabPanel,
+  PlayerTabState,
+} from './PlayerTabPanel';
+import { usePlayer } from '../hooks/usePlayer';
 
 function relativeTime(timestamp: number): string {
   const now = Date.now();
@@ -89,64 +94,46 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
   );
 };
 
-export const PlayerPageComments = ({ songId }: { songId: number }) => {
-  const { data, isLoading, isError } = useComments({
-    type: 'music',
-    id: songId,
-  });
+export const PlayerPageComments = () => {
+  const { currentTrack } = usePlayer();
+  const { data, isLoading, isError } = useComments(
+    {
+      type: 'music',
+      id: currentTrack?.id,
+    },
+    !!currentTrack,
+  );
 
   useEffect(() => {
     if (isError) toast.error('加载评论失败');
   }, [isError]);
 
-  if (isLoading) {
-    return (
-      <div className="h-full w-full flex items-center justify-center">
-        <p className="text-xs text-muted-foreground">加载中...</p>
-      </div>
-    );
-  }
-
   const allComments = [...(data?.hotComments ?? []), ...(data?.comments ?? [])];
   const hotCount = data?.hotComments?.length ?? 0;
-  const total = data?.total ?? 0;
+
+  const renderList = () => {
+    if (isLoading) return <PlayerTabState>加载中...</PlayerTabState>;
+
+    if (allComments.length === 0) {
+      return (
+        <PlayerTabState icon={<MessageSquare className="size-10 opacity-30" />}>
+          暂无评论
+        </PlayerTabState>
+      );
+    }
+
+    return allComments.map((comment, index) => (
+      <CommentItem
+        comment={comment}
+        isHot={index < hotCount}
+        key={comment.id}
+      />
+    ));
+  };
 
   return (
-    <div className="relative h-full w-full overflow-y-auto scrollbar-gutter-stable pr-4 xl:pr-8">
-      <header className="sticky top-0 flex items-center justify-between px-2 py-3 z-10 bg-[#fafafa] dark:bg-[#0a0a0a]">
-        <h2 className="text-sm font-medium">
-          评论
-          {total > 0 && (
-            <span className="ml-1.5 text-xs text-muted-foreground">
-              ({formatCount(total)})
-            </span>
-          )}
-        </h2>
-      </header>
-
-      <div>
-        {allComments.length === 0 ? (
-          <div
-            className={cn(
-              'absolute inset-0',
-              'flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300',
-            )}
-          >
-            <MessageSquare className="size-10 opacity-30" />
-            <p className="text-xs">暂无评论</p>
-          </div>
-        ) : (
-          <div>
-            {allComments.map((comment, index) => (
-              <CommentItem
-                comment={comment}
-                isHot={index < hotCount}
-                key={comment.id}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+    <PlayerTabPanel count={data?.total ?? 0} title="评论">
+      <PlayerTabBody>{renderList()}</PlayerTabBody>
+    </PlayerTabPanel>
   );
 };

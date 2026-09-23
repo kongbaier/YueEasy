@@ -1,5 +1,4 @@
 import { LikeButton } from '@/features/like/components/LikeButton';
-import type { Track } from '@/shared/types/player';
 import { Button } from '@/shared/ui/button';
 import { cn } from 'cn';
 import {
@@ -10,20 +9,17 @@ import {
   Share2,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { usePlayer } from '../hooks/usePlayer';
+import type { TabKeys } from '../PlayerPage';
 
 export const PlayerMenu = ({
-  currentTrack,
-  showComments,
-  showQueue,
-  onToggleComments,
-  onToggleQueue,
+  tabKey,
+  changeShowTab,
 }: {
-  currentTrack: Track;
-  showComments: boolean;
-  showQueue: boolean;
-  onToggleComments: () => void;
-  onToggleQueue: () => void;
+  tabKey: TabKeys;
+  changeShowTab: (tab: TabKeys) => void;
 }) => {
+  const { currentTrack } = usePlayer();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
@@ -38,6 +34,17 @@ export const PlayerMenu = ({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [moreOpen]);
 
+  const showComments = tabKey === 'comments';
+  const showQueue = tabKey === 'queue';
+
+  const handleToggle = (tab: TabKeys) => {
+    if (tab === tabKey) {
+      changeShowTab('lyrics');
+    } else {
+      changeShowTab(tab);
+    }
+  };
+
   return (
     <div className="w-full shrink-0 h-1/10 flex justify-between items-center gap-1 text-foreground">
       <LikeButton track={currentTrack} size="icon-lg" />
@@ -47,7 +54,7 @@ export const PlayerMenu = ({
             ? 'text-primary hover:text-primary'
             : 'text-foreground hover:bg-transparent hover:text-primary',
         )}
-        onClick={onToggleComments}
+        onClick={() => handleToggle('comments')}
         size="icon-lg"
         variant={showComments ? 'secondary' : 'ghost'}
       >
@@ -59,7 +66,7 @@ export const PlayerMenu = ({
             ? 'text-primary hover:text-primary'
             : 'text-foreground hover:bg-transparent hover:text-primary',
         )}
-        onClick={onToggleQueue}
+        onClick={() => handleToggle('queue')}
         size="icon-lg"
         variant={showQueue ? 'secondary' : 'ghost'}
       >

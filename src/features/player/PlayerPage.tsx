@@ -18,11 +18,22 @@ import { AspectFit } from '@/shared/ui/aspect-fit';
 import { usePlayer } from '@/features/player/hooks/usePlayer';
 import { PlayerMenu } from './components/PlayerMenu';
 
+const tabs = [
+  { key: 'queue', label: '队列', component: PlayerPageQueue },
+  { key: 'comments', label: '评论', component: PlayerPageComments },
+  { key: 'lyrics', label: '歌词', component: Lyrics },
+] as const;
+
+export type TabKeys = (typeof tabs)[number]['key'];
+
 export default function PlayerPage() {
   const { currentTrack, queue } = usePlayer();
   const { close, isOpen, runAfterExit } = usePlayerPage();
-  const [showQueue, setShowQueue] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const [showTab, setShowTab] = useState<TabKeys>('lyrics');
+
+  const changeShowTab = (tab: TabKeys) => {
+    setShowTab(tab);
+  };
 
   // 安全网：播放页打开时若无歌可播，自动关闭。
   // 用户触发的清空类操作（清空/移除最后一首/退出漫游且无队列可恢复）已在
@@ -74,39 +85,22 @@ export default function PlayerPage() {
                   <PlayerPageProgress />
                   <PlayerPageControls />
                   <PlayerPageVolume />
-                  <PlayerMenu
-                    currentTrack={currentTrack}
-                    onToggleComments={() => {
-                      setShowComments((v) => !v);
-                      setShowQueue(false);
-                    }}
-                    onToggleQueue={() => {
-                      setShowQueue((v) => !v);
-                      setShowComments(false);
-                    }}
-                    showComments={showComments}
-                    showQueue={showQueue}
-                  />
+                  <PlayerMenu tabKey={showTab} changeShowTab={changeShowTab} />
                 </React.Fragment>
               )}
             </div>
 
             <div className="col-span-1 min-h-0">
-              <Activity mode={showComments ? 'visible' : 'hidden'}>
-                {currentTrack && (
-                  <PlayerPageComments key="comments" songId={currentTrack.id} />
-                )}
-              </Activity>
-              <Activity
-                mode={!showComments && showQueue ? 'visible' : 'hidden'}
-              >
-                <PlayerPageQueue key="queue" />
-              </Activity>
-              <Activity
-                mode={!showComments && !showQueue ? 'visible' : 'hidden'}
-              >
-                <Lyrics />
-              </Activity>
+              {tabs.map((tab) => {
+                return (
+                  <Activity
+                    key={tab.key}
+                    mode={tab.key === showTab ? 'visible' : 'hidden'}
+                  >
+                    <tab.component />
+                  </Activity>
+                );
+              })}
             </div>
           </div>
         </motion.div>

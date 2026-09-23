@@ -11,6 +11,10 @@ import { queueItemToSong } from '@/shared/utils/mappers';
 /**
  * Player 域门面 hook：组合 queue store（低频队列/模式）+ player store（transport/编排）
  * + settings/auth/like 为统一输出。组件只 import 本 hook，不直接触碰 store。
+ *
+ * 高频字段（currentTime，约 4Hz 的 timeupdate）刻意**不**订阅：进度展示走
+ * `useProgress()` 的细粒度 selector。否则本门面的返回对象会按 timeupdate 频率变形，
+ * 把所有消费方（含队列列表/虚拟滚动）都按 4Hz 重渲染。
  */
 export function usePlayer() {
   const transport = usePlayerStore(
@@ -18,7 +22,6 @@ export function usePlayer() {
       playing: s.playing,
       loading: s.loading,
       buffering: s.buffering,
-      currentTime: s.currentTime,
       duration: s.duration,
       currentTrack: s.currentTrack,
     })),
@@ -57,6 +60,19 @@ export function usePlayer() {
     })),
   );
 
+  // 派生值按来源身份 memo：只有队列增删 / 切歌才重建。
+  // 否则每次 transport 变化（loading/buffering 翻转）都会重映射整条队列、
+  // 重造 currentTrack 对象，把新 identity 透传给所有下游组件。
+  const queue = useMemo(
+    () => queueView.queue.map(queueItemToSong),
+    [queueView.queue],
+  );
+  const currentTrack = useMemo(
+    () =>
+      transport.currentTrack ? queueItemToSong(transport.currentTrack) : null,
+    [transport.currentTrack],
+  );
+
   const togglePlay = useCallback(() => {
     playerService.toggle();
   }, []);
@@ -81,54 +97,34 @@ export function usePlayer() {
     playerService.toggleShuffle();
   }, []);
 
-  return useMemo(
-    () => ({
-      playing: transport.playing,
-      loading: transport.loading,
-      buffering: transport.buffering,
-      currentTime: transport.currentTime,
-      duration: transport.duration,
-      currentTrack: transport.currentTrack
-        ? queueItemToSong(transport.currentTrack)
-        : null,
-      queue: queueView.queue.map(queueItemToSong),
-      queueLength: queueView.queue.length,
-      currentIndex: queueView.currentIndex,
-      isFm: queueView.contentSource === 'personal_fm',
-      fmExitWillEmpty: queueView.contentSource !== 'personal_fm',
-      canPrev:
-        queueView.currentIndex !== null &&
-        (queueView.contentSource !== 'personal_fm' ||
-          queueView.currentIndex > 0),
-      order: queueView.order,
-      repeat: queueView.repeat,
-      isShuffle: queueView.order === 'shuffle',
-      ...actions,
-      togglePlay,
-      seek,
-      setVolume,
-      setMuted,
-      cycleRepeat,
-      toggleShuffle,
-      volume: playerSettings.volume,
-      isMuted: playerSettings.isMuted,
-      isLoggedIn,
-      isLiked: like.isLiked,
-      likedIds: like.likedIds,
-    }),
-    [
-      transport,
-      queueView,
-      actions,
-      playerSettings,
-      isLoggedIn,
-      like,
-      togglePlay,
-      seek,
-      setVolume,
-      setMuted,
-      cycleRepeat,
-      toggleShuffle,
-    ],
-  );
+  return {
+    playing: transport.playing,
+    loading: transport.loading,
+    buffering: transport.buffering,
+    duration: transport.duration,
+    currentTrack,
+    queue,
+    queueLength: queue.length,
+    currentIndex: queueView.currentIndex,
+    isFm: queueView.contentSource === 'personal_fm',
+    fmExitWillEmpty: queueView.contentSource !== 'personal_fm',
+    canPrev:
+      queueView.currentIndex !== null &&
+      (queueView.contentSource !== 'personal_fm' || queueView.currentIndex > 0),
+    order: queueView.order,
+    repeat: queueView.repeat,
+    isShuffle: queueView.order === 'shuffle',
+    ...actions,
+    togglePlay,
+    seek,
+    setVolume,
+    setMuted,
+    cycleRepeat,
+    toggleShuffle,
+    volume: playerSettings.volume,
+    isMuted: playerSettings.isMuted,
+    isLoggedIn,
+    isLiked: like.isLiked,
+    likedIds: like.likedIds,
+  };
 }

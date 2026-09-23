@@ -1,7 +1,5 @@
 import { Loader2, Music, Radio, ThumbsDown, Trash2, X } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
-import type { VirtuosoHandle } from 'react-virtuoso';
-import { Virtuoso } from 'react-virtuoso';
+import { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Button } from '@/shared/ui/button';
 import {
@@ -12,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/dialog';
-import { VirtuosoScroller } from '@/shared/ui/virtuoso';
 import { DecodedImage } from '@/shared/ui/image';
 import type { Track } from '@/shared/types/player';
 import { toast } from '@/shared/lib/toast';
@@ -20,6 +17,10 @@ import { cn } from '@/shared/utils/cn';
 import { getNcmImageUrl } from '@/shared/utils/image';
 import { formatQueueCount } from '@/shared/utils/format';
 import { usePlayer } from '@/features/player/hooks/usePlayer';
+import { QueueList } from './QueueList';
+
+/** 与 QueueItem 行高（h-[52px]：text-sm 20 + text-xs 16 + py-2*2）一致。 */
+const ROW_HEIGHT = 52;
 
 const QueueItem = ({
   track,
@@ -36,7 +37,7 @@ const QueueItem = ({
 }) => (
   <div
     className={cn(
-      'group flex items-center px-4 py-2 w-full cursor-pointer transition-colors hover:bg-surface-hover',
+      'group flex items-center h-13 px-4 py-2 w-full cursor-pointer transition-colors hover:bg-surface-hover',
       isCurrent && 'bg-primary/10',
     )}
   >
@@ -105,8 +106,6 @@ export const QueuePanel = ({
   } = usePlayer();
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [trashPending, setTrashPending] = useState(false);
-  const virtuosoRef = useRef<VirtuosoHandle>(null);
-  const scrolledOnceRef = useRef(false);
 
   const handleClose = () => onClose();
 
@@ -163,17 +162,6 @@ export const QueuePanel = ({
       run();
     }
   };
-
-  const scrollToCurrent = useCallback(() => {
-    if (currentIndex !== null) {
-      setTimeout(() => {
-        virtuosoRef.current?.scrollToIndex({
-          index: currentIndex,
-          align: 'center',
-        });
-      }, 50);
-    }
-  }, [currentIndex]);
 
   return (
     <AnimatePresence onExitComplete={handlePanelExitComplete}>
@@ -321,33 +309,19 @@ export const QueuePanel = ({
                         : 'opacity-0 translate-y-2 pointer-events-none',
                     )}
                   >
-                    <Virtuoso
-                      components={{ Scroller: VirtuosoScroller }}
-                      computeItemKey={(index) => queue[index]?.id ?? index}
-                      fixedItemHeight={48}
-                      itemContent={(index) => (
+                    <QueueList
+                      currentIndex={currentIndex}
+                      itemHeight={ROW_HEIGHT}
+                      queue={queue}
+                      renderItem={(track, index) => (
                         <QueueItem
                           index={index}
                           isCurrent={index === currentIndex}
                           onPlay={handlePlayTrack}
                           onRemove={handleRemove}
-                          track={queue[index]}
+                          track={track}
                         />
                       )}
-                      overscan={100}
-                      ref={(ref) => {
-                        virtuosoRef.current = ref;
-                        if (
-                          ref &&
-                          !scrolledOnceRef.current &&
-                          currentIndex !== null
-                        ) {
-                          scrolledOnceRef.current = true;
-                          scrollToCurrent();
-                        }
-                      }}
-                      style={{ height: '100%' }}
-                      totalCount={queue.length}
                     />
                   </div>
                 </>
