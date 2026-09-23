@@ -11,7 +11,7 @@ use crate::model::entity::{
 };
 use crate::model::error::{check_code, NcmApiError, Result};
 use crate::model::{mapper, response};
-use crate::netease::client::{fetch, opt};
+use crate::netease::client::{self, fetch, opt};
 use crate::netease::NcmState;
 
 pub struct NcmService;
@@ -31,12 +31,31 @@ impl NcmService {
         captcha: Option<String>,
         countrycode: Option<String>,
     ) -> Result<AuthSession> {
-        let mut q = Query::new().param("phone", &phone);
-        q = opt(q, "password", password.as_deref());
-        q = opt(q, "captcha", captcha.as_deref());
-        q = opt(q, "countrycode", countrycode.as_deref());
         let client = state.client();
-        let dto: response::LoginResponseDto = fetch(state, app, client.login_cellphone(&q)).await?;
+        // 验证码与密码是两条互斥路径（上游 Node 同此语义）：给了验证码就走验证码登录，
+        // 不能再把 captcha 当 password 发给服务端（见 `client::login_cellphone_by_captcha`）。
+        let captcha = captcha.filter(|c| !c.trim().is_empty());
+        let dto: response::LoginResponseDto = match captcha {
+            Some(code) => {
+                fetch(
+                    state,
+                    app,
+                    client::login_cellphone_by_captcha(
+                        &client,
+                        &phone,
+                        &code,
+                        countrycode.as_deref(),
+                    ),
+                )
+                .await?
+            }
+            None => {
+                let mut q = Query::new().param("phone", &phone);
+                q = opt(q, "password", password.as_deref());
+                q = opt(q, "countrycode", countrycode.as_deref());
+                fetch(state, app, client.login_cellphone(&q)).await?
+            }
+        };
         check_code(dto.code, dto.message.as_deref())?;
         Ok(mapper::map_auth_session(dto))
     }
