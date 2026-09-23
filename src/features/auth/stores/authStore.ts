@@ -11,6 +11,7 @@ interface AuthState {
 
 interface AuthStore extends AuthState {
   setAuth: (state: Partial<AuthState>) => void;
+  initAuth: () => Promise<void>;
   logout: () => void;
 }
 
@@ -22,6 +23,25 @@ export const useAuthStore = create<AuthStore>((set) => ({
   avatarUrl: '',
 
   setAuth: (state) => set(state),
+  initAuth: async () => {
+    const cookie = await getNcmCookie();
+    if (!cookie) return;
+
+    const res = await ncm.loginStatus();
+    const profile = res.profile;
+
+    if (profile?.id) {
+      useAuthStore.getState().setAuth({
+        isLoggedIn: true,
+        cookie,
+        userId: profile.id,
+        nickname: profile.nickname ?? '',
+        avatarUrl: profile.avatarUrl ?? '',
+      });
+    } else {
+      await clearNcmCookie();
+    }
+  },
   logout: () => {
     clearNcmCookie();
     set({

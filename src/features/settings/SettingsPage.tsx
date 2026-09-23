@@ -225,7 +225,7 @@ export default function Settings() {
               </>
             ) : (
               <Row label="登录网易云音乐">
-                <Button onClick={() => openLogin()} size="xs">
+                <Button className="h-8" onClick={() => openLogin()} size={'sm'}>
                   立即登录
                 </Button>
               </Row>
