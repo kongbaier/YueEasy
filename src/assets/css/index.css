@@ -19,6 +19,15 @@
     cursor: pointer;
   }
 
+  /* 视口不参与滚动，也不做弹性回弹：
+     Windows WebView2（Chromium）默认开启触控板 ElasticOverscroll，
+     即便 html 无可滚动溢出，两指甩动也会让根滚动器整体位移（半透明窗口下表现为整页回弹）。
+     鼠标滚轮是离散刻度、不走 fling 路径，故不受影响。 */
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+
   body {
     font-family: var(--font-family);
     color: var(--foreground);
