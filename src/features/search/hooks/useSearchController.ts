@@ -18,6 +18,8 @@ export function useSearchController() {
   const setShow = useSearchStore((s) => s.setShow);
   const submit = useSearchStore((s) => s.submit);
   const setType = useSearchStore((s) => s.setType);
+  const history = useSearchStore((s) => s.history);
+  const removeHistory = useSearchStore((s) => s.removeHistory);
 
   const play = playerService.play;
 
@@ -38,10 +40,12 @@ export function useSearchController() {
       show,
       keyword,
       searchType,
+      history,
       setInput,
       setShow,
       submit,
       setType,
+      removeHistory,
       handlePlay,
     }),
     [
@@ -49,10 +53,12 @@ export function useSearchController() {
       show,
       keyword,
       searchType,
+      history,
       setInput,
       setShow,
       submit,
       setType,
+      removeHistory,
       handlePlay,
     ],
   );

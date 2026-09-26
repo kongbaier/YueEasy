@@ -9,6 +9,9 @@ import type {
 export const SKELETON_COUNT = 8;
 export const GRID_SKELETON_COUNT = 12;
 
+/** 搜索历史条数上限（最新在前，超出丢弃最旧）。 */
+export const SEARCH_HISTORY_MAX = 10;
+
 export enum SearchType {
   SONG = '1',
   ALBUM = '10',
