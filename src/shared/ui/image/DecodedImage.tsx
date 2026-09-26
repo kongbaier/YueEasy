@@ -1,10 +1,13 @@
 import { cn } from '@/shared/utils/cn';
-import { Skeleton } from '@/shared/ui/skeleton';
-import { useEffect, useRef, useState } from 'react';
+import { useDecodedSrc } from '@/shared/hooks/useDecodedSrc';
+import { ImagePlaceholder } from './ImagePlaceholder';
 
 interface DecodedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
-  /** 加载中占位内容，默认 shimmer 骨架 */
+  /**
+   * 解码期占位内容。缺省 = shimmer 骨架；传 null 表示不渲染占位
+   * （调用方已在容器层铺好骨架，避免双骨架叠加）。
+   */
   placeholder?: React.ReactNode;
   /** 包裹容器类名：相对定位 + 尺寸 + 圆角等 */
   containerClassName?: string;
@@ -23,11 +26,11 @@ interface DecodedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 /**
  * 先离屏预加载并完整解码，再挂载 <img>。
  *
- * 浏览器对渐进式图片（progressive JPEG / 交错 PNG）会在数据流到达时逐行渲染，
- * 出现"从上往下先显示一半"的观感。本组件通过 `new Image()` + `decode()` 等到
- * 整张图解码完毕才替换占位骨架，保证图片一次性完整出现。
+ * 解码状态机在 `useDecodedSrc`（与 CrossfadeImage 共用）；本组件只负责
+ * 「解码期显示 ImagePlaceholder，就绪后原地替换成 <img>」这一种呈现方式。
+ * 换源时保留旧图直到新图解码完成，不会闪回骨架；需要交叉淡出请用 CrossfadeImage。
  *
- * lazy 模式下用 IntersectionObserver 延后触发上面的预加载，离屏 slide 不浪费纹理。
+ * lazy 模式下用 IntersectionObserver 延后触发预加载，离屏 slide 不浪费纹理。
  */
 export const DecodedImage = ({
   src,
@@ -39,82 +42,24 @@ export const DecodedImage = ({
   lazy = false,
   ...props
 }: DecodedImageProps) => {
-  const [loadedSrc, setLoadedSrc] = useState<string>();
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const preload = () => {
-      const img = new Image();
-      img.src = src;
-
-      const markLoaded = () => {
-        if (cancelled) return;
-        setLoadedSrc(src);
-      };
-      const markLoadedAnyway = () => {
-        if (cancelled) return;
-        if (fallbackOnError) markLoaded();
-      };
-
-      // decode() 在图片可安全绘制（完整解码）后才 resolve，
-      // 提前于 load 事件，能杜绝渐进式局部绘制。
-      const decode = (
-        img as HTMLImageElement & { decode?: () => Promise<void> }
-      ).decode;
-      if (typeof decode === 'function') {
-        decode.call(img).then(markLoaded).catch(markLoadedAnyway);
-      } else {
-        img.addEventListener('load', markLoaded);
-        img.addEventListener('error', markLoadedAnyway);
-      }
-    };
-
-    if (!lazy) {
-      preload();
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    const el = containerRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            observer.disconnect();
-            preload();
-          }
-        }
-      },
-      // 200px 提前量：相邻 slide 滑进前就开始解码，保证切到时已就绪
-      { rootMargin: '200px' },
-    );
-    observer.observe(el);
-
-    return () => {
-      cancelled = true;
-      observer.disconnect();
-    };
-  }, [src, fallbackOnError, lazy]);
+  const { ref, decodedSrc } = useDecodedSrc<HTMLDivElement>(src, {
+    lazy,
+    fallbackOnError,
+  });
 
   return (
     <div
-      ref={containerRef}
+      ref={ref}
       className={cn('relative overflow-hidden', containerClassName)}
     >
-      {!loadedSrc &&
-        (placeholder ?? (
-          <Skeleton className="absolute inset-0 size-full" shimmer={shimmer} />
-        ))}
-      {loadedSrc && (
+      {!decodedSrc && (
+        <ImagePlaceholder shimmer={shimmer}>{placeholder}</ImagePlaceholder>
+      )}
+      {decodedSrc && (
         <img
           alt=""
           className={cn('size-full object-cover', className)}
-          src={loadedSrc}
+          src={decodedSrc}
           {...props}
           loading={lazy ? 'lazy' : props.loading}
         />

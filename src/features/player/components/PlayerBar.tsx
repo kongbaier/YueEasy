@@ -22,7 +22,7 @@ import { getNcmImageUrl } from '@/shared/utils/image';
 import { formatQueueCount } from '@/shared/utils/format';
 import { snapToDevicePixel } from '@/shared/utils/snap';
 import { useDevicePixelRatio } from '@/shared/hooks/useDevicePixelRatio';
-import { usePlayerPage } from '@/features/player/contexts/PlayerPageContext';
+import { usePlayerPage } from '@/features/player/hooks/usePlayerPage';
 import { RepeatButton } from './RepeatButton';
 import { ShuffleButton } from './ShuffleButton';
 import { SeekBar } from './SeekBar';

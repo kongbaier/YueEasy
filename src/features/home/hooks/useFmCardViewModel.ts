@@ -5,14 +5,14 @@ import { useQueueStore } from '@/features/player/stores/queueStore';
 import { playerService } from '@/features/player/services/PlayerService';
 import { queueItemToSong } from '@/shared/utils/mappers';
 import { useAuthStore } from '@/features/auth/stores/authStore';
-import { useLoginDialog } from '@/features/auth/stores/loginDialogStore';
-import { usePlayerPage } from '@/features/player/contexts/PlayerPageContext';
+import { useLoginModal } from '@/features/auth/stores/loginModalStore';
+import { usePlayerPage } from '@/features/player/hooks/usePlayerPage';
 import { toast } from '@/shared/lib/toast';
 import { getPersonalFmPreview } from '../home-service';
 
 /**
  * 私人漫游卡片 viewmodel：组合预请求候选歌 + queue store 的 setContentSource / MirrorStore 的内容来源。
- * 只订阅 store / context，组件不再直接触碰它们。
+ * 只订阅 store / hook，组件不再直接触碰它们。
  */
 export function useFmCardViewModel() {
   // 内容来源（FM 标志）在低频 queue store；setContentSource / currentTrack 在 player store。
@@ -23,7 +23,7 @@ export function useFmCardViewModel() {
     ? queueItemToSong(currentTrackRaw)
     : null;
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
+  const setLoginModalOpen = useLoginModal((s) => s.setOpen);
   const { open: openPlayerPage } = usePlayerPage();
   const queryClient = useQueryClient();
   const [pending, setPending] = useState(false);
@@ -55,7 +55,7 @@ export function useFmCardViewModel() {
       if (pending) return;
       if (!isLoggedIn) {
         toast.error('请先登录');
-        setLoginDialogOpen(true);
+        setLoginModalOpen(true);
         return;
       }
       // 已在漫游中：不再重复发起，仅做导航
@@ -81,7 +81,7 @@ export function useFmCardViewModel() {
       isLoggedIn,
       isFm,
       openPlayerPage,
-      setLoginDialogOpen,
+      setLoginModalOpen,
       setContentSource,
       queryClient,
     ],

@@ -5,8 +5,8 @@ import { useWindowState } from '@/shared/hooks/useWindowState';
 import { Cover } from '@/shared/ui/image';
 import type { Track } from '@/shared/types/player';
 import { cn } from '@/shared/utils/cn';
-import { getNcmImageUrl } from '@/shared/utils/image';
-import { usePlayerPage } from '@/features/player/contexts/PlayerPageContext';
+import { decodeImage, getNcmImageUrl } from '@/shared/utils/image';
+import { usePlayerPage } from '@/features/player/hooks/usePlayerPage';
 import { Lyrics } from '@/features/lyrics/components/Lyrics';
 import { PlayerPageComments } from './components/PlayerPageComments';
 import { PlayerPageControls } from './components/PlayerPageControls';
@@ -48,10 +48,8 @@ export default function PlayerPage() {
     const idx = queue.findIndex((t) => t.id === currentTrack.id);
     const next = queue[idx + 1];
     if (next?.album?.picUrl) {
-      const img = new Image();
-      // 预加载也限尺寸，避免解码原始大图
-      img.src = getNcmImageUrl(next.album.picUrl, 640);
-      img.decode().catch(() => {});
+      // 预加载也限尺寸，避免解码原始大图；解码入口统一走 decodeImage
+      void decodeImage(getNcmImageUrl(next.album.picUrl, 640));
     }
   }, [currentTrack, queue]);
 

@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { QR_PHASE_MESSAGE, type QrPhase } from '../constants';
-import { authService } from '../services/AuthService';
+import {
+  checkQr,
+  createQr,
+  fetchProfile,
+  getQrKey,
+} from '../services/AuthService';
 
 type Profile = { nickname?: string } | null;
 
@@ -13,7 +18,9 @@ export const useQrLogin = (onAuthSuccess: (profile?: Profile) => void) => {
   const [status, setStatus] = useState<QrPhase>('loading');
   const [error, setError] = useState('');
   const qrKeyRef = useRef('');
-  const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(
+    undefined,
+  );
 
   const stopPolling = useCallback(() => {
     clearInterval(timerRef.current);
@@ -24,7 +31,7 @@ export const useQrLogin = (onAuthSuccess: (profile?: Profile) => void) => {
   const startQrFlow = useCallback(() => {
     stopPolling();
     timerRef.current = setInterval(async () => {
-      const res = await authService.checkQr(qrKeyRef.current).catch(() => null);
+      const res = await checkQr(qrKeyRef.current).catch(() => null);
       if (!res) return;
 
       if (res.status === 'expired') {
@@ -34,9 +41,7 @@ export const useQrLogin = (onAuthSuccess: (profile?: Profile) => void) => {
       } else if (res.status === 'confirmed') {
         stopPolling();
         // 补全 profile 失败不影响已完成的登录（cookie 已落盘）
-        const profile = await authService
-          .fetchProfile(res.cookie ?? '')
-          .catch(() => null);
+        const profile = await fetchProfile(res.cookie ?? '').catch(() => null);
         onAuthSuccess(profile);
       } else if (res.status === 'scanned' || res.status === 'waiting') {
         setStatus(res.status);
@@ -52,11 +57,11 @@ export const useQrLogin = (onAuthSuccess: (profile?: Profile) => void) => {
     setError('');
 
     try {
-      const { key } = await authService.getQrKey();
+      const { key } = await getQrKey();
       if (!key) throw new Error('获取二维码密钥失败');
       qrKeyRef.current = key;
 
-      const { image, url } = await authService.createQr(key);
+      const { image, url } = await createQr(key);
       setQrImg(image || qrImageFallback(url));
       setStatus('waiting');
       startQrFlow();
@@ -74,7 +79,13 @@ export const useQrLogin = (onAuthSuccess: (profile?: Profile) => void) => {
   }, [refresh, stopPolling]);
 
   return useMemo(
-    () => ({ qrImg, status, message: QR_PHASE_MESSAGE[status], error, refresh }),
+    () => ({
+      qrImg,
+      status,
+      message: QR_PHASE_MESSAGE[status],
+      error,
+      refresh,
+    }),
     [qrImg, status, error, refresh],
   );
 };

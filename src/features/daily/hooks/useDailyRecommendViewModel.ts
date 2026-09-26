@@ -1,5 +1,5 @@
-import { useCallback, useMemo } from 'react';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getDailyRecommendSongs } from '../daily-service';
 import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { toast } from '@/shared/lib/toast';
@@ -15,13 +15,14 @@ export function useDailyRecommendViewModel() {
   const play = playerService.play;
   const replaceAndPlay = playerService.replaceAndPlay;
 
-  const { data: songs } = useSuspenseQuery({
+  const { data: songs, isLoading } = useQuery({
     queryKey: ['dailyRecommend'],
     queryFn: () => getDailyRecommendSongs(),
+    placeholderData: [],
     staleTime: 5 * 60 * 1000,
   });
 
-  const visibleCount = useLoadMore(songs.length);
+  const visibleCount = useLoadMore(songs?.length ?? 0);
 
   const handlePlay = useCallback(
     async (track: Song) => {
@@ -35,7 +36,7 @@ export function useDailyRecommendViewModel() {
   );
 
   const handlePlayAll = useCallback(async () => {
-    if (!songs.length) return;
+    if (songs === undefined || !songs.length) return;
     try {
       await replaceAndPlay(songs);
     } catch {
@@ -43,8 +44,11 @@ export function useDailyRecommendViewModel() {
     }
   }, [replaceAndPlay, songs]);
 
-  return useMemo(
-    () => ({ songs, visibleCount, handlePlay, handlePlayAll }),
-    [songs, visibleCount, handlePlay, handlePlayAll],
-  );
+  return {
+    songs: songs ?? [],
+    visibleCount,
+    handlePlay,
+    handlePlayAll,
+    isLoading,
+  };
 }

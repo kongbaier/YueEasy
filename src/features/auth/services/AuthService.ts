@@ -19,50 +19,50 @@ function applyAuth(cookie: string, profile?: Partial<AuthProfile> | null) {
   return profile;
 }
 
-export const authService = {
-  loginWithPassword: async (
-    phone: string,
-    password: string,
-  ): Promise<AuthProfile | null> => {
-    const res = await ncm.loginCellphone({ phone, password });
-    const profile = res.profile ?? null;
-    applyAuth(res.cookie, profile);
+export const loginWithPassword = async (
+  phone: string,
+  password: string,
+): Promise<AuthProfile | null> => {
+  const res = await ncm.loginCellphone({ phone, password });
+  const profile = res.profile ?? null;
+  applyAuth(res.cookie, profile);
+  return profile;
+};
+
+export const sendSmsCode = async (phone: string): Promise<void> => {
+  await ncm.captchaSent(phone);
+};
+
+export const loginWithSms = async (
+  phone: string,
+  code: string,
+): Promise<AuthProfile | null> => {
+  const res = await ncm.loginCellphone({ phone, captcha: code });
+  const profile = res.profile ?? null;
+  applyAuth(res.cookie, profile);
+  return profile;
+};
+
+export const getQrKey = () => ncm.qrKey();
+
+export const createQr = (key: string) => ncm.qrCreate(key);
+
+export const checkQr = (key: string) => ncm.qrCheck(key);
+
+/** 扫码登录成功后的 profile 补全 */
+export const fetchProfile = async (
+  cookie: string,
+): Promise<Partial<AuthProfile> | null> => {
+  const statusRes = await ncm.loginStatus();
+  const profile = statusRes.profile ?? null;
+  if (profile?.id) {
+    applyAuth(cookie, profile);
     return profile;
-  },
+  }
+  return null;
+};
 
-  sendSmsCode: async (phone: string): Promise<void> => {
-    await ncm.captchaSent(phone);
-  },
-
-  loginWithSms: async (
-    phone: string,
-    code: string,
-  ): Promise<AuthProfile | null> => {
-    const res = await ncm.loginCellphone({ phone, captcha: code });
-    const profile = res.profile ?? null;
-    applyAuth(res.cookie, profile);
-    return profile;
-  },
-
-  getQrKey: () => ncm.qrKey(),
-  createQr: (key: string) => ncm.qrCreate(key),
-  checkQr: (key: string) => ncm.qrCheck(key),
-
-  /** 扫码登录成功后的 profile 补全 */
-  fetchProfile: async (
-    cookie: string,
-  ): Promise<Partial<AuthProfile> | null> => {
-    const statusRes = await ncm.loginStatus();
-    const profile = statusRes.profile ?? null;
-    if (profile?.id) {
-      applyAuth(cookie, profile);
-      return profile;
-    }
-    return null;
-  },
-
-  logout: () => {
-    clearNcmCookie();
-    useAuthStore.getState().logout();
-  },
+export const logout = () => {
+  clearNcmCookie();
+  useAuthStore.getState().logout();
 };

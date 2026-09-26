@@ -3,11 +3,15 @@ import { PlaylistCard } from '@/shared/components/playlist-card';
 import { useTopPlaylistsViewModel } from '../hooks/useTopPlaylistsViewModel';
 
 export const TopPlaylists = () => {
-  const { topPlaylists } = useTopPlaylistsViewModel();
+  const { topPlaylists, isLoading } = useTopPlaylistsViewModel();
 
   return (
-    <HorizontalCarousel title="热门歌单" titleLink="/discover/toplist">
-      {topPlaylists.map((pl) => (
+    <HorizontalCarousel
+      loading={isLoading}
+      title="热门歌单"
+      titleLink="/discover/toplist"
+    >
+      {(topPlaylists ?? []).map((pl) => (
         <PlaylistCard key={pl.id} playlist={pl} />
       ))}
     </HorizontalCarousel>

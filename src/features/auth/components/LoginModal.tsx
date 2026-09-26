@@ -21,15 +21,15 @@ const tabs: { key: LoginTab; label: string }[] = [
   { key: 'qr', label: '扫码登录' },
 ];
 
-export const LoginDialog = () => {
+export const LoginModal = () => {
   const [tab, setTab] = useState<LoginTab>('password');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const {
-    loginDialogOpen: open,
-    setLoginDialogOpen: setOpen,
+    loginModalOpen: open,
+    setLoginModalOpen: setOpen,
     loginWithPassword,
     loginWithSms,
   } = useAuthViewModel();

@@ -2,7 +2,11 @@
 // 每个函数 = 一次 invoke 封装；返回值即 Rust 侧产出的 Ui Model。
 
 import { invoke } from '@tauri-apps/api/core';
-import type { Playlist, PlaylistHotTag, PlaylistPage } from '@/shared/types/uiModels';
+import type {
+  Playlist,
+  PlaylistHotTag,
+  PlaylistPage,
+} from '@/shared/types/uiModels';
 
 export const playlistDetail = (id: number): Promise<Playlist> =>
   invoke<Playlist>('ncm_playlist_detail', { id });

@@ -15,8 +15,9 @@ import { cn } from '@/shared/utils/cn';
 const SKELETON_COUNT = 8;
 
 const CardSkeleton = () => {
+  // 尺寸/外边距与 PlaylistCard 对齐（w-42 box-content m-1），骨架切真实卡片不跳
   return (
-    <div className="w-40 lg:w-44 xl:w-48 shrink-0">
+    <div className="w-42 lg:w-44 xl:w-48 shrink-0 box-content m-1">
       <Skeleton className="aspect-square w-full rounded-t-lg" shimmer />
       <div className="p-2.5 space-y-1.5">
         <Skeleton className="h-4 w-3/4 rounded" shimmer />

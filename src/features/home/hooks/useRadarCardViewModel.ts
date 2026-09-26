@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/auth/stores/authStore';
-import { useLoginDialog } from '@/features/auth/stores/loginDialogStore';
+import { useLoginModal } from '@/features/auth/stores/loginModalStore';
 import { toast } from '@/shared/lib/toast';
 import { getDragonBall, getPlaylistDetail } from '../home-service';
 
@@ -13,7 +13,7 @@ import { getDragonBall, getPlaylistDetail } from '../home-service';
 export function useRadarCardViewModel() {
   const navigate = useNavigate();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
+  const setLoginModalOpen = useLoginModal((s) => s.setOpen);
 
   // 圆形入口接口需要登录，未登录时优雅降级为空
   const {
@@ -59,11 +59,11 @@ export function useRadarCardViewModel() {
   const goRadar = useCallback(() => {
     if (!isLoggedIn) {
       toast.error('请先登录');
-      setLoginDialogOpen(true);
+      setLoginModalOpen(true);
       return;
     }
     if (hasResource) navigate(`/playlist/${resourceId}`);
-  }, [isLoggedIn, setLoginDialogOpen, hasResource, resourceId, navigate]);
+  }, [isLoggedIn, setLoginModalOpen, hasResource, resourceId, navigate]);
 
   return {
     isLoggedIn,

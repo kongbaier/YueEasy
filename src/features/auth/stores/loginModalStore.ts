@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 
 /**
- * Login dialog state — scoped to auth feature.
+ * Login modal state — scoped to auth feature.
  * Any component that needs to trigger login imports this directly.
  */
-export const useLoginDialog = create<{
+export const useLoginModal = create<{
   open: boolean;
   setOpen: (open: boolean) => void;
 }>((set) => ({

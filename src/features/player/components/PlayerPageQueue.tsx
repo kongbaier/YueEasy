@@ -16,7 +16,7 @@ import { toast } from '@/shared/lib/toast';
 import { cn } from '@/shared/utils/cn';
 import { getNcmImageUrl } from '@/shared/utils/image';
 import { formatQueueCount } from '@/shared/utils/format';
-import { usePlayerPage } from '@/features/player/contexts/PlayerPageContext';
+import { usePlayerPage } from '@/features/player/hooks/usePlayerPage';
 import { usePlayer } from '@/features/player/hooks/usePlayer';
 import { QueueList } from './QueueList';
 import type { QueueListHandle } from './QueueList';

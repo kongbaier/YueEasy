@@ -15,7 +15,8 @@ export const banner = (): Promise<Banner[]> =>
 export const recommendSongs = (): Promise<Song[]> =>
   invoke<Song[]>('ncm_recommend_songs');
 
-export const personalFm = (): Promise<Song[]> => invoke<Song[]>('ncm_personal_fm');
+export const personalFm = (): Promise<Song[]> =>
+  invoke<Song[]>('ncm_personal_fm');
 
 export const fmTrash = (id: number): Promise<void> =>
   invoke<void>('ncm_fm_trash', { id });
@@ -30,4 +31,8 @@ export const playmodeIntelligenceList = (
   pid: number,
   count = 20,
 ): Promise<IntelligenceSong[]> =>
-  invoke<IntelligenceSong[]>('ncm_playmode_intelligence_list', { id, pid, count });
+  invoke<IntelligenceSong[]>('ncm_playmode_intelligence_list', {
+    id,
+    pid,
+    count,
+  });

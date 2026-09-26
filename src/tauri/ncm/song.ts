@@ -19,28 +19,48 @@ export const search = (
   limit = 30,
   offset = 0,
 ): Promise<SearchResult> =>
-  invoke<SearchResult>('ncm_cloudsearch', { keywords, searchType: 1, limit, offset });
+  invoke<SearchResult>('ncm_cloudsearch', {
+    keywords,
+    searchType: 1,
+    limit,
+    offset,
+  });
 
 export const searchAlbum = (
   keywords: string,
   limit = 30,
   offset = 0,
 ): Promise<SearchResult> =>
-  invoke<SearchResult>('ncm_cloudsearch', { keywords, searchType: 10, limit, offset });
+  invoke<SearchResult>('ncm_cloudsearch', {
+    keywords,
+    searchType: 10,
+    limit,
+    offset,
+  });
 
 export const searchArtist = (
   keywords: string,
   limit = 30,
   offset = 0,
 ): Promise<SearchResult> =>
-  invoke<SearchResult>('ncm_cloudsearch', { keywords, searchType: 100, limit, offset });
+  invoke<SearchResult>('ncm_cloudsearch', {
+    keywords,
+    searchType: 100,
+    limit,
+    offset,
+  });
 
 export const searchUser = (
   keywords: string,
   limit = 30,
   offset = 0,
 ): Promise<SearchResult> =>
-  invoke<SearchResult>('ncm_cloudsearch', { keywords, searchType: 1002, limit, offset });
+  invoke<SearchResult>('ncm_cloudsearch', {
+    keywords,
+    searchType: 1002,
+    limit,
+    offset,
+  });
 
 export const searchSuggest = (keywords: string): Promise<SuggestResult> =>
   invoke<SuggestResult>('ncm_search_suggest', { keywords });
@@ -57,7 +77,8 @@ export const songUrl = (id: number): Promise<SongUrlResult> =>
 export const songDetail = (ids: number[]): Promise<Song[]> =>
   invoke<Song[]>('ncm_song_detail', { ids });
 
-export const lyric = (id: number): Promise<Lyric> => invoke<Lyric>('ncm_lyric', { id });
+export const lyric = (id: number): Promise<Lyric> =>
+  invoke<Lyric>('ncm_lyric', { id });
 
 export const lyricNew = (id: number): Promise<Lyric> =>
   invoke<Lyric>('ncm_lyric_new', { id });

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import { useLikeStore } from '@/features/like/stores/like';
-import { useLoginDialog } from '@/features/auth/stores/loginDialogStore';
+import { useLoginModal } from '@/features/auth/stores/loginModalStore';
 import { queryClient } from '@/shared/lib/queryClient';
 import { toast } from '@/shared/lib/toast';
 import type { Song } from '@/shared/types/uiModels';
@@ -27,7 +27,7 @@ function removeLikedSongCache(trackId: number) {
 
 export function useLikeAction() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const setLoginDialogOpen = useLoginDialog((s) => s.setOpen);
+  const setLoginModalOpen = useLoginModal((s) => s.setOpen);
   const toggleLikeRemote = useLikeStore((s) => s.toggleLikeRemote);
   // 订阅 likedIds（Set 引用变化触发重渲染），保证 isLiked(id) 结果随点赞状态更新
   const likedIds = useLikeStore((s) => s.likedIds);
@@ -37,7 +37,7 @@ export function useLikeAction() {
     async (track: Song) => {
       if (!isLoggedIn) {
         toast.error('请先登录');
-        setLoginDialogOpen(true);
+        setLoginModalOpen(true);
         return;
       }
       const currentIsLiked = useLikeStore.getState().isLiked(track.id);
@@ -58,7 +58,7 @@ export function useLikeAction() {
         toast.error('操作失败，请重试');
       }
     },
-    [isLoggedIn, setLoginDialogOpen, toggleLikeRemote],
+    [isLoggedIn, setLoginModalOpen, toggleLikeRemote],
   );
 
   return { like, isLiked };

@@ -5,6 +5,8 @@ import { invoke } from '@tauri-apps/api/core';
 export const setNcmCookie = (cookie: string): Promise<void> =>
   invoke<void>('ncm_set_cookie', { cookie });
 
-export const getNcmCookie = (): Promise<string> => invoke<string>('ncm_get_cookie');
+export const getNcmCookie = (): Promise<string> =>
+  invoke<string>('ncm_get_cookie');
 
-export const clearNcmCookie = (): Promise<void> => invoke<void>('ncm_clear_cookie');
+export const clearNcmCookie = (): Promise<void> =>
+  invoke<void>('ncm_clear_cookie');

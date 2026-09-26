@@ -1,61 +1,16 @@
 import { Play, Sparkles } from 'lucide-react';
-import { Suspense } from 'react';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
 import { Button } from '@/shared/ui/button';
 import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
 import { useAuthViewModel } from '@/features/auth/hooks/useAuthViewModel';
 import { useDailyRecommendViewModel } from './hooks/useDailyRecommendViewModel';
 
-const DailyRecommendSkeleton = () => (
-  <div className="p-6">
-    <div className="mt-3 space-y-0.5">
-      {Array.from({ length: 8 }).map((_, i) => (
-        // oxlint-disable-next-line react/no-array-index-key
-        <TrackRowSkeleton index={i} key={i} />
-      ))}
-    </div>
-  </div>
-);
-
-const DailyRecommendContent = () => {
-  const { songs, visibleCount, handlePlay, handlePlayAll } =
-    useDailyRecommendViewModel();
-
-  return (
-    <div className="p-6">
-      {songs.length > 0 ? (
-        <>
-          <div className="mt-4 flex items-center gap-3">
-            <p className="text-sm text-muted-foreground">
-              共 {songs.length} 首推荐歌曲
-            </p>
-            <Button onClick={handlePlayAll} size="xs">
-              <Play className="h-3 w-3" />
-              播放全部
-            </Button>
-          </div>
-
-          <div className="mt-3 space-y-0.5">
-            {songs.slice(0, visibleCount).map((track, index) => (
-              <TrackRow
-                index={index}
-                key={track.id}
-                onPlay={handlePlay}
-                track={track}
-              />
-            ))}
-          </div>
-        </>
-      ) : (
-        <p className="mt-4 text-sm text-muted-foreground">暂无推荐歌曲</p>
-      )}
-    </div>
-  );
-};
-
 export default function DailyRecommend() {
   usePageTitle('每日推荐', { root: true });
   const { isLoggedIn, openLogin } = useAuthViewModel();
+
+  const { songs, visibleCount, handlePlay, handlePlayAll, isLoading } =
+    useDailyRecommendViewModel();
 
   if (!isLoggedIn) {
     return (
@@ -67,9 +22,41 @@ export default function DailyRecommend() {
     );
   }
 
+  if (isLoading)
+    return (
+      <div className="p-6">
+        <div className="mt-3 space-y-0.5">
+          {Array.from({ length: 8 }).map((_, i) => (
+            // oxlint-disable-next-line react/no-array-index-key
+            <TrackRowSkeleton index={i} key={i} />
+          ))}
+        </div>
+      </div>
+    );
+
   return (
-    <Suspense fallback={<DailyRecommendSkeleton />}>
-      <DailyRecommendContent />
-    </Suspense>
+    <div className="h-full flex flex-col">
+      <div className="mt-2 py-2 px-6 flex items-center gap-3">
+        <p className="text-sm text-muted-foreground">
+          共 <span className="text-primary px-2">{songs.length}</span>{' '}
+          首推荐歌曲
+        </p>
+        <Button onClick={handlePlayAll} size="sm">
+          <Play className="h-3 w-3" />
+          播放全部
+        </Button>
+      </div>
+
+      <div className="mt-3 space-y-0.5 px-6 overflow-auto flex-1">
+        {songs.slice(0, visibleCount).map((track, index) => (
+          <TrackRow
+            index={index}
+            key={track.id}
+            onPlay={handlePlay}
+            track={track}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

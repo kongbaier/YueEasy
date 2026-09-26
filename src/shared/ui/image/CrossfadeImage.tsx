@@ -1,5 +1,6 @@
 import { cn } from '@/shared/utils/cn';
-import { Skeleton } from '@/shared/ui/skeleton';
+import { useDecodedSrc } from '@/shared/hooks/useDecodedSrc';
+import { ImagePlaceholder } from './ImagePlaceholder';
 import {
   useEffect,
   useLayoutEffect,
@@ -40,6 +41,12 @@ interface CrossfadeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> 
   animateIn?: (el: HTMLElement, opts: KeyframeAnimationOptions) => Animation;
 }
 
+/**
+ * 换源交叉淡出：首次加载显示 ImagePlaceholder，切换时保持旧图可见，
+ * 新图完整解码后才挂载并淡入淡出（避免渐进式图片逐行绘制 + 换源空窗）。
+ *
+ * 解码状态机在 `useDecodedSrc`（与 DecodedImage 共用），本组件只负责相位编排与动画。
+ */
 export const CrossfadeImage = ({
   src,
   containerClassName,
@@ -51,44 +58,19 @@ export const CrossfadeImage = ({
   ...props
 }: CrossfadeImageProps) => {
   const reduceMotion = usePrefersReducedMotion();
-  const [current, setCurrent] = useState<string>();
+  const { ref: containerRef, decodedSrc } = useDecodedSrc<HTMLDivElement>(src);
+
   const [previous, setPrevious] = useState<string>();
-  // 镜像 current 状态，供 decode 完成回调读取最新值，避免闭包过期
-  const currentSrcRef = useRef<string | undefined>(undefined);
+  // 镜像已落位的 src，供 decodedSrc 更新回调读取，避免闭包过期
+  const settledRef = useRef<string | undefined>(undefined);
 
-  // 新 src 先离屏预加载并完整解码：首次加载期间展示 shimmer，
-  // 切换时保持旧图可见，解码完成后才挂载 <img> 并做交叉淡入淡出，
-  // 避免渐进式图片逐行绘制。
+  // 新图就绪 → 旧图转入离场队列；prefers-reduced-motion 时直接切换
   useEffect(() => {
-    if (src === currentSrcRef.current) return;
-
-    let cancelled = false;
-    const img = new Image();
-    img.src = src;
-
-    const markReady = () => {
-      if (cancelled) return;
-      const prev = currentSrcRef.current;
-      if (!reduceMotion && prev !== undefined) {
-        setPrevious(prev);
-      }
-      currentSrcRef.current = src;
-      setCurrent(src);
-    };
-
-    const decode = (img as HTMLImageElement & { decode?: () => Promise<void> })
-      .decode;
-    if (typeof decode === 'function') {
-      decode.call(img).then(markReady).catch(markReady);
-    } else {
-      img.addEventListener('load', markReady);
-      img.addEventListener('error', markReady);
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [src, reduceMotion]);
+    if (!decodedSrc || decodedSrc === settledRef.current) return;
+    const prev = settledRef.current;
+    settledRef.current = decodedSrc;
+    setPrevious(reduceMotion ? undefined : prev);
+  }, [decodedSrc, reduceMotion]);
 
   const prevNodeRef = useRef<HTMLImageElement>(null);
   const curNodeRef = useRef<HTMLImageElement>(null);
@@ -126,15 +108,14 @@ export const CrossfadeImage = ({
       outAnim.cancel();
       inAnim.cancel();
     };
-  }, [previous, current, duration, easing, animateOut, animateIn]);
+  }, [previous, decodedSrc, duration, easing, animateOut, animateIn]);
 
   return (
     <div
+      ref={containerRef}
       className={cn('relative overflow-hidden size-full', containerClassName)}
     >
-      {!current && !previous && (
-        <Skeleton className="absolute inset-0 size-full" shimmer />
-      )}
+      {!decodedSrc && <ImagePlaceholder />}
       {previous && (
         <img
           key={previous}
@@ -144,11 +125,11 @@ export const CrossfadeImage = ({
           className={cn('absolute inset-0 object-cover', className)}
         />
       )}
-      {current && (
+      {decodedSrc && (
         <img
-          key={current}
+          key={decodedSrc}
           ref={curNodeRef}
-          src={current}
+          src={decodedSrc}
           {...props}
           className={cn('absolute inset-0 object-cover', className)}
         />

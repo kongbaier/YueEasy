@@ -140,7 +140,10 @@ export class QueuePolicy implements IPlaybackPolicy {
   }
 
   /** 整批替换并从 startIndex 起播。 */
-  replacePlay(tracks: PlayerCoreTrack[], startIndex = 0): PlayerCoreTrack | null {
+  replacePlay(
+    tracks: PlayerCoreTrack[],
+    startIndex = 0,
+  ): PlayerCoreTrack | null {
     this.exhausted = false;
     this.queue.replace(tracks, startIndex);
     return this.queue.current();
