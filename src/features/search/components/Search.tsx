@@ -16,8 +16,14 @@ export function Search({ children }: { children?: React.ReactNode }) {
   return <div className="flex flex-col h-full">{children}</div>;
 }
 
-export function SearchHeader({ children }: { children?: React.ReactNode }) {
-  return <div className="shrink-0 px-6 pt-6">{children}</div>;
+export function SearchHeader({
+  children,
+  className,
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}) {
+  return <div className={cn('shrink-0 px-6 pt-6', className)}>{children}</div>;
 }
 
 // ---- search input ----

@@ -13,7 +13,7 @@ export default function SearchPage() {
 
   return (
     <Search>
-      <SearchHeader>
+      <SearchHeader className="mb-2">
         <SearchInput>
           <SearchDropdown />
         </SearchInput>
