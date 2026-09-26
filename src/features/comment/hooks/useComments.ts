@@ -8,8 +8,8 @@ type CommentTarget =
   | { type: 'playlist'; id: number | undefined }
   | { type: 'music'; id: number | undefined };
 
-export function useComments(target: CommentTarget, enabled = true) {
-  const { data, isLoading, isError } = useQuery({
+export function useComments(target: CommentTarget) {
+  const { data, isPending, isError } = useQuery({
     queryKey:
       target.type === 'playlist'
         ? ['playlist-comments', target.id]
@@ -19,8 +19,7 @@ export function useComments(target: CommentTarget, enabled = true) {
       if (target.type === 'playlist') return getPlaylistComments(target.id);
       return getMusicComments(target.id);
     },
-    enabled: enabled,
   });
 
-  return { data, isLoading, isError };
+  return { data, isPending, isError };
 }

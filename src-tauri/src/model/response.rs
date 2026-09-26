@@ -110,6 +110,9 @@ pub struct PlaylistDto {
     pub special_type: Option<i64>,
     #[serde(default)]
     pub subscribed_count: Option<i64>,
+    /// 当前登录用户是否已收藏该歌单（仅歌单详情接口返回）。
+    #[serde(default)]
+    pub subscribed: Option<bool>,
     #[serde(default)]
     pub comment_count: Option<i64>,
     #[serde(default)]
@@ -245,6 +248,15 @@ pub struct RecentSongResponseDto {
 }
 
 // ── playlist ────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaylistSubscribeResponseDto {
+    #[serde(default)]
+    pub code: Option<i64>,
+    #[serde(default, alias = "msg")]
+    pub message: Option<String>,
+}
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]

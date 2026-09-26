@@ -17,6 +17,16 @@ pub(crate) async fn ncm_playlist_detail(
 }
 
 #[tauri::command]
+pub(crate) async fn ncm_playlist_subscribe(
+    app_handle: AppHandle,
+    state: State<'_, NcmState>,
+    id: i64,
+    subscribe: bool,
+) -> Result<()> {
+    NcmService::playlist_subscribe(&app_handle, &state, id, subscribe).await
+}
+
+#[tauri::command]
 pub(crate) async fn ncm_user_playlist(
     app_handle: AppHandle,
     state: State<'_, NcmState>,

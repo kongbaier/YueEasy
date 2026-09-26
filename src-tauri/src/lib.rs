@@ -85,6 +85,7 @@ pub fn run() {
             commands::ncm::song::ncm_likelist,
             commands::ncm::song::ncm_record_recent_song,
             commands::ncm::playlist::ncm_playlist_detail,
+            commands::ncm::playlist::ncm_playlist_subscribe,
             commands::ncm::playlist::ncm_user_playlist,
             commands::ncm::playlist::ncm_personalized,
             commands::ncm::playlist::ncm_top_playlist,

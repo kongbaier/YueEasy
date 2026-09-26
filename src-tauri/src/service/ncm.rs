@@ -253,6 +253,22 @@ impl NcmService {
         Ok(mapper::map_playlist(playlist))
     }
 
+    /// 收藏 / 取消收藏歌单（`t=1` 收藏，`t=0` 取消）。
+    pub async fn playlist_subscribe(
+        app: &AppHandle,
+        state: &NcmState,
+        id: i64,
+        subscribe: bool,
+    ) -> Result<()> {
+        let q = Query::new()
+            .param("id", &id.to_string())
+            .param("t", if subscribe { "1" } else { "0" });
+        let client = state.client();
+        let dto: response::PlaylistSubscribeResponseDto =
+            fetch(state, app, client.playlist_subscribe(&q)).await?;
+        check_code(dto.code, dto.message.as_deref())
+    }
+
     pub async fn user_playlist(
         app: &AppHandle,
         state: &NcmState,

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getPlaylistDetail } from '../playlist-service';
 import { useLoadMore } from '@/shared/hooks/useLoadMore';
@@ -17,7 +17,7 @@ export function usePlaylistViewModel(id: number) {
   const play = playerService.play;
   const replaceAndPlay = playerService.replaceAndPlay;
 
-  const { data } = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: ['playlist', id],
     queryFn: () => getPlaylistDetail(Number(id)),
     throwOnError: true,
@@ -47,14 +47,12 @@ export function usePlaylistViewModel(id: number) {
     }
   }, [playlist?.tracks, replaceAndPlay]);
 
-  return useMemo(
-    () => ({
-      playlist,
-      fromCache: data?.fromCache ?? false,
-      visibleCount,
-      handlePlay,
-      handlePlayAll,
-    }),
-    [playlist, data?.fromCache, visibleCount, handlePlay, handlePlayAll],
-  );
+  return {
+    playlist,
+    fromCache: data?.fromCache ?? false,
+    visibleCount,
+    handlePlay,
+    handlePlayAll,
+    isPending,
+  };
 }

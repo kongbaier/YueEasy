@@ -4,7 +4,10 @@ import { Cover } from '@/shared/ui/image';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { formatCount, formatDate } from '@/shared/utils/format';
 import { getNcmImageUrl } from '@/shared/utils/image';
-import { Play } from 'lucide-react';
+import { cn } from '@/shared/utils/cn';
+import { Play, Star } from 'lucide-react';
+import { MetaLine, type MetaItem } from './MetaLine';
+import { usePlaylistSubscription } from '../hooks/usePlaylistSubscription';
 
 interface PlaylistInfoProps {
   playlist: Playlist;
@@ -12,25 +15,49 @@ interface PlaylistInfoProps {
   onPlayAll: () => void;
 }
 
+/** 元信息行的字段裁剪逻辑（只决定展示什么，不决定样式） */
+const playlistMeta = (playlist: Playlist): (MetaItem | false | undefined)[] => {
+  const {
+    playCount,
+    subscribedCount = 0,
+    creator,
+    createTimeMs,
+    updateTimeMs,
+  } = playlist;
+
+  return [
+    {
+      key: 'play',
+      node: formatCount(playCount),
+      ext: '次播放',
+    },
+    subscribedCount > 0 && {
+      key: 'subscribe',
+      node: formatCount(subscribedCount),
+      ext: '收藏',
+    },
+    creator && { key: 'creator', node: creator.nickname },
+    createTimeMs != null && {
+      key: 'createTime',
+      node: formatDate(createTimeMs),
+      ext: '创建',
+    },
+    updateTimeMs != null &&
+      updateTimeMs !== createTimeMs && {
+        key: 'updateTime',
+        node: formatDate(updateTimeMs),
+        ext: '更新',
+      },
+  ];
+};
+
 export const PlaylistInfo = ({
   playlist,
   fromCache,
   onPlayAll,
 }: PlaylistInfoProps) => {
-  const metaParts: string[] = [];
-  metaParts.push(`${formatCount(playlist.playCount)}次播放`);
-  if (playlist.subscribedCount != null && playlist.subscribedCount > 0) {
-    metaParts.push(`${formatCount(playlist.subscribedCount)}收藏`);
-  }
-  if (playlist.creator) metaParts.push(playlist.creator.nickname);
-  if (playlist.createTimeMs)
-    metaParts.push(`${formatDate(playlist.createTimeMs)}创建`);
-  if (
-    playlist.updateTimeMs &&
-    playlist.updateTimeMs !== playlist.createTimeMs
-  ) {
-    metaParts.push(`${formatDate(playlist.updateTimeMs)}更新`);
-  }
+  const { isOwn, isPending, subscribed, toggle } =
+    usePlaylistSubscription(playlist);
 
   return (
     <header className="flex gap-8">
@@ -69,11 +96,7 @@ export const PlaylistInfo = ({
             {playlist.description}
           </p>
 
-          {metaParts.length > 0 && (
-            <p className="text-sm text-muted-foreground/80 truncate">
-              {metaParts.join('  ·  ')}
-            </p>
-          )}
+          <MetaLine items={playlistMeta(playlist)} />
         </div>
 
         {/* 操作按钮 */}
@@ -87,6 +110,24 @@ export const PlaylistInfo = ({
             <Play className="size-3.5" />
             播放全部
           </Button>
+          {!isOwn && (
+            <Button
+              className="h-auto py-2 rounded-lg"
+              disabled={isPending}
+              onClick={toggle}
+              size="default"
+              title={subscribed ? '取消收藏' : '收藏'}
+              variant="outline"
+            >
+              <Star
+                className={cn(
+                  'size-3.5',
+                  subscribed && 'fill-primary text-primary',
+                )}
+              />
+              <span>{subscribed ? '取消收藏' : '收藏歌单'}</span>
+            </Button>
+          )}
           {fromCache && (
             <span className="text-xs text-muted-foreground/70 bg-muted px-2 py-0.5 rounded">
               缓存数据
@@ -122,6 +163,7 @@ PlaylistInfo.Skeleton = () => (
       {/* 操作按钮 */}
       <div className="flex items-center gap-3 pt-1">
         <Skeleton className="h-9 w-28 rounded-md" shimmer />
+        <Skeleton className="h-9 w-24 rounded-md" shimmer />
       </div>
     </div>
   </header>

@@ -24,3 +24,11 @@ export async function getPlaylistDetail(
     throw new Error('加载歌单失败');
   }
 }
+
+/** 收藏 / 取消收藏歌单（远程权威；失败由调用方回滚乐观状态）。 */
+export async function setPlaylistSubscribed(
+  id: number,
+  subscribe: boolean,
+): Promise<void> {
+  await ncm.playlistSubscribe(id, subscribe);
+}

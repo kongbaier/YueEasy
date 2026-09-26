@@ -96,13 +96,10 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
 
 export const PlayerPageComments = () => {
   const { currentTrack } = usePlayer();
-  const { data, isLoading, isError } = useComments(
-    {
-      type: 'music',
-      id: currentTrack?.id,
-    },
-    !!currentTrack,
-  );
+  const { data, isPending, isError } = useComments({
+    type: 'music',
+    id: currentTrack?.id,
+  });
 
   useEffect(() => {
     if (isError) toast.error('加载评论失败');
@@ -112,7 +109,7 @@ export const PlayerPageComments = () => {
   const hotCount = data?.hotComments?.length ?? 0;
 
   const renderList = () => {
-    if (isLoading) return <PlayerTabState>加载中...</PlayerTabState>;
+    if (isPending) return <PlayerTabState>加载中...</PlayerTabState>;
 
     if (allComments.length === 0) {
       return (

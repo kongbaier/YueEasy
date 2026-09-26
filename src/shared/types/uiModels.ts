@@ -54,6 +54,8 @@ export interface Playlist {
   tracks?: Song[];
   specialType?: number;
   subscribedCount?: number;
+  /** 当前登录用户是否已收藏（仅详情接口返回） */
+  subscribed?: boolean;
   commentCount?: number;
   shareCount?: number;
   createTimeMs?: number;

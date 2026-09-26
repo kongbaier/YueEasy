@@ -14,6 +14,12 @@ export const playlistDetail = (id: number): Promise<Playlist> =>
 export const userPlaylist = (uid: number): Promise<Playlist[]> =>
   invoke<Playlist[]>('ncm_user_playlist', { uid });
 
+/** 收藏 / 取消收藏歌单。 */
+export const playlistSubscribe = (
+  id: number,
+  subscribe: boolean,
+): Promise<void> => invoke('ncm_playlist_subscribe', { id, subscribe });
+
 export const personalized = (limit = 30): Promise<Playlist[]> =>
   invoke<Playlist[]>('ncm_personalized', { limit });
 

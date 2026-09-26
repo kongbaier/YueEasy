@@ -1,6 +1,6 @@
-import { Suspense, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { CommentPanel, CommentSkeleton } from '@/features/comment/components';
+import { CommentPanel } from '@/features/comment/components';
 import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
 import { usePlaylistViewModel } from './hooks/usePlaylistViewModel';
 import { PlaylistInfo } from './components/PlaylistInfo';
@@ -44,13 +44,20 @@ export default function PlaylistPage({ playlistId }: PlaylistProps) {
 
   if (!resolvedId) throw new Error('无效的歌单 ID');
 
-  const { playlist, fromCache, visibleCount, handlePlay, handlePlayAll } =
-    usePlaylistViewModel(resolvedId);
+  const {
+    playlist,
+    fromCache,
+    visibleCount,
+    handlePlay,
+    handlePlayAll,
+    isPending,
+  } = usePlaylistViewModel(resolvedId);
 
   usePageTitle(playlist?.name);
 
-  // 数据未就绪（useQuery 未 suspense）：整页骨架。放在所有 hook 之后，hook 顺序稳定。
-  if (!playlist) return <PlaylistSkeleton />;
+  if (isPending) return <PlaylistSkeleton />;
+
+  if (!playlist) return;
 
   return (
     <div className="py-8 pl-8 pr-4 space-y-8">
@@ -84,9 +91,7 @@ export default function PlaylistPage({ playlistId }: PlaylistProps) {
             </div>
           )
         ) : (
-          <Suspense fallback={<CommentSkeleton />}>
-            <CommentPanel playlistId={playlist.id} />
-          </Suspense>
+          <CommentPanel playlistId={playlist.id} />
         )}
       </div>
     </div>

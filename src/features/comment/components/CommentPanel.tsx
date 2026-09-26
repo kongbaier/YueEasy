@@ -77,10 +77,6 @@ const CommentItem = ({ comment }: { comment: Comment }) => (
   </div>
 );
 
-/* ------------------------------------------------------------------ */
-/*  骨架                                                               */
-/* ------------------------------------------------------------------ */
-
 const CommentSkeleton = () => (
   <div className="space-y-1">
     {Array.from({ length: 5 }).map((_, i) => (
@@ -100,18 +96,14 @@ const CommentSkeleton = () => (
   </div>
 );
 
-/* ------------------------------------------------------------------ */
-/*  评论面板内容                                                        */
-/* ------------------------------------------------------------------ */
-
-interface CommentPanelContentProps {
+interface CommentPanelProps {
   playlistId: number;
 }
 
-const CommentPanelContent = ({ playlistId }: CommentPanelContentProps) => {
-  const { data, isLoading } = useComments({ type: 'playlist', id: playlistId });
+export const CommentPanel = ({ playlistId }: CommentPanelProps) => {
+  const { data, isPending } = useComments({ type: 'playlist', id: playlistId });
 
-  if (isLoading) return <CommentSkeleton />;
+  if (isPending) return <CommentSkeleton />;
 
   const comments = data?.comments ?? [];
   const hotComments = data?.hotComments ?? [];
@@ -154,18 +146,6 @@ const CommentPanelContent = ({ playlistId }: CommentPanelContentProps) => {
       )}
     </>
   );
-};
-
-/* ------------------------------------------------------------------ */
-/*  导出                                                               */
-/* ------------------------------------------------------------------ */
-
-interface CommentPanelProps {
-  playlistId: number;
-}
-
-export const CommentPanel = ({ playlistId }: CommentPanelProps) => {
-  return <CommentPanelContent playlistId={playlistId} />;
 };
 
 export { CommentSkeleton };

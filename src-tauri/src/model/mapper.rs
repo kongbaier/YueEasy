@@ -96,6 +96,7 @@ pub fn map_playlist(d: response::PlaylistDto) -> ent::Playlist {
         tracks: d.tracks.map(|ts| ts.into_iter().map(map_song).collect()),
         special_type: d.special_type,
         subscribed_count: d.subscribed_count,
+        subscribed: d.subscribed,
         comment_count: d.comment_count,
         share_count: d.share_count,
         create_time_ms: d.create_time,

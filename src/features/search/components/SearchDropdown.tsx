@@ -1,14 +1,6 @@
 import { useSearchHot, useSearchSuggest } from '../hooks/useSearch';
 import { useSearchController } from '../hooks/useSearchController';
-import {
-  Clock,
-  Disc,
-  Music,
-  Search,
-  User,
-  TrendingUp,
-  X,
-} from 'lucide-react';
+import { Clock, Disc, Music, Search, User, TrendingUp, X } from 'lucide-react';
 import { suggestionKey } from '../constants';
 import type { SuggestionItem } from '../constants';
 import { useEffect, useRef } from 'react';
@@ -209,15 +201,17 @@ export function SearchDropdown() {
 
   return (
     <>
-      {show === 'hot' && !input.trim() && (history.length > 0 || hots.length > 0) && (
-        <HotDropdown
-          hots={hots}
-          history={history}
-          onClose={() => setShow(null)}
-          onPick={(keyword) => handlePick(keyword)}
-          onRemove={(keyword) => removeHistory(keyword)}
-        />
-      )}
+      {show === 'hot' &&
+        !input.trim() &&
+        (history.length > 0 || hots.length > 0) && (
+          <HotDropdown
+            hots={hots}
+            history={history}
+            onClose={() => setShow(null)}
+            onPick={(keyword) => handlePick(keyword)}
+            onRemove={(keyword) => removeHistory(keyword)}
+          />
+        )}
       {show === 'suggest' && suggestions.length > 0 && (
         <SuggestDropdown
           items={suggestions}

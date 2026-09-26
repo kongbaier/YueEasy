@@ -90,6 +90,9 @@ pub struct Playlist {
     pub special_type: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscribed_count: Option<i64>,
+    /// 当前登录用户是否已收藏该歌单（详情接口返回；列表接口缺省）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscribed: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment_count: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
