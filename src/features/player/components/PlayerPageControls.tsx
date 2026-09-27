@@ -21,18 +21,11 @@ export const PlayerPageControls = ({ className }: PlayerPageControlsProps) => {
   } = usePlayer();
 
   return (
-    <div
-      className={cn(
-        'grid grid-cols-[auto_4fr_auto_3fr_auto_3fr_auto_4fr_auto] items-center',
-        className,
-      )}
-    >
-      <div className="col-start-1 flex items-center gap-x-1">
-        <RepeatButton />
-      </div>
+    <div className={cn('flex items-center justify-between gap-x-2', className)}>
+      <RepeatButton />
 
       <Button
-        className="col-start-3 text-foreground hover:bg-transparent hover:text-primary"
+        className="text-foreground hover:bg-transparent hover:text-primary"
         disabled={!canPrev}
         onClick={prev}
         size="icon"
@@ -41,7 +34,7 @@ export const PlayerPageControls = ({ className }: PlayerPageControlsProps) => {
         <ChevronFirst className="size-5" />
       </Button>
       <Button
-        className="col-start-5 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary transition-transform hover:scale-100 active:scale-95"
+        className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary transition-transform hover:scale-100 active:scale-95"
         disabled={isLoading}
         onClick={togglePlay}
         type="button"
@@ -56,7 +49,7 @@ export const PlayerPageControls = ({ className }: PlayerPageControlsProps) => {
       </Button>
 
       <Button
-        className="col-start-7 text-foreground hover:bg-transparent hover:text-primary"
+        className="text-foreground hover:bg-transparent hover:text-primary"
         onClick={next}
         size="icon"
         variant="ghost"
@@ -64,9 +57,7 @@ export const PlayerPageControls = ({ className }: PlayerPageControlsProps) => {
         <ChevronLast className="size-5" />
       </Button>
 
-      <div className="col-start-9 flex items-center gap-x-1">
-        <ShuffleButton />
-      </div>
+      <ShuffleButton />
     </div>
   );
 };

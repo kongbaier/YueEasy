@@ -4,6 +4,7 @@ import { Button } from '@/shared/ui/button';
 import { FollowTooltip } from '@/features/player/components/FollowTooltip';
 import { useDragScrub } from '@/features/player/hooks/useDragScrub';
 import { usePlayer } from '@/features/player/hooks/usePlayer';
+import { cn } from 'cn';
 
 const STEP = 0.1;
 
@@ -59,7 +60,7 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
   };
 
   return (
-    <div className={`flex items-center gap-1 ${className ?? ''}`}>
+    <div className={cn('flex items-center gap-2', className)}>
       <Button
         className="text-foreground hover:bg-transparent hover:text-primary"
         onClick={() => adjustVolume(-STEP)}
