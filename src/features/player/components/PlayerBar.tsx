@@ -23,12 +23,12 @@ import { formatQueueCount } from '@/shared/utils/format';
 import { snapToDevicePixel } from '@/shared/utils/snap';
 import { useDevicePixelRatio } from '@/shared/hooks/useDevicePixelRatio';
 import { usePlayerPage } from '@/features/player/hooks/usePlayerPage';
+import { useQueueDrawer } from '@/features/player/hooks/useQueuePanel';
 import { RepeatButton } from './RepeatButton';
 import { ShuffleButton } from './ShuffleButton';
 import { SeekBar } from './SeekBar';
 import { VolumeControl } from './VolumeControl';
 import { CrossfadeImage } from '@/shared/ui/image';
-import type { Track } from '@/shared/types/player';
 import { LikeButton } from '@/features/like/components/LikeButton';
 import { LyricsToggle } from '@/features/lyrics/components/LyricsToggle';
 
@@ -149,7 +149,8 @@ const PlayerControls = () => {
   );
 };
 
-const PlayerInfo = ({ currentTrack }: { currentTrack: Track | null }) => {
+const PlayerInfo = () => {
+  const { currentTrack } = usePlayer();
   const { open: openPlayerPage } = usePlayerPage();
 
   return (
@@ -218,12 +219,9 @@ const PlayerInfo = ({ currentTrack }: { currentTrack: Track | null }) => {
   );
 };
 
-const PlayerMenu = ({
-  onToggleQueuePanel,
-}: {
-  onToggleQueuePanel: () => void;
-}) => {
+const PlayerMenu = () => {
   const { currentTrack, queueLength, isFm, fmTrash } = usePlayer();
+  const { toggle: toggleQueuePanel } = useQueueDrawer();
   const [trashPending, setTrashPending] = useState(false);
 
   const handleFmTrash = async () => {
@@ -250,7 +248,7 @@ const PlayerMenu = ({
       <Button
         className="text-foreground hover:bg-transparent hover:text-primary"
         disabled={trashPending}
-        onClick={isFm ? handleFmTrash : onToggleQueuePanel}
+        onClick={isFm ? handleFmTrash : toggleQueuePanel}
         size="icon"
         title={isFm ? '不感兴趣' : undefined}
         variant="ghost"
@@ -276,16 +274,9 @@ const PlayerMenu = ({
   );
 };
 
-export const PlayerBar = ({
-  className,
-  onToggleQueuePanel,
-}: {
-  className?: string;
-  onToggleQueuePanel: () => void;
-}) => {
+export const PlayerBar = ({ className }: { className?: string }) => {
   usePlayerKeyboard();
   useMediaSession();
-  const { currentTrack } = usePlayer();
   return (
     <div
       className={cn(
@@ -295,11 +286,11 @@ export const PlayerBar = ({
     >
       <PlayerProgress />
 
-      <PlayerInfo currentTrack={currentTrack} />
+      <PlayerInfo />
 
       <PlayerControls />
 
-      <PlayerMenu onToggleQueuePanel={onToggleQueuePanel} />
+      <PlayerMenu />
     </div>
   );
 };

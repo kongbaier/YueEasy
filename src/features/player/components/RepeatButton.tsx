@@ -44,7 +44,7 @@ export const RepeatButton = ({ className }: { className?: string }) => {
             size="icon"
             variant="ghost"
           >
-            <Icon className="size-5" />
+            <Icon strokeWidth={1.8} className="size-5" />
           </Button>
         }
       />

@@ -17,6 +17,7 @@ import { cn } from '@/shared/utils/cn';
 import { getNcmImageUrl } from '@/shared/utils/image';
 import { formatQueueCount } from '@/shared/utils/format';
 import { usePlayer } from '@/features/player/hooks/usePlayer';
+import { useQueueDrawer } from '@/features/player/hooks/useQueuePanel';
 import { QueueList } from './QueueList';
 
 /** 与 QueueItem 行高（h-[52px]：text-sm 20 + text-xs 16 + py-2*2）一致。 */
@@ -84,13 +85,8 @@ const QueueItem = ({
   </div>
 );
 
-export const QueuePanel = ({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) => {
+export const QueuePanel = () => {
+  const { isOpen, close: handleClose } = useQueueDrawer();
   const {
     queue,
     queueLength,
@@ -106,8 +102,6 @@ export const QueuePanel = ({
   } = usePlayer();
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [trashPending, setTrashPending] = useState(false);
-
-  const handleClose = () => onClose();
 
   const handlePlayTrack = (index: number) => {
     playFromIndex(index);
@@ -141,7 +135,7 @@ export const QueuePanel = ({
   const afterCloseRef = useRef<(() => void) | null>(null);
   const closeAfter = (fn: () => void) => {
     afterCloseRef.current = fn;
-    onClose();
+    handleClose();
   };
   const handlePanelExitComplete = () => {
     const fn = afterCloseRef.current;
@@ -165,7 +159,7 @@ export const QueuePanel = ({
 
   return (
     <AnimatePresence onExitComplete={handlePanelExitComplete}>
-      {open && (
+      {isOpen && (
         <div className="isolate fixed inset-0 z-50 flex justify-end">
           <button
             aria-label="关闭播放列表"

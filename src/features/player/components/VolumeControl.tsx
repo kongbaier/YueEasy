@@ -60,9 +60,9 @@ export const VolumeControl = () => {
           variant="ghost"
         >
           {displayVolume === 0 ? (
-            <VolumeX className="size-5" />
+            <VolumeX strokeWidth={1.8} className="size-5" />
           ) : (
-            <Volume2 className="size-5" />
+            <Volume2 strokeWidth={1.8} className="size-5" />
           )}
         </Button>
       </div>

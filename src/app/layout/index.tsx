@@ -1,15 +1,13 @@
-import { useState } from 'react';
 import KeepAliveRouteOutlet from 'keepalive-for-react-router';
-import { PlayerBar, QueuePanel } from '@/features/player/components';
 import { SidebarProvider } from '@/shared/ui/sidebar';
 import { AppHeader } from './AppHeader';
 import { AppSidebar } from './AppSidebar';
 import { PageScroller } from './PageScroller';
 import { PageTitleProvider } from './PageTitleContext';
+import { PlayerBar } from '@/features/player/components/PlayerBar';
+import { QueuePanel } from '@/features/player/components/QueueDrawer';
 
 export function AppLayout() {
-  const [queuePanelOpen, setQueuePanelOpen] = useState(false);
-
   return (
     <PageTitleProvider>
       <SidebarProvider defaultOpen={true}>
@@ -31,15 +29,9 @@ export function AppLayout() {
             </main>
           </div>
 
-          <PlayerBar
-            className="h-18"
-            onToggleQueuePanel={() => setQueuePanelOpen((v) => !v)}
-          />
+          <PlayerBar className="h-18" />
 
-          <QueuePanel
-            open={queuePanelOpen}
-            onClose={() => setQueuePanelOpen(false)}
-          />
+          <QueuePanel />
         </div>
       </SidebarProvider>
     </PageTitleProvider>

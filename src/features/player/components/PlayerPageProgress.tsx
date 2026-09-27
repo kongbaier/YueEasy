@@ -1,4 +1,4 @@
-import { SeekBar } from '@/features/player/components';
+import { SeekBar } from './SeekBar';
 import { FollowTooltip } from '@/features/player/components/FollowTooltip';
 import { useProgress } from '@/features/player/hooks/useProgress';
 import { usePlayer } from '@/features/player/hooks/usePlayer';

@@ -36,7 +36,7 @@ export const ShuffleButton = ({
             size={size}
             variant="ghost"
           >
-            <Shuffle className={`size-${iconSize}`} />
+            <Shuffle strokeWidth={1.8} className={`size-${iconSize}`} />
           </Button>
         }
       />

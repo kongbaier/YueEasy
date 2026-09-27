@@ -67,7 +67,7 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
         size="icon"
         variant="ghost"
       >
-        <Volume1 className="size-5" />
+        <Volume1 strokeWidth={1.8} className="size-5" />
       </Button>
       <div
         className="flex-1 h-5 cursor-pointer flex items-center"
@@ -92,7 +92,7 @@ export const PlayerPageVolume = ({ className }: { className?: string }) => {
         size="icon"
         variant="ghost"
       >
-        <Volume2 className="size-5" />
+        <Volume2 strokeWidth={1.8} className="size-5" />
       </Button>
 
       <FollowTooltip anchorRef={barRef} open={isHovering} x={hoverBarX}>

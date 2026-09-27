@@ -1,8 +1,9 @@
 import { ChevronFirst, ChevronLast, Loader2, Pause, Play } from 'lucide-react';
-import { RepeatButton, ShuffleButton } from '@/features/player/components';
 import { Button } from '@/shared/ui/button';
 import { usePlayer } from '@/features/player/hooks/usePlayer';
 import { cn } from 'cn';
+import { ShuffleButton } from './ShuffleButton';
+import { RepeatButton } from './RepeatButton';
 
 interface PlayerPageControlsProps {
   className?: string;
