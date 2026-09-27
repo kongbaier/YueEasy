@@ -1,5 +1,6 @@
 import { Shuffle } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/utils/cn';
 import { usePlayer } from '@/features/player/hooks/usePlayer';
 
@@ -20,31 +21,28 @@ export const ShuffleButton = ({
   const label = '随机播放';
 
   return (
-    <div className={cn('relative group', className)}>
-      <Button
-        aria-label={label}
-        className={cn(
-          'hover:bg-transparent',
-          isShuffle && 'text-primary hover:text-primary',
-        )}
-        disabled={isFm}
-        onClick={toggleShuffle}
-        size={size}
-        title={label}
-        variant="ghost"
-      >
-        <Shuffle className={`size-${iconSize}`} />
-      </Button>
-      <span
-        className={cn(
-          'pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap ',
-          'rounded-md px-3 py-2 opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100',
-          'text-xs',
-          'bg-popover text-popover-foreground border border-border shadow-md',
-        )}
-      >
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            aria-label={label}
+            className={cn(
+              'hover:bg-transparent',
+              className,
+              isShuffle && 'text-primary hover:text-primary',
+            )}
+            disabled={isFm}
+            onClick={toggleShuffle}
+            size={size}
+            variant="ghost"
+          >
+            <Shuffle className={`size-${iconSize}`} />
+          </Button>
+        }
+      />
+      <TooltipContent className="px-2 py-1.5" side="top" sideOffset={6}>
         {label}
-      </span>
-    </div>
+      </TooltipContent>
+    </Tooltip>
   );
 };
