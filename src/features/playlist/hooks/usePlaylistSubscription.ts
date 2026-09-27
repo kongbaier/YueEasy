@@ -6,12 +6,6 @@ import { toast } from '@/shared/lib/toast';
 import type { Playlist } from '@/shared/types/uiModels';
 import { setPlaylistSubscribed } from '../playlist-service';
 
-/** 歌单详情 query 的缓存形状（与 `playlist-service.ts` 返回一致）。 */
-interface PlaylistDetailData {
-  playlist: Playlist;
-  fromCache: boolean;
-}
-
 /** IPC 错误（Rust `NcmApiError` 序列化为 `{ kind, message }`）→ 可展示文案。 */
 function errorText(e: unknown): string {
   if (e instanceof Error) return e.message;
@@ -24,19 +18,15 @@ function errorText(e: unknown): string {
 
 /** 乐观改写详情缓存：收藏状态与收藏数同步增减。 */
 function patchSubscribedCache(id: number, subscribe: boolean) {
-  queryClient.setQueryData<PlaylistDetailData>(['playlist', id], (old) => {
+  queryClient.setQueryData<Playlist>(['playlist', id], (old) => {
     if (!old) return old;
-    const { playlist } = old;
     return {
       ...old,
-      playlist: {
-        ...playlist,
-        subscribed: subscribe,
-        subscribedCount: Math.max(
-          0,
-          (playlist.subscribedCount ?? 0) + (subscribe ? 1 : -1),
-        ),
-      },
+      subscribed: subscribe,
+      subscribedCount: Math.max(
+        0,
+        (old.subscribedCount ?? 0) + (subscribe ? 1 : -1),
+      ),
     };
   });
 }

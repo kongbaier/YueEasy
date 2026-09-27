@@ -11,7 +11,6 @@ import { usePlaylistSubscription } from '../hooks/usePlaylistSubscription';
 
 interface PlaylistInfoProps {
   playlist: Playlist;
-  fromCache: boolean;
   onPlayAll: () => void;
 }
 
@@ -53,7 +52,6 @@ const playlistMeta = (playlist: Playlist): (MetaItem | false | undefined)[] => {
 
 export const PlaylistInfo = ({
   playlist,
-  fromCache,
   onPlayAll,
 }: PlaylistInfoProps) => {
   const { isOwn, isPending, subscribed, toggle } =
@@ -127,11 +125,6 @@ export const PlaylistInfo = ({
               />
               <span>{subscribed ? '取消收藏' : '收藏歌单'}</span>
             </Button>
-          )}
-          {fromCache && (
-            <span className="text-xs text-muted-foreground/70 bg-muted px-2 py-0.5 rounded">
-              缓存数据
-            </span>
           )}
         </div>
       </div>

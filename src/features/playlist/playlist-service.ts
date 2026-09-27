@@ -1,28 +1,13 @@
 import type { Playlist } from '@/shared/types/uiModels';
-import { CacheKeys, cacheGet, cacheSet } from '@/tauri/cache';
 import { ncm } from '@/tauri/ncm';
 
-export async function getPlaylistDetail(
-  id: number,
-): Promise<{ playlist: Playlist; fromCache: boolean }> {
-  const key = CacheKeys.playlist(id);
-
-  const cached = await cacheGet<Playlist>(key);
-
-  try {
-    const fresh = await ncm.playlistDetail(id);
-
-    if (!cached || cached.trackCount !== fresh.trackCount) {
-      await cacheSet(key, fresh);
-    }
-
-    return { playlist: fresh, fromCache: false };
-  } catch {
-    if (cached) {
-      return { playlist: cached, fromCache: true };
-    }
-    throw new Error('加载歌单失败');
-  }
+/**
+ * 歌单详情取数：直连 ncm，不做磁盘缓存。
+ * 缓存语义由 React Query 独占（queryKey `['playlist', id]`），
+ * 避免 service 里再手搓一套失效逻辑（曾用 trackCount 比较，恒等即永不更新）。
+ */
+export function getPlaylistDetail(id: number): Promise<Playlist> {
+  return ncm.playlistDetail(id);
 }
 
 /** 收藏 / 取消收藏歌单（远程权威；失败由调用方回滚乐观状态）。 */

@@ -23,7 +23,7 @@ export function usePlaylistViewModel(id: number) {
     throwOnError: true,
   });
 
-  const playlist = data?.playlist;
+  const playlist = data;
   const visibleCount = useLoadMore(playlist?.tracks?.length ?? 0);
 
   const handlePlay = useCallback(
@@ -49,7 +49,6 @@ export function usePlaylistViewModel(id: number) {
 
   return {
     playlist,
-    fromCache: data?.fromCache ?? false,
     visibleCount,
     handlePlay,
     handlePlayAll,

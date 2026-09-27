@@ -46,7 +46,6 @@ export default function PlaylistPage({ playlistId }: PlaylistProps) {
 
   const {
     playlist,
-    fromCache,
     visibleCount,
     handlePlay,
     handlePlayAll,
@@ -63,7 +62,6 @@ export default function PlaylistPage({ playlistId }: PlaylistProps) {
     <div className="py-8 pl-8 pr-4 space-y-8">
       {/* ═══ Header ═══ */}
       <PlaylistInfo
-        fromCache={fromCache}
         onPlayAll={handlePlayAll}
         playlist={playlist}
       />
