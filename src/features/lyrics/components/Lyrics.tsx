@@ -1,22 +1,37 @@
 import { Loader2, Music } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { createContext, use } from 'react';
+import { createContext, use, useEffect } from 'react';
 import { cn } from '@/shared/utils/cn';
 import { LyricLine } from './LyricLine';
 import { useLyricScroll } from '../hooks/useLyricScroll';
+import { useLyricSeekHint } from '../hooks/useLyricSeekHint';
 import { useLyricViewModel } from '../hooks/useLyricViewModel';
 
 export const Lyrics = ({ className }: { className?: string }) => {
-  const { trackId, isLoading, lines, activeLine, hasLyrics, hasYrc, tlyric } =
+  const { trackId, isPending, lines, activeLine, hasLyrics, hasYrc, tlyric } =
     useLyricViewModel();
 
-  const { containerRef, contentRef, contentStyle } = useLyricScroll(
+  const { containerRef, contentRef, contentStyle, translateY } = useLyricScroll(
     activeLine,
     hasLyrics,
     trackId,
   );
 
-  if (isLoading) {
+  // 行「跳转」按钮的展示裁决统一在列表层：展示哪行看真实指针移动，是否展示看 idle + 是否停在按钮上
+  const {
+    visibleLine,
+    handlePointerMove,
+    handlePointerLeave,
+    setButtonHovered,
+    handleContentMoved,
+  } = useLyricSeekHint(trackId);
+
+  // 歌词内容一旦位移（播放自动滚动 / 滚轮），指针下的行就不是原来那行了，收起按钮
+  useEffect(() => {
+    handleContentMoved();
+  }, [translateY, handleContentMoved]);
+
+  if (isPending) {
     return (
       <div className={cn('h-full flex flex-col', className)}>
         <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -41,27 +56,30 @@ export const Lyrics = ({ className }: { className?: string }) => {
   // 有歌词
   return (
     <div className={cn('h-full flex flex-col', className)}>
-      <div className="relative overflow-hidden flex-1 mb-4" ref={containerRef}>
+      <div
+        className="relative overflow-hidden flex-1 mb-4 px-4"
+        onMouseLeave={handlePointerLeave}
+        onMouseMove={handlePointerMove}
+        ref={containerRef}
+      >
         <ul
-          className="space-y-2 mx-4 font-sans w-full"
+          className="space-y-2 font-sans"
           ref={contentRef}
           style={contentStyle}
         >
           <LyricsProvider value={{ hasYrc }}>
             {lines.map((line, i) => {
               const status =
-                i < activeLine
-                  ? ('past' as const)
-                  : i > activeLine
-                    ? ('future' as const)
-                    : ('active' as const);
+                i < activeLine ? 'past' : i > activeLine ? 'future' : 'active';
               return (
                 <LyricLine
                   key={`${line.startMs}-${line.text.slice(0, 8)}`}
+                  hintVisible={visibleLine === i}
                   line={line}
                   lineIndex={i}
-                  tline={tlyric[i]}
+                  onHintButtonHoverChange={setButtonHovered}
                   status={status}
+                  tline={tlyric[i]}
                 />
               );
             })}

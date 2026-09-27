@@ -17,7 +17,7 @@ export function useLyricViewModel() {
   const trackId = usePlayerStore((s) => s.currentTrack?.track_id);
   const seek = playerService.seek;
 
-  const { data, isLoading } = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: ['lyrics', trackId],
     queryFn: () =>
       trackId ? fetchLyrics(trackId) : { lyric: [], tlyric: [], yrc: [] },
@@ -30,7 +30,7 @@ export function useLyricViewModel() {
   return {
     trackId,
     seek,
-    isLoading,
+    isPending,
     lines,
     activeLine,
     hasLyrics,

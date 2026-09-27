@@ -16,6 +16,8 @@ export function useLyricScroll(
   containerRef: React.RefObject<HTMLDivElement | null>;
   contentRef: React.RefObject<HTMLUListElement | null>;
   contentStyle: React.CSSProperties;
+  /** 当前内容位移量（px）：内容在指针下滑动时用于让 hover 类交互失效 */
+  translateY: number;
 } {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLUListElement>(null);
@@ -178,6 +180,7 @@ export function useLyricScroll(
   return {
     containerRef,
     contentRef,
+    translateY,
     contentStyle: {
       transform: `translateY(${translateY}px)`,
       transition:
