@@ -1,5 +1,5 @@
 import { PlayCircle } from 'lucide-react';
-import { memo, useCallback } from 'react';
+import { useCallback } from 'react';
 import type { LyricLine as LyricLineType } from '@/features/lyrics/parser';
 import { cn } from '@/shared/utils/cn';
 import { useLyricsContext } from './Lyrics';
@@ -20,14 +20,14 @@ interface LyricLineProps {
   onHintButtonHoverChange: (hovered: boolean) => void;
 }
 
-export const LyricLine = memo(function LyricLine({
+export const LyricLine = ({
   line,
   tline,
   lineIndex,
   status,
   hintVisible,
   onHintButtonHoverChange,
-}: LyricLineProps) {
+}: LyricLineProps) => {
   const { hasYrc } = useLyricsContext();
   const { seek } = useLyricViewModel();
 
@@ -47,8 +47,6 @@ export const LyricLine = memo(function LyricLine({
     onHintButtonHoverChange(false);
   }, [onHintButtonHoverChange]);
 
-  const showWords = hasYrc && line.words?.length;
-
   return (
     <li
       className={cn(
@@ -65,25 +63,8 @@ export const LyricLine = memo(function LyricLine({
           'group-data-[status=active]:scale-110',
         )}
       >
-        {showWords ? (
-          status === 'active' ? (
-            <ActiveLineContent line={line} />
-          ) : (
-            line.words?.map((w, wordIndex) => {
-              const wordStatus =
-                status === 'past'
-                  ? ('past-line' as const)
-                  : ('future-line' as const);
-              return (
-                <Word
-                  // oxlint-disable-next-line react/no-array-index-key 歌词的index不会随便改变
-                  key={wordIndex}
-                  text={w.text}
-                  status={wordStatus}
-                />
-              );
-            })
-          )
+        {hasYrc && status === 'active' ? (
+          <ActiveLineContent line={line} />
         ) : (
           line.text
         )}
@@ -111,8 +92,7 @@ export const LyricLine = memo(function LyricLine({
       </Button>
     </li>
   );
-});
-
+};
 /**
  * Words of the active line. useActiveLine rAF-samples audioCore.getPosition() at 60fps
  * and re-renders every frame; memoized Word children mean only the current word
@@ -122,17 +102,15 @@ const ActiveLineContent = ({ line }: { line: LyricLineType }) => {
   const { wordIndex, progress } = useActiveLine(line);
   const words = line.words ?? [];
 
-  if (words.length === 0) return <>{line.text}</>;
-
   return (
     <>
       {words.map((w, i) => {
         const wordStatus =
           i < wordIndex
-            ? ('past-word' as const)
+            ? 'past-word'
             : i === wordIndex
-              ? ('current-word' as const)
-              : ('future-word' as const);
+              ? 'current-word'
+              : 'future-word';
         return (
           <Word
             // oxlint-disable-next-line react/no-array-index-key 歌词的index不会随便改变
