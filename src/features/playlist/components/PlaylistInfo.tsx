@@ -50,10 +50,7 @@ const playlistMeta = (playlist: Playlist): (MetaItem | false | undefined)[] => {
   ];
 };
 
-export const PlaylistInfo = ({
-  playlist,
-  onPlayAll,
-}: PlaylistInfoProps) => {
+export const PlaylistInfo = ({ playlist, onPlayAll }: PlaylistInfoProps) => {
   const { isOwn, isPending, subscribed, toggle } =
     usePlaylistSubscription(playlist);
 
@@ -132,7 +129,7 @@ export const PlaylistInfo = ({
   );
 };
 
-PlaylistInfo.Skeleton = () => (
+export const PlaylistInfoSkeleton = () => (
   <header className="flex gap-8">
     {/* 封面 */}
     <Skeleton className="size-48 shrink-0 rounded-2xl" shimmer />

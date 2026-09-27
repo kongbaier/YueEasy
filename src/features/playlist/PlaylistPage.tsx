@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { CommentPanel } from '@/features/comment/components';
 import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
 import { usePlaylistViewModel } from './hooks/usePlaylistViewModel';
-import { PlaylistInfo } from './components/PlaylistInfo';
+import { PlaylistInfo, PlaylistInfoSkeleton } from './components/PlaylistInfo';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
 import type { TabKey } from './components/TabBar';
 import { TabBar } from './components/TabBar';
@@ -17,13 +17,9 @@ const TrackListSkeleton = () => (
   </div>
 );
 
-/**
- * Suspense fallback：只做组装，容器外形与 PlaylistContent 对齐，避免数据到达时布局跳动。
- * 页面数据来自单个 query，各区块同时就绪，故不为它们单独开 Suspense 边界。
- */
 const PlaylistSkeleton = () => (
   <div className="py-8 pl-8 pr-4 space-y-8">
-    <PlaylistInfo.Skeleton />
+    <PlaylistInfoSkeleton />
     <div className="space-y-4">
       <TabBar active="songs" onChange={() => {}} />
       <TrackListSkeleton />
@@ -31,26 +27,20 @@ const PlaylistSkeleton = () => (
   </div>
 );
 
-interface PlaylistProps {
-  /** 外部显式传入的歌单 id（如「我喜欢」复用场景）；缺省时回退路由参数 :id */
-  playlistId?: number;
-}
-
-export default function PlaylistPage({ playlistId }: PlaylistProps) {
+/**
+ * 歌单详情页：id 一律来自路由参数 `:id`（`playlist/:id` 与 `my/liked/:id` 共用）。
+ * 「我喜欢」场景由 LikedPage 守卫后重定向到 `my/liked/:id`，不再经 props 注入 id。
+ */
+export default function PlaylistPage() {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabKey>('songs');
 
-  const resolvedId = playlistId ?? Number(id);
+  const resolvedId = Number(id);
 
   if (!resolvedId) throw new Error('无效的歌单 ID');
 
-  const {
-    playlist,
-    visibleCount,
-    handlePlay,
-    handlePlayAll,
-    isPending,
-  } = usePlaylistViewModel(resolvedId);
+  const { playlist, visibleCount, handlePlay, handlePlayAll, isPending } =
+    usePlaylistViewModel(resolvedId);
 
   usePageTitle(playlist?.name);
 
@@ -61,10 +51,7 @@ export default function PlaylistPage({ playlistId }: PlaylistProps) {
   return (
     <div className="py-8 pl-8 pr-4 space-y-8">
       {/* ═══ Header ═══ */}
-      <PlaylistInfo
-        onPlayAll={handlePlayAll}
-        playlist={playlist}
-      />
+      <PlaylistInfo onPlayAll={handlePlayAll} playlist={playlist} />
 
       <div className="space-y-4">
         <TabBar
