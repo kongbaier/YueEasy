@@ -89,7 +89,7 @@ export const LyricLine = ({
         aria-label="跳转到这句歌词"
         className={cn(
           'absolute block right-0 top-1/2 -translate-y-1/2 rounded-md',
-          'text-xs text-muted-foreground',
+          'tabular-nums text-xs text-muted-foreground',
           'flex items-center',
           'rounded-full px-2 py-1 h-auto',
           'hover:text-primary focus-visible:opacity-100 focus-visible:pointer-events-auto',
