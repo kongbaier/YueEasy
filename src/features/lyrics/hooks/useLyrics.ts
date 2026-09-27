@@ -39,19 +39,24 @@ export const useLyrics = (
   const mainLines = hasYrc ? yrc : lyric;
   const lines = mainLines.length > 0 ? mainLines : tlyric;
 
-  // Ref holds latest data for the Zustand subscriber without effect deps churn.
-  // No deps: intentionally synced after every render to keep refs current.
   const linesRef = useRef(lines);
 
   useEffect(() => {
     linesRef.current = lines;
   });
 
-  // Eagerly compute active line on mount so the scroll position is correct on first paint.
-  // Lazy initializer runs once; subsequent updates come from the Zustand subscriber.
   const [activeLine, setActiveLine] = useState<number>(() =>
     computeActiveLine(usePlayerStore.getState().currentTime, lines),
   );
+
+  useEffect(() => {
+    setActiveLine(
+      computeActiveLine(
+        usePlayerStore.getState().currentTime,
+        linesRef.current,
+      ),
+    );
+  }, [lyricResult]);
 
   // Subscribe to currentTime via Zustand — only setState when the line index changes.
   useEffect(() => {

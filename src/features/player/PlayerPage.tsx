@@ -67,13 +67,19 @@ export default function PlayerPage() {
         >
           <PlayerHeader handleBack={handleBack} />
 
-          <div className="relative h-[calc(100vh-40px)] grid grid-cols-[1fr_1fr] overflow-auto">
+          {/* grid 本身必须**不可滚动**（overflow-clip，而非 auto/hidden）：
+              歌词视图的位移是 transform，浏览器对获得焦点的元素做 scrollIntoView 时
+              会沿祖先链找可滚动容器 —— grid 一旦可滚动，Tab 聚焦到右栏视口外的歌词按钮
+              就会把整个播放页顶位移，而 transform 无法抵消它（详见 lyrics/Lyrics）。
+              需要滚动的只有左栏，就让它自己滚。 */}
+          <div className="relative h-[calc(100vh-40px)] grid grid-cols-[1fr_1fr] overflow-clip">
             <div
               className={cn(
                 'col-span-1 justify-self-center min-h-0',
                 'pb-4 gap-2 px-4',
                 'flex flex-col justify-around',
                 'w-4/5 max-w-md',
+                'overflow-y-auto',
               )}
             >
               {currentTrack && (

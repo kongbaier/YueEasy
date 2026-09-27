@@ -15,16 +15,23 @@ export interface LyricSeekHint {
   setButtonHovered: (hovered: boolean) => void;
   /** 歌词内容发生位移（播放驱动的自动滚动 / 滚轮）：指针下的行已不是原来那行，收起 */
   handleContentMoved: () => void;
+  /** 触发按钮获得「可见焦点」：展示该行按钮，焦点停留期间不参与 idle 收起 */
+  handleHintFocus: (lineIndex: number) => void;
+  /** 触发按钮失焦：恢复 idle 收起计时 */
+  handleHintBlur: () => void;
 }
 
 /**
  * 歌词行「跳转」按钮的展示裁决，拆成两件互不耦合的事：
  *   - 展示哪行：由 **真实的指针移动** 落点决定（命中哪一行就记哪一行）；
- *   - 是否展示：指针一动就重置 idle 计时，满 IDLE_HIDE_MS 且指针未停在触发按钮上才收起。
+ *   - 是否展示：指针一动就重置 idle 计时，满 IDLE_HIDE_MS 且未停按钮上/未聚焦才收起。
  *
  * 关键：内容在静止指针下滚动时，浏览器会补发合成 mousemove/mouseover（hit-test 重跑），
  * 坐标与上一条完全相同 —— 那不是用户操作，一律忽略并收起，否则「播放自动滚动到鼠标下」
  * 会凭空弹出按钮。同理，歌词位移（自动滚动/滚轮）本身也直接收起。
+ *
+ * 职责边界：本 hook 只管「按钮的展示」，不管「视图跟着走」—— 焦点定位由
+ * useLyricScroll.focusLine 负责，两者在 Lyrics 里组合成一次「键盘用户操作」。
  *
  * 纯视图局部状态（无 store / service），状态跟着列表走，故只需在切歌重排时 reset。
  */
@@ -33,6 +40,8 @@ export function useLyricSeekHint(resetKey?: string | number): LyricSeekHint {
   const [isVisible, setIsVisible] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isButtonHoveredRef = useRef(false);
+  /** 可见焦点是否在某个按钮上：焦点期间不收起（否则聚焦元素连焦点环一起变不可见） */
+  const isFocusedRef = useRef(false);
   /** 上一条指针事件的坐标：坐标未变 = 内容在指针下滚动引发的合成事件 */
   const pointerRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -47,8 +56,8 @@ export function useLyricSeekHint(resetKey?: string | number): LyricSeekHint {
     clearIdleTimer();
     idleTimerRef.current = setTimeout(() => {
       idleTimerRef.current = null;
-      // 停在按钮上不算 idle：保持展示，等离开按钮（setButtonHovered(false)）再重新计时
-      if (isButtonHoveredRef.current) return;
+      // 停在按钮上 / 焦点还在按钮上都不算 idle：保持展示，等离开或失焦后重新计时
+      if (isButtonHoveredRef.current || isFocusedRef.current) return;
       setIsVisible(false);
     }, IDLE_HIDE_MS);
   }, [clearIdleTimer]);
@@ -57,14 +66,20 @@ export function useLyricSeekHint(resetKey?: string | number): LyricSeekHint {
   const hideHint = useCallback(() => {
     clearIdleTimer();
     isButtonHoveredRef.current = false;
+    // 焦点还在某行按钮上：不能收起，否则聚焦元素连焦点环一起变不可见
+    if (isFocusedRef.current) return;
     setHoveredLine(null);
     setIsVisible(false);
   }, [clearIdleTimer]);
 
   const reset = useCallback(() => {
-    hideHint();
+    clearIdleTimer();
+    isButtonHoveredRef.current = false;
+    isFocusedRef.current = false;
     pointerRef.current = null;
-  }, [hideHint]);
+    setHoveredLine(null);
+    setIsVisible(false);
+  }, [clearIdleTimer]);
 
   // 卸载与切歌（歌词重排、行号失效）都要清掉定时器与 hover 残留
   useEffect(() => reset, [reset, resetKey]);
@@ -107,11 +122,30 @@ export function useLyricSeekHint(resetKey?: string | number): LyricSeekHint {
     [armIdleTimer],
   );
 
+  /** 可见焦点进入某行按钮：展示该行按钮，且焦点停留期间不参与 idle 收起 */
+  const handleHintFocus = useCallback(
+    (lineIndex: number) => {
+      isFocusedRef.current = true;
+      clearIdleTimer();
+      setHoveredLine(lineIndex);
+      setIsVisible(true);
+    },
+    [clearIdleTimer],
+  );
+
+  const handleHintBlur = useCallback(() => {
+    isFocusedRef.current = false;
+    // 失焦后重新按 hover/idle 规则计时（指针可能仍停在按钮上）
+    armIdleTimer();
+  }, [armIdleTimer]);
+
   return {
     visibleLine: isVisible ? hoveredLine : null,
     handlePointerMove,
     handlePointerLeave: hideHint,
     setButtonHovered,
     handleContentMoved,
+    handleHintFocus,
+    handleHintBlur,
   };
 }
