@@ -25,10 +25,7 @@ const RecentPlaysContent = ({
   userId: number | null;
   localEnabled: boolean;
 }) => {
-  const { items, visibleCount, handlePlay } = useRecentPlaysViewModel(
-    userId,
-    localEnabled,
-  );
+  const { items, handlePlay } = useRecentPlaysViewModel(userId, localEnabled);
 
   return (
     <div className="p-6">
@@ -39,7 +36,7 @@ const RecentPlaysContent = ({
         </div>
       ) : (
         <div className="space-y-0.5">
-          {items.slice(0, visibleCount).map((item, index) => (
+          {items.map((item, index) => (
             <TrackRow
               badge={item.source === 'local' ? '本地' : undefined}
               index={index}

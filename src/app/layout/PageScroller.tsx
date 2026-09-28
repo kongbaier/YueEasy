@@ -1,54 +1,49 @@
 import { useEffectOnActive } from 'keepalive-for-react';
 import type { ReactNode } from 'react';
-import { useCallback, useRef, useState } from 'react';
-import { ScrollContainerContext } from '@/shared/hooks/useLoadMore';
+import { useCallback, useRef } from 'react';
+import type SimpleBar from 'simplebar-react';
+import { ScrollArea } from '@/shared/ui/scroll-area';
 
 interface PageScrollerProps {
   children: ReactNode;
 }
 
+type SimpleBarInstance = NonNullable<React.ComponentRef<typeof SimpleBar>>;
+
 /**
- * 每个页面独立的滚动容器。
- * 通过 KeepAliveRouteOutlet 的 wrapperComponent 注入，
- * 使 useLoadMore 的 ScrollContainerContext 指向各自页面的滚动容器。
+ * 每个页面独立的滚动容器，作为 KeepAliveRouteOutlet 的 wrapperComponent 注入。
  *
- * KeepAlive 缓存切换时 detach/reattach DOM，浏览器会重置 scrollTop。
- * 持续追踪滚动位置并在激活时恢复。
+ * KeepAlive 缓存切换时会把缓存节点从 DOM 上摘下来再挂回去（keepalive-for-react 用
+ * appendChild 搬移 `keepalive-cache-div`），浏览器在这次搬移中会把 scrollTop 归零。
+ * 所以离开页面时记下位置，重新激活时恢复——与迁移前同一个理由。
  */
 export function PageScroller({ children }: PageScrollerProps) {
-  const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(
-    null,
-  );
   const savedTop = useRef(0);
-  const scrollRef = useCallback((el: HTMLDivElement | null) => {
-    setScrollContainer(el);
+  const simpleBar = useRef<SimpleBarInstance | null>(null);
+
+  const setSimpleBarRef = useCallback((instance: SimpleBarInstance | null) => {
+    simpleBar.current = instance;
   }, []);
 
-  // 持续追踪滚动位置，确保 detach 时已有最新值
-  const handleScroll = useCallback(() => {
-    if (scrollContainer) {
-      savedTop.current = scrollContainer.scrollTop;
-    }
-  }, [scrollContainer]);
-
-  // 页面激活时恢复滚动位置（延迟到浏览器 layout 完成后）
   useEffectOnActive(() => {
-    const el = scrollContainer;
+    // SimpleBar 真正的滚动节点是内部的 content-wrapper，根节点不滚动
+    const el = simpleBar.current?.getScrollElement();
     if (!el) return;
+
+    // 延迟到浏览器 layout 完成后恢复
     requestAnimationFrame(() => {
       el.scrollTop = savedTop.current;
     });
-  }, [scrollContainer]);
+
+    // 离开页面（节点仍挂在 DOM 上）时记录位置；已被摘下的节点读不到有效值，跳过
+    return () => {
+      if (el.isConnected) savedTop.current = el.scrollTop;
+    };
+  }, []);
 
   return (
-    <ScrollContainerContext.Provider value={scrollContainer}>
-      <div
-        className="h-full overflow-y-auto scrollbar-gutter-stable mr-1"
-        onScroll={handleScroll}
-        ref={scrollRef}
-      >
-        {children}
-      </div>
-    </ScrollContainerContext.Provider>
+    <ScrollArea className="h-full w-full" ref={setSimpleBarRef}>
+      {children}
+    </ScrollArea>
   );
 }

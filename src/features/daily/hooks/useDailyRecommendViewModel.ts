@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDailyRecommendSongs } from '../daily-service';
-import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { toast } from '@/shared/lib/toast';
 import type { Song } from '@/shared/types/uiModels';
 import { playerService } from '@/features/player/services/PlayerService';
@@ -21,8 +20,6 @@ export function useDailyRecommendViewModel() {
     placeholderData: [],
     staleTime: 5 * 60 * 1000,
   });
-
-  const visibleCount = useLoadMore(songs?.length ?? 0);
 
   const handlePlay = useCallback(
     async (track: Song) => {
@@ -46,7 +43,6 @@ export function useDailyRecommendViewModel() {
 
   return {
     songs: songs ?? [],
-    visibleCount,
     handlePlay,
     handlePlayAll,
     isLoading,

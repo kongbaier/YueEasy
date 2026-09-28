@@ -1,6 +1,7 @@
 import { useSearchHot, useSearchSuggest } from '../hooks/useSearch';
 import { useSearchController } from '../hooks/useSearchController';
 import { Clock, Disc, Music, Search, User, TrendingUp, X } from 'lucide-react';
+import { ScrollArea } from '@/shared/ui/scroll-area';
 import { suggestionKey } from '../constants';
 import type { SuggestionItem } from '../constants';
 import { useEffect, useRef } from 'react';
@@ -100,7 +101,7 @@ function HotDropdown({
               热门搜索
             </span>
           </div>
-          <div className="max-h-64 overflow-y-auto">
+          <ScrollArea className="max-h-64">
             {hots.map((word, i) => (
               <button
                 className="flex items-center gap-3 w-full rounded-[3px] px-2.5 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
@@ -118,7 +119,7 @@ function HotDropdown({
                 <span className="flex-1 truncate">{word}</span>
               </button>
             ))}
-          </div>
+          </ScrollArea>
         </>
       )}
     </div>
@@ -168,7 +169,7 @@ function SuggestDropdown({ items, onPick, onClose }: SuggestDropdownProps) {
           搜索建议
         </span>
       </div>
-      <div className="max-h-64 overflow-y-auto">
+      <ScrollArea className="max-h-64">
         {items.map((item) => {
           const Icon = ICON_MAP[item.kind];
           return (
@@ -183,7 +184,7 @@ function SuggestDropdown({ items, onPick, onClose }: SuggestDropdownProps) {
             </button>
           );
         })}
-      </div>
+      </ScrollArea>
     </div>
   );
 }

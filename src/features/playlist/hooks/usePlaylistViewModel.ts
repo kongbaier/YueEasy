@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getPlaylistDetail } from '../playlist-service';
-import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { toast } from '@/shared/lib/toast';
 import { playerService } from '@/features/player/services/PlayerService';
 import type { Song } from '@/shared/types/uiModels';
@@ -24,7 +23,6 @@ export function usePlaylistViewModel(id: number) {
   });
 
   const playlist = data;
-  const visibleCount = useLoadMore(playlist?.tracks?.length ?? 0);
 
   const handlePlay = useCallback(
     async (track: Song) => {
@@ -49,7 +47,6 @@ export function usePlaylistViewModel(id: number) {
 
   return {
     playlist,
-    visibleCount,
     handlePlay,
     handlePlayAll,
     isPending,

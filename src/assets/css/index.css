@@ -3,6 +3,7 @@
 @import './properties.css';
 @import './theme.css';
 @import './animations.css';
+@import 'simplebar-react/dist/simplebar.min.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -39,6 +40,7 @@
   *::after {
     -webkit-user-select: none;
     user-select: none;
+    box-sizing: border-box;
   }
 
   img {
@@ -59,22 +61,39 @@
     user-select: text;
   }
 
-  *::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  *::-webkit-scrollbar-track {
-    background: transparent;
+  /* 1. 轨道：热区保持宽一点，默认透明 */
+  .simplebar-track.simplebar-vertical {
+    width: 12px !important;
+    background-color: transparent;
   }
 
-  *::-webkit-scrollbar-thumb {
-    width: 6px;
-    background: rgba(128, 128, 128, 0.3);
-    border-radius: 3px;
+  .simplebar-scrollbar {
+    width: 12px;
+    position: relative;
   }
 
-  *::-webkit-scrollbar-thumb:hover {
-    background: rgba(128, 128, 128, 0.5);
+  .simplebar-scrollbar::before {
+    position: absolute;
+    width: 4px !important;
+    background-color: #5a5a5a;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+
+  /* content 层默认高度 auto，容器内的 `h-full` 会退化成内容高度（满屏页面的
+     内层滚动容器因此失效）。撑满滚动视口后语义与原生 `h-full` 一致；
+     高度 auto 的容器（如 max-h-* 下拉）不受影响——百分比相对 auto 高度即 auto。 */
+  .simplebar-content {
+    height: 100%;
+  }
+
+  /* react-virtuoso（Element 模式）的视口是绝对定位：绝对定位子树不计入
+     SimpleBar content 层的 scrollHeight，SimpleBar 会据此判定「无溢出」并把
+     滚动视口的 overflow 锁成 hidden（虚拟列表彻底滚不动）。
+     改回流内布局后 content 层能统计到真实列表高度，同时 viewport 的
+     height:100% 依然等于视口高度，测量逻辑不变。 */
+  .simplebar-content > [data-viewport-type='element'] {
+    position: relative !important;
   }
 }
 

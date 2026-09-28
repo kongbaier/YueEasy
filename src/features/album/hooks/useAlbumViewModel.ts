@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { getAlbumDetail } from '../album-service';
-import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { toast } from '@/shared/lib/toast';
 import type { Song } from '@/shared/types/uiModels';
 import { playerService } from '@/features/player/services/PlayerService';
@@ -21,7 +20,6 @@ export function useAlbumViewModel(id: number) {
   });
 
   const { album, songs } = data;
-  const visibleCount = useLoadMore(songs.length);
 
   const handlePlay = useCallback(
     async (track: Song) => {
@@ -43,5 +41,5 @@ export function useAlbumViewModel(id: number) {
     }
   }, [replaceAndPlay, songs]);
 
-  return { album, tracks: songs, visibleCount, handlePlay, handlePlayAll };
+  return { album, tracks: songs, handlePlay, handlePlayAll };
 }

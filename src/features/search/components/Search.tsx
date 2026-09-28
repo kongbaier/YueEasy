@@ -1,9 +1,7 @@
 import { Search as SearchIcon, X } from 'lucide-react';
-import { useCallback, useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
-import { useLoadMore } from '@/shared/hooks/useLoadMore';
-import { ScrollContainerContext } from '@/shared/hooks/useLoadMore';
+import { ScrollArea } from '@/shared/ui/scroll-area';
 import { cn } from '@/shared/utils/cn';
 import { SEARCH_TABS } from '../constants';
 import { SearchResults } from './SearchResults';
@@ -122,28 +120,18 @@ export function SearchResultsDisplay() {
   const hasSearched = keyword.trim().length > 0;
   const results = data ?? null;
 
-  const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null);
-  const scrollRef = useCallback(
-    (el: HTMLDivElement | null) => setScrollEl(el),
-    [],
-  );
-  const visibleCount = useLoadMore(results?.items.length ?? 0);
-
   return (
-    <ScrollContainerContext.Provider value={scrollEl}>
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6" ref={scrollRef}>
-        <SearchResults
-          error={error instanceof Error ? error.message : ''}
-          hasSearched={hasSearched}
-          keyword={keyword}
-          loading={isLoading}
-          onPlay={handlePlay}
-          results={results}
-          searchType={searchType}
-          showDropdown={show !== null}
-          visibleCount={visibleCount}
-        />
-      </div>
-    </ScrollContainerContext.Provider>
+    <ScrollArea className="flex-1 px-6 pb-6">
+      <SearchResults
+        error={error instanceof Error ? error.message : ''}
+        hasSearched={hasSearched}
+        keyword={keyword}
+        loading={isLoading}
+        onPlay={handlePlay}
+        results={results}
+        searchType={searchType}
+        showDropdown={show !== null}
+      />
+    </ScrollArea>
   );
 }

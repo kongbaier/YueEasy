@@ -1,21 +1,44 @@
-import type { HTMLAttributes } from 'react';
-import { forwardRef } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
+import SimpleBar from 'simplebar-react';
 
+interface VirtuosoScrollerProps extends HTMLAttributes<HTMLDivElement> {
+  children?: ReactNode;
+  /** react-virtuoso 内部注入的 React context，不属于 DOM 属性，丢弃。 */
+  context?: unknown;
+}
+
+/**
+ * react-virtuoso 的 Scroller 组件：把虚拟列表的滚动节点换成 SimpleBar 的内部滚动节点，
+ * 使队列列表的滚动条与全应用一致。
+ *
+ * 关键点：
+ * - Virtuoso 需要的是「真正的滚动元素」——它在这一节点上读 `scrollTop`/`scrollHeight`、
+ *   调 `scrollTo`、挂 `scroll` 监听，所以 ref 与事件必须落在 `.simplebar-content-wrapper` 上，
+ *   而不是 SimpleBar 根节点（根节点不滚动）。
+ * - Virtuoso 传入的 style 里带有 `overflow-y: auto` / `position`，那是给原生滚动元素用的，
+ *   照搬会重新露出原生滚动条；这里只取尺寸，交给 SimpleBar 根节点。
+ * - Virtuoso 的视口是绝对定位，`index.css` 里已把它改回流内布局，否则 SimpleBar
+ *   统计不到内容高度、会锁死滚动（详见 index.css 注释）。
+ */
 export const VirtuosoScroller = forwardRef<
   HTMLDivElement,
-  HTMLAttributes<HTMLDivElement>
->((props, ref) => (
-  <div
-    {...props}
-    ref={ref}
-    style={{
-      ...props.style,
-      height: '100%',
-      overflow: 'auto',
-      // 预留滚动条槽位：列表长度变化出现/消失滚动条时内容不抖动
-      scrollbarGutter: 'stable',
-    }}
-  />
-));
+  VirtuosoScrollerProps
+>(({ children, context: _context, style, ...props }, ref) => {
+  const scrollableRef = useRef<HTMLDivElement>(null);
+
+  // Virtuoso 传下来的是它自己的 ref 对象，指向 SimpleBar 的内部滚动节点
+  useImperativeHandle(ref, () => scrollableRef.current as HTMLDivElement, []);
+
+  return (
+    <SimpleBar
+      className="h-full w-full"
+      scrollableNodeProps={{ ...props, ref: scrollableRef }}
+      style={{ height: style?.height, width: style?.width }}
+    >
+      {children}
+    </SimpleBar>
+  );
+});
 
 VirtuosoScroller.displayName = 'VirtuosoScroller';

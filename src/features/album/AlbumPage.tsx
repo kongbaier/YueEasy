@@ -59,8 +59,9 @@ const AlbumContent = () => {
 
   if (!id) throw new Error('无效的专辑 ID');
 
-  const { album, tracks, visibleCount, handlePlay, handlePlayAll } =
-    useAlbumViewModel(Number(id));
+  const { album, tracks, handlePlay, handlePlayAll } = useAlbumViewModel(
+    Number(id),
+  );
   usePageTitle(album.name);
 
   const metaParts: string[] = [];
@@ -135,7 +136,7 @@ const AlbumContent = () => {
               {tracks.length} 首
             </span>
           </div>
-          {tracks.slice(0, visibleCount).map((track, index) => (
+          {tracks.map((track, index) => (
             <TrackRow
               index={index}
               key={track.id}

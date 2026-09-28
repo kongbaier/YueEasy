@@ -69,8 +69,6 @@ interface SearchResultsProps {
   results: SearchResults | null;
   /** 当前搜索分类 */
   searchType: SearchType;
-  /** 当前可见的结果数量（懒加载） */
-  visibleCount: number;
   /** 是否已执行过搜索 */
   hasSearched: boolean;
   /** 当前搜索关键词 */
@@ -86,7 +84,6 @@ export function SearchResults({
   error,
   results,
   searchType,
-  visibleCount,
   hasSearched,
   keyword,
   showDropdown,
@@ -110,7 +107,7 @@ export function SearchResults({
           {/* Song results */}
           {results.type === SearchType.SONG && (
             <div className="space-y-0.5">
-              {results.items.slice(0, visibleCount).map((track, index) => (
+              {results.items.map((track, index) => (
                 <TrackRow
                   artistTag={originCoverTag(track.originCoverType)}
                   index={index}
@@ -125,7 +122,7 @@ export function SearchResults({
           {/* Album results */}
           {results.type === SearchType.ALBUM && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {results.items.slice(0, visibleCount).map((item) => (
+              {results.items.map((item) => (
                 <SearchAlbumCard item={item} key={item.id} />
               ))}
             </div>
@@ -134,7 +131,7 @@ export function SearchResults({
           {/* Artist results */}
           {results.type === SearchType.ARTIST && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {results.items.slice(0, visibleCount).map((item) => (
+              {results.items.map((item) => (
                 <SearchArtistCard item={item} key={item.id} />
               ))}
             </div>
@@ -143,7 +140,7 @@ export function SearchResults({
           {/* User results */}
           {results.type === SearchType.USER && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {results.items.slice(0, visibleCount).map((item) => (
+              {results.items.map((item) => (
                 <SearchUserCard item={item} key={item.id} />
               ))}
             </div>

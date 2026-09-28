@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { getCombinedRecent } from '../recent-service';
-import { useLoadMore } from '@/shared/hooks/useLoadMore';
 import { toast } from '@/shared/lib/toast';
 import type { Song } from '@/shared/types/uiModels';
 import { playerService } from '@/features/player/services/PlayerService';
@@ -32,8 +31,6 @@ export function useRecentPlaysViewModel(
     });
   }, [queryClient]);
 
-  const visibleCount = useLoadMore(items.length);
-
   const handlePlay = useCallback(
     async (track: Song) => {
       try {
@@ -45,8 +42,5 @@ export function useRecentPlaysViewModel(
     [play],
   );
 
-  return useMemo(
-    () => ({ items, visibleCount, handlePlay }),
-    [items, visibleCount, handlePlay],
-  );
+  return useMemo(() => ({ items, handlePlay }), [items, handlePlay]);
 }

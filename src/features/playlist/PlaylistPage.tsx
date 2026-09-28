@@ -39,7 +39,7 @@ export default function PlaylistPage() {
 
   if (!resolvedId) throw new Error('无效的歌单 ID');
 
-  const { playlist, visibleCount, handlePlay, handlePlayAll, isPending } =
+  const { playlist, handlePlay, handlePlayAll, isPending } =
     usePlaylistViewModel(resolvedId);
 
   usePageTitle(playlist?.name);
@@ -65,7 +65,7 @@ export default function PlaylistPage() {
           playlist.tracks &&
           playlist.tracks.length > 0 && (
             <div className="space-y-0.5">
-              {playlist.tracks.slice(0, visibleCount).map((track, index) => (
+              {playlist.tracks.map((track, index) => (
                 <TrackRow
                   index={index}
                   key={track.id}
