@@ -1,7 +1,5 @@
-import { LocateFixed, Music, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ListRange } from 'react-virtuoso';
-import { AnimatePresence, motion } from 'motion/react';
+import { Music, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import {
   Dialog,
@@ -19,15 +17,11 @@ import { formatQueueCount } from '@/shared/utils/format';
 import { usePlayerPage } from '@/features/player/hooks/usePlayerPage';
 import { usePlayer } from '@/features/player/hooks/usePlayer';
 import { QueueList } from './QueueList';
-import type { QueueListHandle } from './QueueList';
 import { PlayerTabPanel } from './PlayerTabPanel';
 import type { Track } from '@/shared/types/player';
 
 /** 与 QueueItem 行高（h-[52px]：text-sm 20 + text-xs 16 + py-2*2）一致。 */
 const ROW_HEIGHT = 52;
-
-const isIndexInRange = (index: number | null, range: ListRange) =>
-  index !== null && index >= range.startIndex && index <= range.endIndex;
 
 const QueueItem = ({
   track,
@@ -90,85 +84,6 @@ const QueueItem = ({
   );
 };
 
-/**
- * 页签内容区：仅在页签可见时挂载。
- * 列表首屏就按 currentIndex 定位，可见性状态随挂载天然重置——
- * 所以不需要「离开页签复位」之类的 effect。
- */
-const QueueTabContent = ({
-  currentIndex,
-  onPlay,
-  onRemove,
-  queue,
-}: {
-  currentIndex: number | null;
-  onPlay: (index: number) => void;
-  onRemove: (index: number) => void;
-  queue: Track[];
-}) => {
-  const listRef = useRef<QueueListHandle>(null);
-  const lastRangeRef = useRef<ListRange | null>(null);
-  // 当前项是否已在可视区内（初始视为可见：首屏就是按 currentIndex 定位的）。
-  const [currentInView, setCurrentInView] = useState(true);
-
-  const handleRangeChanged = useCallback(
-    (range: ListRange) => {
-      lastRangeRef.current = range;
-      setCurrentInView(isIndexInRange(currentIndex, range));
-    },
-    [currentIndex],
-  );
-
-  // 双击可视行切歌 / 队列增删时可视区间不变、rangeChanged 不触发，
-  // 用最近一次区间重算一次。
-  useEffect(() => {
-    const range = lastRangeRef.current;
-    if (range) setCurrentInView(isIndexInRange(currentIndex, range));
-  }, [currentIndex, queue.length]);
-
-  // 「回到当前播放」：仅当有当前项、且当前项被滚出视口时才出现。
-  const canRevealCurrent = currentIndex !== null && !currentInView;
-
-  return (
-    <>
-      <QueueList
-        currentIndex={currentIndex}
-        itemHeight={ROW_HEIGHT}
-        onRangeChanged={handleRangeChanged}
-        queue={queue}
-        ref={listRef}
-        renderItem={(track, index) => (
-          <QueueItem
-            index={index}
-            isCurrent={index === currentIndex}
-            onPlay={onPlay}
-            onRemove={onRemove}
-            track={track}
-          />
-        )}
-      />
-
-      <AnimatePresence>
-        {canRevealCurrent && (
-          <motion.button
-            aria-label="回到当前播放"
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-4 right-4 size-10 z-10 flex items-center justify-center rounded-full border border-border bg-background/90 shadow-lg backdrop-blur-sm transition-colors hover:bg-accent"
-            exit={{ opacity: 0, y: 4 }}
-            initial={{ opacity: 0, y: 4 }}
-            onClick={() => listRef.current?.revealCurrent('smooth')}
-            title="回到当前播放"
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            type="button"
-          >
-            <LocateFixed className="size-4.5" />
-          </motion.button>
-        )}
-      </AnimatePresence>
-    </>
-  );
-};
-
 export const PlayerPageQueue = () => {
   const {
     queue,
@@ -221,11 +136,21 @@ export const PlayerPageQueue = () => {
       formatCount={formatQueueCount}
       title="播放列表"
     >
-      <QueueTabContent
+      {/* 列表首屏就按 currentIndex 定位；「回到当前播放」按钮由 QueueList 内置，
+          PlayerTabPanel 的内容区是 relative，正好当它的定位上下文。 */}
+      <QueueList
         currentIndex={currentIndex}
-        onPlay={playFromIndex}
-        onRemove={handleRemove}
+        itemHeight={ROW_HEIGHT}
         queue={queue}
+        renderItem={(track, index) => (
+          <QueueItem
+            index={index}
+            isCurrent={index === currentIndex}
+            onPlay={playFromIndex}
+            onRemove={handleRemove}
+            track={track}
+          />
+        )}
       />
 
       {!isFm && (

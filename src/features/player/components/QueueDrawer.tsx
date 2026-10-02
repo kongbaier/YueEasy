@@ -1,4 +1,4 @@
-import { Loader2, Music, Radio, ThumbsDown, Trash2, X } from 'lucide-react';
+import { Music, Trash2, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Button } from '@/shared/ui/button';
@@ -90,18 +90,13 @@ export const QueuePanel = () => {
   const {
     queue,
     queueLength,
-    currentTrack,
     currentIndex,
     playFromIndex,
     removeFromQueue,
     clearQueue,
     isFm,
-    fmTrash,
-    setContentSource,
-    fmExitWillEmpty,
   } = usePlayer();
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
-  const [trashPending, setTrashPending] = useState(false);
 
   const handlePlayTrack = (index: number) => {
     playFromIndex(index);
@@ -117,44 +112,13 @@ export const QueuePanel = () => {
     toast.success('播放列表已清空');
   };
 
-  const handleFmTrash = async () => {
-    if (trashPending) return;
-    setTrashPending(true);
-    try {
-      await fmTrash();
-      toast.success('已减少此类推荐');
-    } catch {
-      toast.error('操作失败，请重试');
-    } finally {
-      setTrashPending(false);
-    }
-  };
-
   // 退出漫游会清空队列（进入漫游前无队列）时，先关面板（退出动画展示漫游内容），
   // 动画结束再执行 exitFm——与播放页“先退出再清空”的统一规则一致。
   const afterCloseRef = useRef<(() => void) | null>(null);
-  const closeAfter = (fn: () => void) => {
-    afterCloseRef.current = fn;
-    handleClose();
-  };
   const handlePanelExitComplete = () => {
     const fn = afterCloseRef.current;
     afterCloseRef.current = null;
     fn?.();
-  };
-
-  const handleExitFm = () => {
-    const run = () => {
-      void setContentSource('queue').catch(() =>
-        toast.error('操作失败，请重试'),
-      );
-    };
-    if (fmExitWillEmpty) {
-      closeAfter(run);
-    } else {
-      // 退出漫游会恢复原队列（有歌可播）：直接退出，面板保持打开展示恢复的歌单
-      run();
-    }
   };
 
   return (
@@ -177,24 +141,15 @@ export const QueuePanel = () => {
           >
             <header className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
               <h2 className="text-sm font-medium flex items-center gap-1.5">
-                {isFm ? (
-                  <>
-                    <Radio className="size-4 text-primary" />
-                    私人漫游
-                  </>
-                ) : (
-                  <>
-                    播放列表
-                    {queueLength > 0 && (
-                      <span className="ml-1.5 text-xs text-text-muted">
-                        ({formatQueueCount(queueLength)})
-                      </span>
-                    )}
-                  </>
+                播放列表
+                {queueLength > 0 && (
+                  <span className="ml-1.5 text-xs text-text-muted">
+                    ({formatQueueCount(queueLength)})
+                  </span>
                 )}
               </h2>
               <div className="flex items-center gap-1">
-                {!isFm && queue.length > 0 && (
+                {queue.length > 0 && (
                   <Button
                     className="border-none"
                     onClick={() => setClearConfirmOpen(true)}
@@ -216,109 +171,37 @@ export const QueuePanel = () => {
               </div>
             </header>
 
-            <div className="flex-1 relative">
-              {isFm ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 px-6">
-                  <div className="w-44">
-                    <div className="relative aspect-square w-full overflow-hidden rounded-lg shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
-                      {currentTrack?.album.picUrl ? (
-                        <DecodedImage
-                          alt={currentTrack.album.name}
-                          className="size-full object-cover"
-                          containerClassName="size-full"
-                          src={getNcmImageUrl(currentTrack.album.picUrl, 200)}
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center size-full bg-accent">
-                          <Music className="size-6 text-muted-foreground/60" />
-                        </div>
-                      )}
-                      {currentTrack && (
-                        <span className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
-                          <Radio className="size-3" />
-                          私人漫游
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-3 text-center">
-                      <p className="truncate text-sm font-medium">
-                        {currentTrack?.name ?? '正在为你挑选音乐…'}
-                      </p>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {currentTrack
-                          ? currentTrack.artists.map((a) => a.name).join(' / ')
-                          : '根据你的口味推荐'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-muted-foreground leading-relaxed text-center">
-                    不喜欢这首？点一下，让漫游少推荐类似的歌
-                  </p>
-
-                  <div className="w-full flex flex-col gap-2">
-                    <Button
-                      className="h-10 w-full gap-2 text-[0.95rem]"
-                      disabled={trashPending}
-                      onClick={handleFmTrash}
-                      variant="default"
-                    >
-                      {trashPending ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <ThumbsDown className="size-4" />
-                      )}
-                      减少推荐
-                    </Button>
-                    <Button
-                      className="h-9 w-full text-muted-foreground hover:text-foreground"
-                      onClick={handleExitFm}
-                      variant="ghost"
-                    >
-                      退出漫游
-                    </Button>
-                  </div>
+            {/* min-h-0 必须写：SimpleBar 的 .simplebar-placeholder 是流内元素且高度=内容高度，
+                会让 flex 子项的 min-height:auto 被撑到内容高度，height:100% 的滚动视口随之
+                等于内容高度 → 溢出判定为 false、overflow 被锁成 hidden，列表彻底滚不动。 */}
+            <div className="relative flex-1 min-h-0">
+              {queue.length === 0 ? (
+                <div
+                  className={cn(
+                    'absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-muted transition-all duration-300',
+                  )}
+                >
+                  <Music className="size-10 opacity-30" />
+                  <p className="text-xs">播放列表为空</p>
+                  <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
                 </div>
               ) : (
-                <>
-                  <div
-                    className={cn(
-                      'absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-muted transition-all duration-300',
-                      queue.length === 0
-                        ? 'opacity-100 scale-100'
-                        : 'opacity-0 scale-95 pointer-events-none',
+                <div className={cn('h-full')}>
+                  <QueueList
+                    currentIndex={currentIndex}
+                    itemHeight={ROW_HEIGHT}
+                    queue={queue}
+                    renderItem={(track, index) => (
+                      <QueueItem
+                        index={index}
+                        isCurrent={index === currentIndex}
+                        onPlay={handlePlayTrack}
+                        onRemove={handleRemove}
+                        track={track}
+                      />
                     )}
-                  >
-                    <Music className="size-10 opacity-30" />
-                    <p className="text-xs">播放列表为空</p>
-                    <p className="text-[10px] opacity-60">
-                      双击歌曲即可加入队列
-                    </p>
-                  </div>
-                  <div
-                    className={cn(
-                      'h-full transition-all duration-300',
-                      queue.length > 0
-                        ? 'opacity-100 translate-y-0'
-                        : 'opacity-0 translate-y-2 pointer-events-none',
-                    )}
-                  >
-                    <QueueList
-                      currentIndex={currentIndex}
-                      itemHeight={ROW_HEIGHT}
-                      queue={queue}
-                      renderItem={(track, index) => (
-                        <QueueItem
-                          index={index}
-                          isCurrent={index === currentIndex}
-                          onPlay={handlePlayTrack}
-                          onRemove={handleRemove}
-                          track={track}
-                        />
-                      )}
-                    />
-                  </div>
-                </>
+                  />
+                </div>
               )}
             </div>
           </motion.aside>
