@@ -70,7 +70,7 @@ impl NcmService {
                 .message
                 .filter(|m| !m.trim().is_empty())
                 .unwrap_or_else(|| "验证码发送失败".to_string());
-            return Err(NcmApiError::Api { message });
+            return Err(NcmApiError::api(message));
         }
         Ok(())
     }
@@ -90,7 +90,7 @@ impl NcmService {
                 .message
                 .filter(|m| !m.trim().is_empty())
                 .unwrap_or_else(|| "验证码校验失败".to_string());
-            return Err(NcmApiError::Api { message });
+            return Err(NcmApiError::api(message));
         }
         Ok(())
     }
@@ -247,9 +247,9 @@ impl NcmService {
         let client = state.client();
         let dto: response::PlaylistDetailResponseDto = fetch(state, app, client.playlist_detail(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
-        let playlist = dto.playlist.ok_or_else(|| NcmApiError::Decode {
-            message: "响应缺少 playlist 字段".to_string(),
-        })?;
+        let playlist = dto
+            .playlist
+            .ok_or_else(|| NcmApiError::decode("响应缺少 playlist 字段"))?;
         Ok(mapper::map_playlist(playlist))
     }
 
@@ -433,9 +433,9 @@ impl NcmService {
         let client = state.client();
         let dto: response::CloudsearchResponseDto = fetch(state, app, client.cloudsearch(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
-        let result = dto.result.ok_or_else(|| NcmApiError::Decode {
-            message: "搜索响应缺少 result 字段".to_string(),
-        })?;
+        let result = dto
+            .result
+            .ok_or_else(|| NcmApiError::decode("搜索响应缺少 result 字段"))?;
         Ok(mapper::map_search_result(result))
     }
 
@@ -448,9 +448,9 @@ impl NcmService {
         let client = state.client();
         let dto: response::SuggestResponseDto = fetch(state, app, client.search_suggest(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
-        let result = dto.result.ok_or_else(|| NcmApiError::Decode {
-            message: "搜索建议响应缺少 result 字段".to_string(),
-        })?;
+        let result = dto
+            .result
+            .ok_or_else(|| NcmApiError::decode("搜索建议响应缺少 result 字段"))?;
         Ok(mapper::map_suggest_result(result))
     }
 

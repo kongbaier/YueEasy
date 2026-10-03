@@ -39,6 +39,10 @@ where
         .await
         .map_err(|_| NetError::Network {
             message: "请求超时".to_string(),
+            detail: Some(format!(
+                "tokio::time::timeout({}s) 到点；reqwest 客户端未设自身 timeout，这是唯一时限",
+                REQUEST_TIMEOUT.as_secs()
+            )),
         })?
         .map_err(from_ncm)?;
 
@@ -51,6 +55,7 @@ where
     collapse_message_aliases(&mut value);
     serde_json::from_value(value).map_err(|e| NetError::Decode {
         message: e.to_string(),
+        detail: Some(format!("expected DTO = {}", std::any::type_name::<D>())),
     })
 }
 

@@ -3,7 +3,7 @@ import { useAuthStore } from '@/features/auth/stores/authStore';
 import { useLoginModal } from '@/features/auth/stores/loginModalStore';
 import { queryClient } from '@/shared/lib/queryClient';
 import { toast } from '@/shared/lib/toast';
-import { errorMessage } from '@/shared/utils/error';
+import { reportError } from '@/shared/utils/error';
 import type { Playlist } from '@/shared/types/uiModels';
 import { setPlaylistSubscribed } from '../playlist-service';
 
@@ -57,7 +57,7 @@ export function usePlaylistSubscription(playlist: Playlist) {
       toast.success(next ? '已收藏歌单' : '已取消收藏歌单');
     } catch (e) {
       patchSubscribedCache(playlist.id, !next);
-      toast.error(errorMessage(e));
+      toast.error(reportError('playlist.subscribe', e));
     } finally {
       setIsPending(false);
     }

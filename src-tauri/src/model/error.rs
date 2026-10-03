@@ -13,24 +13,56 @@ use serde::Serialize;
 
 use crate::netease::error::NetError;
 
-/// 跨 IPC 序列化为 `{ "kind": ..., "message": ... }`（tagged enum）。
+/// 跨 IPC 序列化为 `{ "kind": ..., "message": ..., "detail"?: ... }`（tagged enum）。
+/// - `message`：面向用户，前端直接展示
+/// - `detail`：面向开发者，前端只 `console` 到 devtools（根因链 / 原始 code），不进 UI
 #[derive(Debug, Serialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum NcmApiError {
     /// 网络 / 超时等传输层错误
-    Network { message: String },
+    Network {
+        message: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        detail: Option<String>,
+    },
     /// 业务失败（code 不在白名单，或响应语义失败如验证码发送失败）
-    Api { message: String },
+    Api {
+        message: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        detail: Option<String>,
+    },
     /// 响应结构与 DTO 不匹配
-    Decode { message: String },
+    Decode {
+        message: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        detail: Option<String>,
+    },
+}
+
+impl NcmApiError {
+    /// 业务失败（无开发者详情时用）。
+    pub fn api(message: impl Into<String>) -> Self {
+        Self::Api {
+            message: message.into(),
+            detail: None,
+        }
+    }
+
+    /// 响应结构异常（前端只展示「数据解析失败」+ message）。
+    pub fn decode(message: impl Into<String>) -> Self {
+        Self::Decode {
+            message: message.into(),
+            detail: None,
+        }
+    }
 }
 
 impl std::fmt::Display for NcmApiError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NcmApiError::Network { message } => write!(f, "{message}"),
-            NcmApiError::Api { message } => write!(f, "{message}"),
-            NcmApiError::Decode { message } => write!(f, "数据解析失败：{message}"),
+            NcmApiError::Network { message, .. } => write!(f, "{message}"),
+            NcmApiError::Api { message, .. } => write!(f, "{message}"),
+            NcmApiError::Decode { message, .. } => write!(f, "数据解析失败：{message}"),
         }
     }
 }
@@ -39,13 +71,13 @@ impl std::error::Error for NcmApiError {}
 
 pub type Result<T> = std::result::Result<T, NcmApiError>;
 
-/// 网络层错误 → 对外错误。三臂全量、无损，保证 IPC 上的 `kind` 与文案不变。
+/// 网络层错误 → 对外错误。三臂全量、无损（含开发者 detail），保证 IPC 上的 `kind` 与文案不变。
 impl From<NetError> for NcmApiError {
     fn from(err: NetError) -> Self {
         match err {
-            NetError::Network { message } => NcmApiError::Network { message },
-            NetError::Api { message } => NcmApiError::Api { message },
-            NetError::Decode { message } => NcmApiError::Decode { message },
+            NetError::Network { message, detail } => NcmApiError::Network { message, detail },
+            NetError::Api { message, detail } => NcmApiError::Api { message, detail },
+            NetError::Decode { message, detail } => NcmApiError::Decode { message, detail },
         }
     }
 }
@@ -61,7 +93,10 @@ pub fn check_code(code: Option<i64>, message: Option<&str>) -> Result<()> {
                 .filter(|m| !m.trim().is_empty())
                 .map(|m| m.to_string())
                 .unwrap_or_else(|| format!("请求失败 ({c})"));
-            Err(NcmApiError::Api { message })
+            Err(NcmApiError::Api {
+                message,
+                detail: Some(format!("响应体 code={c}")),
+            })
         }
     }
 }

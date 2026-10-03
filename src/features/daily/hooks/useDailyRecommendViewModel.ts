@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDailyRecommendSongs } from '../daily-service';
 import { toast } from '@/shared/lib/toast';
-import { errorMessage } from '@/shared/utils/error';
+import { reportError } from '@/shared/utils/error';
 import type { Song } from '@/shared/types/uiModels';
 import { playerService } from '@/features/player/services/PlayerService';
 
@@ -27,7 +27,7 @@ export function useDailyRecommendViewModel() {
       try {
         await play(track);
       } catch (e) {
-        toast.error(errorMessage(e, '播放失败'));
+        toast.error(reportError('daily.play', e, '播放失败'));
       }
     },
     [play],

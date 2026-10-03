@@ -6773,6 +6773,7 @@ dependencies = [
  "image",
  "log",
  "ncm-api-rs",
+ "reqwest 0.12.28",
  "rusqlite",
  "serde",
  "serde_json",

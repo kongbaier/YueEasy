@@ -3,7 +3,7 @@ import { useSearchStore } from '../store';
 import type { Song } from '@/shared/types/uiModels';
 import { playerService } from '@/features/player/services/PlayerService';
 import { toast } from '@/shared/lib/toast';
-import { errorMessage } from '@/shared/utils/error';
+import { reportError } from '@/shared/utils/error';
 
 /**
  * search 页面的 ViewModel：输入态 + 搜索意图 + 播放命令。
@@ -29,7 +29,7 @@ export function useSearchController() {
       try {
         await play(track);
       } catch (e) {
-        toast.error(errorMessage(e, '播放失败'));
+        toast.error(reportError('search.play', e, '播放失败'));
       }
     },
     [play],

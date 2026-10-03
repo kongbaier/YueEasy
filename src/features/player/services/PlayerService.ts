@@ -21,7 +21,7 @@ import { usePlayerStore } from '../stores/playerStore';
 import { recordPlay } from './PlayHistoryService';
 import { usePlayerSettingsStore } from '../stores/playerSettingsStore';
 import { toast } from '@/shared/lib/toast';
-import { errorMessage } from '@/shared/utils/error';
+import { reportError } from '@/shared/utils/error';
 
 /** QueueItem → 库 Track（URL 留空，由 resolver 解析后注入）。 */
 function queueItemToCoreTrack(item: QueueItem): PlayerCoreTrack {
@@ -158,8 +158,8 @@ async function resolveAndPlay(item: QueueItem): Promise<void> {
     loaded = await player.loadAndPlay(queueItemToCoreTrack(item));
   } catch (e) {
     if (seq !== playSeq) return; // 已被更新的切歌取代，交给新的那次
-    console.warn('[player] resolve/load failed:', e);
-    await failover(errorMessage(e, '播放失败'));
+    // reportError：message 进 toast，detail（reqwest 根因链 / 原始 code）进 devtools
+    await failover(reportError('player.resolve', e, '播放失败'));
     return;
   }
   if (seq !== playSeq) return; // 已被更新的切歌取代
@@ -300,7 +300,9 @@ async function fmContinuation(): Promise<void> {
     try {
       tracks = await fetchFmWithRetry();
     } catch (e) {
-      toast.error(errorMessage(e, '私人漫游加载失败'), { id: 'play-fail' });
+      toast.error(reportError('player.fm', e, '私人漫游加载失败'), {
+        id: 'play-fail',
+      });
       pauseAudio();
       return;
     }

@@ -24,6 +24,9 @@ tauri-plugin-process = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
 ncm-api-rs = { git = "https://github.com/SPlayer-Dev/ncm-api-rs.git" }
+# 只为读取传输错误的分类信息（reqwest::Error 的 is_timeout/is_connect/source 链）：
+# 与 ncm-api-rs 同版本，保证是同一个 crate（features 在依赖图内取并集）。
+reqwest = { version = "0.12", default-features = false }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rusqlite = { version = "0.31", features = ["bundled"] }
