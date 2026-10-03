@@ -39,7 +39,7 @@
   --muted-foreground: #5d5d5d;
   --accent: color-mix(in oklch, black 4%, transparent);
   --accent-foreground: var(--foreground);
-  --destructive: #c42b1c;
+  --destructive: var(--color-red-500);
   --destructive-foreground: #ffffff;
 
   --ring: var(--primary);
@@ -83,7 +83,7 @@
   --popover-foreground: #f6f6f6;
   --border: #3f3f46;
   --input: color-mix(in oklch, #2a2a2a 12%, transparent);
-  --destructive: #d13438;
+  --destructive: var(--color-red-700);
   --destructive-foreground: #ffffff;
 
   --sidebar: transparent;

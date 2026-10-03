@@ -39,7 +39,7 @@ export const WindowControls = ({ className }: { className?: string }) => {
       </Button>
 
       <Button
-        className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-red-500 hover:text-white"
+        className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-destructive hover:text-destructive-foreground"
         onPointerUp={handleClose}
         type="button"
         variant="ghost"
