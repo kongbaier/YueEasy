@@ -119,13 +119,15 @@ export interface QueueState {
   restart: () => QueueItem | null;
 
   // ── FM ──
-  enterFm: (track: QueueItem) => void;
+  enterFm: (tracks: QueueItem[]) => void;
   exitFm: () => QueueItem | null;
   appendFm: (tracks: QueueItem[]) => void;
   removeFmCurrent: () => QueueItem | null;
 
   // ── 只读 ──
   currentTrack: () => QueueItem | null;
+  /** 只读预测下一首（不改队列 / 不推进 shuffle）——供 URL 预取用。 */
+  peekNext: () => QueueItem | null;
   isFmActive: () => boolean;
   isEnded: () => boolean;
   snapshot: () => QueueSnapshot;
@@ -246,9 +248,11 @@ export const useQueueStore = create<QueueState>()(
           return t ? trackToQueueItem(t) : null;
         },
 
-        enterFm: (track) => {
+        enterFm: (tracks) => {
+          if (tracks.length === 0) return;
           set({ contentSource: 'personal_fm' });
-          fmPolicy.seed(queueItemToTrack(track));
+          // 整批入队（而非只留首曲）：留出 lookahead —— 下一首可直接预取，不必等播完再发请求
+          fmPolicy.seedFrom(tracks.map(queueItemToTrack), 0);
           mirror(fmPolicy);
         },
         exitFm: () => {
@@ -272,6 +276,11 @@ export const useQueueStore = create<QueueState>()(
         currentTrack: () => {
           const p = activePolicyOf(get().contentSource);
           const t = p.current();
+          return t ? trackToQueueItem(t) : null;
+        },
+        peekNext: () => {
+          const p = activePolicyOf(get().contentSource);
+          const t = p.peekNext();
           return t ? trackToQueueItem(t) : null;
         },
         isFmActive: () => get().contentSource === 'personal_fm',

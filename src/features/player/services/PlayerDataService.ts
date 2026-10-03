@@ -8,12 +8,15 @@ import type { QueueItem } from '@/shared/types/uiModels';
 import { songToQueueItem } from '@/shared/utils/mappers';
 
 /**
- * 解析曲目播放 URL（Rust `resolve_play_url`）。失败抛出可读错误。
+ * 解析曲目播放 URL（Rust `resolve_play_url`）。
+ *
+ * 返回 `null` 表示**不可播**（VIP / 无版权 / 仅试听）——正常业务值，调用方应跳过；
+ * 抛错才是失败（网络 / 业务 code）。
  */
 export async function resolveUrl(
   trackId: number,
   quality?: string | null,
-): Promise<string> {
+): Promise<string | null> {
   return resolvePlayUrl(trackId, quality);
 }
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { getCombinedRecent } from '../recent-service';
 import { toast } from '@/shared/lib/toast';
+import { errorMessage } from '@/shared/utils/error';
 import type { Song } from '@/shared/types/uiModels';
 import { playerService } from '@/features/player/services/PlayerService';
 import { onLocalHistoryChanged } from '@/features/player/services/PlayHistoryService';
@@ -36,7 +37,7 @@ export function useRecentPlaysViewModel(
       try {
         await play(track);
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : '播放失败');
+        toast.error(errorMessage(e, '播放失败'));
       }
     },
     [play],

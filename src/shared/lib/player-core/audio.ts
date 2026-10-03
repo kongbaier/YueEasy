@@ -39,6 +39,11 @@ export class AudioCore implements IAudioCore<AudioCoreEventMap> {
     return this.#element.src;
   }
 
+  /** 最近一次媒体错误（同一失败源重复派发 `error` 时指向同一对象，可用于去重）。 */
+  get mediaError(): MediaError | null {
+    return this.#element.error;
+  }
+
   get volume() {
     return this.#element.volume;
   }

@@ -3,25 +3,26 @@
 
 use tauri::{AppHandle, State};
 
+use crate::model::error::Result;
 use crate::netease::NcmState;
 use crate::service::NcmService;
 
 /// 解析播放 URL（纯网络取数；前端自持曲目元数据，本命令只需 track_id）。
-/// 返回第一条非空 url。
+///
+/// `Ok(None)` 表示**这首歌不可播**（VIP / 无版权 / 仅试听 —— NCM 侧表现为
+/// `data[0].url == null`）。**不可播是正常业务值，不是错误**：前端据此提示并跳过，
+/// 只有 `Err`（网络 / 业务 code 失败）才算异常，才需要重试或暂停。
 #[tauri::command]
 pub(crate) async fn resolve_play_url(
     app_handle: AppHandle,
     ncm: State<'_, NcmState>,
     track_id: u64,
     quality: Option<String>,
-) -> Result<String, String> {
-    let result = NcmService::song_url(&app_handle, &ncm, track_id as i64, quality)
-        .await
-        .map_err(|e| e.to_string())?;
-    result
+) -> Result<Option<String>> {
+    let result = NcmService::song_url(&app_handle, &ncm, track_id as i64, quality).await?;
+    Ok(result
         .data
         .into_iter()
         .map(|u| u.url)
-        .find(|u| !u.is_empty())
-        .ok_or_else(|| format!("无法获取曲目 {track_id} 的播放地址"))
+        .find(|u| !u.is_empty()))
 }

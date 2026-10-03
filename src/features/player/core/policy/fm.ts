@@ -116,6 +116,17 @@ export class FmPolicy implements IPlaybackPolicy {
     this.repeat = repeat === 'all' ? 'off' : repeat;
   }
 
+  /**
+   * 只读预测下一首（不改索引、不改 exhausted）——供 URL 预取用。
+   * FM 是流式的：批次未 append 时没有「已知的下一首」，返回 null（此时不预取）。
+   */
+  peekNext(): PlayerCoreTrack | null {
+    if (this.repeat === 'one') return this.queue.current();
+    const cur = this.queue.currentIdx();
+    if (cur == null) return null;
+    return this.queue.items()[cur + 1] ?? null;
+  }
+
   repeatValue(): Repeat {
     return this.repeat;
   }

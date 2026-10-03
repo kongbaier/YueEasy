@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getPlaylistDetail } from '../playlist-service';
 import { toast } from '@/shared/lib/toast';
+import { errorMessage } from '@/shared/utils/error';
 import { playerService } from '@/features/player/services/PlayerService';
 import type { Song } from '@/shared/types/uiModels';
 
@@ -29,7 +30,7 @@ export function usePlaylistViewModel(id: number) {
       try {
         await play(track);
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : '播放失败');
+        toast.error(errorMessage(e, '播放失败'));
       }
     },
     [play],

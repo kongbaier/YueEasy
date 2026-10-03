@@ -94,17 +94,23 @@ export class Player {
    * - 加载媒体
    * - 等待必要的 metadata
    * - 更新播放器内部状态
+   *
+   * @returns 是否真的装载了 source。resolver 返回 null（坏歌 / 竞态被取代）→ false。
    */
-  async load(track: PlayerCoreTrack) {
+  async load(track: PlayerCoreTrack): Promise<boolean> {
     const url = await this.#resolve(track);
-    if (url == null) return;
+    if (url == null) return false;
     this.#audio.load(url);
+    return true;
   }
 
-  /** app 端「播放指定曲目 / 整单替换」入口（占位，供 store 直接触发加载）。 */
-  async loadAndPlay(track: PlayerCoreTrack) {
-    await this.load(track);
+  /** app 端「播放指定曲目 / 整单替换」入口（占位，供 store 直接触发加载）。
+   *  加载被跳过（无 URL / 竞态被取代）时不 play —— 否则会把音频元素里残留的上一首
+   *  src 重新播出来（ended 状态调 play() 会从 0 秒重播上一曲）。 */
+  async loadAndPlay(track: PlayerCoreTrack): Promise<boolean> {
+    if (!(await this.load(track))) return false;
     await this.play();
+    return true;
   }
 
   get currentTime() {

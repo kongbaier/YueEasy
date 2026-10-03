@@ -3,18 +3,9 @@ import { useAuthStore } from '@/features/auth/stores/authStore';
 import { useLoginModal } from '@/features/auth/stores/loginModalStore';
 import { queryClient } from '@/shared/lib/queryClient';
 import { toast } from '@/shared/lib/toast';
+import { errorMessage } from '@/shared/utils/error';
 import type { Playlist } from '@/shared/types/uiModels';
 import { setPlaylistSubscribed } from '../playlist-service';
-
-/** IPC 错误（Rust `NcmApiError` 序列化为 `{ kind, message }`）→ 可展示文案。 */
-function errorText(e: unknown): string {
-  if (e instanceof Error) return e.message;
-  if (typeof e === 'object' && e !== null && 'message' in e) {
-    const { message } = e as { message?: unknown };
-    if (typeof message === 'string' && message) return message;
-  }
-  return '操作失败，请重试';
-}
 
 /** 乐观改写详情缓存：收藏状态与收藏数同步增减。 */
 function patchSubscribedCache(id: number, subscribe: boolean) {
@@ -66,7 +57,7 @@ export function usePlaylistSubscription(playlist: Playlist) {
       toast.success(next ? '已收藏歌单' : '已取消收藏歌单');
     } catch (e) {
       patchSubscribedCache(playlist.id, !next);
-      toast.error(errorText(e));
+      toast.error(errorMessage(e));
     } finally {
       setIsPending(false);
     }

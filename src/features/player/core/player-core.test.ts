@@ -172,6 +172,43 @@ describe('QueuePolicy', () => {
     expect(q.next()!.id).toBe('0');
     expect(q.isExhausted).toBe(false);
   });
+
+  it('peekNext 预测下一首但不推进（供 URL 预取）', () => {
+    const q = new QueuePolicy();
+    q.append(tracks(3));
+    q.playQueueAt(0);
+    expect(q.peekNext()!.id).toBe('1');
+    expect(q.peekNext()!.id).toBe('1'); // 幂等
+    expect(q.current()!.id).toBe('0'); // 当前曲不变
+    expect(q.currentIndex()).toBe(0);
+    expect(q.next()!.id).toBe('1'); // 与预测一致
+  });
+
+  it('peekNext 队尾：repeat off 为 null，all 环绕', () => {
+    const off = new QueuePolicy('sequential', 'off');
+    off.append(tracks(2));
+    off.playQueueAt(1);
+    expect(off.peekNext()).toBeNull();
+
+    const all = new QueuePolicy('sequential', 'all');
+    all.append(tracks(2));
+    all.playQueueAt(1);
+    expect(all.peekNext()!.id).toBe('0');
+  });
+
+  it('peekNext 单曲循环返回当前曲（不误判为下一首）', () => {
+    const q = new QueuePolicy('sequential', 'one');
+    q.append(tracks(3));
+    q.playQueueAt(1);
+    expect(q.peekNext()!.id).toBe('1');
+  });
+
+  it('peekNext 随机序与随后的 next 一致', () => {
+    const q = new QueuePolicy('shuffle', 'off', 7);
+    q.append(tracks(6));
+    expect(q.peekNext()!.id).toBe(q.next()!.id);
+    expect(q.peekNext()!.id).toBe(q.next()!.id);
+  });
 });
 
 describe('FmPolicy', () => {
@@ -209,6 +246,21 @@ describe('FmPolicy', () => {
     fm.append([track(101)]);
     expect(fm.removeCurrent()!.id).toBe('100');
     expect(fm.getCurrent()!.id).toBe('101');
+  });
+});
+
+describe('peekNext（预取用只读预测）', () => {
+  it('FmPolicy：批次内有下一首则返回，队尾/未 append 返回 null', () => {
+    const fm = new FmPolicy();
+    fm.seed(track(100));
+    expect(fm.peekNext()).toBeNull(); // 流式：批次未 append，无可预测
+    fm.append([track(101), track(102)]);
+    expect(fm.peekNext()!.id).toBe('101');
+    expect(fm.current()!.id).toBe('100'); // 不推进
+    fm.next();
+    expect(fm.peekNext()!.id).toBe('102');
+    fm.next();
+    expect(fm.peekNext()).toBeNull();
   });
 });
 
@@ -254,13 +306,33 @@ describe('Player', () => {
     expect(p.currentTrack!.id).toBe('100');
   });
 
-  it('resolver 返回 null（坏歌/竞态）不播放', async () => {
+  it('resolver 返回 null（坏歌/竞态）不加载也不 play', async () => {
     const audio = new FakeAudio();
     const q = new QueuePolicy();
     q.append(tracks(2));
     const p = new Player(audio, q, () => Promise.resolve(null));
     await p.next();
     expect(audio.loaded).toEqual([]);
+    expect(audio.playing).toBe(false); // 不得重播音频元素里残留的上一首
     expect(p.currentTrack!.id).toBe('1'); // 策略已推进，只是不加载
+  });
+
+  it('loadAndPlay 在无 URL 时返回 false，有 URL 时返回 true', async () => {
+    const audio = new FakeAudio();
+    const q = new QueuePolicy();
+    q.append(tracks(1));
+    const p = new Player(audio, q, resolve);
+    expect(await p.loadAndPlay(track(0))).toBe(true);
+    const pNull = new Player(audio, q, () => Promise.resolve(null));
+    expect(await pNull.loadAndPlay(track(0))).toBe(false);
+  });
+
+  it('resolver 抛错时向调用方冒泡（由编排层兜底，不静默）', async () => {
+    const audio = new FakeAudio();
+    const q = new QueuePolicy();
+    q.append(tracks(1));
+    const p = new Player(audio, q, () => Promise.reject(new Error('网络错误')));
+    await expect(p.loadAndPlay(track(0))).rejects.toThrow('网络错误');
+    expect(audio.loaded).toEqual([]);
   });
 });

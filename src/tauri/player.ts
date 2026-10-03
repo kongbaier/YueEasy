@@ -4,10 +4,15 @@
 
 import { invoke } from '@tauri-apps/api/core';
 
-/** 解析曲目播放 URL（Rust `resolve_play_url`）。返回 URL 字符串。 */
+/**
+ * 解析曲目播放 URL（Rust `resolve_play_url`）。
+ *
+ * 返回 `null` 表示**不可播**（VIP / 无版权 / 仅试听）——正常业务值，调用方应跳过；
+ * 抛错才是失败（网络 / 业务 code），由调用方提示与重试。
+ */
 export function resolvePlayUrl(
   trackId: number,
   quality?: string | null,
-): Promise<string> {
+): Promise<string | null> {
   return invoke('resolve_play_url', { trackId, quality: quality ?? null });
 }

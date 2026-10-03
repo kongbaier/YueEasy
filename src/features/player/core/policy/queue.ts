@@ -118,6 +118,20 @@ export class QueuePolicy implements IPlaybackPolicy {
     this.repeat = repeat;
   }
 
+  /**
+   * 只读预测「自然结束会播到的下一首」（不改索引、不改 exhausted）——供 URL 预取用。
+   * shuffle 下若尚未建表，会按需重建排列（同参数下幂等，结果与随后的 next() 一致）。
+   */
+  peekNext(): PlayerCoreTrack | null {
+    if (this.repeat === 'one') return this.queue.current();
+    const idx = this.strategy.nextIndex(
+      this.queue.currentIdx(),
+      this.queue.length,
+      this.repeat === 'all',
+    );
+    return idx == null ? null : (this.queue.items()[idx] ?? null);
+  }
+
   setOrder(order: Order): void {
     this.strategy.setOrder(order);
   }

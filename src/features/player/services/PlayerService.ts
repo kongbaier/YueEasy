@@ -20,6 +20,8 @@ import { fetchFm, resolveUrl, trashFm } from './PlayerDataService';
 import { usePlayerStore } from '../stores/playerStore';
 import { recordPlay } from './PlayHistoryService';
 import { usePlayerSettingsStore } from '../stores/playerSettingsStore';
+import { toast } from '@/shared/lib/toast';
+import { errorMessage } from '@/shared/utils/error';
 
 /** QueueItem → 库 Track（URL 留空，由 resolver 解析后注入）。 */
 function queueItemToCoreTrack(item: QueueItem): PlayerCoreTrack {
@@ -27,11 +29,80 @@ function queueItemToCoreTrack(item: QueueItem): PlayerCoreTrack {
   return { id: String(track_id), src: '', ...rest };
 }
 
-// ── URL 解析（缓存 + 反竞态 seq） ──
-const lastUrlCache = new Map<string, string>();
+// ── URL 解析（缓存 + TTL + 反竞态 seq + 在途去重） ──
+/** 播放 URL 带签名：超时后 CDN 会 403，所以缓存必须有寿命（不是永久 Map）。 */
+const URL_TTL_MS = 5 * 60 * 1000;
+/** 「不可播」负缓存寿命：比正缓存短 —— 登录 / 换音质后同一首可能立刻变可播。 */
+const UNAVAILABLE_TTL_MS = 60 * 1000;
+/** url 为 null 表示「不可播」（VIP / 无版权 / 仅试听），是正常业务值而非错误。 */
+type UrlEntry = { url: string | null; at: number };
+const lastUrlCache = new Map<string, UrlEntry>();
+/** 在途请求：预取与切歌可能同时解析同一首，合并为一次网络请求。 */
+const inflightUrl = new Map<
+  string,
+  { gen: number; promise: Promise<string | null> }
+>();
+/** 缓存代际：invalidate 时递增，用于丢弃「作废后到达」的在途结果。 */
+const urlGeneration = new Map<string, number>();
 let playSeq = 0;
 /** FM 续歌防死循环上限（对齐旧实现）。 */
 const FM_CONTINUE_MAX = 8;
+/** FM 取数重试（对齐 YesPlayMusic：多次 + 线性退避），全部失败才提示并停。 */
+const FM_FETCH_ATTEMPTS = 3;
+const FM_FETCH_BACKOFF_MS = 800;
+/** 网络类失败上限：达到即停，避免断网时无限跳歌空转。 */
+const MAX_FAILED_STREAK = 5;
+/** 「不可播」跳过上限：队列里可能成片出现 VIP / 无版权曲，给足额度再停。 */
+const MAX_UNAVAILABLE_SKIPS = 12;
+
+/** 网络类失败计数：任一曲目真的进入 playing、或用户重新发起播放时归零。 */
+let failedStreak = 0;
+/** 不可播跳过计数（归零时机同上）。 */
+let skipStreak = 0;
+/** 因音频 error 绕过缓存重解析过的曲目 id（同一首只重试一次）。 */
+let audioRetriedId: number | null = null;
+/** 已处理过的 MediaError：同一失败源会重复派发 error，用对象身份去重（避免误判为二次失败而跳过）。 */
+let lastMediaError: unknown = null;
+
+function invalidateUrl(trackId: number): void {
+  const key = String(trackId);
+  lastUrlCache.delete(key);
+  urlGeneration.set(key, (urlGeneration.get(key) ?? 0) + 1);
+}
+
+function resetStreaks(): void {
+  failedStreak = 0;
+  skipStreak = 0;
+}
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** 解析并缓存播放 URL。`null` = 不可播（值）；抛错 = 真失败，由调用方兜底。 */
+async function resolveTrackUrl(trackId: number): Promise<string | null> {
+  const key = String(trackId);
+  const gen = urlGeneration.get(key) ?? 0;
+  const hit = lastUrlCache.get(key);
+  if (hit) {
+    const ttl = hit.url == null ? UNAVAILABLE_TTL_MS : URL_TTL_MS;
+    if (Date.now() - hit.at <= ttl) return hit.url;
+  }
+  const pending = inflightUrl.get(key);
+  if (pending && pending.gen === gen) return pending.promise;
+  lastUrlCache.delete(key);
+  const promise = resolveUrl(trackId)
+    .then((url) => {
+      // 已被 invalidate（音频 error 后绕过缓存重解析）→ 不回填，避免又拿到同一个坏 URL
+      if ((urlGeneration.get(key) ?? 0) === gen) {
+        lastUrlCache.set(key, { url, at: Date.now() });
+      }
+      return url;
+    })
+    .finally(() => {
+      if (inflightUrl.get(key)?.gen === gen) inflightUrl.delete(key);
+    });
+  inflightUrl.set(key, { gen, promise });
+  return promise;
+}
 
 // ── 库音频 / Player 门面（共享同一 AudioCore 实例） ──
 // audioCore：物理层，订阅其事件驱动 transport；player：编排层（policy + resolver + load/play）。
@@ -39,13 +110,8 @@ export const audioCore = new AudioCore();
 const player = new Player(audioCore, queuePolicy, async (track) => {
   // 反竞态：被更新的切歌取代则返回 null（Player 跳过 load/play）
   const mySeq = playSeq;
-  const key = track.id;
-  let url = lastUrlCache.get(key);
-  if (!url) {
-    url = await resolveUrl(Number(key));
-    if (mySeq !== playSeq) return null; // 已被更新的切歌取代
-    lastUrlCache.set(key, url);
-  }
+  const url = await resolveTrackUrl(Number(track.id));
+  if (mySeq !== playSeq) return null; // 已被更新的切歌取代
   return url;
 });
 
@@ -54,6 +120,7 @@ audioCore.on('timeupdate', (pos) => {
   usePlayerStore.setState({ currentTime: pos });
 });
 audioCore.on('status', (status) => {
+  if (status === 'playing') resetStreaks(); // 真的出声了 → 失败链结束
   usePlayerStore.setState({
     playing: status === 'playing' || status === 'buffering',
     loading: status === 'loading',
@@ -64,31 +131,179 @@ audioCore.on('ended', () => {
   void handleEnded();
 });
 audioCore.on('error', () => {
-  usePlayerStore.setState({ playing: false, loading: false });
-  console.warn('[player] audio error');
+  void handleAudioError();
 });
 
 const queueStore = () => useQueueStore.getState();
 
-/** 播放编排：乐观 loading → resolve（经 resolver）→ load+play（经 Player）。 */
+/**
+ * 播放编排：乐观 loading → resolve（经 resolver）→ load+play（经 Player）。
+ *
+ * 解析 / 加载失败绝不把异常抛给调用方（否则 loading 永远不复位、UI 无限转圈、
+ * `resume()` 又因 `loading` 早退导致无法自愈）：这里兜底为「复位 loading → 提示 → 跳过」。
+ */
 async function resolveAndPlay(item: QueueItem): Promise<void> {
-  recordPlay(item); // 本地播放记录（fire-and-forget，受开关控制）
   const seq = ++playSeq;
+  // 新曲目重置「音频 error 已重试」标记（同一首不重复重试）
+  if (item.track_id !== audioRetriedId) audioRetriedId = null;
   usePlayerStore.setState({
     currentTrack: item,
     currentTime: 0,
     duration: item.duration_secs,
     loading: true,
   });
-  await player.loadAndPlay(queueItemToCoreTrack(item));
+
+  let loaded: boolean;
+  try {
+    loaded = await player.loadAndPlay(queueItemToCoreTrack(item));
+  } catch (e) {
+    if (seq !== playSeq) return; // 已被更新的切歌取代，交给新的那次
+    console.warn('[player] resolve/load failed:', e);
+    await failover(errorMessage(e, '播放失败'));
+    return;
+  }
   if (seq !== playSeq) return; // 已被更新的切歌取代
+  if (!loaded) {
+    // 解析成功但不可播（VIP / 无版权 / 仅试听）→ 值分支：提示 + 跳过
+    usePlayerStore.setState({ loading: false });
+    await skipUnavailable(item);
+    return;
+  }
+  recordPlay(item); // 成功装载后才记本地播放记录（fire-and-forget，受开关控制）
+  prefetchNext(); // 预取下一首 URL，把解析失败移出下一次切歌事务
+}
+
+/**
+ * 预取下一首的播放 URL（对齐 YesPlayMusic `_cacheNextTrack`）。
+ * 只预热缓存，不改任何状态；失败静默吞掉，真正切到它时由 resolveAndPlay 统一处理。
+ */
+function prefetchNext(): void {
+  const next = queueStore().peekNext();
+  if (!next) return;
+  void resolveTrackUrl(next.track_id).catch(() => null);
+}
+
+/** 失败兜底：连续失败达上限即停（避免断网时无限跳歌），否则提示并推进下一首。 */
+async function failover(message: string): Promise<void> {
+  failedStreak += 1;
+  if (failedStreak > MAX_FAILED_STREAK) {
+    toast.error('连续多首歌曲无法播放，已暂停', { id: 'play-fail' });
+    pauseAudio();
+    return;
+  }
+  toast.error(message, { id: 'play-fail' });
+  await stepForward();
+}
+
+/**
+ * 不可播（VIP / 无版权 / 仅试听）→ 对齐 YesPlayMusic 的值分支：提示 + 跳过。
+ * 不计入网络失败计数；skipStreak 防「整队不可播」或 repeat-one 时空转。
+ */
+async function skipUnavailable(item: QueueItem): Promise<void> {
+  skipStreak += 1;
+  if (skipStreak > MAX_UNAVAILABLE_SKIPS) {
+    toast.error('没有可播放的歌曲，已暂停', { id: 'play-skip' });
+    pauseAudio();
+    return;
+  }
+  toast.error(`无法播放：${item.title}`, { id: 'play-skip' });
+  await skipForward();
+}
+
+/** 手动语义推进（跳过当前曲，不回放）——不可播跳过与 `next()` 命令共用。 */
+async function skipForward(): Promise<void> {
+  const q = queueStore();
+  if (q.queue.length === 0) {
+    pauseAudio();
+    return;
+  }
+  const step = q.manualNext();
+  if (step.type === 'play') {
+    const track = q.queue[step.index];
+    if (track) await resolveAndPlay(track);
+    return;
+  }
+  if (q.isFmActive()) {
+    await fmContinuation();
+    return;
+  }
+  pauseAudio();
+}
+
+/** 音频元素报错（签名 URL 过期 / CDN 403 / 网络中断）：绕过缓存重解析一次，仍失败则跳过该曲。 */
+async function handleAudioError(): Promise<void> {
+  usePlayerStore.setState({ playing: false, loading: false });
+  const item = usePlayerStore.getState().currentTrack;
+  // 空 src（reset / clearQueue 触发的空 src 报错）→ 忽略
+  if (!item || !audioCore.src) return;
+  // 同一失败源会重复派发 error —— 用 mediaError 对象身份去重，只处理一次
+  const error = audioCore.mediaError;
+  if (error && error === lastMediaError) return;
+  lastMediaError = error;
+  if (audioRetriedId !== item.track_id) {
+    audioRetriedId = item.track_id;
+    invalidateUrl(item.track_id);
+    console.warn('[player] audio error, retrying with fresh url:', item.track_id);
+    await resolveAndPlay(item);
+    return;
+  }
+  await failover('音频加载失败，已跳过');
+}
+
+/** 自动语义推进（尊重 repeat）：自然结束与网络失败共用，无处可去则停。 */
+async function stepForward(): Promise<void> {
+  if (queueStore().queue.length === 0) {
+    pauseAudio();
+    return;
+  }
+  const step = queueStore().onTrackEnd();
+  if (step.type === 'play') {
+    const track = queueStore().queue[step.index];
+    if (track) await resolveAndPlay(track);
+    return;
+  }
+  if (step.type === 'replayCurrent') {
+    const cur = queueStore().currentTrack();
+    if (cur) await resolveAndPlay(cur);
+    return;
+  }
+  if (queueStore().isFmActive()) {
+    await fmContinuation();
+    return;
+  }
+  pauseAudio();
+}
+
+/** FM 取数 + 重试（线性退避）。全试尽仍抛错，由调用方决定提示与暂停。 */
+async function fetchFmWithRetry(): Promise<QueueItem[]> {
+  let last: unknown;
+  for (let attempt = 0; attempt < FM_FETCH_ATTEMPTS; attempt++) {
+    try {
+      // oxlint-disable-next-line no-await-in-loop 重试必须串行 + 退避，不能 Promise.all
+      return await fetchFm();
+    } catch (e) {
+      last = e;
+      if (attempt < FM_FETCH_ATTEMPTS - 1) {
+        // oxlint-disable-next-line no-await-in-loop 退避等待
+        await delay(FM_FETCH_BACKOFF_MS * (attempt + 1));
+      }
+    }
+  }
+  throw last;
 }
 
 /** FM 续歌循环：End + personal_fm → fetch → appendFm → 重推进。带防死循环 guard。 */
 async function fmContinuation(): Promise<void> {
   for (let i = 0; i < FM_CONTINUE_MAX; i++) {
     const before = fmPolicy.tracks.length;
-    const tracks = await fetchFm();
+    let tracks: QueueItem[];
+    try {
+      tracks = await fetchFmWithRetry();
+    } catch (e) {
+      toast.error(errorMessage(e, '私人漫游加载失败'), { id: 'play-fail' });
+      pauseAudio();
+      return;
+    }
     if (tracks.length === 0) {
       pauseAudio();
       return;
@@ -116,22 +331,7 @@ function pauseAudio(): void {
 
 /** 自然播放结束：按 repeat 推进 / FM 续歌 / 停。 */
 async function handleEnded(): Promise<void> {
-  if (queueStore().queue.length === 0) {
-    pauseAudio();
-    return;
-  }
-  const step = queueStore().onTrackEnd();
-  if (step.type === 'play') {
-    const track = queueStore().queue[step.index];
-    if (track) await resolveAndPlay(track);
-  } else if (step.type === 'replayCurrent') {
-    const cur = queueStore().currentTrack();
-    if (cur) await resolveAndPlay(cur);
-  } else if (queueStore().isFmActive()) {
-    await fmContinuation();
-  } else {
-    pauseAudio();
-  }
+  await stepForward();
 }
 
 export interface PlayerController {
@@ -167,6 +367,9 @@ export const playerService: PlayerController = {
     useQueueStore.getState().restore(snapshot);
     playSeq += 1;
     lastUrlCache.clear();
+    resetStreaks();
+    audioRetriedId = null;
+    lastMediaError = null;
     usePlayerStore.setState({
       currentTrack: useQueueStore.getState().currentTrack(),
       duration: useQueueStore.getState().currentTrack()?.duration_secs ?? 0,
@@ -184,6 +387,7 @@ export const playerService: PlayerController = {
   },
   resume: async () => {
     if (usePlayerStore.getState().loading) return;
+    resetStreaks(); // 用户主动播放：重置失败链
     const q = () => useQueueStore.getState();
     // ended 后点播放 → 从头播放队列
     if (q().isEnded()) {
@@ -237,27 +441,23 @@ export const playerService: PlayerController = {
   },
 
   play: async (track) => {
+    resetStreaks();
     const cur = useQueueStore.getState().playTrack(songToQueueItem(track));
     if (cur) await resolveAndPlay(cur);
   },
   replaceAndPlay: async (tracks, startIndex = 0) => {
+    resetStreaks();
     const cur = useQueueStore
       .getState()
       .replacePlay(tracks.map(songToQueueItem), startIndex);
     if (cur) await resolveAndPlay(cur);
   },
   next: async () => {
-    const q = () => useQueueStore.getState();
-    const step = q().manualNext();
-    if (step.type === 'play') {
-      const track = q().queue[step.index];
-      if (track) await resolveAndPlay(track);
-    } else if (step.type === 'end') {
-      if (q().isFmActive()) await fmContinuation();
-      else await pauseAudio();
-    }
+    resetStreaks();
+    await skipForward();
   },
   prev: async () => {
+    resetStreaks();
     const cur = useQueueStore.getState().prev();
     if (cur) await resolveAndPlay(cur);
   },
@@ -268,6 +468,7 @@ export const playerService: PlayerController = {
     useQueueStore.getState().insertNext(songToQueueItem(track));
   },
   playFromIndex: async (index) => {
+    resetStreaks();
     const cur = useQueueStore.getState().playQueueAt(index);
     if (cur) await resolveAndPlay(cur);
   },
@@ -283,7 +484,11 @@ export const playerService: PlayerController = {
   },
   clearQueue: () => {
     useQueueStore.getState().clear();
+    playSeq += 1; // 使在途 resolve 失效，避免旧曲目被回写
     audioCore.reset();
+    resetStreaks();
+    audioRetriedId = null;
+    lastMediaError = null;
     usePlayerStore.setState({
       currentTrack: null,
       playing: false,
@@ -294,11 +499,12 @@ export const playerService: PlayerController = {
     });
   },
   setContentSource: async (source) => {
+    resetStreaks();
     const q = () => useQueueStore.getState();
     if (source === 'personal_fm') {
-      const tracks = await fetchFm();
+      const tracks = await fetchFmWithRetry(); // 取数失败抛给调用方（viewmodel）提示
       if (tracks.length === 0) return;
-      q().enterFm(tracks[0]);
+      q().enterFm(tracks); // 整批入队：留 lookahead 供下一首预取
       const cur = q().currentTrack();
       if (cur) await resolveAndPlay(cur);
     } else {
@@ -307,6 +513,7 @@ export const playerService: PlayerController = {
     }
   },
   fmTrash: async () => {
+    resetStreaks();
     const q = () => useQueueStore.getState();
     if (!q().isFmActive()) return;
     const removed = q().removeFmCurrent();
