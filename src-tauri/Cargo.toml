@@ -42,5 +42,18 @@ tauri-plugin-cache = "0.1.6"
 tauri-plugin-window-state = "2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.58", features = ["UI_ViewManagement", "Win32_System_Com", "Win32_Media_Audio", "Win32_UI_Shell_PropertiesSystem", "implement"] }
+windows = { version = "0.58", features = [
+    "UI_ViewManagement",
+    "Win32_System_Com",
+    "Win32_Media_Audio",
+    "Win32_UI_Shell_PropertiesSystem",
+    "implement",
+    # Win11 贴靠布局（platform/snap_layout.rs）：最大化按钮上叠一个透明命中层子窗口
+    "Win32_Foundation",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_HiDpi",
+    "Win32_Graphics_Gdi",
+] }
 windows-core = "0.58"

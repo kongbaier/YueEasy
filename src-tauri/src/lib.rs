@@ -100,6 +100,7 @@ pub fn run() {
             commands::ncm::comment::ncm_comment_playlist,
             commands::ncm::comment::ncm_comment_music,
             commands::accent::get_accent_color,
+            commands::window::set_maximize_button_rect,
             commands::history::history_add,
             commands::history::history_get,
             commands::history::history_mark_synced,
