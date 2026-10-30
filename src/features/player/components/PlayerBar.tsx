@@ -100,9 +100,10 @@ const PlayIcon = ({
 };
 
 const PlayerControls = () => {
-  const { togglePlay, next, prev, playing, loading, currentTrack, canPrev } =
+  // 禁用判据用 isPlayable（transport 当前曲 || 队列非空），不用 currentTrack：
+  // 空队列追加歌曲后 index 已是 0、可直接起播，但 transport 还没写入 currentTrack。
+  const { togglePlay, next, prev, playing, loading, isPlayable, canPrev } =
     usePlayer();
-  const hasTrack = !!currentTrack;
   return (
     <article className="flex items-center gap-x-6">
       <section className="flex items-center gap-x-1">
@@ -111,7 +112,7 @@ const PlayerControls = () => {
       <section
         className={cn(
           'flex text-4xl gap-x-3 justify-center items-center-safe transition-opacity duration-300',
-          !hasTrack && 'opacity-30 pointer-events-none',
+          !isPlayable && 'opacity-30 pointer-events-none',
         )}
       >
         <Button

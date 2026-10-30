@@ -105,6 +105,15 @@ export function usePlayer() {
     currentTrack,
     queue,
     queueLength: queue.length,
+    /**
+     * 是否有东西可播（控件启用 / 禁用的唯一判据）。
+     *
+     * 不能只看 `currentTrack`：transport 的 currentTrack 只在真正起播
+     * （`resolveAndPlay`）时写入，而「队列从空到非空」时队列是权威的、已经可播
+     * （`TrackQueue.append` 会把 index 定位到 0），只是还没起播。
+     * 两者都从既有响应式状态派生，不需要任何事件通知。
+     */
+    isPlayable: transport.currentTrack !== null || queue.length > 0,
     currentIndex: queueView.currentIndex,
     isFm: queueView.contentSource === 'personal_fm',
     fmExitWillEmpty: queueView.contentSource !== 'personal_fm',
