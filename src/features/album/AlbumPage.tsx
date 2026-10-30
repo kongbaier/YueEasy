@@ -8,6 +8,7 @@ import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { ScrollArea } from '@/shared/ui/scroll-area';
+import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import { getNcmImageUrl } from '@/shared/utils/image';
 import { useAlbumViewModel } from './hooks/useAlbumViewModel';
 
@@ -59,6 +60,7 @@ const AlbumSkeleton = () => (
 
 const AlbumContent = () => {
   const { id } = useParams<{ id: string }>();
+  const scrollRef = useScrollMemory();
 
   if (!id) throw new Error('无效的专辑 ID');
 
@@ -74,7 +76,7 @@ const AlbumContent = () => {
   if (album.company) metaParts.push(album.company);
 
   return (
-    <ScrollArea className="h-full py-8 pl-8 pr-4">
+    <ScrollArea className="h-full py-8 pl-8 pr-4" ref={scrollRef}>
       <div className="space-y-8">
         {/* ═══ Header ═══ */}
         <div className="flex gap-8 items-center">

@@ -5,6 +5,7 @@ import { Button } from '@/shared/ui/button';
 import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { useAuthViewModel } from '@/features/auth/hooks/useAuthViewModel';
+import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import { usePlayerSetting } from '@/shared/hooks/useSetting';
 import { useRecentPlaysViewModel } from './hooks/useRecentPlaysViewModel';
 
@@ -27,9 +28,10 @@ const RecentPlaysContent = ({
   localEnabled: boolean;
 }) => {
   const { items, handlePlay } = useRecentPlaysViewModel(userId, localEnabled);
+  const scrollRef = useScrollMemory();
 
   return (
-    <ScrollArea className="h-full p-6">
+    <ScrollArea className="h-full p-6" ref={scrollRef}>
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-2">
           <Clock className="h-8 w-8 text-muted-foreground" />

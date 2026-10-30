@@ -5,6 +5,7 @@ import { Button } from '@/shared/ui/button';
 import { PlaylistCard } from '@/shared/components/playlist-card';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { useAuthViewModel } from '@/features/auth/hooks/useAuthViewModel';
+import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import type { Playlist } from '@/shared/types/uiModels';
 import { useMyPlaylistsViewModel } from './hooks/useMyPlaylistsViewModel';
 
@@ -29,6 +30,7 @@ const Section = ({
 };
 
 const MyPlaylistsContent = () => {
+  const scrollRef = useScrollMemory();
   const { userId } = useAuthViewModel();
   if (!userId) throw new Error('未登录');
 
@@ -44,7 +46,7 @@ const MyPlaylistsContent = () => {
   }
 
   return (
-    <ScrollArea className="h-full p-6">
+    <ScrollArea className="h-full p-6" ref={scrollRef}>
       <div className="space-y-8">
         <Section title="创建的歌单" playlists={created} />
         <Section title="收藏的歌单" playlists={favorited} />

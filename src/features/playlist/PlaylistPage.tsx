@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { CommentPanel } from '@/features/comment/components';
 import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
 import { ScrollArea } from '@/shared/ui/scroll-area';
+import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import { usePlaylistViewModel } from './hooks/usePlaylistViewModel';
 import { PlaylistInfo, PlaylistInfoSkeleton } from './components/PlaylistInfo';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
@@ -37,6 +38,7 @@ const PlaylistSkeleton = () => (
 export default function PlaylistPage() {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabKey>('songs');
+  const scrollRef = useScrollMemory();
 
   const resolvedId = Number(id);
 
@@ -52,7 +54,7 @@ export default function PlaylistPage() {
   if (!playlist) return;
 
   return (
-    <ScrollArea className="h-full py-8 pl-8 pr-4">
+    <ScrollArea className="h-full py-8 pl-8 pr-4" ref={scrollRef}>
       <div className="space-y-8">
         {/* ═══ Header ═══ */}
         <PlaylistInfo onPlayAll={handlePlayAll} playlist={playlist} />

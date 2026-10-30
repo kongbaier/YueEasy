@@ -2,6 +2,7 @@ import { Search as SearchIcon, X } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ScrollArea } from '@/shared/ui/scroll-area';
+import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import { cn } from '@/shared/utils/cn';
 import { SEARCH_TABS } from '../constants';
 import { SearchResults } from './SearchResults';
@@ -116,12 +117,13 @@ export function SearchTabs() {
 export function SearchResultsDisplay() {
   const { keyword, searchType, show, handlePlay } = useSearchController();
   const { data, error, isLoading } = useSearchResults();
+  const scrollRef = useScrollMemory();
 
   const hasSearched = keyword.trim().length > 0;
   const results = data ?? null;
 
   return (
-    <ScrollArea className="flex-1 px-6 pb-6">
+    <ScrollArea className="flex-1 px-6 pb-6" ref={scrollRef}>
       <SearchResults
         error={error instanceof Error ? error.message : ''}
         hasSearched={hasSearched}

@@ -13,6 +13,7 @@ import {
   useAppearanceSetting,
   usePlayerSetting,
 } from '@/shared/hooks/useSetting';
+import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import { useSettingsViewModel } from './hooks/useSettingsViewModel';
 import { toast } from '@/shared/lib/toast';
 import type { Theme } from '@/shared/types/settings';
@@ -37,6 +38,7 @@ const windowsEffectLabels: Record<WindowsEffect, string> = {
 
 export default function Settings() {
   usePageTitle('设置', { root: true });
+  const scrollRef = useScrollMemory();
   const [theme, setTheme] = useAppearanceSetting('theme');
   const [windowEffect, setWindowEffectState] =
     useAppearanceSetting('windowEffect');
@@ -103,7 +105,10 @@ export default function Settings() {
   };
 
   return (
-    <ScrollArea className="mx-auto h-full w-full px-4 sm:px-8 py-6 sm:py-8 animate-content-enter">
+    <ScrollArea
+      className="mx-auto h-full w-full px-4 sm:px-8 py-6 sm:py-8 animate-content-enter"
+      ref={scrollRef}
+    >
       {/* Page heading */}
       <div className="mb-6 sm:mb-8 flex items-center gap-3">
         <div className="h-7 w-1 rounded-full bg-primary" />

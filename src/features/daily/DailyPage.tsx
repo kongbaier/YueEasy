@@ -2,12 +2,14 @@ import { Play, Sparkles } from 'lucide-react';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
 import { Button } from '@/shared/ui/button';
 import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
+import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { useAuthViewModel } from '@/features/auth/hooks/useAuthViewModel';
 import { useDailyRecommendViewModel } from './hooks/useDailyRecommendViewModel';
 
 export default function DailyRecommend() {
   usePageTitle('每日推荐', { root: true });
+  const scrollRef = useScrollMemory();
   const { isLoggedIn, openLogin } = useAuthViewModel();
 
   const { songs, handlePlay, handlePlayAll, isLoading } =
@@ -53,7 +55,7 @@ export default function DailyRecommend() {
         </Button>
       </div>
 
-      <ScrollArea className="mt-3 flex-1 px-6">
+      <ScrollArea className="mt-3 flex-1 px-6" ref={scrollRef}>
         <div className="space-y-0.5">
           {songs.map((track, index) => (
             <TrackRow
