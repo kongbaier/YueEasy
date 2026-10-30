@@ -35,7 +35,7 @@ export const AppHeader = () => {
       {canGoBack && (
         <Button
           aria-label="返回"
-          className="ml-2 size-10 p-0 rounded-md hover:bg-accent transition-colors"
+          className="ml-2 size-8 p-0 rounded-md hover:bg-accent transition-colors"
           onClick={() => navigate(-1)}
           type="button"
           variant="ghost"

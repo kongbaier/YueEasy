@@ -161,7 +161,7 @@ export const AppSidebar = () => {
           {!isLoggedIn && (
             <SidebarMenuItem>
               <SidebarMenuButton
-                className="h-10 gap-x-3 [&_svg]:size-5 group-data-[collapsible=icon]:[&_svg]:size-4"
+                className="h-8 gap-x-3 [&_svg]:size-4 group-data-[collapsible=icon]:[&_svg]:size-4"
                 onClick={openLogin}
               >
                 <LogIn />
@@ -174,7 +174,7 @@ export const AppSidebar = () => {
             return (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton
-                  className="h-10 gap-x-3 [&_svg]:size-5 group-data-[collapsible=icon]:[&_svg]:size-4"
+                  className="h-8 gap-x-3 [&_svg]:size-4 group-data-[collapsible=icon]:[&_svg]:size-4"
                   isActive={isActive}
                   onClick={() => navigate(item.to)}
                 >
