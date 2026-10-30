@@ -49,7 +49,7 @@ export function useLikeAction() {
       try {
         await toggleLikeRemote(track.id, next);
         toast.success(
-          next ? `已收藏 ${track.name}` : `已取消收藏 ${track.name}`,
+          next ? `已喜欢 ${track.name}` : `已取消喜欢 ${track.name}`,
         );
       } catch {
         if (next) {

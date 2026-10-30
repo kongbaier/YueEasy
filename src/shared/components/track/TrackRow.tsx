@@ -110,7 +110,7 @@ export const TrackRow = ({
         <ContextMenuSeparator />
         <ContextMenuItem onClick={handleLike}>
           <Heart className="h-4 w-4" fill={liked ? '#ef4444' : 'none'} />
-          {liked ? '取消收藏' : '收藏'}
+          {liked ? '不再喜欢' : '喜欢'}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

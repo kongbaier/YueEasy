@@ -28,7 +28,7 @@ export const LikeButton = ({
       className={cn(liked && 'text-[#ef4444]', className)}
       onClick={handleLike}
       size={size}
-      title={liked ? '取消收藏' : '收藏'}
+      title={liked ? '不再喜欢' : '喜欢'}
       variant="svg"
     >
       <Heart className={`size-${iconSize}`} fill={liked ? '#ef4444' : 'none'} />

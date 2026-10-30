@@ -36,15 +36,20 @@ export default function DailyRecommend() {
     );
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="mt-2 py-2 px-6 flex items-center gap-3">
+    <div className="py-2 h-full flex flex-col">
+      <div className="px-6 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          共 <span className="text-primary px-2">{songs.length}</span>{' '}
+          共 <span className="text-primary px-2">{songs.length}</span>
           首推荐歌曲
         </p>
-        <Button onClick={handlePlayAll} size="sm">
-          <Play className="h-3 w-3" />
-          播放全部
+        <Button
+          aria-label="播放全部"
+          className="rounded-full"
+          onClick={handlePlayAll}
+          size="icon"
+          title="播放全部"
+        >
+          <Play className="size-3" />
         </Button>
       </div>
 
