@@ -11,6 +11,8 @@ import { cn } from '@/shared/utils/cn';
  * 用法约定：
  * - 高度必须由外部给定（`h-full` / `flex-1 min-h-0`），否则容器会随内容撑开而不滚动；
  *   `min-h-0` 已内置，flex 子项不必再写。
+ * - **滚动所有权在页面**：路由页自己给出滚动根（常规 `<ScrollArea className="h-full">`），
+ *   布局层不代管滚动（见 AGENTS.md §8）。
  * - 内边距写在 ScrollArea 上，不要写在子元素上：SimpleBar 会把 padding 搬到内容层、
  *   给滚动视口加反向负边距，这样滚动条贴着容器真正的边缘（写子元素上内容会压到滚动条下面）。
  */

@@ -80,8 +80,8 @@
     transform: translateX(-50%) !important;
   }
 
-  /* content 层默认高度 auto，容器内的 `h-full` 会退化成内容高度（满屏页面的
-     内层滚动容器因此失效）。撑满滚动视口后语义与原生 `h-full` 一致；
+  /* content 层默认高度 auto，容器内的 `h-full` 会退化成内容高度（页面自己作为滚动根时
+     写的 `h-full` / `flex-1` 也因此失效）。撑满滚动视口后语义与原生 `h-full` 一致；
      高度 auto 的容器（如 max-h-* 下拉）不受影响——百分比相对 auto 高度即 auto。 */
   .simplebar-content {
     height: 100%;

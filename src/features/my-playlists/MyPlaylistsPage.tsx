@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
 import { Button } from '@/shared/ui/button';
 import { PlaylistCard } from '@/shared/components/playlist-card';
+import { ScrollArea } from '@/shared/ui/scroll-area';
 import { useAuthViewModel } from '@/features/auth/hooks/useAuthViewModel';
 import type { Playlist } from '@/shared/types/uiModels';
 import { useMyPlaylistsViewModel } from './hooks/useMyPlaylistsViewModel';
@@ -43,10 +44,12 @@ const MyPlaylistsContent = () => {
   }
 
   return (
-    <div className="p-6 space-y-8">
-      <Section title="创建的歌单" playlists={created} />
-      <Section title="收藏的歌单" playlists={favorited} />
-    </div>
+    <ScrollArea className="h-full p-6">
+      <div className="space-y-8">
+        <Section title="创建的歌单" playlists={created} />
+        <Section title="收藏的歌单" playlists={favorited} />
+      </div>
+    </ScrollArea>
   );
 };
 

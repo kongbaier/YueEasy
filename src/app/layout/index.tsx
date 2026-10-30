@@ -2,7 +2,6 @@ import KeepAliveRouteOutlet from 'keepalive-for-react-router';
 import { SidebarProvider } from '@/shared/ui/sidebar';
 import { AppHeader } from './AppHeader';
 import { AppSidebar } from './AppSidebar';
-import { PageScroller } from './PageScroller';
 import { PageTitleProvider } from './PageTitleContext';
 import { PlayerBar } from '@/features/player/components/PlayerBar';
 import { QueuePanel } from '@/features/player/components/QueueDrawer';
@@ -19,12 +18,11 @@ export function AppLayout() {
               <AppHeader />
               <div className="flex-1 min-h-0 min-w-0">
                 {/* /my/liked 是纯守卫页（登录态 + id 解析后立即重定向），无 UI 状态可缓存，
-                    且缓存会让其重定向逻辑在切走后仍存活，故排除出 KeepAlive。 */}
-                <KeepAliveRouteOutlet
-                  exclude={['/my/liked']}
-                  max={5}
-                  wrapperComponent={PageScroller}
-                />
+                    且缓存会让其重定向逻辑在切走后仍存活，故排除出 KeepAlive。
+
+                    滚动所有权在页面：布局层只给一个定高（h-full 可解析）的挂载点，
+                    不提供滚动容器 —— 各页面按自己的结构决定滚什么（见 AGENTS.md §8）。 */}
+                <KeepAliveRouteOutlet exclude={['/my/liked']} max={5} />
               </div>
             </main>
           </div>

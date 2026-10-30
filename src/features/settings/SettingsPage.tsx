@@ -20,6 +20,7 @@ import { Button } from '@/shared/ui/button';
 import { Select } from '@/shared/ui/select';
 import { Switch } from '@/shared/ui/switch';
 import { DecodedImage } from '@/shared/ui/image';
+import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Effect, type WindowsEffect } from '@/shared/types/effect';
 
 const labels: Record<Theme, string> = {
@@ -102,7 +103,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="mx-auto w-full px-4 sm:px-8 py-6 sm:py-8 animate-content-enter">
+    <ScrollArea className="mx-auto h-full w-full px-4 sm:px-8 py-6 sm:py-8 animate-content-enter">
       {/* Page heading */}
       <div className="mb-6 sm:mb-8 flex items-center gap-3">
         <div className="h-7 w-1 rounded-full bg-primary" />
@@ -334,7 +335,7 @@ export default function Settings() {
           </div>
         </SectionCard>
       </div>
-    </div>
+    </ScrollArea>
   );
 }
 
