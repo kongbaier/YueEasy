@@ -112,25 +112,25 @@ const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
   const { state, toggleFullscreen } = useWindowState();
 
   return (
-    <header className="flex items-center h-10 shrink-0" data-drag-region>
+    <header className="h-12 flex items-center shrink-0" data-drag-region>
       <button
-        className="flex items-center justify-center size-8 rounded ml-1 hover:bg-accent"
+        className="flex items-center justify-center size-10 rounded-md ml-2 hover:bg-accent"
         onClick={handleBack}
         type="button"
       >
         <ChevronDown className="size-5" />
       </button>
-      <div className="ml-auto flex items-center mr-1">
+      <div className="ml-auto flex items-center">
         <button
-          className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-gray-500/20"
+          className="size-12 text-foreground flex items-center justify-center rounded-none hover:bg-gray-500/20"
           onClick={toggleFullscreen}
           type="button"
           title={state === 'fullscreen' ? '退出全屏' : '全屏'}
         >
           {state === 'fullscreen' ? (
-            <Minimize className="size-4" />
+            <Minimize className="size-5" />
           ) : (
-            <Maximize className="size-4" />
+            <Maximize className="size-5" />
           )}
         </button>
         {state !== 'fullscreen' && <WindowControls />}

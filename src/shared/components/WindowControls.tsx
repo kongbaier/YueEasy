@@ -18,12 +18,9 @@ export const WindowControls = ({ className }: { className?: string }) => {
   if (state === 'fullscreen') return null;
 
   return (
-    <div
-      className={`flex space-x-1 z-50 text-foreground ${className}`}
-      data-drag-region
-    >
+    <div className={`flex z-50 text-foreground ${className}`} data-drag-region>
       <Button
-        className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-gray-500/20"
+        className="size-12 text-foreground flex items-center justify-center rounded-none border-none hover:bg-gray-500/20"
         onPointerUp={handleMinimize}
         type="button"
         variant="ghost"
@@ -34,7 +31,7 @@ export const WindowControls = ({ className }: { className?: string }) => {
       <Button
         ref={maximizeRef}
         className={cn(
-          'w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-gray-500/20',
+          'size-12 text-foreground flex items-center justify-center rounded-none border-none hover:bg-gray-500/20',
           // 命中区归系统后 :hover 不再触发，用原生回灌的悬停态补高亮。
           maximizeHovered && 'bg-gray-500/20',
         )}
@@ -50,7 +47,7 @@ export const WindowControls = ({ className }: { className?: string }) => {
       </Button>
 
       <Button
-        className="w-8 h-8 text-foreground flex items-center justify-center rounded hover:bg-destructive hover:text-destructive-foreground"
+        className="size-12 text-foreground flex items-center justify-center rounded-none border-none hover:bg-destructive hover:text-destructive-foreground"
         onPointerUp={handleClose}
         type="button"
         variant="ghost"

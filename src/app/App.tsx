@@ -17,7 +17,7 @@ export default function App() {
     <Providers>
       <CoverGlowDefs />
       <AppRouter />
-      <Toaster position="top-right" richColors style={{ top: '2.5rem' }} />
+      <Toaster position="top-right" richColors style={{ top: '3.25rem' }} />
     </Providers>
   );
 }

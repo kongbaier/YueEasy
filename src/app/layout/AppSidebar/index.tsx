@@ -56,7 +56,7 @@ const SidebarBrand = ({ expanded }: { expanded: boolean }) => (
         initial={{ maxWidth: 0, opacity: 0 }}
         transition={{ duration: 0.2 }}
       >
-        <img alt="icon" className="size-4" src="/icon.svg" />
+        <img alt="icon" className="size-5" src="/icon.svg" />
         <span className="text-sm">
           <span className="text-red-400">乐</span>·易
         </span>
@@ -95,24 +95,28 @@ export const AppSidebar = () => {
       className="static h-full border-sidebar-border"
     >
       <SidebarHeader
-        className="h-10 flex-row items-center shrink-0 justify-between overflow-hidden"
+        // 覆盖 SidebarHeader 默认的 p-2：标题栏要整条等高，垂直方向不能留内边距；
+        // 折叠态侧栏只有 3rem 宽，横向 padding 收到 4px 才能容纳 40px 的折叠按钮。
+        className="h-12 flex-row items-center shrink-0 justify-between overflow-hidden px-2 py-0 group-data-[collapsible=icon]:justify-center"
         data-drag-region
       >
         <SidebarBrand expanded={state === 'expanded'} />
 
-        <SidebarTrigger />
+        <SidebarTrigger
+          className={cn('size-8  hover:bg-surface-hover', '[&_svg]:size-4')}
+        />
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
+            <SidebarMenu className="space-y-1">
               {items.map((item) => {
                 const isActive = activeKey === item.to;
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton
-                      className="gap-x-3"
+                      className="h-8 gap-x-3 [&_svg]:size-4 group-data-[collapsible=icon]:[&_svg]:size-4"
                       isActive={isActive}
                       onClick={() => navigate(item.to)}
                     >
@@ -131,13 +135,13 @@ export const AppSidebar = () => {
             我的
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
+            <SidebarMenu className="space-y-1">
               {myItems.map((item) => {
                 const isActive = activeKey === item.to;
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton
-                      className="gap-x-3"
+                      className="h-8 gap-x-3 [&_svg]:size-4  group-data-[collapsible=icon]:[&_svg]:size-4"
                       isActive={isActive}
                       onClick={() => navigate(item.to)}
                     >
@@ -153,10 +157,13 @@ export const AppSidebar = () => {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu className="space-y-0.5">
+        <SidebarMenu className="space-y-1">
           {!isLoggedIn && (
             <SidebarMenuItem>
-              <SidebarMenuButton className="gap-x-3" onClick={openLogin}>
+              <SidebarMenuButton
+                className="h-10 gap-x-3 [&_svg]:size-5 group-data-[collapsible=icon]:[&_svg]:size-4"
+                onClick={openLogin}
+              >
                 <LogIn />
                 <span>登录</span>
               </SidebarMenuButton>
@@ -167,7 +174,7 @@ export const AppSidebar = () => {
             return (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton
-                  className="gap-x-3"
+                  className="h-10 gap-x-3 [&_svg]:size-5 group-data-[collapsible=icon]:[&_svg]:size-4"
                   isActive={isActive}
                   onClick={() => navigate(item.to)}
                 >

@@ -29,23 +29,23 @@ export const AppHeader = () => {
 
   return (
     <header
-      className="h-10 flex items-center shrink-0 select-none"
+      className="h-12 flex items-center shrink-0 select-none"
       data-drag-region
     >
       {canGoBack && (
         <Button
           aria-label="返回"
-          className="ml-2 size-6 p-0 rounded-md hover:bg-black/10 transition-colors"
+          className="ml-2 size-10 p-0 rounded-md hover:bg-accent transition-colors"
           onClick={() => navigate(-1)}
           type="button"
           variant="ghost"
           size="sm"
         >
-          <ChevronLeft className="size-4" />
+          <ChevronLeft className="size-5" />
         </Button>
       )}
       {breadcrumbs.length > 0 && (
-        <nav className="ml-3 flex items-center gap-1.5 text-xs min-w-0">
+        <nav className="ml-3 flex items-center gap-1.5 text-sm min-w-0">
           <span className="text-muted-foreground/60 font-medium">乐·易</span>
           {breadcrumbs.map((entry) => (
             <span
@@ -60,7 +60,7 @@ export const AppHeader = () => {
           ))}
         </nav>
       )}
-      <WindowControls className="ml-auto mr-1" />
+      <WindowControls className="ml-auto" />
     </header>
   );
 };
