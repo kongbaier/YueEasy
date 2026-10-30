@@ -7,4 +7,3 @@ pub mod like;
 pub mod media_session;
 pub mod ncm;
 pub mod query;
-pub mod window;
