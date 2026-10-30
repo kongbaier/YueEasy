@@ -28,7 +28,8 @@ export const ImagePlaceholder = ({
   if (children !== undefined) return <>{children}</>;
   return (
     <Skeleton
-      className={cn('absolute inset-0 size-full', className)}
+      // div 是块级盒：inset-0 已把四边拉满，无需再加 size-full
+      className={cn('absolute inset-0', className)}
       shimmer={shimmer}
     />
   );

@@ -52,8 +52,10 @@ export const Cover = ({
   foregroundClassName,
 }: CoverProps) => {
   return (
+    // 不写 `isolate`/`relative`：非 none 的 filter 本身就会建 stacking context 与
+    // containing block（无片源时本层本来也是空的）；子层 CrossfadeImage 自带 `relative`。
     <div
-      className={cn('isolate relative', className)}
+      className={className}
       style={src ? { filter: `url(#${COVER_GLOW_FILTER_ID})` } : undefined}
     >
       {src && (

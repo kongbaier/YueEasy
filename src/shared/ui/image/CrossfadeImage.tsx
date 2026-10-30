@@ -2,7 +2,6 @@ import { cn } from '@/shared/utils/cn';
 import { useDecodedSrc } from '@/shared/hooks/useDecodedSrc';
 import { ImagePlaceholder } from './ImagePlaceholder';
 import {
-  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -30,6 +29,13 @@ const defaultAnimateOut = (el: HTMLElement, opts: KeyframeAnimationOptions) =>
 const defaultAnimateIn = (el: HTMLElement, opts: KeyframeAnimationOptions) =>
   el.animate([{ opacity: 0 }, { opacity: 1 }], opts);
 
+/**
+ * 交叉淡出的两层共用定位：
+ * - `size-full` 必需：`inset-0` 对**替换元素**不拉伸（图片按内在尺寸停在左上角）
+ * - 只需 `left/top`：w/h 已确定，`right/bottom` 属于 over-constrained 会被浏览器丢弃
+ */
+const LAYER_CLASS = 'absolute left-0 top-0 size-full object-cover';
+
 interface CrossfadeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
   containerClassName?: string;
@@ -46,6 +52,13 @@ interface CrossfadeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> 
  * 新图完整解码后才挂载并淡入淡出（避免渐进式图片逐行绘制 + 换源空窗）。
  *
  * 解码状态机在 `useDecodedSrc`（与 DecodedImage 共用），本组件只负责相位编排与动画。
+ *
+ * 两条硬约束：
+ * 1. `<img>` 必须满填充（`size-full`）：`inset-0` 对**替换元素**不会拉伸，
+ *    `width/height:auto` 走内在尺寸（CSS 2.1 §10.3.8），小图因此停在左上角不铺满。
+ * 2. `current`/`previous` 必须在**渲染期**同步推进（React「render 中调整 state」）：
+ *    若放在 effect 里推进，新图会先独占一帧提交（旧图已卸载）再回头做交叉淡出，
+ *    表现为「新图闪一下 → 旧图闪回来 → 才淡入」。
  */
 export const CrossfadeImage = ({
   src,
@@ -60,17 +73,20 @@ export const CrossfadeImage = ({
   const reduceMotion = usePrefersReducedMotion();
   const { ref: containerRef, decodedSrc } = useDecodedSrc<HTMLDivElement>(src);
 
-  const [previous, setPrevious] = useState<string>();
-  // 镜像已落位的 src，供 decodedSrc 更新回调读取，避免闭包过期
-  const settledRef = useRef<string | undefined>(undefined);
+  // 已提交到 DOM 的 { 当前图, 离场图 }：两者必须在同一次提交里挂载
+  const [frames, setFrames] = useState<{
+    current?: string;
+    previous?: string;
+  }>({});
 
-  // 新图就绪 → 旧图转入离场队列；prefers-reduced-motion 时直接切换
-  useEffect(() => {
-    if (!decodedSrc || decodedSrc === settledRef.current) return;
-    const prev = settledRef.current;
-    settledRef.current = decodedSrc;
-    setPrevious(reduceMotion ? undefined : prev);
-  }, [decodedSrc, reduceMotion]);
+  // 新图就绪 → 同一次提交内挂上旧图（prefers-reduced-motion 时直接切换，不排离场）
+  if (decodedSrc !== frames.current) {
+    setFrames({
+      current: decodedSrc,
+      previous: reduceMotion ? undefined : frames.current,
+    });
+  }
+  const { current, previous } = frames;
 
   const prevNodeRef = useRef<HTMLImageElement>(null);
   const curNodeRef = useRef<HTMLImageElement>(null);
@@ -93,14 +109,15 @@ export const CrossfadeImage = ({
 
     let cancelled = false;
 
-    outAnim.finished.then(() => {
+    // 离场动画结束 → 卸载旧图（cancelled 时 finished 会 reject，交白卷即可）
+    const settle = () => {
       if (cancelled) return;
-      setPrevious(undefined);
-    });
+      setFrames((f) => (f.previous === previous ? { current: f.current } : f));
+    };
 
-    const fallback = setTimeout(() => {
-      if (!cancelled) setPrevious(undefined);
-    }, duration + 100);
+    void outAnim.finished.then(settle, () => {});
+
+    const fallback = setTimeout(settle, duration + 100);
 
     return () => {
       cancelled = true;
@@ -108,30 +125,30 @@ export const CrossfadeImage = ({
       outAnim.cancel();
       inAnim.cancel();
     };
-  }, [previous, decodedSrc, duration, easing, animateOut, animateIn]);
+  }, [previous, duration, easing, animateOut, animateIn]);
 
   return (
     <div
       ref={containerRef}
       className={cn('relative overflow-hidden size-full', containerClassName)}
     >
-      {!decodedSrc && <ImagePlaceholder />}
+      {!current && <ImagePlaceholder />}
       {previous && (
         <img
           key={previous}
           ref={prevNodeRef}
           src={previous}
           {...props}
-          className={cn('absolute inset-0 object-cover', className)}
+          className={cn(LAYER_CLASS, className)}
         />
       )}
-      {decodedSrc && (
+      {current && (
         <img
-          key={decodedSrc}
+          key={current}
           ref={curNodeRef}
-          src={decodedSrc}
+          src={current}
           {...props}
-          className={cn('absolute inset-0 object-cover', className)}
+          className={cn(LAYER_CLASS, className)}
         />
       )}
     </div>
