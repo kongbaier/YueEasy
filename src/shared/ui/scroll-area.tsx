@@ -15,6 +15,8 @@ import { cn } from '@/shared/utils/cn';
  *   布局层不代管滚动（见 AGENTS.md §8）。
  * - 内边距写在 ScrollArea 上，不要写在子元素上：SimpleBar 会把 padding 搬到内容层、
  *   给滚动视口加反向负边距，这样滚动条贴着容器真正的边缘（写子元素上内容会压到滚动条下面）。
+ *   这条依赖 `index.css` 里 `.simplebar-content` 的 `height: 100% + min-height: fit-content`：
+ *   只有 `height: 100%` 时内容会溢出内容盒，`pb` 不计入 scrollHeight（底部留白消失）。
  */
 export const ScrollArea = ({
   className,

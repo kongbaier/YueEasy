@@ -85,6 +85,12 @@
      高度 auto 的容器（如 max-h-* 下拉）不受影响——百分比相对 auto 高度即 auto。 */
   .simplebar-content {
     height: 100%;
+    /* 但高度锁死 100% 时，超出视口的内容会溢出内容盒，padding-bottom 落在「溢出之前」，
+       SimpleBar 统计的 scrollHeight 不含它 —— 表现为写在 ScrollArea 上的 pb 不生效
+       （pt 正常，pb 滚到底看不到留白）。这里给 min-height 放开上限：内容撑高时 content
+       跟着长，pb 重新排在最后一个子元素之后；内容不足时仍由 height:100% 撑满视口，
+       容器内 `h-full` 的语义不变。 */
+    min-height: fit-content;
   }
 
   /* react-virtuoso（Element 模式）的视口是绝对定位：绝对定位子树不计入
