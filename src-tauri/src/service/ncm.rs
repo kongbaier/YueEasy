@@ -6,8 +6,8 @@ use tauri::AppHandle;
 
 use crate::model::entity::{
     AlbumDetail, AuthSession, Banner, CommentPage, DragonBallItem, HotSearchItem, IntelligenceSong,
-    LikeList, LoginStatus, Lyric, Playlist, PlaylistHotTag, PlaylistPage, QrCheck, QrCreate, QrKey,
-    RecentSongs, SearchResult, Song, SongUrlResult, SuggestResult,
+    KeywordSuggest, LikeList, LoginStatus, Lyric, Playlist, PlaylistHotTag, PlaylistPage, QrCheck,
+    QrCreate, QrKey, RecentSongs, SearchResult, Song, SongUrlResult,
 };
 use crate::model::error::{check_code, NcmApiError, Result};
 use crate::model::{mapper, response};
@@ -439,20 +439,23 @@ impl NcmService {
         Ok(mapper::map_search_result(result))
     }
 
-    pub async fn search_suggest(
+    pub async fn search_suggest_keyword(
         app: &AppHandle,
         state: &NcmState,
         keywords: String,
-    ) -> Result<SuggestResult> {
-        let q = Query::new().param("keywords", &keywords);
+    ) -> Result<Vec<KeywordSuggest>> {
+        // PC 关键词联想接口：返回 keywords + 高亮分段 + 角标（热搜），
+        // 与官方输入框下拉一致；实体联想（songs/albums/artists）不在此处使用。
+        let q = Query::new().param("keyword", &keywords);
         let client = state.client();
-        let dto: response::SuggestResponseDto = fetch(state, app, client.search_suggest(&q)).await?;
+        let dto: response::PcSuggestResponseDto = fetch(state, app, client.search_suggest_pc(&q)).await?;
         check_code(dto.code, dto.message.as_deref())?;
-        let result = dto
-            .result
-            .ok_or_else(|| NcmApiError::decode("搜索建议响应缺少 result 字段"))?;
-        Ok(mapper::map_suggest_result(result))
+        let data = dto
+            .data
+            .ok_or_else(|| NcmApiError::decode("搜索建议响应缺少 data 字段"))?;
+        Ok(mapper::map_keyword_suggest(data))
     }
+
 
     pub async fn search_hot(app: &AppHandle, state: &NcmState) -> Result<Vec<HotSearchItem>> {
         let q = Query::new();

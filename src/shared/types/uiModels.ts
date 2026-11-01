@@ -163,27 +163,19 @@ export interface SearchResult {
   userCount: number;
 }
 
-export interface SuggestSong {
-  id: number;
-  name: string;
-  artists: string[];
+export interface SuggestHighlight {
+  /** 分段文本 */
+  text: string;
+  /** 是否命中输入的关键词（前端着主题色） */
+  highlighted: boolean;
 }
 
-export interface SuggestAlbum {
-  id: number;
-  name: string;
-  artist?: string;
-}
-
-export interface SuggestArtist {
-  id: number;
-  name: string;
-}
-
-export interface SuggestResult {
-  songs: SuggestSong[];
-  albums: SuggestAlbum[];
-  artists: SuggestArtist[];
+/** 搜索建议：关键词联想（点选后按整串关键词重新搜索，与官方输入框一致） */
+export interface KeywordSuggest {
+  keyword: string;
+  /** 角标，如「热搜」 */
+  tag?: string;
+  highlights: SuggestHighlight[];
 }
 
 export interface HotSearchItem {

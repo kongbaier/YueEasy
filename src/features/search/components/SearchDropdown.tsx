@@ -1,9 +1,8 @@
 import { useSearchHot, useSearchSuggest } from '../hooks/useSearch';
 import { useSearchController } from '../hooks/useSearchController';
-import { Clock, Disc, Music, Search, User, TrendingUp, X } from 'lucide-react';
+import { Clock, Search, TrendingUp, X } from 'lucide-react';
 import { ScrollArea } from '@/shared/ui/scroll-area';
-import { suggestionKey } from '../constants';
-import type { SuggestionItem } from '../constants';
+import type { KeywordSuggest } from '@/shared/types/uiModels';
 import { useEffect, useRef } from 'react';
 
 interface HistorySectionProps {
@@ -127,19 +126,13 @@ function HotDropdown({
 }
 
 interface SuggestDropdownProps {
-  /** 建议项列表 */
-  items: SuggestionItem[];
+  /** 关键词联想项（点选后按整串关键词重新搜索，与官方输入框一致） */
+  items: KeywordSuggest[];
   /** 选中某个建议 */
   onPick: (keyword: string) => void;
   /** 关闭下拉面板（点击外部） */
   onClose: () => void;
 }
-
-const ICON_MAP = {
-  song: Music,
-  album: Disc,
-  artist: User,
-};
 
 function SuggestDropdown({ items, onPick, onClose }: SuggestDropdownProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -170,20 +163,31 @@ function SuggestDropdown({ items, onPick, onClose }: SuggestDropdownProps) {
         </span>
       </div>
       <ScrollArea className="max-h-64">
-        {items.map((item) => {
-          const Icon = ICON_MAP[item.kind];
-          return (
-            <button
-              className="flex items-center gap-3 w-full rounded-[3px] px-2.5 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
-              key={suggestionKey(item)}
-              onClick={() => onPick(item.keyword)}
-              type="button"
-            >
-              <Icon className="size-4 text-muted-foreground shrink-0" />
-              <span className="flex-1 truncate">{item.label}</span>
-            </button>
-          );
-        })}
+        {items.map((item) => (
+          <button
+            className="flex items-center gap-2 w-full rounded-[3px] px-2.5 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
+            key={item.keyword}
+            onClick={() => onPick(item.keyword)}
+            type="button"
+          >
+            <Search className="size-3.5 shrink-0 text-muted-foreground" />
+            <span className="flex-1 truncate">
+              {item.highlights.map((seg) => (
+                <span
+                  className={seg.highlighted ? 'text-primary' : undefined}
+                  key={`${item.keyword}:${seg.text}:${seg.highlighted}`}
+                >
+                  {seg.text}
+                </span>
+              ))}
+            </span>
+            {item.tag && (
+              <span className="shrink-0 rounded-full bg-orange-500/10 px-1.5 py-0.5 text-[10px] leading-none text-orange-500">
+                {item.tag}
+              </span>
+            )}
+          </button>
+        ))}
       </ScrollArea>
     </div>
   );

@@ -5,13 +5,13 @@ import { invoke } from '@tauri-apps/api/core';
 import type {
   AlbumDetail,
   HotSearchItem,
+  KeywordSuggest,
   LikeList,
   Lyric,
   RecentSongs,
   SearchResult,
   Song,
   SongUrlResult,
-  SuggestResult,
 } from '@/shared/types/uiModels';
 
 export const search = (
@@ -62,8 +62,10 @@ export const searchUser = (
     offset,
   });
 
-export const searchSuggest = (keywords: string): Promise<SuggestResult> =>
-  invoke<SuggestResult>('ncm_search_suggest', { keywords });
+export const searchSuggestKeyword = (
+  keywords: string,
+): Promise<KeywordSuggest[]> =>
+  invoke<KeywordSuggest[]>('ncm_search_suggest_keyword', { keywords });
 
 export const albumDetail = (id: number): Promise<AlbumDetail> =>
   invoke<AlbumDetail>('ncm_album', { id });

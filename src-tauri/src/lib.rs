@@ -74,7 +74,7 @@ pub fn run() {
             commands::ncm::auth::ncm_get_cookie,
             commands::ncm::auth::ncm_clear_cookie,
             commands::ncm::search::ncm_cloudsearch,
-            commands::ncm::search::ncm_search_suggest,
+            commands::ncm::search::ncm_search_suggest_keyword,
             commands::ncm::search::ncm_search_hot,
             commands::ncm::song::ncm_album,
             commands::ncm::song::ncm_song_url_v1,

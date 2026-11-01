@@ -261,34 +261,22 @@ pub struct SearchResult {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SuggestSong {
-    pub id: i64,
-    pub name: String,
-    pub artists: Vec<String>,
+pub struct SuggestHighlight {
+    pub text: String,
+    /// 命中输入关键词的片段（前端着主题色）。
+    pub highlighted: bool,
 }
 
+/// 搜索建议：关键词联想（对齐官方输入框下拉——点选后按整串关键词再搜，
+/// 而不是直接跳某首歌 / 某张专辑）。
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SuggestAlbum {
-    pub id: i64,
-    pub name: String,
+pub struct KeywordSuggest {
+    pub keyword: String,
+    /// 角标，如「热搜」；没有角标时整体省略。
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub artist: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SuggestArtist {
-    pub id: i64,
-    pub name: String,
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SuggestResult {
-    pub songs: Vec<SuggestSong>,
-    pub albums: Vec<SuggestAlbum>,
-    pub artists: Vec<SuggestArtist>,
+    pub tag: Option<String>,
+    pub highlights: Vec<SuggestHighlight>,
 }
 
 #[derive(Debug, Clone, Serialize)]

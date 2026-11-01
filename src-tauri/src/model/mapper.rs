@@ -225,35 +225,42 @@ pub fn map_search_result(d: response::SearchResultDto) -> ent::SearchResult {
     }
 }
 
-pub fn map_suggest_result(d: response::SuggestResultDto) -> ent::SuggestResult {
-    ent::SuggestResult {
-        songs: d
-            .songs
-            .into_iter()
-            .map(|s| ent::SuggestSong {
-                id: s.id,
-                name: s.name,
-                artists: s.artists.into_iter().map(|a| a.name).collect(),
-            })
-            .collect(),
-        albums: d
-            .albums
-            .into_iter()
-            .map(|a| ent::SuggestAlbum {
-                id: a.id,
-                name: a.name,
-                artist: a.artist.map(|x| x.name),
-            })
-            .collect(),
-        artists: d
-            .artists
-            .into_iter()
-            .map(|a| ent::SuggestArtist {
-                id: a.id,
-                name: a.name,
-            })
-            .collect(),
+/// 搜索建议（PC 关键词联想）：把 `highLightInfo` 这个 JSON 字符串解析成分段文本。
+/// 缺失 / 解析失败时退化成「整串不高亮」，保证下拉永远有可点文本。
+pub fn map_keyword_suggest(data: response::PcSuggestDataDto) -> Vec<ent::KeywordSuggest> {
+    data.suggests
+        .into_iter()
+        .filter(|s| !s.keyword.trim().is_empty())
+        .map(|s| {
+            let highlights = map_suggest_highlights(s.high_light_info.as_deref(), &s.keyword);
+            ent::KeywordSuggest {
+                keyword: s.keyword,
+                tag: s.tag,
+                highlights,
+            }
+        })
+        .collect()
+}
+
+fn map_suggest_highlights(raw: Option<&str>, keyword: &str) -> Vec<ent::SuggestHighlight> {
+    let parsed = raw
+        .and_then(|r| serde_json::from_str::<Vec<response::SuggestHighlightDto>>(r).ok())
+        .unwrap_or_default();
+
+    if parsed.is_empty() {
+        return vec![ent::SuggestHighlight {
+            text: keyword.to_string(),
+            highlighted: false,
+        }];
     }
+
+    parsed
+        .into_iter()
+        .map(|h| ent::SuggestHighlight {
+            text: h.text,
+            highlighted: h.highlighted,
+        })
+        .collect()
 }
 
 pub fn map_hot_search(result: Option<response::SearchHotResultDto>) -> Vec<ent::HotSearchItem> {
@@ -442,5 +449,49 @@ mod tests {
     fn search_song_omits_absent_origin_cover_type() {
         let value = serde_json::to_value(search_song(None)).expect("serialize");
         assert!(value.as_object().expect("object").get("originCoverType").is_none());
+    }
+
+    /// `highLightInfo` 是 JSON 字符串，解析后必须还原分段与高亮标记（实测键名 `highLighted`）。
+    #[test]
+    fn keyword_suggest_parses_highlight_segments() {
+        let dto: response::PcSuggestDataDto = serde_json::from_value(json!({
+            "suggests": [{
+                "keyword": "天龙八部之宿敌DJ",
+                "tag": "热搜",
+                "highLightInfo": "[{\"text\":\"天龙八部之宿敌\",\"highLighted\":true},{\"text\":\"DJ\",\"highLighted\":false}]"
+            }]
+        }))
+        .expect("decode");
+
+        let items = map_keyword_suggest(dto);
+        assert_eq!(items.len(), 1);
+        let item = &items[0];
+        assert_eq!(item.keyword, "天龙八部之宿敌DJ");
+        assert_eq!(item.tag.as_deref(), Some("热搜"));
+        assert_eq!(item.highlights.len(), 2);
+        assert_eq!(item.highlights[0].text, "天龙八部之宿敌");
+        assert!(item.highlights[0].highlighted);
+        assert_eq!(item.highlights[1].text, "DJ");
+        assert!(!item.highlights[1].highlighted);
+    }
+
+    /// 高亮信息缺失 / 坏 JSON 时退化为整串不高亮，且丢掉空关键词。
+    #[test]
+    fn keyword_suggest_falls_back_when_highlight_missing() {
+        let dto: response::PcSuggestDataDto = serde_json::from_value(json!({
+            "suggests": [
+                { "keyword": "晴天", "tag": null, "highLightInfo": null },
+                { "keyword": "  " }
+            ]
+        }))
+        .expect("decode");
+
+        let items = map_keyword_suggest(dto);
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].keyword, "晴天");
+        assert_eq!(items[0].tag, None);
+        assert_eq!(items[0].highlights.len(), 1);
+        assert_eq!(items[0].highlights[0].text, "晴天");
+        assert!(!items[0].highlights[0].highlighted);
     }
 }

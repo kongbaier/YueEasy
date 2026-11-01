@@ -540,57 +540,42 @@ pub struct CloudsearchResponseDto {
     pub message: Option<String>,
 }
 
+/// 搜索建议里的高亮分段（PC 关键词接口把高亮信息塞进一个 JSON 字符串里）。
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SuggestArtistRefDto {
+pub struct SuggestHighlightDto {
     #[serde(default, deserialize_with = "de_string_nullable")]
-    pub name: String,
+    pub text: String,
+    /// 实测字段名是大写的 `highLighted`，与 camelCase 规则不一致。
+    #[serde(default, alias = "highLighted")]
+    pub highlighted: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SuggestSongDto {
-    pub id: i64,
+pub struct PcSuggestItemDto {
     #[serde(default, deserialize_with = "de_string_nullable")]
-    pub name: String,
+    pub keyword: String,
+    /// 角标，如「热搜」；多数条目为 null。
     #[serde(default)]
-    pub artists: Vec<SuggestArtistRefDto>,
+    pub tag: Option<String>,
+    /// JSON 编码的字符串：`[{"text":"…","highLighted":true}]`，由 mapper 解析。
+    #[serde(default)]
+    pub high_light_info: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SuggestAlbumDto {
-    pub id: i64,
-    #[serde(default, deserialize_with = "de_string_nullable")]
-    pub name: String,
+pub struct PcSuggestDataDto {
     #[serde(default)]
-    pub artist: Option<SuggestArtistRefDto>,
+    pub suggests: Vec<PcSuggestItemDto>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SuggestArtistDto {
-    pub id: i64,
-    #[serde(default, deserialize_with = "de_string_nullable")]
-    pub name: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SuggestResultDto {
+pub struct PcSuggestResponseDto {
     #[serde(default)]
-    pub songs: Vec<SuggestSongDto>,
-    #[serde(default)]
-    pub albums: Vec<SuggestAlbumDto>,
-    #[serde(default)]
-    pub artists: Vec<SuggestArtistDto>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SuggestResponseDto {
-    #[serde(default)]
-    pub result: Option<SuggestResultDto>,
+    pub data: Option<PcSuggestDataDto>,
     #[serde(default)]
     pub code: Option<i64>,
     #[serde(default, alias = "msg")]

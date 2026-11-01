@@ -33,25 +33,6 @@ export const TYPE_LABEL: Record<SearchType, string> = {
   [SearchType.USER]: '用户',
 };
 
-export interface SuggestionItem {
-  /** 实体 id（与 kind 组合后唯一） */
-  id: number;
-  /** 展示文本（含副标题，如 "七里香 — 周杰伦"） */
-  label: string;
-  /** 点击后填入搜索框的关键词 */
-  keyword: string;
-  /** 类型：歌曲 / 专辑 / 歌手 */
-  kind: 'song' | 'album' | 'artist';
-}
-
-/**
- * 建议项唯一标识：列表 key 与去重共用。
- * 必须带 kind 前缀——歌曲 / 专辑 / 歌手的 id 各自独立编号，会重号。
- * 不能用 label：同名专辑 / 同名歌曲的 label 完全相同。
- */
-export const suggestionKey = (item: SuggestionItem) =>
-  `${item.kind}:${item.id}`;
-
 /** 各搜索分类对应的实体类型 */
 export interface SearchEntityMap {
   [SearchType.SONG]: SearchSong;

@@ -2,7 +2,7 @@
 
 use tauri::{AppHandle, State};
 
-use crate::model::entity::{HotSearchItem, SearchResult, SuggestResult};
+use crate::model::entity::{HotSearchItem, KeywordSuggest, SearchResult};
 use crate::model::error::Result;
 use crate::netease::NcmState;
 use crate::service::NcmService;
@@ -20,12 +20,12 @@ pub(crate) async fn ncm_cloudsearch(
 }
 
 #[tauri::command]
-pub(crate) async fn ncm_search_suggest(
+pub(crate) async fn ncm_search_suggest_keyword(
     app_handle: AppHandle,
     state: State<'_, NcmState>,
     keywords: String,
-) -> Result<SuggestResult> {
-    NcmService::search_suggest(&app_handle, &state, keywords).await
+) -> Result<Vec<KeywordSuggest>> {
+    NcmService::search_suggest_keyword(&app_handle, &state, keywords).await
 }
 
 #[tauri::command]
