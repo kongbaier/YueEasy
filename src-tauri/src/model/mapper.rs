@@ -53,6 +53,10 @@ pub fn map_song(d: response::SongDto) -> ent::Song {
     }
 }
 
+pub fn map_songs(dtos: Vec<response::SongDto>) -> Vec<ent::Song> {
+    dtos.into_iter().map(map_song).collect()
+}
+
 fn map_user(d: response::UserDto) -> ent::User {
     ent::User {
         id: d.user_id,
@@ -102,6 +106,10 @@ pub fn map_playlist(d: response::PlaylistDto) -> ent::Playlist {
         create_time_ms: d.create_time,
         update_time_ms: d.update_time,
     }
+}
+
+pub fn map_playlists(dtos: Vec<response::PlaylistDto>) -> Vec<ent::Playlist> {
+    dtos.into_iter().map(map_playlist).collect()
 }
 
 fn map_be_replied(d: response::BeRepliedDto) -> ent::BeReplied {
@@ -372,6 +380,55 @@ pub fn map_recent_songs(d: response::RecentSongResponseDto) -> ent::RecentSongs 
         })
         .unwrap_or_default();
     ent::RecentSongs { list }
+}
+
+// ── 整包响应的组合映射 ─────────────────────────────────────────────
+//
+// 接口直接返回 `{ 字段1, 字段2, code, message }` 时，「选取哪几个字段组成 Entity」
+// 的决定放在这里，service 只负责「取包 + 交给 mapper」；否则这段构造逻辑会
+// 散落在 service 里、绕开本模块的可单测性。
+
+pub fn map_album_detail(d: response::AlbumDetailResponseDto) -> ent::AlbumDetail {
+    ent::AlbumDetail {
+        album: map_album(d.album),
+        songs: map_songs(d.songs),
+    }
+}
+
+pub fn map_playlist_page(d: response::TopPlaylistResponseDto) -> ent::PlaylistPage {
+    ent::PlaylistPage {
+        playlists: map_playlists(d.playlists),
+        total: d.total,
+        more: d.more,
+    }
+}
+
+pub fn map_playlist_hot(d: response::PlaylistHotResponseDto) -> Vec<ent::PlaylistHotTag> {
+    d.tags
+        .into_iter()
+        .map(|t| ent::PlaylistHotTag {
+            id: t.id,
+            name: t.name,
+            category: t.category,
+        })
+        .collect()
+}
+
+pub fn map_banners(dtos: Vec<response::BannerDto>) -> Vec<ent::Banner> {
+    dtos.into_iter()
+        .map(|b| ent::Banner {
+            big_image_url: b.big_image_url,
+            image_url: b.image_url,
+            target_id: b.target_id,
+            target_type: b.target_type,
+            type_title: b.type_title,
+            url: b.url,
+        })
+        .collect()
+}
+
+pub fn map_like_list(d: response::LikeListResponseDto) -> ent::LikeList {
+    ent::LikeList { ids: d.ids }
 }
 
 #[cfg(test)]

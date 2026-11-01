@@ -1,61 +1,11 @@
 //! NCM 发现页 IPC 命令（薄壳）：参数透传 → service。
 
-use tauri::{AppHandle, State};
-
+use super::command;
 use crate::model::entity::{Banner, DragonBallItem, IntelligenceSong, Song};
-use crate::model::error::Result;
-use crate::netease::NcmState;
-use crate::service::NcmService;
 
-#[tauri::command]
-pub(crate) async fn ncm_banner(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-    banner_type: Option<i64>,
-) -> Result<Vec<Banner>> {
-    NcmService::banner(&app_handle, &state, banner_type).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_recommend_songs(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-) -> Result<Vec<Song>> {
-    NcmService::recommend_songs(&app_handle, &state).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_personal_fm(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-) -> Result<Vec<Song>> {
-    NcmService::personal_fm(&app_handle, &state).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_fm_trash(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-    id: i64,
-) -> Result<()> {
-    NcmService::fm_trash(&app_handle, &state, id).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_homepage_dragon_ball(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-) -> Result<Vec<DragonBallItem>> {
-    NcmService::dragon_ball(&app_handle, &state).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_playmode_intelligence_list(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-    id: i64,
-    pid: i64,
-    count: Option<i64>,
-) -> Result<Vec<IntelligenceSong>> {
-    NcmService::playmode_intelligence_list(&app_handle, &state, id, pid, count).await
-}
+command!(ncm_banner(state, banner_type: Option<i64>) -> Vec<Banner> => banner);
+command!(ncm_recommend_songs(state) -> Vec<Song> => recommend_songs);
+command!(ncm_personal_fm(state) -> Vec<Song> => personal_fm);
+command!(ncm_fm_trash(state, id: i64) => fm_trash);
+command!(ncm_homepage_dragon_ball(state) -> Vec<DragonBallItem> => dragon_ball);
+command!(ncm_playmode_intelligence_list(state, id: i64, pid: i64, count: Option<i64>) -> Vec<IntelligenceSong> => playmode_intelligence_list);

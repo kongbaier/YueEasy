@@ -1,72 +1,12 @@
 //! NCM 歌单 IPC 命令（薄壳）：参数透传 → service。
 
-use tauri::{AppHandle, State};
-
+use super::command;
 use crate::model::entity::{Playlist, PlaylistHotTag, PlaylistPage};
-use crate::model::error::Result;
-use crate::netease::NcmState;
-use crate::service::NcmService;
 
-#[tauri::command]
-pub(crate) async fn ncm_playlist_detail(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-    id: i64,
-) -> Result<Playlist> {
-    NcmService::playlist_detail(&app_handle, &state, id).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_playlist_subscribe(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-    id: i64,
-    subscribe: bool,
-) -> Result<()> {
-    NcmService::playlist_subscribe(&app_handle, &state, id, subscribe).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_user_playlist(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-    uid: i64,
-) -> Result<Vec<Playlist>> {
-    NcmService::user_playlist(&app_handle, &state, uid).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_personalized(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-    limit: Option<i64>,
-) -> Result<Vec<Playlist>> {
-    NcmService::personalized(&app_handle, &state, limit).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_top_playlist(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-    cat: Option<String>,
-    limit: Option<i64>,
-    offset: Option<i64>,
-) -> Result<PlaylistPage> {
-    NcmService::top_playlist(&app_handle, &state, cat, limit, offset).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_playlist_hot(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-) -> Result<Vec<PlaylistHotTag>> {
-    NcmService::playlist_hot(&app_handle, &state).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_recommend_resource(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-) -> Result<Vec<Playlist>> {
-    NcmService::recommend_resource(&app_handle, &state).await
-}
+command!(ncm_playlist_detail(state, id: i64) -> Playlist => playlist_detail);
+command!(ncm_playlist_subscribe(state, id: i64, subscribe: bool) => playlist_subscribe);
+command!(ncm_user_playlist(state, uid: i64) -> Vec<Playlist> => user_playlist);
+command!(ncm_personalized(state, limit: Option<i64>) -> Vec<Playlist> => personalized);
+command!(ncm_top_playlist(state, cat: Option<String>, limit: Option<i64>, offset: Option<i64>) -> PlaylistPage => top_playlist);
+command!(ncm_playlist_hot(state) -> Vec<PlaylistHotTag> => playlist_hot);
+command!(ncm_recommend_resource(state) -> Vec<Playlist> => recommend_resource);

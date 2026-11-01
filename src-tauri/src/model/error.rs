@@ -47,14 +47,6 @@ impl NcmApiError {
             detail: None,
         }
     }
-
-    /// 响应结构异常（前端只展示「数据解析失败」+ message）。
-    pub fn decode(message: impl Into<String>) -> Self {
-        Self::Decode {
-            message: message.into(),
-            detail: None,
-        }
-    }
 }
 
 impl std::fmt::Display for NcmApiError {
@@ -80,6 +72,21 @@ impl From<NetError> for NcmApiError {
             NetError::Decode { message, detail } => NcmApiError::Decode { message, detail },
         }
     }
+}
+
+/// 取出响应里的必填字段：缺字段是 `Decode` 错误（结构不符），不是业务失败。
+///
+/// 统一在这里构造，避免每个调用点各写一份 `ok_or_else(|| NcmApiError::decode(..))`
+/// 导致文案与 `detail` 五花八门：
+///
+/// ```ignore
+/// let playlist = required(dto.playlist, "playlist")?;
+/// ```
+pub fn required<T>(value: Option<T>, field: &'static str) -> Result<T> {
+    value.ok_or_else(|| NcmApiError::Decode {
+        message: format!("响应缺少 {field} 字段"),
+        detail: Some(format!("expected non-null `{field}` in response body")),
+    })
 }
 
 /// 校验业务 code：白名单成功码（200/201），其余转为 `Api` 错误。

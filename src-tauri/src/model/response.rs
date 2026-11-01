@@ -760,6 +760,88 @@ pub struct LoginStatusResponseDto {
     pub profile: Option<UserDto>,
 }
 
+// ── 顶层信封 ───────────────────────────────────────────────────────
+
+/// 顶层响应信封：告诉请求管道（`service::ncm::NcmService::call`）「这个响应带业务 code」。
+///
+/// 「哪些 code 算成功」是**响应形状**的知识，所以声明在类型上、而不是散落在每个调用点：
+/// - 绝大多数接口：`code()` 返回 `self.code`，非 200/201 即业务失败
+/// - 少数接口的 code 不是成败信号（见下方两个显式实现），`code()` 返回 `None`，管道跳过校验
+pub trait Envelope {
+    /// 业务 code；`None` 表示该响应不参与「成功码白名单」校验。
+    fn code(&self) -> Option<i64>;
+    /// 面向用户的失败文案（与 code 配对出现）。
+    fn message(&self) -> Option<&str>;
+}
+
+/// 标准信封：`{ code, message }`。
+macro_rules! impl_envelope {
+    ($($dto:ty),* $(,)?) => {$(
+        impl Envelope for $dto {
+            fn code(&self) -> Option<i64> {
+                self.code
+            }
+
+            fn message(&self) -> Option<&str> {
+                self.message.as_deref()
+            }
+        }
+    )*};
+}
+
+impl_envelope!(
+    SongUrlResponseDto,
+    SongDetailResponseDto,
+    LyricResponseDto,
+    AlbumDetailResponseDto,
+    LikeResponseDto,
+    LikeListResponseDto,
+    RecentSongResponseDto,
+    PlaylistSubscribeResponseDto,
+    PlaylistDetailResponseDto,
+    UserPlaylistResponseDto,
+    PersonalizedResponseDto,
+    TopPlaylistResponseDto,
+    PlaylistHotResponseDto,
+    RecommendResourceResponseDto,
+    BannerResponseDto,
+    RecommendSongsResponseDto,
+    PersonalFmResponseDto,
+    FmTrashResponseDto,
+    DragonBallResponseDto,
+    IntelligenceResponseDto,
+    CloudsearchResponseDto,
+    PcSuggestResponseDto,
+    SearchHotResponseDto,
+    CommentPageResponseDto,
+    LoginResponseDto,
+    CaptchaResponseDto,
+    QrKeyResponseDto,
+    QrCreateResponseDto,
+);
+
+/// `qr_check` 的 code 是轮询状态（800/801/802/803），不是成败，由 mapper 映射为枚举。
+impl Envelope for QrCheckResponseDto {
+    fn code(&self) -> Option<i64> {
+        None
+    }
+
+    fn message(&self) -> Option<&str> {
+        None
+    }
+}
+
+/// `login/status` 未登录时返回非 200（如 301），那是「没登录」而不是「请求失败」，不报错。
+impl Envelope for LoginStatusResponseDto {
+    fn code(&self) -> Option<i64> {
+        None
+    }
+
+    fn message(&self) -> Option<&str> {
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -829,6 +911,24 @@ mod tests {
         assert_eq!(dto.core.duration_ms, Some(123456));
         assert_eq!(dto.core.artists[0].name, "某歌手");
         assert_eq!(dto.core.album.as_ref().map(|a| a.id), Some(8));
+    }
+
+    /// 信封校验只认标准 `{ code, message }`；`login/status` 与 `qr_check` 的 code 必须
+    /// 被声明为「不校验」，否则未登录（301）与轮询态（801）会被误判成请求失败。
+    #[test]
+    fn envelope_declares_which_codes_are_not_failures() {
+        let detail: PlaylistDetailResponseDto =
+            serde_json::from_value(json!({ "code": 502, "message": "无权限" })).expect("decode");
+        assert_eq!(detail.code(), Some(502));
+        assert_eq!(detail.message(), Some("无权限"));
+
+        let status: LoginStatusResponseDto =
+            serde_json::from_value(json!({ "code": 301 })).expect("decode");
+        assert_eq!(status.code(), None);
+
+        let qr: QrCheckResponseDto =
+            serde_json::from_value(json!({ "code": 801 })).expect("decode");
+        assert_eq!(qr.code(), None);
     }
 
     /// 网易云会把字符串字段发成 null，`de_string_nullable` 要把 null 归一成空串

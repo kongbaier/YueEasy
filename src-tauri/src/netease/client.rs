@@ -16,10 +16,13 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// 发一次通知请求并解码为 DTO。
 ///
+/// 业务层不走本函数，而走 [`crate::service::NcmService::call`] ——「取数 + 业务 code 校验」
+/// 的唯一入口；本函数只保留与具体接口无关的传输职责。
+///
 /// 调用方自己取 client 就地构造 future，所以这里不需要闭包：
 /// ```ignore
 /// let client = state.client();
-/// let dto: response::CloudsearchResponseDto = fetch(state, app, client.cloudsearch(&q)).await?;
+/// let dto: response::CloudsearchResponseDto = fetch(state, client.cloudsearch(&q)).await?;
 /// ```
 ///
 /// 本函数只做四件与具体接口无关、但每次请求都躲不掉的事：
@@ -27,11 +30,7 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 /// 2. 传输错误归一（`NcmError` → `NcmApiError`）
 /// 3. 响应 cookie 合并回写（crate 不会自己写回，且无 getter 可读）
 /// 4. wire 归一（整数型浮点 / 并存的 `msg`+`message`）+ 反序列化
-pub async fn fetch<D>(
-    state: &NcmState,
-    app_handle: &tauri::AppHandle,
-    fut: impl Future<Output = ApiResult>,
-) -> Result<D>
+pub async fn fetch<D>(state: &NcmState, fut: impl Future<Output = ApiResult>) -> Result<D>
 where
     D: DeserializeOwned,
 {
@@ -47,7 +46,7 @@ where
         .map_err(from_ncm)?;
 
     if !resp.cookie.is_empty() {
-        state.merge_cookie(app_handle, &resp.cookie);
+        state.merge_cookie(&resp.cookie);
     }
 
     let mut value = resp.body.take();
@@ -108,11 +107,40 @@ fn collapse_message_aliases(value: &mut Value) {
     }
 }
 
-/// 可选参数写入 Query：`None` 时跳过。
-pub fn opt(query: Query, key: &str, value: Option<&str>) -> Query {
-    match value {
-        Some(v) => query.param(key, v),
-        None => query,
+/// 组装 [`Query`] 的语法糖：消掉 `&id.to_string()` 与
+/// `opt(q, key, v.map(|v| v.to_string()).as_deref())` 这类与接口无关的噪音。
+///
+/// ```ignore
+/// Query::new().p("id", id).o("limit", limit).list("ids", &ids)
+/// ```
+pub trait QueryExt {
+    /// 必填参数（任何 `ToString`：`i64` / `String` / `&str` …）。
+    fn p(self, key: &str, value: impl ToString) -> Query;
+    /// 可选参数：`None` 时整条参数不出现。
+    fn o(self, key: &str, value: Option<impl ToString>) -> Query;
+    /// 逗号分隔的 id 列表（`song/detail` 的 `ids=1,2,3`）。
+    fn list(self, key: &str, values: &[i64]) -> Query;
+}
+
+impl QueryExt for Query {
+    fn p(self, key: &str, value: impl ToString) -> Query {
+        self.param(key, &value.to_string())
+    }
+
+    fn o(self, key: &str, value: Option<impl ToString>) -> Query {
+        match value {
+            Some(value) => self.param(key, &value.to_string()),
+            None => self,
+        }
+    }
+
+    fn list(self, key: &str, values: &[i64]) -> Query {
+        let joined = values
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        self.param(key, &joined)
     }
 }
 
@@ -166,6 +194,20 @@ pub async fn login_cellphone_by_captcha(
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn query_ext_omits_absent_options_and_joins_ids() {
+        let q = Query::new()
+            .p("id", 7)
+            .o("limit", None::<i64>)
+            .o("level", Some("exhigh"))
+            .list("ids", &[1, 2, 3]);
+
+        assert_eq!(q.get("id"), Some("7"));
+        assert_eq!(q.get("limit"), None);
+        assert_eq!(q.get("level"), Some("exhigh"));
+        assert_eq!(q.get("ids"), Some("1,2,3"));
+    }
 
     #[test]
     fn collapse_message_aliases_dedupes_login_failure_body() {

@@ -37,10 +37,13 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_cache::init())
         .manage(Database::default())
-        .manage(NcmState::default())
         .manage(LikeState::default())
         .setup(|app| {
             let handle = app.handle();
+
+            // NcmState 持有 AppHandle（cookie 回写要落盘），所以在这里构造：
+            // builder 期还没有 handle。命令只会在 setup 之后被 invoke。
+            app.manage(NcmState::new(handle.clone()));
 
             // 先应用窗口特效再显示：材质是 DWM 窗口属性，对隐藏窗口即生效；
             // 顺序颠倒会让窗口先以「无材质」状态呈现一帧。
@@ -55,7 +58,7 @@ pub fn run() {
                 eprintln!("Failed to setup media session handler: {}", e);
             }
 
-            app.state::<NcmState>().restore_cookie(handle);
+            app.state::<NcmState>().restore_cookie();
 
             platform::tray::setup(handle)?;
             platform::accent_color::watch_accent_color(handle.clone());

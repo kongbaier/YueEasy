@@ -1,37 +1,9 @@
 //! NCM 搜索 IPC 命令（薄壳）：参数透传 → service。
 
-use tauri::{AppHandle, State};
-
+use super::command;
 use crate::model::entity::{HotSearchItem, KeywordSuggest, SearchResult};
-use crate::model::error::Result;
-use crate::netease::NcmState;
-use crate::service::NcmService;
 
-#[tauri::command]
-pub(crate) async fn ncm_cloudsearch(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-    keywords: String,
-    search_type: Option<i64>, // 1=歌曲 10=专辑 100=歌手 1002=用户
-    limit: Option<i64>,
-    offset: Option<i64>,
-) -> Result<SearchResult> {
-    NcmService::cloudsearch(&app_handle, &state, keywords, search_type, limit, offset).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_search_suggest_keyword(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-    keywords: String,
-) -> Result<Vec<KeywordSuggest>> {
-    NcmService::search_suggest_keyword(&app_handle, &state, keywords).await
-}
-
-#[tauri::command]
-pub(crate) async fn ncm_search_hot(
-    app_handle: AppHandle,
-    state: State<'_, NcmState>,
-) -> Result<Vec<HotSearchItem>> {
-    NcmService::search_hot(&app_handle, &state).await
-}
+// `search_type`：1=歌曲 10=专辑 100=歌手 1002=用户
+command!(ncm_cloudsearch(state, keywords: String, search_type: Option<i64>, limit: Option<i64>, offset: Option<i64>) -> SearchResult => cloudsearch);
+command!(ncm_search_suggest_keyword(state, keywords: String) -> Vec<KeywordSuggest> => search_suggest_keyword);
+command!(ncm_search_hot(state) -> Vec<HotSearchItem> => search_hot);

@@ -33,7 +33,7 @@ pub(crate) async fn like_init(
     ncm: State<'_, NcmState>,
     uid: i64,
 ) -> Result<Vec<u64>, String> {
-    let list = NcmService::like_list(&app, &ncm, uid)
+    let list = NcmService::like_list(&ncm, uid)
         .await
         .map_err(|e| e.to_string())?;
     let ids: Vec<u64> = list.ids.into_iter().map(|id| id as u64).collect();
@@ -55,7 +55,7 @@ pub(crate) async fn like_toggle(
     id: u64,
     like: bool,
 ) -> Result<(), String> {
-    NcmService::like(&app, &ncm, id as i64, Some(like))
+    NcmService::like(&ncm, id as i64, Some(like))
         .await
         .map_err(|e| e.to_string())?;
     {
