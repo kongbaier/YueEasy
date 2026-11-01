@@ -11,9 +11,10 @@ fn map_artist(d: response::ArtistDto) -> ent::Artist {
         id: d.id,
         name: d.name,
         pic_url: d.pic_url,
-        alias: None,
-        album_size: None,
-        music_size: None,
+        alias: (!d.alias.is_empty()).then_some(d.alias),
+        album_size: d.album_size,
+        music_size: d.music_size,
+        brief_desc: d.brief_desc,
     }
 }
 
@@ -23,7 +24,11 @@ pub fn map_album(d: Option<response::AlbumDto>) -> ent::Album {
             id: a.id,
             name: a.name,
             pic_url: a.pic_url,
-            artist: a.artist.map(map_artist),
+            // 歌手专辑列表用 `artists` 数组、专辑详情用 `artist` 对象，这里归一成同一个字段。
+            artist: a
+                .artist
+                .or_else(|| a.artists.into_iter().next())
+                .map(map_artist),
             publish_time_ms: a.publish_time,
             size: a.size,
             company: a.company,
@@ -197,6 +202,7 @@ fn map_search_artist(d: response::SearchArtistDto) -> ent::Artist {
         alias: Some(d.alias),
         album_size: Some(d.album_size),
         music_size: Some(d.music_size),
+        brief_desc: None,
     }
 }
 
@@ -392,6 +398,46 @@ pub fn map_album_detail(d: response::AlbumDetailResponseDto) -> ent::AlbumDetail
     ent::AlbumDetail {
         album: map_album(d.album),
         songs: map_songs(d.songs),
+    }
+}
+
+pub fn map_artist_detail(d: response::ArtistDetailResponseDto) -> ent::ArtistDetail {
+    ent::ArtistDetail {
+        artist: d.artist.map(map_artist).unwrap_or_else(|| ent::Artist {
+            id: 0,
+            name: String::new(),
+            pic_url: None,
+            alias: None,
+            album_size: None,
+            music_size: None,
+            brief_desc: None,
+        }),
+        hot_songs: map_songs(d.hot_songs),
+        more: d.more,
+    }
+}
+
+pub fn map_artist_albums(d: response::ArtistAlbumResponseDto) -> ent::ArtistAlbumPage {
+    ent::ArtistAlbumPage {
+        albums: d
+            .hot_albums
+            .into_iter()
+            .map(|a| map_album(Some(a)))
+            .collect(),
+        more: d.more,
+    }
+}
+
+pub fn map_user_detail(d: response::UserDetailResponseDto) -> ent::UserDetail {
+    let playlist_count = d.profile.as_ref().and_then(|p| p.playlist_count);
+    let create_time_ms = d.profile.as_ref().and_then(|p| p.create_time);
+    let user = d.profile.map(map_user).unwrap_or_else(empty_user);
+    ent::UserDetail {
+        user,
+        level: d.level,
+        listen_songs: d.listen_songs,
+        playlist_count,
+        create_time_ms,
     }
 }
 

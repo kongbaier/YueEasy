@@ -1,4 +1,5 @@
 import type { Playlist } from '@/shared/types/uiModels';
+import { Link } from 'react-router-dom';
 import { Button } from '@/shared/ui/button';
 import { Cover } from '@/shared/ui/image';
 import { Skeleton } from '@/shared/ui/skeleton';
@@ -35,7 +36,14 @@ const playlistMeta = (playlist: Playlist): (MetaItem | false | undefined)[] => {
       node: formatCount(subscribedCount),
       ext: '收藏',
     },
-    creator && { key: 'creator', node: creator.nickname },
+    creator && {
+      key: 'creator',
+      node: (
+        <Link className="hover:underline" to={`/user/${creator.id}`}>
+          {creator.nickname}
+        </Link>
+      ),
+    },
     createTimeMs != null && {
       key: 'createTime',
       node: formatDate(createTimeMs),

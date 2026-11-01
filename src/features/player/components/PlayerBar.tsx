@@ -8,7 +8,7 @@ import {
   Play,
   ThumbsDown,
 } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { FollowTooltip } from '@/features/player/components/FollowTooltip';
 import { useMediaSession } from '@/features/player/hooks/useMediaSession';
@@ -31,6 +31,7 @@ import { VolumeControl } from './VolumeControl';
 import { CrossfadeImage } from '@/shared/ui/image';
 import { LikeButton } from '@/features/like/components/LikeButton';
 import { LyricsToggle } from '@/features/lyrics/components/LyricsToggle';
+import { ArtistLink } from '@/features/artist/components/ArtistLink';
 
 const PlayerProgress = () => {
   const { percentage, formatted } = useProgress();
@@ -212,7 +213,14 @@ const PlayerInfo = () => {
             {currentTrack?.name ?? ''}
           </p>
           <p className="truncate text-xs text-muted-foreground">
-            {currentTrack?.artists?.map((a) => a.name).join('/') || ' '}
+            {currentTrack?.artists && currentTrack.artists.length > 0
+              ? currentTrack.artists.map((artist, i) => (
+                  <Fragment key={artist.id > 0 ? artist.id : artist.name}>
+                    {i > 0 && '/'}
+                    <ArtistLink artist={artist} />
+                  </Fragment>
+                ))
+              : ' '}
           </p>
         </div>
       </div>

@@ -5,7 +5,13 @@
 import type { Track } from '@/shared/types/player';
 import type { QueueItem } from '@/shared/types/uiModels';
 
-/** Track(Song) → QueueItem：NCM 实体进入前端队列前的扁平化（如 FM 取歌）。 */
+/**
+ * Track(Song) → QueueItem：NCM 实体进入前端队列前的扁平化（如 FM 取歌）。
+ *
+ * 除展示用的 `artist` / `album` 字符串外，额外保留歌手 id 与专辑 id：
+ * 播放器里的歌手名 / 专辑名要能跳二级页，而 id 不能从展示字符串反推
+ * （曾用 `track_id` 冒充歌手 id，导致点开歌手页请求 `/artist/<歌曲id>` 返回 404）。
+ */
 export function songToQueueItem(track: Track): QueueItem {
   return {
     track_id: track.id,
@@ -14,20 +20,25 @@ export function songToQueueItem(track: Track): QueueItem {
     album: track.album?.name ?? '',
     cover_url: track.album?.picUrl ?? '',
     duration_secs: (track.durationMs ?? 0) / 1000,
+    artists: track.artists?.map(({ id, name }) => ({ id, name })) ?? [],
+    album_id: track.album?.id ?? 0,
   };
 }
 
 /**
  * QueueItem → Track(Song)：队列持久化形状还原为 Song 实体，
  * 供 usePlayer 门面向 UI 呈现 currentTrack / queue。
+ *
+ * 歌手/专辑的 id 由 `songToQueueItem` 一并持久化，属于快照的约定字段，
+ * 因此这里直接透传，不再做「没有 id 就用名字拼」的兜底。
  */
 export function queueItemToSong(item: QueueItem): Track {
   return {
     id: item.track_id,
     name: item.title,
-    artists: item.artist ? [{ id: item.track_id, name: item.artist }] : [],
+    artists: item.artists ?? [],
     album: {
-      id: item.track_id,
+      id: item.album_id ?? 0,
       name: item.album,
       picUrl: item.cover_url || undefined,
     },

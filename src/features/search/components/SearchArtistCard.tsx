@@ -1,4 +1,5 @@
 import { Mic } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { DecodedImage } from '@/shared/ui/image';
 import { getNcmImageUrl } from '@/shared/utils/image';
@@ -11,7 +12,10 @@ interface SearchArtistCardProps {
 
 export function SearchArtistCard({ item }: SearchArtistCardProps) {
   return (
-    <div className="group cursor-pointer rounded-lg p-3 transition-colors hover:bg-accent text-center">
+    <Link
+      className="group cursor-pointer rounded-lg p-3 transition-colors hover:bg-accent text-center"
+      to={`/artist/${item.id}`}
+    >
       <div className="relative mx-auto mb-2 w-full max-w-40 aspect-square overflow-hidden rounded-full">
         {item.picUrl ? (
           <DecodedImage
@@ -43,7 +47,7 @@ export function SearchArtistCard({ item }: SearchArtistCardProps) {
           .filter(Boolean)
           .join(' · ')}
       </p>
-    </div>
+    </Link>
   );
 }
 

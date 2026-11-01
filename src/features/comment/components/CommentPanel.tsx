@@ -1,4 +1,5 @@
 import { MessageCircle, ThumbsUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { DecodedImage } from '@/shared/ui/image';
 import { formatCount } from '@/shared/utils/format';
@@ -31,15 +32,20 @@ const CommentItem = ({ comment }: { comment: Comment }) => (
   >
     {/* 用户行 */}
     <div className="flex items-center gap-2">
-      <DecodedImage
-        alt={comment.user.nickname}
-        className="size-full object-cover"
-        containerClassName="h-7 w-7 shrink-0 rounded-full"
-        src={getNcmImageUrl(comment.user.avatarUrl, 50)}
-      />
-      <span className="text-xs font-medium truncate">
-        {comment.user.nickname}
-      </span>
+      <Link
+        className="group/user flex min-w-0 items-center gap-2"
+        to={`/user/${comment.user.id}`}
+      >
+        <DecodedImage
+          alt={comment.user.nickname}
+          className="size-full object-cover"
+          containerClassName="h-7 w-7 shrink-0 rounded-full"
+          src={getNcmImageUrl(comment.user.avatarUrl, 50)}
+        />
+        <span className="truncate text-xs font-medium group-hover/user:text-primary group-hover/user:underline">
+          {comment.user.nickname}
+        </span>
+      </Link>
       <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
         {formatTime(comment.timeMs)}
       </span>
@@ -59,7 +65,13 @@ const CommentItem = ({ comment }: { comment: Comment }) => (
             key={reply.id}
           >
             <span className="text-primary/80">
-              @{reply.user?.nickname ?? ''}
+              {reply.user ? (
+                <Link className="hover:underline" to={`/user/${reply.user.id}`}>
+                  @{reply.user.nickname}
+                </Link>
+              ) : (
+                '@'
+              )}
             </span>{' '}
             {reply.content}
           </p>

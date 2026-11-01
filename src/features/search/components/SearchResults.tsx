@@ -1,10 +1,7 @@
 import { Search as SearchIcon, SearchX } from 'lucide-react';
 
-import {
-  TrackRow,
-  TrackRowSkeletonList,
-} from '@/shared/components/track';
-import { SearchAlbumCard, SearchAlbumCardSkeleton } from './SearchAlbumCard';
+import { TrackRow, TrackRowSkeletonList } from '@/shared/components/track';
+import { AlbumCard, AlbumCardSkeleton } from '@/shared/components/album-card';
 import { SearchArtistCard, SearchArtistCardSkeleton } from './SearchArtistCard';
 import { SearchUserCard, SearchUserCardSkeleton } from './SearchUserCard';
 import {
@@ -26,7 +23,7 @@ function LoadingState({ type }: { type: SearchType }) {
 
   const SkeletonComponent =
     type === SearchType.ALBUM
-      ? SearchAlbumCardSkeleton
+      ? AlbumCardSkeleton
       : type === SearchType.ARTIST
         ? SearchArtistCardSkeleton
         : SearchUserCardSkeleton;
@@ -119,7 +116,7 @@ export function SearchResults({
           {results.type === SearchType.ALBUM && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
               {results.items.map((item) => (
-                <SearchAlbumCard item={item} key={item.id} />
+                <AlbumCard album={item} key={item.id} />
               ))}
             </div>
           )}

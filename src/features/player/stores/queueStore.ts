@@ -47,6 +47,10 @@ function trackToQueueItem(t: PlayerCoreTrack): QueueItem {
     album: (t.album as string) ?? '',
     cover_url: (t.cover_url as string) ?? '',
     duration_secs: (t.duration_secs as number) ?? 0,
+    // 歌手 / 专辑 id 在 policy track 里是透传字段（见 queueItemToTrack 的 ...rest），
+    // 必须一起写回快照：否则每次快照重建都会丢掉跳歌手页 / 专辑页所需的 id。
+    artists: t.artists as QueueItem['artists'],
+    album_id: t.album_id as QueueItem['album_id'],
   };
 }
 

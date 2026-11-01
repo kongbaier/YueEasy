@@ -19,6 +19,9 @@ pub struct Artist {
     pub album_size: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub music_size: Option<i64>,
+    /// 歌手简介（仅歌手详情接口返回）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brief_desc: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -214,6 +217,38 @@ pub struct Lyric {
 pub struct AlbumDetail {
     pub album: Album,
     pub songs: Vec<Song>,
+}
+
+/// 歌手详情：歌手本体 + 热门歌曲（`hotSongs`）。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArtistDetail {
+    pub artist: Artist,
+    pub hot_songs: Vec<Song>,
+    pub more: bool,
+}
+
+/// 歌手专辑分页（`hotAlbums`）。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArtistAlbumPage {
+    pub albums: Vec<Album>,
+    pub more: bool,
+}
+
+/// 用户主页：用户本体 + 听歌/等级/歌单数等只在详情接口返回的字段。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UserDetail {
+    pub user: User,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub level: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub listen_songs: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub playlist_count: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub create_time_ms: Option<i64>,
 }
 
 /// 原唱/翻唱标记，由接口的 `originCoverType` 归一而来。

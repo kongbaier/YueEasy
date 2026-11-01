@@ -9,12 +9,14 @@
 //! 依赖方向：`commands → service → model → netease`；本模块是唯一同时认识
 //! `netease`（取数）与 `model`（校验 / 映射）的地方。
 
+mod artist;
 mod auth;
 mod comment;
 mod discover;
 mod playlist;
 mod search;
 mod song;
+mod user;
 
 use std::future::Future;
 

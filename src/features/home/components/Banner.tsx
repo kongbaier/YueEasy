@@ -1,5 +1,6 @@
 import { Loader2, Play, Radar, Radio } from 'lucide-react';
 import React, { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useContainerWidth } from '@/shared/hooks/useContainerWidth';
 import { ParallaxCarousel } from '@/shared/ui/carousel';
 import { Skeleton } from '@/shared/ui/skeleton';
@@ -10,10 +11,23 @@ import { useFmCardViewModel } from '../hooks/useFmCardViewModel';
 import { useRadarCardViewModel } from '../hooks/useRadarCardViewModel';
 import { useQuery } from '@tanstack/react-query';
 import { getBanners } from '../home-service';
+import type { Banner as BannerModel } from '@/shared/types/uiModels';
 
 const WIDE_BREAKPOINT = 672; // 与 CSS @min-2xl: 对齐（64rem = 1024px，按默认 16px 根字号）
 
+/**
+ * Banner → 站内路由。只处理能落到二级页的目标类型：
+ * 10=专辑、1000=歌单；歌曲（1）/ MV（1004）/ 广告不在站内页面体系里，返回 null 保持不可点。
+ */
+const bannerRoute = (banner: BannerModel): string | null => {
+  if (banner.targetId == null) return null;
+  if (banner.targetType === 10) return `/album/${banner.targetId}`;
+  if (banner.targetType === 1000) return `/playlist/${banner.targetId}`;
+  return null;
+};
+
 const BannerCarousel = () => {
+  const navigate = useNavigate();
   // useQuery 而非 useSuspenseQuery：本组件上方没有 Suspense 边界，挂起会扣住整个
   // 首页（且单块失败会直接炸掉整棵树），这里自己拿 loading/error 做区块级降级。
   const {
@@ -58,8 +72,14 @@ const BannerCarousel = () => {
       items={banners}
     >
       {(banner) => {
+        const to = bannerRoute(banner);
         return (
-          <React.Fragment>
+          <div
+            className={
+              to ? 'absolute inset-0 cursor-pointer' : 'absolute inset-0'
+            }
+            onClick={to ? () => navigate(to) : undefined}
+          >
             <DecodedImage
               alt={banner.typeTitle}
               className="size-full object-cover"
@@ -71,7 +91,7 @@ const BannerCarousel = () => {
             <div className="absolute right-3 top-3 drop-shadow-2xl text-xs bg-background rounded-sm px-1 py-0.5">
               {banner.typeTitle}
             </div>
-          </React.Fragment>
+          </div>
         );
       }}
     </ParallaxCarousel>

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Heart, MessageSquare } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { DecodedImage } from '@/shared/ui/image';
 import { formatCount } from '@/shared/utils/format';
 import { toast } from '@/shared/lib/toast';
@@ -12,6 +13,7 @@ import {
   PlayerTabState,
 } from './PlayerTabPanel';
 import { usePlayer } from '../hooks/usePlayer';
+import { usePlayerPage } from '../hooks/usePlayerPage';
 
 function relativeTime(timestamp: number): string {
   const now = Date.now();
@@ -35,9 +37,16 @@ interface CommentItemProps {
 }
 
 const CommentItem = ({ comment, isHot }: CommentItemProps) => {
+  // 播放页是覆盖层：跳转前先关掉，否则目标页面被挡住
+  const { close } = usePlayerPage();
+
   return (
     <div className="group flex gap-3 px-2 py-3 w-full text-left rounded-md">
-      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
+      <Link
+        className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden"
+        onClick={() => close()}
+        to={`/user/${comment.user.id}`}
+      >
         {comment.user.avatarUrl ? (
           <DecodedImage
             alt={comment.user.nickname}
@@ -49,13 +58,17 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
         ) : (
           <MessageSquare className="size-3.5 text-muted-foreground" />
         )}
-      </div>
+      </Link>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground truncate max-w-30">
+          <Link
+            className="text-xs text-muted-foreground truncate max-w-30 hover:text-primary hover:underline"
+            onClick={() => close()}
+            to={`/user/${comment.user.id}`}
+          >
             {comment.user.nickname}
-          </span>
+          </Link>
           {isHot && (
             <span className="text-[10px] text-red-500 border border-red-500/30 rounded px-1 leading-none py-0.5">
               热评
@@ -71,9 +84,17 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
           <div className="mt-1.5 p-2 rounded bg-surface-hover text-xs text-muted-foreground">
             {comment.beReplied.map((reply) => (
               <span key={reply.id}>
-                <span className="text-foreground/70">
-                  @{reply.user?.nickname ?? ''}
-                </span>
+                {reply.user ? (
+                  <Link
+                    className="text-foreground/70 hover:text-primary hover:underline"
+                    onClick={() => close()}
+                    to={`/user/${reply.user.id}`}
+                  >
+                    @{reply.user.nickname}
+                  </Link>
+                ) : (
+                  <span className="text-foreground/70">@</span>
+                )}
                 ：{reply.content}
               </span>
             ))}

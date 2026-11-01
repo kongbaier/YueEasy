@@ -1,4 +1,6 @@
 import { Disc3, Heart, ListPlus, Play, SkipForward } from 'lucide-react';
+import { Fragment } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -15,6 +17,7 @@ import { getNcmImageUrl } from '@/shared/utils/image';
 import { useLikeAction } from '@/features/like/hooks/useLikeAction';
 import { LikeButton } from '@/features/like/components/LikeButton';
 import { useTrackActions } from '@/features/player/hooks/useTrackActions';
+import { ArtistLink } from '@/features/artist/components/ArtistLink';
 
 /* ------------------------------------------------------------------ */
 /*  行布局常量                                                         */
@@ -96,7 +99,14 @@ export const TrackRow = ({
           {/* 歌手名截断、标记恒显，所以截断加在内层 span 上而非 <p> */}
           <p className="flex items-center gap-1 min-w-0 text-xs text-muted-foreground">
             <span className="truncate">
-              {track.artists.map((a) => a.name).join('/') || '未知歌手'}
+              {track.artists.length > 0
+                ? track.artists.map((artist, i) => (
+                    <Fragment key={artist.id > 0 ? artist.id : artist.name}>
+                      {i > 0 && <span className="px-0.5">/</span>}
+                      <ArtistLink artist={artist} stopPropagation />
+                    </Fragment>
+                  ))
+                : '未知歌手'}
             </span>
             {artistTag && (
               <span className="shrink-0 rounded-sm border border-primary/35 bg-primary/10 p-0.5 text-[10px] leading-none font-medium text-primary">
@@ -105,9 +115,14 @@ export const TrackRow = ({
             )}
           </p>
         </div>
-        <span className="flex-1 min-w-0 truncate text-xs text-muted-foreground">
+        <Link
+          className="flex-1 min-w-0 truncate text-xs text-muted-foreground hover:text-primary hover:underline"
+          onClick={(e) => e.stopPropagation()}
+          onDoubleClick={(e) => e.stopPropagation()}
+          to={`/album/${track.album.id}`}
+        >
           {track.album.name || '-'}
-        </span>
+        </Link>
         <span className={ROW_LIKE} onClick={(e) => e.stopPropagation()}>
           <LikeButton track={track} size="icon-sm" />
         </span>

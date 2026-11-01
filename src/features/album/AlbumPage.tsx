@@ -1,5 +1,5 @@
 import { Disc, Music, Play } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Cover } from '@/shared/ui/image';
 import { ExpandableText } from '@/shared/ui/expandable-text';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
@@ -75,7 +75,6 @@ export default function Album() {
   if (!album) return null;
 
   const metaParts: string[] = [];
-  if (album.artist?.name) metaParts.push(album.artist.name);
   if (album.publishTimeMs)
     metaParts.push(`${formatDate(album.publishTimeMs)}发行`);
   if (album.company) metaParts.push(album.company);
@@ -101,8 +100,21 @@ export default function Album() {
           <div className="flex-1 min-w-0 space-y-4">
             <h1 className="text-2xl font-bold tracking-tight">{album.name}</h1>
 
-            {metaParts.length > 0 && (
-              <p className="text-sm text-muted-foreground/80">
+            {(album.artist?.name || metaParts.length > 0) && (
+              <p className="text-sm text-muted-foreground/80 truncate">
+                {album.artist?.name && (
+                  <Link
+                    className="text-primary hover:underline"
+                    to={`/artist/${album.artist.id}`}
+                  >
+                    {album.artist.name}
+                  </Link>
+                )}
+                {album.artist?.name && metaParts.length > 0 && (
+                  <span className="mx-2 text-muted-foreground/30 select-none">
+                    ·
+                  </span>
+                )}
                 {metaParts.join('  ·  ')}
               </p>
             )}

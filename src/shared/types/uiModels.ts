@@ -9,6 +9,8 @@ export interface Artist {
   alias?: string[];
   albumSize?: number;
   musicSize?: number;
+  /** 歌手简介（仅歌手详情接口返回） */
+  briefDesc?: string;
 }
 
 export interface Album {
@@ -140,6 +142,28 @@ export interface AlbumDetail {
   songs: Song[];
 }
 
+/** 歌手详情：歌手本体 + 热门歌曲（对应 Rust `ArtistDetail`） */
+export interface ArtistDetail {
+  artist: Artist;
+  hotSongs: Song[];
+  more: boolean;
+}
+
+/** 歌手专辑分页（对应 Rust `ArtistAlbumPage`） */
+export interface ArtistAlbumPage {
+  albums: Album[];
+  more: boolean;
+}
+
+/** 用户主页（对应 Rust `UserDetail`） */
+export interface UserDetail {
+  user: User;
+  level?: number;
+  listenSongs?: number;
+  playlistCount?: number;
+  createTimeMs?: number;
+}
+
 /** 原唱/翻唱标记（Rust `model::entity::OriginCoverType`）。 */
 export type OriginCoverType = 'original' | 'cover' | 'other';
 
@@ -269,4 +293,8 @@ export interface QueueItem {
   album: string;
   cover_url: string;
   duration_secs: number;
+  /** 歌手的 id / 名（跳歌手页需要；由 songToQueueItem 一并持久化）。 */
+  artists?: { id: number; name: string }[];
+  /** 专辑 id（跳专辑页需要）。 */
+  album_id?: number;
 }

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getUserPlaylists } from '../my-playlists-service';
+import { getUserPlaylists } from '@/shared/services/UserService';
 
 /**
  * 我的歌单 viewmodel：userId 为空（未登录）时不发请求，返回空列表。

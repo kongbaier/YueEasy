@@ -4,12 +4,14 @@
 //! 所以三处重复（命令声明 / 转手调用 / 参数列表）在这里收敛成一处。
 //! `lib.rs::generate_handler` 的注册仍逐条显式列出——IPC 入口表要能一眼看全。
 
+pub mod artist;
 pub mod auth;
 pub mod comment;
 pub mod discover;
 pub mod playlist;
 pub mod search;
 pub mod song;
+pub mod user;
 
 /// 生成一个「参数透传 → service」的 `#[tauri::command]` 薄壳。
 ///

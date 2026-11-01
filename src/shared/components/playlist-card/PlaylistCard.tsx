@@ -1,5 +1,5 @@
 import { ListMusic, Play } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatCount } from '@/shared/utils/format';
 import { cn } from '@/shared/utils/cn';
 import { getNcmImageUrl } from '@/shared/utils/image';
@@ -16,6 +16,9 @@ export const PlaylistCard = ({
   playlist,
   showPlayCount,
 }: PlaylistCardProps) => {
+  const navigate = useNavigate();
+  const creator = playlist.creator;
+
   return (
     <Link
       className={cn(
@@ -49,8 +52,20 @@ export const PlaylistCard = ({
           {playlist.name}
         </p>
         <p className="flex items-center gap-1 text-xs text-muted-foreground truncate">
-          {playlist.creator ? (
-            <span>{playlist.creator.nickname}</span>
+          {creator ? (
+            // 卡片整体是 <Link>（嵌套 <a> 不合法），所以创作者用 span + 阻止冒泡的方式跳转
+            <span
+              className="hover:text-primary hover:underline"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                navigate(`/user/${creator.id}`);
+              }}
+              role="link"
+              title={`查看 ${creator.nickname} 的主页`}
+            >
+              {creator.nickname}
+            </span>
           ) : (
             playlist.trackCount > 0 && (
               <>

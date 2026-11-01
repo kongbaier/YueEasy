@@ -25,6 +25,15 @@ pub struct ArtistDto {
     pub name: String,
     #[serde(default)]
     pub pic_url: Option<String>,
+    /// 只有歌手详情 / 搜索歌手会给出；歌曲内嵌歌手缺省为空。
+    #[serde(default)]
+    pub alias: Vec<String>,
+    #[serde(default)]
+    pub album_size: Option<i64>,
+    #[serde(default)]
+    pub music_size: Option<i64>,
+    #[serde(default)]
+    pub brief_desc: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -37,6 +46,9 @@ pub struct AlbumDto {
     pub pic_url: Option<String>,
     #[serde(default)]
     pub artist: Option<ArtistDto>,
+    /// 歌手专辑列表（`hotAlbums`）用 `artists` 数组表示作者，与 `artist` 二选一。
+    #[serde(default)]
+    pub artists: Vec<ArtistDto>,
     #[serde(default)]
     pub publish_time: Option<i64>,
     #[serde(default)]
@@ -82,6 +94,11 @@ pub struct UserDto {
     pub follows: Option<i64>,
     #[serde(default)]
     pub followeds: Option<i64>,
+    /// 仅用户详情接口返回（用户列表 / 歌单创建者不带）。
+    #[serde(default)]
+    pub playlist_count: Option<i64>,
+    #[serde(default)]
+    pub create_time: Option<i64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -241,6 +258,54 @@ pub struct RecentSongDataDto {
 pub struct RecentSongResponseDto {
     #[serde(default)]
     pub data: Option<RecentSongDataDto>,
+    #[serde(default)]
+    pub code: Option<i64>,
+    #[serde(default, alias = "msg")]
+    pub message: Option<String>,
+}
+
+// ── artist / user ──────────────────────────────────────────────────
+
+/// `/api/v1/artist/{id}`：歌手信息 + 热门歌曲一次取回。
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArtistDetailResponseDto {
+    #[serde(default)]
+    pub artist: Option<ArtistDto>,
+    #[serde(default)]
+    pub hot_songs: Vec<SongDto>,
+    #[serde(default)]
+    pub more: bool,
+    #[serde(default)]
+    pub code: Option<i64>,
+    #[serde(default, alias = "msg")]
+    pub message: Option<String>,
+}
+
+/// `/api/artist/albums/{id}`：歌手的专辑分页。
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArtistAlbumResponseDto {
+    #[serde(default)]
+    pub hot_albums: Vec<AlbumDto>,
+    #[serde(default)]
+    pub more: bool,
+    #[serde(default)]
+    pub code: Option<i64>,
+    #[serde(default, alias = "msg")]
+    pub message: Option<String>,
+}
+
+/// `/api/v1/user/detail/{uid}`：`profile` 是用户本体，level / listenSongs 在外层。
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UserDetailResponseDto {
+    #[serde(default)]
+    pub profile: Option<UserDto>,
+    #[serde(default)]
+    pub level: Option<i64>,
+    #[serde(default)]
+    pub listen_songs: Option<i64>,
     #[serde(default)]
     pub code: Option<i64>,
     #[serde(default, alias = "msg")]
@@ -797,6 +862,9 @@ impl_envelope!(
     LikeResponseDto,
     LikeListResponseDto,
     RecentSongResponseDto,
+    ArtistDetailResponseDto,
+    ArtistAlbumResponseDto,
+    UserDetailResponseDto,
     PlaylistSubscribeResponseDto,
     PlaylistDetailResponseDto,
     UserPlaylistResponseDto,

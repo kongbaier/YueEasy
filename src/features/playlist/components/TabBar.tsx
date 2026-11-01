@@ -1,13 +1,7 @@
-import { Button } from '@/shared/ui/button';
 import { formatCount } from '@/shared/utils/format';
-import { cn } from '@/shared/utils/cn';
+import { TabBar as UnderlineTabs, type TabBarItem } from '@/shared/ui/tab-bar';
 
 export type TabKey = 'songs' | 'comments';
-
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'songs', label: '歌曲' },
-  { key: 'comments', label: '评论' },
-];
 
 interface TabBarProps {
   active: TabKey;
@@ -16,44 +10,31 @@ interface TabBarProps {
   commentCount?: number;
 }
 
+/**
+ * 歌单详情分类条：只负责决定「每个分类带不带角标」（歌曲数恒显、评论数 0 不显），
+ * 视觉与交互复用 `shared/ui/tab-bar`。
+ */
 export const TabBar = ({
   active,
   onChange,
   songCount,
   commentCount,
-}: TabBarProps) => (
-  <div className="flex border-b border-border/40 space-x-4">
-    {TABS.map((tab) => {
-      const count = tab.key === 'songs' ? songCount : commentCount;
-      const showCount =
-        tab.key === 'songs' ? count != null : count != null && count > 0;
-      return (
-        <Button
-          className={cn(
-            'px-0 text-[17px] font-medium transition-colors',
-            active === tab.key
-              ? 'text-foreground font-medium'
-              : 'text-muted-foreground hover:text-foreground/80',
-          )}
-          key={tab.key}
-          onClick={() => onChange(tab.key)}
-          variant="ghost"
-        >
-          <span className="flex items-start gap-1">
-            <span className="relative leading-none">
-              {tab.label}
-              {active === tab.key && (
-                <span className="absolute left-1/2 -translate-x-1/2 -bottom-1.75 w-5 h-0.5 bg-primary rounded-full" />
-              )}
-            </span>
-            {showCount && count != null && (
-              <span className="text-[9px] leading-none tabular-nums text-muted-foreground/70">
-                {formatCount(count)}
-              </span>
-            )}
-          </span>
-        </Button>
-      );
-    })}
-  </div>
-);
+}: TabBarProps) => {
+  const items: TabBarItem<TabKey>[] = [
+    {
+      key: 'songs',
+      label: '歌曲',
+      badge: songCount != null ? formatCount(songCount) : undefined,
+    },
+    {
+      key: 'comments',
+      label: '评论',
+      badge:
+        commentCount != null && commentCount > 0
+          ? formatCount(commentCount)
+          : undefined,
+    },
+  ];
+
+  return <UnderlineTabs active={active} items={items} onChange={onChange} />;
+};

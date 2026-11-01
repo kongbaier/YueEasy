@@ -7,6 +7,8 @@ const Home = lazy(() => import('@/features/home/HomePage'));
 const Search = lazy(() => import('@/features/search/SearchPage'));
 const Playlist = lazy(() => import('@/features/playlist/PlaylistPage'));
 const Album = lazy(() => import('@/features/album/AlbumPage'));
+const Artist = lazy(() => import('@/features/artist/ArtistPage'));
+const UserProfile = lazy(() => import('@/features/user/UserPage'));
 const DailyRecommend = lazy(() => import('@/features/daily/DailyPage'));
 const Liked = lazy(() => import('@/features/like/LikedPage'));
 const RecentPlays = lazy(() => import('@/features/recent/RecentPage'));
@@ -24,6 +26,8 @@ export function AppRouter() {
           <Route element={<Home />} index />
           <Route element={<Search />} path="search" />
           <Route element={<Album />} path="album/:id" />
+          <Route element={<Artist />} path="artist/:id" />
+          <Route element={<UserProfile />} path="user/:id" />
           <Route element={<Playlist />} path="playlist/:id" />
           <Route element={<DailyRecommend />} path="daily" />
           <Route element={<Liked />} path="my/liked" />

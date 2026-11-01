@@ -7,6 +7,7 @@ import {
   Search,
   Settings,
   Sparkles,
+  User as UserIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -27,6 +28,7 @@ import {
   useSidebar,
 } from '@/shared/ui/sidebar';
 import { useAuthViewModel } from '@/features/auth/hooks/useAuthViewModel';
+import { getNcmImageUrl } from '@/shared/utils/image';
 
 const items = [
   { to: '/', icon: Home, label: '发现' },
@@ -69,7 +71,7 @@ export const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { state } = useSidebar();
-  const { isLoggedIn, openLogin } = useAuthViewModel();
+  const { isLoggedIn, userId, avatarUrl, openLogin } = useAuthViewModel();
 
   // 双层路由：一级页更新高亮，二级页（playlist/album 详情）保持来源高亮
   const [activeKey, setActiveKey] = useState<string | null>(() =>
@@ -166,6 +168,26 @@ export const AppSidebar = () => {
               >
                 <LogIn />
                 <span>登录</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+          {isLoggedIn && userId != null && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                className="h-8 gap-x-3 [&_svg]:size-4 group-data-[collapsible=icon]:[&_svg]:size-4"
+                isActive={location.pathname === `/user/${userId}`}
+                onClick={() => navigate(`/user/${userId}`)}
+              >
+                {avatarUrl ? (
+                  <img
+                    alt=""
+                    className="size-4 shrink-0 rounded-full object-cover"
+                    src={getNcmImageUrl(avatarUrl, 50)}
+                  />
+                ) : (
+                  <UserIcon />
+                )}
+                <span>我的主页</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}

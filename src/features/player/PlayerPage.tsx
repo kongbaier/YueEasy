@@ -1,5 +1,11 @@
 import { ChevronDown, Maximize, Minimize } from 'lucide-react';
-import React, { Activity, useEffect, useLayoutEffect, useState } from 'react';
+import React, {
+  Activity,
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import { WindowControls } from '@/shared/components/WindowControls';
 import { useWindowState } from '@/shared/hooks/useWindowState';
 import { Cover } from '@/shared/ui/image';
@@ -17,6 +23,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { AspectFit } from '@/shared/ui/aspect-fit';
 import { usePlayer } from '@/features/player/hooks/usePlayer';
 import { PlayerMenu } from './components/PlayerMenu';
+import { ArtistLink } from '@/features/artist/components/ArtistLink';
 
 const tabs = [
   { key: 'queue', label: '队列', component: PlayerPageQueue },
@@ -140,13 +147,21 @@ const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
 };
 
 const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
+  const { close } = usePlayerPage();
+
   return (
     <div className="h-14">
       <h1 className="text-xl font-semibold text-foreground truncate">
         {currentTrack.name}
       </h1>
       <p className="text-sm text-muted-foreground mt-1 truncate">
-        {currentTrack.artists?.map((a) => a.name).join(' / ')}
+        {currentTrack.artists?.map((artist, i) => (
+          <Fragment key={artist.id > 0 ? artist.id : artist.name}>
+            {i > 0 && ' / '}
+            {/* 播放页是覆盖层：点歌手先关掉它，否则跳转后的页面会被盖住 */}
+            <ArtistLink artist={artist} beforeOpen={() => close()} />
+          </Fragment>
+        ))}
       </p>
     </div>
   );
