@@ -1,9 +1,9 @@
-import { useAuthStore } from '../stores/authStore';
+import { selectIsLoggedIn, useAuthStore } from '../stores/authStore';
 import { useLoginModal } from '../stores/loginModalStore';
 import * as authService from '../services/AuthService';
 
 export const useAuthViewModel = () => {
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const userId = useAuthStore((s) => s.userId);
   const nickname = useAuthStore((s) => s.nickname);
   const avatarUrl = useAuthStore((s) => s.avatarUrl);

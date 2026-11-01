@@ -4,7 +4,10 @@ import { usePlayerStore } from '@/features/player/stores/playerStore';
 import { useQueueStore } from '@/features/player/stores/queueStore';
 import { playerService } from '@/features/player/services/PlayerService';
 import { usePlayerSettingsStore } from '@/features/player/stores/playerSettingsStore';
-import { useAuthStore } from '@/features/auth/stores/authStore';
+import {
+  selectIsLoggedIn,
+  useAuthStore,
+} from '@/features/auth/stores/authStore';
 import { useLikeStore } from '@/features/like/stores/like';
 import { queueItemToSong } from '@/shared/utils/mappers';
 
@@ -52,7 +55,7 @@ export function usePlayer() {
     [],
   );
   const playerSettings = usePlayerSettingsStore((s) => s.player);
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const like = useLikeStore(
     useShallow((s) => ({
       isLiked: s.isLiked,

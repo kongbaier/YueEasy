@@ -10,7 +10,6 @@ function applyAuth(cookie: string, profile?: Partial<AuthProfile> | null) {
   // 响应体 cookie 为空时不能覆盖，否则会清掉已落盘的会话。
   if (cookie) setNcmCookie(cookie);
   useAuthStore.getState().setAuth({
-    isLoggedIn: true,
     cookie,
     userId: profile?.id ?? null,
     nickname: profile?.nickname ?? '',

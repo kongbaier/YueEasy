@@ -1,5 +1,8 @@
 import { useCallback, useState } from 'react';
-import { useAuthStore } from '@/features/auth/stores/authStore';
+import {
+  selectIsLoggedIn,
+  useAuthStore,
+} from '@/features/auth/stores/authStore';
 import { useLoginModal } from '@/features/auth/stores/loginModalStore';
 import { queryClient } from '@/shared/lib/queryClient';
 import { toast } from '@/shared/lib/toast';
@@ -28,7 +31,7 @@ function patchSubscribedCache(id: number, subscribe: boolean) {
  * 自己的歌单不可收藏（`isOwn`，由调用方决定是否渲染按钮）。
  */
 export function usePlaylistSubscription(playlist: Playlist) {
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const userId = useAuthStore((s) => s.userId);
   const setLoginModalOpen = useLoginModal((s) => s.setOpen);
   const [isPending, setIsPending] = useState(false);

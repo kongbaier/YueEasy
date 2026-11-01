@@ -1,7 +1,10 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '@/features/auth/stores/authStore';
+import {
+  selectIsLoggedIn,
+  useAuthStore,
+} from '@/features/auth/stores/authStore';
 import { useLoginModal } from '@/features/auth/stores/loginModalStore';
 import { toast } from '@/shared/lib/toast';
 import { getDragonBall, getPlaylistDetail } from '../home-service';
@@ -12,7 +15,7 @@ import { getDragonBall, getPlaylistDetail } from '../home-service';
  */
 export function useRadarCardViewModel() {
   const navigate = useNavigate();
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const setLoginModalOpen = useLoginModal((s) => s.setOpen);
 
   // 圆形入口接口需要登录，未登录时优雅降级为空

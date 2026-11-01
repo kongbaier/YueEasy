@@ -4,7 +4,10 @@ import { usePlayerStore } from '@/features/player/stores/playerStore';
 import { useQueueStore } from '@/features/player/stores/queueStore';
 import { playerService } from '@/features/player/services/PlayerService';
 import { queueItemToSong } from '@/shared/utils/mappers';
-import { useAuthStore } from '@/features/auth/stores/authStore';
+import {
+  selectIsLoggedIn,
+  useAuthStore,
+} from '@/features/auth/stores/authStore';
 import { useLoginModal } from '@/features/auth/stores/loginModalStore';
 import { usePlayerPage } from '@/features/player/hooks/usePlayerPage';
 import { toast } from '@/shared/lib/toast';
@@ -22,7 +25,7 @@ export function useFmCardViewModel() {
   const currentTrack = currentTrackRaw
     ? queueItemToSong(currentTrackRaw)
     : null;
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const setLoginModalOpen = useLoginModal((s) => s.setOpen);
   const { open: openPlayerPage } = usePlayerPage();
   const queryClient = useQueryClient();

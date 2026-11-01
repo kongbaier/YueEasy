@@ -72,7 +72,8 @@ void likeApi.onLikedToggled((trackId, liked) => {
 // ── self-init: 登录后由 Rust 端拉取喜欢列表（like_init）+ 喜欢歌单 id，前端只读结果 ──
 
 useAuthStore.subscribe((state, prev) => {
-  if (state.isLoggedIn && state.userId && !useLikeStore.getState().isLoaded) {
+  // 登录态唯一真相是 userId（见 authStore.selectIsLoggedIn），此处直接判 uid。
+  if (state.userId && !useLikeStore.getState().isLoaded) {
     likeApi
       .likeInit(state.userId)
       .then((ids) => useLikeStore.getState().init(ids))
@@ -82,7 +83,7 @@ useAuthStore.subscribe((state, prev) => {
       .then((id) => useLikeStore.getState().setLikedPlaylistId(id))
       .catch(() => {});
   }
-  if (!state.isLoggedIn && prev.isLoggedIn) {
+  if (state.userId === null && prev.userId !== null) {
     useLikeStore.getState().clear();
   }
 });

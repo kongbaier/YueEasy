@@ -1,5 +1,8 @@
 import { useCallback } from 'react';
-import { useAuthStore } from '@/features/auth/stores/authStore';
+import {
+  selectIsLoggedIn,
+  useAuthStore,
+} from '@/features/auth/stores/authStore';
 import { useLikeStore } from '@/features/like/stores/like';
 import { useLoginModal } from '@/features/auth/stores/loginModalStore';
 import { queryClient } from '@/shared/lib/queryClient';
@@ -26,7 +29,7 @@ function removeLikedSongCache(trackId: number) {
 }
 
 export function useLikeAction() {
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const setLoginModalOpen = useLoginModal((s) => s.setOpen);
   const toggleLikeRemote = useLikeStore((s) => s.toggleLikeRemote);
   // 订阅 likedIds（Set 引用变化触发重渲染），保证 isLiked(id) 结果随点赞状态更新
