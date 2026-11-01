@@ -1,6 +1,9 @@
 import { Search as SearchIcon, SearchX } from 'lucide-react';
 
-import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
+import {
+  TrackRow,
+  TrackRowSkeletonList,
+} from '@/shared/components/track';
 import { SearchAlbumCard, SearchAlbumCardSkeleton } from './SearchAlbumCard';
 import { SearchArtistCard, SearchArtistCardSkeleton } from './SearchArtistCard';
 import { SearchUserCard, SearchUserCardSkeleton } from './SearchUserCard';
@@ -18,14 +21,7 @@ import type { Song } from '@/shared/types/uiModels';
 
 function LoadingState({ type }: { type: SearchType }) {
   if (type === SearchType.SONG) {
-    return (
-      <div className="space-y-0.5">
-        {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-          // oxlint-disable-next-line react/no-array-index-key
-          <TrackRowSkeleton index={i} key={i} />
-        ))}
-      </div>
-    );
+    return <TrackRowSkeletonList count={SKELETON_COUNT} />;
   }
 
   const SkeletonComponent =

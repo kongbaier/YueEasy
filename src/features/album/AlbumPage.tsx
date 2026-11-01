@@ -1,10 +1,9 @@
 import { Disc, Music, Play } from 'lucide-react';
-import { Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 import { Cover } from '@/shared/ui/image';
 import { ExpandableText } from '@/shared/ui/expandable-text';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
-import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
+import { TrackRow, TrackRowSkeletonList } from '@/shared/components/track';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { ScrollArea } from '@/shared/ui/scroll-area';
@@ -39,16 +38,13 @@ const AlbumSkeleton = () => (
           </div>
         </div>
       </div>
-      <div className="space-y-0.5">
+      <div>
         <div className="flex items-center gap-3 px-3 pb-3 border-b border-border/30 mb-2">
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             歌曲列表
           </span>
         </div>
-        {Array.from({ length: 8 }).map((_, i) => (
-          // oxlint-disable-next-line react/no-array-index-key
-          <TrackRowSkeleton index={i} key={i} />
-        ))}
+        <TrackRowSkeletonList />
       </div>
     </div>
   </ScrollArea>
@@ -58,16 +54,25 @@ const AlbumSkeleton = () => (
 /*  页面主体                                                            */
 /* ------------------------------------------------------------------ */
 
-const AlbumContent = () => {
+/**
+ * 专辑详情页：取数走非 Suspense 的 useQuery（见 useAlbumViewModel），因此本页是单一组件：
+ * 加载骨架由 early return 承载，不再用 `<Suspense>` + `AlbumContent` 这种
+ * 「为承载边界而多包一层」的模式。所有 hook 都在 early return 之前调用。
+ */
+export default function Album() {
   const { id } = useParams<{ id: string }>();
   const scrollRef = useScrollMemory();
+  const resolvedId = Number(id);
 
-  if (!id) throw new Error('无效的专辑 ID');
+  if (!resolvedId) throw new Error('无效的专辑 ID');
 
-  const { album, tracks, handlePlay, handlePlayAll } = useAlbumViewModel(
-    Number(id),
-  );
-  usePageTitle(album.name);
+  const { album, tracks, handlePlay, handlePlayAll, isPending } =
+    useAlbumViewModel(resolvedId);
+  usePageTitle(album?.name);
+
+  if (isPending) return <AlbumSkeleton />;
+
+  if (!album) return null;
 
   const metaParts: string[] = [];
   if (album.artist?.name) metaParts.push(album.artist.name);
@@ -154,17 +159,5 @@ const AlbumContent = () => {
         )}
       </div>
     </ScrollArea>
-  );
-};
-
-/* ------------------------------------------------------------------ */
-/*  导出                                                               */
-/* ------------------------------------------------------------------ */
-
-export default function Album() {
-  return (
-    <Suspense fallback={<AlbumSkeleton />}>
-      <AlbumContent />
-    </Suspense>
   );
 }

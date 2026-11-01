@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CommentPanel } from '@/features/comment/components';
-import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
+import { TrackRow, TrackRowSkeletonList } from '@/shared/components/track';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import { usePlaylistViewModel } from './hooks/usePlaylistViewModel';
@@ -10,22 +10,13 @@ import { usePageTitle } from '@/app/layout/PageTitleContext';
 import type { TabKey } from './components/TabBar';
 import { TabBar } from './components/TabBar';
 
-const TrackListSkeleton = () => (
-  <div className="space-y-0.5">
-    {Array.from({ length: 8 }).map((_, i) => (
-      // oxlint-disable-next-line react/no-array-index-key
-      <TrackRowSkeleton index={i} key={i} />
-    ))}
-  </div>
-);
-
 const PlaylistSkeleton = () => (
   <ScrollArea className="h-full py-8 pl-8 pr-4">
     <div className="space-y-8">
       <PlaylistInfoSkeleton />
       <div className="space-y-4">
         <TabBar active="songs" onChange={() => {}} />
-        <TrackListSkeleton />
+        <TrackRowSkeletonList />
       </div>
     </div>
   </ScrollArea>

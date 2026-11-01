@@ -1,7 +1,7 @@
 import { Play, Sparkles } from 'lucide-react';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
 import { Button } from '@/shared/ui/button';
-import { TrackRow, TrackRowSkeleton } from '@/shared/components/track';
+import { TrackRow, TrackRowSkeletonList } from '@/shared/components/track';
 import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { useAuthViewModel } from '@/features/auth/hooks/useAuthViewModel';
@@ -28,11 +28,8 @@ export default function DailyRecommend() {
   if (isLoading)
     return (
       <div className="p-6">
-        <div className="mt-3 space-y-0.5">
-          {Array.from({ length: 8 }).map((_, i) => (
-            // oxlint-disable-next-line react/no-array-index-key
-            <TrackRowSkeleton index={i} key={i} />
-          ))}
+        <div className="mt-3">
+          <TrackRowSkeletonList />
         </div>
       </div>
     );
