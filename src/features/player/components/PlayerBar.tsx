@@ -190,7 +190,11 @@ const PlayerInfo = () => {
           className={cn(
             'size-10 shrink-0 transition-colors',
             'transition-transform duration-100 origin-bottom-left hover:brightness-105 hover:scale-110',
-            'p-0 border-none',
+            // 封面瓦片的基色必须中性：默认 variant 是 bg-primary，而封面层（CrossfadeImage 的
+            // 骨架 / 无封面兜底 div）都是半透明的 —— 主色会透上来。删掉最后一首时封面层先卸载、
+            // 外层 300ms 淡出，于是变成 cover → 主色 → 半灰三段跳；直接给中性灰瓦片后是 cover → 灰。
+            // 基色与左侧空态占位瓦片（bg-accent/40）一致，切换时瓦片不再变色。
+            'p-0 border-none bg-accent/40 hover:bg-accent/40',
           )}
           onClick={openPlayerPage}
           type="button"
@@ -203,7 +207,7 @@ const PlayerInfo = () => {
               src={getNcmImageUrl(currentTrack.album.picUrl, 50)}
             />
           ) : (
-            <div className="flex items-center justify-center size-full bg-accent">
+            <div className="flex items-center justify-center size-full rounded-md">
               <Music className="size-4 text-muted-foreground/60" />
             </div>
           )}

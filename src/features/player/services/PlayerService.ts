@@ -385,9 +385,33 @@ async function fmContinuation(): Promise<void> {
   pauseAudio();
 }
 
+/** 暂停：当前曲仍在队列里，保留 transport 的曲目信息（UI 需继续显示）。 */
 function pauseAudio(): void {
   player.pause();
   usePlayerStore.setState({ playing: false, loading: false });
+}
+
+/**
+ * 停播并复位 transport（队列已空：清空队列 / 删掉最后一首 / 切回空用户队列）。
+ *
+ * 与 `pauseAudio` 的区别就在这里：队列空了 = 没有「当前曲」可显示，
+ * 必须把 `currentTrack` 一并清掉，否则 PlayerBar / 播放页仍停在已被删除的那首上
+ * （表现为「删掉最后一首后播放器毫无变化，只有清空队列才更新」）。
+ */
+function resetTransport(): void {
+  playSeq += 1; // 使在途 resolve 失效，避免旧曲目被回写
+  audioCore.reset();
+  resetStreaks();
+  audioRetriedId = null;
+  lastMediaError = null;
+  usePlayerStore.setState({
+    currentTrack: null,
+    playing: false,
+    loading: false,
+    buffering: false,
+    currentTime: 0,
+    duration: 0,
+  });
 }
 
 /** 自然播放结束：按 repeat 推进 / FM 续歌 / 停。 */
@@ -538,6 +562,11 @@ export const playerService: PlayerController = {
     const q = () => useQueueStore.getState();
     const before = q().currentTrack()?.track_id;
     q().removeAt(index);
+    // 删掉的是最后一首 → 队列里已无曲目：复位 transport（不能只 pause，见 resetTransport）
+    if (q().queue.length === 0) {
+      resetTransport();
+      return;
+    }
     const after = q().currentTrack();
     if (after?.track_id !== before) {
       if (after) await resolveAndPlay(after);
@@ -546,19 +575,7 @@ export const playerService: PlayerController = {
   },
   clearQueue: () => {
     useQueueStore.getState().clear();
-    playSeq += 1; // 使在途 resolve 失效，避免旧曲目被回写
-    audioCore.reset();
-    resetStreaks();
-    audioRetriedId = null;
-    lastMediaError = null;
-    usePlayerStore.setState({
-      currentTrack: null,
-      playing: false,
-      loading: false,
-      buffering: false,
-      currentTime: 0,
-      duration: 0,
-    });
+    resetTransport();
   },
   setContentSource: async (source) => {
     resetStreaks();
@@ -571,7 +588,9 @@ export const playerService: PlayerController = {
       if (cur) await resolveAndPlay(cur);
     } else {
       const cur = q().exitFm();
+      // 用户队列为空（FM 期间清空 / 从未入队）→ 没有可播曲目，停播并复位
       if (cur) await resolveAndPlay(cur);
+      else resetTransport();
     }
   },
   fmTrash: async () => {
@@ -583,6 +602,8 @@ export const playerService: PlayerController = {
     await trashFm(removed.track_id);
     const cur = q().currentTrack();
     if (cur) await resolveAndPlay(cur);
+    // FM 队列也被删空 → 同样复位 transport（否则播放器仍显示刚「不感兴趣」的那首）
+    else if (q().queue.length === 0) resetTransport();
     else await pauseAudio();
   },
 };
