@@ -17,6 +17,12 @@ import { Player } from '../core/player';
 import type { ContentSource, QueueSnapshot } from '../stores/queueStore';
 import { fmPolicy, queuePolicy, useQueueStore } from '../stores/queueStore';
 import { fetchFm, resolveUrl, trashFm } from './PlayerDataService';
+import {
+  applyLimitFromSettings,
+  invalidate as invalidateAudioCache,
+  localUrl as localAudioUrl,
+  requestCache as requestAudioCache,
+} from './AudioCacheService';
 import { usePlayerStore } from '../stores/playerStore';
 import { recordPlay } from './PlayHistoryService';
 import { usePlayerSettingsStore } from '../stores/playerSettingsStore';
@@ -34,8 +40,12 @@ function queueItemToCoreTrack(item: QueueItem): PlayerCoreTrack {
 const URL_TTL_MS = 5 * 60 * 1000;
 /** 「不可播」负缓存寿命：比正缓存短 —— 登录 / 换音质后同一首可能立刻变可播。 */
 const UNAVAILABLE_TTL_MS = 60 * 1000;
-/** url 为 null 表示「不可播」（VIP / 无版权 / 仅试听），是正常业务值而非错误。 */
-type UrlEntry = { url: string | null; at: number };
+/**
+ * 内存 URL 缓存条目。
+ * - `url == null` = 「不可播」（VIP / 无版权 / 仅试听），是正常业务值而非错误
+ * - `local: true` = 本地磁盘缓存命中的 asset URL：没有签名 / 永不过期（不套 TTL）
+ */
+type UrlEntry = { url: string | null; at: number; local?: boolean };
 const lastUrlCache = new Map<string, UrlEntry>();
 /** 在途请求：预取与切歌可能同时解析同一首，合并为一次网络请求。 */
 const inflightUrl = new Map<
@@ -68,6 +78,8 @@ function invalidateUrl(trackId: number): void {
   const key = String(trackId);
   lastUrlCache.delete(key);
   urlGeneration.set(key, (urlGeneration.get(key) ?? 0) + 1);
+  // 本地文件也可能损坏（半截 / 编码异常）：一并删掉，否则下次仍会命中同一个坏文件
+  invalidateAudioCache(trackId);
 }
 
 function resetStreaks(): void {
@@ -83,18 +95,41 @@ async function resolveTrackUrl(trackId: number): Promise<string | null> {
   const gen = urlGeneration.get(key) ?? 0;
   const hit = lastUrlCache.get(key);
   if (hit) {
-    const ttl = hit.url == null ? UNAVAILABLE_TTL_MS : URL_TTL_MS;
+    // 本地缓存命中永不过期；远端签名 URL 有 TTL
+    const ttl = hit.local
+      ? Infinity
+      : hit.url == null
+        ? UNAVAILABLE_TTL_MS
+        : URL_TTL_MS;
     if (Date.now() - hit.at <= ttl) return hit.url;
   }
   const pending = inflightUrl.get(key);
   if (pending && pending.gen === gen) return pending.promise;
   lastUrlCache.delete(key);
+
+  // ① 本地磁盘缓存优先：文件没有签名、不会 403，命中即起播
+  const local = await localAudioUrl(trackId).catch((e) => {
+    console.warn('[player] 本地缓存查询失败', trackId, e);
+    return null;
+  });
+  if (local) {
+    if ((urlGeneration.get(key) ?? 0) === gen) {
+      lastUrlCache.set(key, { url: local, at: Date.now(), local: true });
+    }
+    return local;
+  }
+  // 本地查询是异步的：其间可能已有别的调用发起了网络解析 → 合并
+  const raced = inflightUrl.get(key);
+  if (raced && raced.gen === gen) return raced.promise;
+
+  // ② 网络解析（成功后请求后台落盘，下次播放走本地）
   const promise = resolveUrl(trackId)
     .then((url) => {
       // 已被 invalidate（音频 error 后绕过缓存重解析）→ 不回填，避免又拿到同一个坏 URL
       if ((urlGeneration.get(key) ?? 0) === gen) {
         lastUrlCache.set(key, { url, at: Date.now() });
       }
+      if (url) requestAudioCache(trackId, url);
       return url;
     })
     .finally(() => {
@@ -183,6 +218,30 @@ function prefetchNext(): void {
   void resolveTrackUrl(next.track_id).catch(() => null);
 }
 
+/**
+ * 单曲循环（`repeat = one`）的「原地重播」：不重新解析 URL、不重新 load 媒体，
+ * 只把播放位置拉回 0 —— 省掉一次 media load 的起播空隙与重复下载。
+ *
+ * 不重新 `recordPlay`：循环听同一首不重复写播放历史（语义是「一次收听一条记录」）。
+ * 无有效 src（启动恢复 / 清空后）时回退到完整重载。
+ */
+async function replayCurrent(item: QueueItem): Promise<void> {
+  if (audioCore.getStatus() === 'idle' || !audioCore.src) {
+    await resolveAndPlay(item);
+    return;
+  }
+  playSeq += 1; // 使在途 resolve 失效，避免旧结果回写
+  audioCore.seek(0);
+  usePlayerStore.setState({
+    currentTrack: item,
+    currentTime: 0,
+    duration: item.duration_secs,
+    loading: false,
+  });
+  await player.play();
+  prefetchNext();
+}
+
 /** 失败兜底：连续失败达上限即停（避免断网时无限跳歌），否则提示并推进下一首。 */
 async function failover(message: string): Promise<void> {
   failedStreak += 1;
@@ -264,7 +323,7 @@ async function stepForward(): Promise<void> {
   }
   if (step.type === 'replayCurrent') {
     const cur = queueStore().currentTrack();
-    if (cur) await resolveAndPlay(cur);
+    if (cur) await replayCurrent(cur);
     return;
   }
   if (queueStore().isFmActive()) {
@@ -368,7 +427,8 @@ export const playerService: PlayerController = {
   restore: (snapshot) => {
     useQueueStore.getState().restore(snapshot);
     playSeq += 1;
-    lastUrlCache.clear();
+    lastUrlCache.clear(); // 内存缓存清空（磁盘缓存在 Rust 侧，跨重启保留）
+    applyLimitFromSettings(); // 启动即把设置里的缓存上限下发给 Rust
     resetStreaks();
     audioRetriedId = null;
     lastMediaError = null;

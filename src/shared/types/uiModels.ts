@@ -294,6 +294,12 @@ export interface RecentSongs {
   list: RecentSong[];
 }
 
+/** 音频磁盘缓存统计（Rust `storage::audio_cache::AudioCacheStats` wire 镜像）。 */
+export interface AudioCacheStats {
+  count: number;
+  totalBytes: number;
+}
+
 /**
  * 本地播放记录（Rust `storage::play_history::PlayRecord` wire 镜像）。
  * 字段即 Rust 字段名（snake_case，与 QueueItem 同约定）；由播放器每次实际播放落库。

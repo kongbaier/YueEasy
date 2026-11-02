@@ -10,6 +10,7 @@ use tauri::Manager;
 
 use crate::app::state::LikeState;
 use crate::netease::NcmState;
+use crate::storage::audio_cache::AudioCache;
 use crate::storage::db::Database;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -38,6 +39,8 @@ pub fn run() {
         .plugin(tauri_plugin_cache::init())
         .manage(Database::default())
         .manage(LikeState::default())
+        // 音频缓存目录由 dirs 解析（不依赖 AppHandle），可以在这里就 manage。
+        .manage(AudioCache::default())
         .setup(|app| {
             let handle = app.handle();
 
@@ -107,6 +110,13 @@ pub fn run() {
             commands::ncm::comment::ncm_comment_playlist,
             commands::ncm::comment::ncm_comment_music,
             commands::accent::get_accent_color,
+            commands::audio_cache::audio_cache_get,
+            commands::audio_cache::audio_cache_dir,
+            commands::audio_cache::audio_cache_request,
+            commands::audio_cache::audio_cache_set_limit,
+            commands::audio_cache::audio_cache_stats,
+            commands::audio_cache::audio_cache_clear,
+            commands::audio_cache::audio_cache_remove,
             commands::history::history_add,
             commands::history::history_get,
             commands::history::history_mark_synced,

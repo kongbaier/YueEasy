@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useEffectOnActive } from 'keepalive-for-react';
 import {
   checkUpdate,
+  clearAudioCache,
   clearCache,
   downloadUpdate,
   getAppVersion,
+  getAudioCacheDir,
+  getAudioCacheStats,
   getCacheSize,
   relaunchApp,
   setEffect,
   type Update,
 } from '../settings-actions-service';
+import type { AudioCacheStats } from '@/shared/types/uiModels';
 import type { WindowsEffect } from '@/shared/types/effect';
 import { useAuthViewModel } from '@/features/auth/hooks/useAuthViewModel';
 
@@ -26,6 +31,8 @@ export function useSettingsViewModel() {
     useAuthViewModel();
 
   const [cacheCount, setCacheCount] = useState<number | null>(null);
+  const [audioCache, setAudioCache] = useState<AudioCacheStats | null>(null);
+  const [audioCacheDir, setAudioCacheDir] = useState('');
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle');
   const [update, setUpdate] = useState<Update | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
@@ -37,9 +44,25 @@ export function useSettingsViewModel() {
       .catch(() => setCacheCount(null));
   }, []);
 
+  const loadAudioCache = useCallback(() => {
+    getAudioCacheStats()
+      .then(setAudioCache)
+      .catch(() => setAudioCache(null));
+  }, []);
+
+  // 设置页是 KeepAlive 页：每次重新激活都刷新统计（缓存使用中随时在变）
+  useEffectOnActive(() => {
+    loadCacheSize();
+    loadAudioCache();
+    getAudioCacheDir()
+      .then(setAudioCacheDir)
+      .catch(() => setAudioCacheDir(''));
+  }, [loadCacheSize, loadAudioCache]);
+
   useEffect(() => {
     loadCacheSize();
-  }, [loadCacheSize]);
+    loadAudioCache();
+  }, [loadCacheSize, loadAudioCache]);
 
   useEffect(() => {
     getAppVersion()
@@ -50,6 +73,11 @@ export function useSettingsViewModel() {
   const handleClearCache = useCallback(async () => {
     await clearCache();
     setCacheCount(0);
+  }, []);
+
+  const handleClearAudioCache = useCallback(async () => {
+    await clearAudioCache();
+    setAudioCache({ count: 0, totalBytes: 0 });
   }, []);
 
   const handleEffectChange = useCallback(
@@ -112,6 +140,10 @@ export function useSettingsViewModel() {
     cacheCount,
     loadCacheSize,
     handleClearCache,
+    audioCache,
+    audioCacheDir,
+    loadAudioCache,
+    handleClearAudioCache,
     updateStatus,
     update,
     downloadProgress,

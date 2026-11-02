@@ -13,4 +13,9 @@ export const DEFAULTS_PLAYER: PlayerSettings = {
   isMuted: false,
   playbackRate: 1,
   savePlaybackHistory: true,
+  // 2GB：320kbps 约 200 首 / 128kbps 约 500 首，兼顾「够用」与「不抢磁盘」
+  audioCacheLimitMB: 2048,
 };
+
+/** 音频缓存上限候选值（MB）：`0` = 关闭。 */
+export const AUDIO_CACHE_LIMIT_OPTIONS = [0, 512, 1024, 2048, 4096, 8192] as const;

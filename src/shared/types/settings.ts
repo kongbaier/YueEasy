@@ -17,4 +17,6 @@ export interface PlayerSettings {
   playbackRate: number;
   /** 是否在本地记录播放历史（SQLite play_history），用于最近播放综合展示。 */
   savePlaybackHistory: boolean;
+  /** 音频文件磁盘缓存上限（MB）；`0` = 关闭缓存（不读不写）。 */
+  audioCacheLimitMB: number;
 }

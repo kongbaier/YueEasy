@@ -16,6 +16,8 @@ import {
 import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import { useSettingsViewModel } from './hooks/useSettingsViewModel';
 import { toast } from '@/shared/lib/toast';
+import { formatBytes } from '@/shared/utils/format';
+import { AUDIO_CACHE_LIMIT_OPTIONS } from '@/shared/constants/player';
 import type { Theme } from '@/shared/types/settings';
 import { Button } from '@/shared/ui/button';
 import { Select } from '@/shared/ui/select';
@@ -48,6 +50,8 @@ export default function Settings() {
   const [savePlaybackHistory, setSavePlaybackHistory] = usePlayerSetting(
     'savePlaybackHistory',
   );
+  const [audioCacheLimitMB, setAudioCacheLimitMB] =
+    usePlayerSetting('audioCacheLimitMB');
   const {
     isLoggedIn,
     nickname,
@@ -56,12 +60,15 @@ export default function Settings() {
     logout,
     openLogin,
     cacheCount,
+    audioCache,
+    audioCacheDir,
     updateStatus,
     update,
     downloadProgress,
     appVersion,
     handleEffectChange: applyWindowEffect,
     handleClearCache: clearCache,
+    handleClearAudioCache: clearAudioCache,
     handleCheckUpdate: checkUpdate,
     handleDownloadAndInstall,
   } = useSettingsViewModel();
@@ -72,6 +79,15 @@ export default function Settings() {
       toast.success('缓存已清除');
     } catch {
       toast.error('清除缓存失败');
+    }
+  };
+
+  const handleClearAudioCache = async () => {
+    try {
+      await clearAudioCache();
+      toast.success('音频缓存已清除');
+    } catch {
+      toast.error('清除音频缓存失败');
     }
   };
 
@@ -263,12 +279,60 @@ export default function Settings() {
         <SectionCard style={{ animationDelay: '240ms' }}>
           <SectionTitle icon={Database}>缓存</SectionTitle>
           <div className="divide-y divide-border/10">
-            <Row description="本地缓存条目数" label="缓存大小">
+            <Row
+              description="播放过的歌曲会缓存到本地，重复播放无需重新下载"
+              label="音频缓存上限"
+            >
+              <Select.Root
+                onValueChange={(v) => setAudioCacheLimitMB(Number(v))}
+                value={String(audioCacheLimitMB)}
+              >
+                <Select.Trigger className="w-28">
+                  <Select.Value>
+                    {audioCacheLimitMB > 0
+                      ? formatBytes(audioCacheLimitMB * 1024 * 1024)
+                      : '关闭'}
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Portal>
+                  <Select.Positioner>
+                    <Select.Popup>
+                      <Select.List>
+                        {AUDIO_CACHE_LIMIT_OPTIONS.map((mb) => (
+                          <Select.Item key={mb} value={String(mb)}>
+                            <Select.ItemText>
+                              {mb > 0 ? formatBytes(mb * 1024 * 1024) : '关闭'}
+                            </Select.ItemText>
+                            <Select.ItemIndicator>
+                              <Check className="size-4" />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.List>
+                    </Select.Popup>
+                  </Select.Positioner>
+                </Select.Portal>
+              </Select.Root>
+            </Row>
+            <Row description={audioCacheDir || '音频文件缓存位置'} label="音频缓存占用">
+              <span className="text-sm text-muted-foreground">
+                {audioCache === null
+                  ? '--'
+                  : `${formatBytes(audioCache.totalBytes)} · ${audioCache.count} 首`}
+              </span>
+              <Button
+                disabled={!audioCache || audioCache.count === 0}
+                onClick={handleClearAudioCache}
+                size="xs"
+                variant="outline"
+              >
+                清除
+              </Button>
+            </Row>
+            <Row description="每日推荐等接口数据缓存" label="数据缓存">
               <span className="text-sm text-muted-foreground">
                 {cacheCount === null ? '--' : `${cacheCount} 项`}
               </span>
-            </Row>
-            <Row label="清除缓存">
               <Button
                 disabled={cacheCount === 0 || cacheCount === null}
                 onClick={handleClearCache}
