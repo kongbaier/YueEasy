@@ -11,7 +11,7 @@ import { onLocalHistoryChanged } from '@/features/player/services/PlayHistorySer
  * 最近播放页 viewmodel：React Query 取数（云 + 本地综合）+ playerService 命令。
  * userId 为空时仅取本地记录；localEnabled 控制本地来源是否并入。
  *
- * 用非 Suspense 的 useQuery + enabled 门控（与 playlist / my-playlists 一致）：
+ * 用非 Suspense 的 useQuery + enabled 门控（与 playlist / user 一致）：
  * 页面自身不挂起，加载态与登录门禁都由页面 early return 承载，
  * 从而省掉「为承载 Suspense 边界而多包一层 Content 组件」。
  * throwOnError 让取数失败照旧抛给上层错误边界，与 suspense 模式行为一致。

@@ -164,6 +164,33 @@ export interface UserDetail {
   createTimeMs?: number;
 }
 
+/**
+ * 音乐云盘文件（对应 Rust `CloudFile`）。
+ * `song` 缺失表示上传后未匹配到曲库：可展示文件名，但不可播放。
+ */
+export interface CloudFile {
+  songId: number;
+  fileName: string;
+  /** 文件格式（Rust 侧从文件名后缀归一，小写：`mp3` / `flac` …） */
+  format?: string;
+  /** 字节 */
+  fileSizeBytes?: number;
+  /** 毫秒时间戳 */
+  addTimeMs?: number;
+  song?: Song;
+}
+
+/** 云盘一页（对应 Rust `CloudPage`）：items 随分页变化，count/容量是全局口径。 */
+export interface CloudPage {
+  items: CloudFile[];
+  /** 云盘文件总数 */
+  count: number;
+  /** 已用容量（字节） */
+  usedBytes?: number;
+  /** 云盘总容量（字节） */
+  maxBytes?: number;
+}
+
 /** 原唱/翻唱标记（Rust `model::entity::OriginCoverType`）。 */
 export type OriginCoverType = 'original' | 'cover' | 'other';
 

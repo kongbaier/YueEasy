@@ -90,6 +90,7 @@ pub fn run() {
             commands::ncm::artist::ncm_artist_detail,
             commands::ncm::artist::ncm_artist_albums,
             commands::ncm::user::ncm_user_detail,
+            commands::ncm::user::ncm_user_cloud,
             commands::ncm::playlist::ncm_playlist_detail,
             commands::ncm::playlist::ncm_playlist_subscribe,
             commands::ncm::playlist::ncm_user_playlist,

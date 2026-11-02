@@ -312,6 +312,115 @@ pub struct UserDetailResponseDto {
     pub message: Option<String>,
 }
 
+// ── cloud（音乐云盘） ──────────────────────────────────────────────
+
+/// 云盘文件的 `artist` 字段形态不稳定：可能是 `"A/B"` 字符串、单个对象或对象数组。
+/// 这里统一降级为「名字列表」（丢掉 id，mapper 侧造 id=0 的歌手），
+/// 只为在 `simpleSong` 缺歌手时还能把歌手名展示出来。
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+enum ArtistNameRaw {
+    Text(String),
+    One(ArtistNameOnly),
+    Many(Vec<ArtistNameOnly>),
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ArtistNameOnly {
+    #[serde(default, deserialize_with = "de_string_nullable")]
+    name: String,
+}
+
+fn de_artist_names<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let raw = Option::<ArtistNameRaw>::deserialize(deserializer)?;
+    let names: Vec<String> = match raw {
+        None => Vec::new(),
+        Some(ArtistNameRaw::Text(text)) => text
+            .split('/')
+            .map(|name| name.trim().to_string())
+            .collect(),
+        Some(ArtistNameRaw::One(one)) => vec![one.name],
+        Some(ArtistNameRaw::Many(list)) => list.into_iter().map(|a| a.name).collect(),
+    };
+    Ok(names.into_iter().filter(|n| !n.is_empty()).collect())
+}
+
+/// 云盘文件的 `album` 字段同理：可能是字符串，也可能是 `{ name, id }` 对象。
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+enum AlbumNameRaw {
+    Text(String),
+    Detail(AlbumNameOnly),
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct AlbumNameOnly {
+    #[serde(default, deserialize_with = "de_string_nullable")]
+    name: String,
+}
+
+fn de_album_name<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let raw = Option::<AlbumNameRaw>::deserialize(deserializer)?;
+    let name = match raw {
+        None => None,
+        Some(AlbumNameRaw::Text(text)) => Some(text),
+        Some(AlbumNameRaw::Detail(detail)) => Some(detail.name),
+    };
+    Ok(name.filter(|n| !n.is_empty()))
+}
+
+/// `/api/v1/cloud/get` 的 `data[]` 每项：云盘文件 + 内嵌歌曲。
+///
+/// 两种形状都存在：新版把歌曲完整放在 `simpleSong` 里；老版（以及部分账号）只在
+/// 文件层给扁平的 `songName` / `artist` / `album`。两种都收，mapper 侧合成为一个 Song。
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CloudFileDto {
+    #[serde(default)]
+    pub song_id: i64,
+    #[serde(default, deserialize_with = "de_string_nullable")]
+    pub file_name: String,
+    /// 扁平回退：老版云盘文件的歌名 / 歌手名 / 专辑名
+    #[serde(default)]
+    pub song_name: Option<String>,
+    #[serde(default, deserialize_with = "de_artist_names")]
+    pub artist: Vec<String>,
+    #[serde(default, deserialize_with = "de_album_name")]
+    pub album: Option<String>,
+    #[serde(default)]
+    pub file_size: Option<i64>,
+    #[serde(default)]
+    pub add_time: Option<i64>,
+    /// 聚合歌曲；未匹配到曲库的文件没有该字段。
+    #[serde(default, alias = "song")]
+    pub simple_song: Option<SongDto>,
+}
+
+/// `/api/v1/cloud/get`：`data` 是分页后的文件列表，`count` / `size` / `maxSize`
+/// 是**全局**口径（文件总数 / 已用容量 / 总容量，单位字节），不随 limit 变化。
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CloudResponseDto {
+    #[serde(default)]
+    pub data: Vec<CloudFileDto>,
+    #[serde(default)]
+    pub count: Option<i64>,
+    #[serde(default)]
+    pub size: Option<i64>,
+    #[serde(default)]
+    pub max_size: Option<i64>,
+    #[serde(default)]
+    pub code: Option<i64>,
+    #[serde(default, alias = "msg")]
+    pub message: Option<String>,
+}
+
 // ── playlist ────────────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Deserialize)]
@@ -865,6 +974,7 @@ impl_envelope!(
     ArtistDetailResponseDto,
     ArtistAlbumResponseDto,
     UserDetailResponseDto,
+    CloudResponseDto,
     PlaylistSubscribeResponseDto,
     PlaylistDetailResponseDto,
     UserPlaylistResponseDto,

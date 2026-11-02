@@ -6,8 +6,8 @@ import { getUserPlaylists } from '@/shared/services/UserService';
 /**
  * 用户主页 viewmodel：用户详情 + 歌单列表两条查询。
  *
- * 歌单查询键与「我的歌单」页一致（`['userPlaylists', uid]`），同一用户在两处共享缓存，
- * 收藏 / 取消收藏歌单后的失效一次即可覆盖两个页面。
+ * 歌单查询键统一为 `['userPlaylists', uid]`，同一用户在多处（我的主页 / 用户主页）共享缓存，
+ * 收藏 / 取消收藏歌单后的失效一次即可覆盖。
  */
 export function useUserViewModel(uid: number) {
   const detail = useQuery({

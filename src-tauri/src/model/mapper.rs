@@ -441,6 +441,91 @@ pub fn map_user_detail(d: response::UserDetailResponseDto) -> ent::UserDetail {
     }
 }
 
+pub fn map_cloud_page(d: response::CloudResponseDto) -> ent::CloudPage {
+    ent::CloudPage {
+        items: d.data.into_iter().map(map_cloud_file).collect(),
+        count: d.count.unwrap_or(0),
+        used_bytes: d.size,
+        max_bytes: d.max_size,
+    }
+}
+
+/// 云盘文件 → Entity。
+///
+/// 歌名 / 歌手 / 专辑可能来自两个地方，优先级：`simpleSong` → 文件层扁平字段。
+/// 云盘歌曲的 `simpleSong` 经常只给歌名（`ar` / `al` 为空），此时用扁平字段补齐，
+/// 否则前端只能显示「未知歌手」——而网易云客户端里是能看到歌手名的。
+fn map_cloud_file(f: response::CloudFileDto) -> ent::CloudFile {
+    let mut song = f.simple_song.map(map_song);
+
+    if let Some(song) = song.as_mut() {
+        // 实测：云盘歌曲的 `ar[]` 里可能出现只有 id、名字为空的对象，
+        // 此时列表会渲染成空白；先剔掉无名条目，再用扁平字段补齐。
+        song.artists.retain(|artist| !artist.name.is_empty());
+        if song.artists.is_empty() && !f.artist.is_empty() {
+            song.artists = flat_artists(&f.artist);
+        }
+        if song.album.name.is_empty() {
+            if let Some(album) = f.album.clone() {
+                song.album.name = album;
+            }
+        }
+    } else if let Some(name) = f.song_name.clone() {
+        // 没有 `simpleSong` 但有扁平歌名：造一个最小 Song（无封面 / 无时长，专辑 id=0）。
+        song = Some(ent::Song {
+            id: f.song_id,
+            name,
+            artists: flat_artists(&f.artist),
+            album: ent::Album {
+                id: 0,
+                name: f.album.clone().unwrap_or_default(),
+                pic_url: None,
+                artist: None,
+                publish_time_ms: None,
+                size: None,
+                company: None,
+                description: None,
+            },
+            duration_ms: 0,
+            fee: None,
+        });
+    }
+
+    ent::CloudFile {
+        song_id: f.song_id,
+        format: file_format(&f.file_name),
+        file_name: f.file_name,
+        file_size_bytes: f.file_size,
+        add_time_ms: f.add_time,
+        song,
+    }
+}
+
+/// 扁平歌手名 → Entity（接口只给了名字，没有 id，统一造 id=0）。
+/// 前端凭 id=0 判断「不可跳转歌手页」，只展示名字。
+fn flat_artists(names: &[String]) -> Vec<ent::Artist> {
+    names
+        .iter()
+        .map(|name| ent::Artist {
+            id: 0,
+            name: name.clone(),
+            pic_url: None,
+            alias: None,
+            album_size: None,
+            music_size: None,
+            brief_desc: None,
+        })
+        .collect()
+}
+
+/// 从文件名后缀取格式：`a.flac` → `flac`。
+/// 只接受短小写化后全是 ASCII 字母数字的后缀，避免把 `xxx.2024` 这类尾巴当格式。
+fn file_format(file_name: &str) -> Option<String> {
+    let ext = file_name.rsplit_once('.')?.1.trim().to_ascii_lowercase();
+    let ok = !ext.is_empty() && ext.len() <= 5 && ext.chars().all(|c| c.is_ascii_alphanumeric());
+    ok.then_some(ext)
+}
+
 pub fn map_playlist_page(d: response::TopPlaylistResponseDto) -> ent::PlaylistPage {
     ent::PlaylistPage {
         playlists: map_playlists(d.playlists),
@@ -596,5 +681,93 @@ mod tests {
         assert_eq!(items[0].highlights.len(), 1);
         assert_eq!(items[0].highlights[0].text, "晴天");
         assert!(!items[0].highlights[0].highlighted);
+    }
+
+    fn cloud_page(file: serde_json::Value) -> ent::CloudPage {
+        let dto: response::CloudResponseDto = serde_json::from_value(json!({
+            "code": 200,
+            "count": 1,
+            "size": 1024,
+            "maxSize": 2048,
+            "data": [file]
+        }))
+        .expect("decode");
+        map_cloud_page(dto)
+    }
+
+    /// 云盘歌曲的 `simpleSong` 只给歌名时，歌手 / 专辑用文件层扁平字段补齐（实测：
+    /// 官方客户端能显示歌手名，而 `simpleSong.ar` 为空会让列表只剩歌名）。
+    #[test]
+    fn cloud_file_falls_back_to_flat_artist_and_album() {
+        let page = cloud_page(json!({
+            "songId": 123,
+            "fileName": "云间独觉 - 某曲.flac",
+            "fileSize": 1024,
+            "addTime": 1700000000000_i64,
+            "songName": "某曲",
+            "artist": "云间独觉",
+            "album": "某专辑",
+            "simpleSong": { "id": 123, "name": "某曲", "ar": [], "al": null, "dt": 0 }
+        }));
+
+        let song = page.items[0].song.as_ref().expect("song");
+        assert_eq!(song.artists.len(), 1);
+        assert_eq!(song.artists[0].name, "云间独觉");
+        // 扁平字段没有歌手 id，造 id=0 → 前端不跳歌手页
+        assert_eq!(song.artists[0].id, 0);
+        assert_eq!(song.album.name, "某专辑");
+        assert_eq!(page.items[0].format.as_deref(), Some("flac"));
+    }
+
+    /// `ar[]` 里只有 id、名字为空对象时属于「无名歌手」，同样走扁平回退，
+    /// 且扁平字段支持 `A/B` 多歌手写法与对象数组写法。
+    #[test]
+    fn cloud_file_ignores_nameless_artists_and_splits_flat_names() {
+        let page = cloud_page(json!({
+            "songId": 7,
+            "fileName": "a.mp3",
+            "artist": "歌手甲/歌手乙",
+            "simpleSong": {
+                "id": 7,
+                "name": "歌",
+                "ar": [{ "id": 99, "name": "" }],
+                "al": { "id": 0, "name": "" }
+            }
+        }));
+
+        let song = page.items[0].song.as_ref().expect("song");
+        let names: Vec<&str> = song.artists.iter().map(|a| a.name.as_str()).collect();
+        assert_eq!(names, vec!["歌手甲", "歌手乙"]);
+        // 专辑名缺失时保留空串，由前端展示「未知专辑」
+        assert_eq!(song.album.name, "");
+
+        let page = cloud_page(json!({
+            "songId": 8,
+            "fileName": "b.flac",
+            "artist": [{ "name": "歌手丙" }],
+            "simpleSong": { "id": 8, "name": "歌", "ar": [], "al": null }
+        }));
+        let song = page.items[0].song.as_ref().expect("song");
+        assert_eq!(song.artists.len(), 1);
+        assert_eq!(song.artists[0].name, "歌手丙");
+    }
+
+    /// 未匹配到曲库（没有 `simpleSong`、没有扁平歌名）的文件保留在列表里但 `song` 为空。
+    #[test]
+    fn cloud_file_without_song_is_kept_unplayable() {
+        let page = cloud_page(json!({
+            "songId": 0,
+            "fileName": "未知文件",
+            "fileSize": 10,
+            "addTime": 1700000000000_i64
+        }));
+
+        assert_eq!(page.items.len(), 1);
+        assert!(page.items[0].song.is_none());
+        // 没有后缀 → 不给格式
+        assert!(page.items[0].format.is_none());
+        assert_eq!(page.count, 1);
+        assert_eq!(page.used_bytes, Some(1024));
+        assert_eq!(page.max_bytes, Some(2048));
     }
 }

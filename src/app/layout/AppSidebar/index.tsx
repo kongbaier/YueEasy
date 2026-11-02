@@ -1,8 +1,8 @@
 import {
   Clock,
+  Cloud,
   Heart,
   Home,
-  Library,
   LogIn,
   Search,
   Settings,
@@ -39,7 +39,7 @@ const items = [
 const myItems = [
   { to: '/my/liked', icon: Heart, label: '我的喜欢' },
   { to: '/my/recent', icon: Clock, label: '最近播放' },
-  { to: '/my/playlists', icon: Library, label: '我的歌单' },
+  { to: '/my/cloud', icon: Cloud, label: '音乐云盘' },
 ];
 
 const footerItems = [{ to: '/settings', icon: Settings, label: '设置' }];
@@ -175,8 +175,11 @@ export const AppSidebar = () => {
             <SidebarMenuItem>
               <SidebarMenuButton
                 className="h-8 gap-x-3 [&_svg]:size-4 group-data-[collapsible=icon]:[&_svg]:size-4"
-                isActive={location.pathname === `/user/${userId}`}
-                onClick={() => navigate(`/user/${userId}`)}
+                isActive={
+                  location.pathname === '/my' ||
+                  location.pathname === `/user/${userId}`
+                }
+                onClick={() => navigate('/my')}
               >
                 {avatarUrl ? (
                   <img

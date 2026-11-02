@@ -26,9 +26,35 @@ export function formatCount(count: number): string {
   return count.toString();
 }
 
+/**
+ * 字节数 → 人类可读容量（B / KB / MB / GB / TB）。
+ * 小于 1 KB 按整数 B 展示（此时小数没有意义）；其余保留一位小数。
+ */
+export function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return unit === 0
+    ? `${Math.round(value)} B`
+    : `${value.toFixed(1)} ${units[unit]}`;
+}
+
 /** Format queue count for display: raw number when ≤99, "99+" otherwise. */
 export function formatQueueCount(count: number): string {
   return count > 99 ? '99+' : String(count);
+}
+
+/** 时间戳 → `YYYY-MM-DD`（需要精确到日的场景，如云盘上传时间）。 */
+export function formatYmd(ts: number): string {
+  const d = new Date(ts);
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
 }
 
 export const formatDate = (ts: number) => {

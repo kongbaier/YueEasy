@@ -27,7 +27,7 @@ function patchSubscribedCache(id: number, subscribe: boolean) {
 
 /**
  * 歌单收藏（订阅）切换：鉴权编排 + 乐观更新 → 远程命令 → 失败回滚 + toast。
- * 状态唯一来源是详情 query 缓存；成功后失效「我的歌单」让侧栏同步。
+ * 状态唯一来源是详情 query 缓存；成功后失效用户歌单（`['userPlaylists', uid]`）让侧栏同步。
  * 自己的歌单不可收藏（`isOwn`，由调用方决定是否渲染按钮）。
  */
 export function usePlaylistSubscription(playlist: Playlist) {

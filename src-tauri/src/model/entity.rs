@@ -251,6 +251,38 @@ pub struct UserDetail {
     pub create_time_ms: Option<i64>,
 }
 
+/// 音乐云盘文件：云盘元信息 + 内嵌歌曲（未匹配到曲库时 `song` 为空，不可播放）。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CloudFile {
+    pub song_id: i64,
+    pub file_name: String,
+    /// 文件格式（由 `fileName` 后缀归一，小写：`mp3` / `flac` …）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file_size_bytes: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub add_time_ms: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub song: Option<Song>,
+}
+
+/// 云盘一页：`items` 随 limit 变化，容量与总数是全局口径。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CloudPage {
+    pub items: Vec<CloudFile>,
+    /// 云盘文件总数（不受 limit 影响）
+    pub count: i64,
+    /// 已用容量（字节）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub used_bytes: Option<i64>,
+    /// 云盘总容量（字节）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_bytes: Option<i64>,
+}
+
 /// 原唱/翻唱标记，由接口的 `originCoverType` 归一而来。
 ///
 /// 取值依据实测：1=原唱、2=翻唱、3=其它改编（DJ 版 / 烟嗓版等）；
