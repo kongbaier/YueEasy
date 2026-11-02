@@ -114,7 +114,7 @@ const FmCard = () => {
 
   return (
     <div
-      className="row-span-1 col-span-2 group relative cursor-pointer overflow-hidden rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+      className="row-span-1 col-span-2 group relative overflow-hidden rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       onClick={() => startFm(true)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -231,7 +231,7 @@ const RadarCard = () => {
 
   return (
     <div
-      className="row-span-1 col-span-1 group relative cursor-pointer overflow-hidden rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+      className="row-span-1 col-span-1 group relative overflow-hidden rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       onClick={goRadar}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

@@ -96,7 +96,7 @@ export const CloudFileRow = ({ track, index, onPlay }: CloudFileRowProps) => {
       <ContextMenuTrigger
         className={cn(
           ROW_BASE,
-          'cursor-pointer text-left text-sm transition-colors hover:bg-accent content-visibility-auto',
+          'text-left text-sm transition-colors hover:bg-accent content-visibility-auto',
         )}
         onDoubleClick={() => onPlay(track.song)}
         onKeyDown={(e) => {

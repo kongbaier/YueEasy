@@ -38,7 +38,7 @@ const QueueItem = ({
 }) => (
   <div
     className={cn(
-      'group flex items-center h-13 px-4 py-2 w-full cursor-pointer transition-colors hover:bg-surface-hover',
+      'group flex items-center h-13 px-4 py-2 w-full transition-colors hover:bg-surface-hover',
       isCurrent && 'bg-primary/10',
     )}
   >
@@ -127,7 +127,7 @@ export const QueuePanel = () => {
         <div className="isolate fixed inset-0 z-50 flex justify-end">
           <button
             aria-label="关闭播放列表"
-            className="absolute inset-0 cursor-default"
+            className="absolute inset-0"
             onClick={handleClose}
             type="button"
           />

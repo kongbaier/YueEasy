@@ -22,7 +22,7 @@ export const PlaylistCard = ({
   return (
     <Link
       className={cn(
-        'block w-42 shrink-0 cursor-pointer snap-start rounded-lg bg-card text-left box-content m-1',
+        'block w-42 shrink-0 snap-start rounded-lg bg-card text-left box-content m-1',
         'border not-focus-visible:border-border/30 not-focus-visible:hover:border-border',
         'transition-all duration-150 ease-out',
         'lg:w-44 xl:w-48',

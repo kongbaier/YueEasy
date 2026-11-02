@@ -65,7 +65,7 @@ export const TrackRow = ({
       <ContextMenuTrigger
         className={cn(
           ROW_BASE,
-          'cursor-pointer text-left text-sm transition-colors hover:bg-accent content-visibility-auto',
+          'text-left text-sm transition-colors hover:bg-accent content-visibility-auto',
         )}
         onDoubleClick={() => onPlay(track)}
         onKeyDown={(e) => {

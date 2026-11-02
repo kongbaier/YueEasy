@@ -96,7 +96,7 @@ function Item({ className, children, ...props }: SelectPrimitive.Item.Props) {
   return (
     <SelectPrimitive.Item
       className={cn(
-        'relative flex cursor-pointer items-center gap-2 rounded-[3px] px-2.5 py-1.5 text-sm text-foreground outline-none select-none transition-colors duration-83 ease-out',
+        'relative flex items-center gap-2 rounded-[3px] px-2.5 py-1.5 text-sm text-foreground outline-none select-none transition-colors duration-83 ease-out',
         'data-highlighted:bg-accent',
         'data-selected:bg-accent data-selected:font-medium',
         className,

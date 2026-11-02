@@ -15,8 +15,16 @@
     @apply outline-none border border-ring ring-2 ring-ring/40;
   }
 
-  button:not(:disabled),
-  [role='button']:not(:disabled) {
+  /* 手型光标 = 「跳转 / 无控件外观的点击面」的补偿，不是「可点」的装饰。
+     Fluent / Windows 口径（本项目采用）：手型只给**链接**与**自建点击面**；
+     真实控件（<button> / 输入框 / 菜单项 / tab / 开关）保持箭头，靠外观与 hover 表达可交互。
+       · 真实 <button>：组件里不要写 cursor-pointer，写了会盖掉 disabled 的默认箭头。
+       · 自建 div 点击面（封面卡 / 整行）：给 role="button" / role="option" / data-clickable，由本规则接管。
+       · 拖拽热区 / 透明覆盖层：挂不上语义，才在元素上手写 cursor-pointer。
+     a[href] 不写：浏览器 UA 样式默认就是手型。 */
+  [role='link'],
+  [role='button']:not([aria-disabled='true']),
+  [data-clickable] {
     cursor: pointer;
   }
 

@@ -13,7 +13,7 @@ interface SearchArtistCardProps {
 export function SearchArtistCard({ item }: SearchArtistCardProps) {
   return (
     <Link
-      className="group cursor-pointer rounded-lg p-3 transition-colors hover:bg-accent text-center"
+      className="group rounded-lg p-3 transition-colors hover:bg-accent text-center"
       to={`/artist/${item.id}`}
     >
       <div className="relative mx-auto mb-2 w-full max-w-40 aspect-square overflow-hidden rounded-full">

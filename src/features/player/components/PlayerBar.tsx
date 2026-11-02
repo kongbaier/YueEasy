@@ -127,7 +127,7 @@ const PlayerControls = () => {
         </Button>
 
         <Button
-          className="relative w-14 h-9 bg-primary rounded-full flex justify-center items-center cursor-pointer focus:outline-none"
+          className="relative w-14 h-9 bg-primary rounded-full flex justify-center items-center focus:outline-none"
           disabled={loading}
           onClick={togglePlay}
           type="button"

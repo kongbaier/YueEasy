@@ -116,7 +116,7 @@ export const ParallaxCarousel = <T,>({
           <div className="absolute h-4 right-4 bottom-4 z-10 flex gap-1.5 items-center">
             {items.map((item, i) => (
               <Button
-                className="group/btn cursor-pointer h-full p-0 hover:bg-transparent"
+                className="group/btn h-full p-0 hover:bg-transparent"
                 key={getKey ? getKey(item, i) : i}
                 onClick={() => api?.scrollTo(i)}
                 type="button"
