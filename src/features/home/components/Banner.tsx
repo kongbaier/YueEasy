@@ -75,10 +75,25 @@ const BannerCarousel = () => {
         const to = bannerRoute(banner);
         return (
           <div
+            aria-label={to ? banner.typeTitle : undefined}
             className={
               to ? 'absolute inset-0 cursor-pointer' : 'absolute inset-0'
             }
             onClick={to ? () => navigate(to) : undefined}
+            onKeyDown={
+              to
+                ? (e) => {
+                    // 只认回车：空格是全站播放/暂停热键，不激活控件
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      navigate(to);
+                    }
+                  }
+                : undefined
+            }
+            role={to ? 'button' : undefined}
+            // 不可跳转的横幅（歌曲 / MV / 广告）不占焦点位，避免 Tab 落在空点击面上
+            tabIndex={to ? 0 : undefined}
           >
             <DecodedImage
               alt={banner.typeTitle}
@@ -117,11 +132,14 @@ const FmCard = () => {
       className="row-span-1 col-span-2 group relative overflow-hidden rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       onClick={() => startFm(true)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        // 只认回车：空格是全站播放/暂停热键，不激活控件
+        if (e.key === 'Enter') {
           e.preventDefault();
           startFm(true);
         }
       }}
+      // 整卡是一个条目（不是区域内的包裹层）：卡内播放键仍是子条目
+      data-focus-item
       role="button"
       tabIndex={0}
     >
@@ -234,7 +252,8 @@ const RadarCard = () => {
       className="row-span-1 col-span-1 group relative overflow-hidden rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       onClick={goRadar}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        // 只认回车：空格是全站播放/暂停热键，不激活控件
+        if (e.key === 'Enter') {
           e.preventDefault();
           goRadar();
         }
@@ -312,7 +331,10 @@ export const Banner = () => {
 
   return (
     <div ref={containerRef} className="@container">
-      <div className="w-full grid grid-rows-2 grid-cols-5 aspect-9/5 @min-2xl:aspect-3/1 gap-2 @min-2xl:gap-3 @min-3xl:gap-4">
+      <div
+        className="w-full grid grid-rows-2 grid-cols-5 aspect-9/5 @min-2xl:aspect-3/1 gap-2 @min-2xl:gap-3 @min-3xl:gap-4"
+        data-focus-zone
+      >
         <div className="row-span-2 col-span-5 @min-2xl:col-span-3 relative">
           <BannerCarousel />
         </div>

@@ -78,7 +78,7 @@ const Section = ({
   }
 
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="flex flex-wrap gap-4" data-focus-zone>
       {playlists.map((playlist) => (
         <PlaylistCard key={playlist.id} playlist={playlist} />
       ))}
@@ -141,7 +141,7 @@ export function UserProfile({ uid, title }: UserProfileProps) {
     <ScrollArea className="h-full py-8 pl-8 pr-4" ref={scrollRef}>
       <div className="space-y-8">
         {/* ═══ Header ═══ */}
-        <header className="flex gap-8 items-center">
+        <header className="flex gap-8 items-center" data-focus-zone>
           {user.avatarUrl ? (
             <DecodedImage
               alt={user.nickname}

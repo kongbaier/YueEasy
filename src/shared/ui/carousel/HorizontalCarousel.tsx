@@ -98,7 +98,7 @@ export const HorizontalCarousel = ({
   loading,
 }: HorizontalCarouselProps) => {
   return (
-    <section>
+    <section data-focus-zone>
       <Carousel
         opts={{ loop: false, align: 'start', containScroll: 'trimSnaps' }}
       >

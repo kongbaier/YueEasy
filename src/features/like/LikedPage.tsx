@@ -20,7 +20,10 @@ export default function LikedPage() {
 
   if (!isLoggedIn) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
+      <div
+        className="flex flex-col items-center justify-center h-full gap-4"
+        data-focus-zone
+      >
         <Heart className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">登录后查看我喜欢</p>
         <Button onClick={openLogin}>立即登录</Button>

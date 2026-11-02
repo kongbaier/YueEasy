@@ -292,6 +292,7 @@ export const PlayerBar = ({ className }: { className?: string }) => {
         'relative px-4 flex items-center justify-between',
         className,
       )}
+      data-focus-zone
     >
       <PlayerProgress />
 

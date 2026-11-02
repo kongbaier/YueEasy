@@ -29,7 +29,10 @@ export function TabBar<K extends string>({
   className,
 }: TabBarProps<K>) {
   return (
-    <div className={cn('flex space-x-4 border-b border-border/40', className)}>
+    <div
+      className={cn('flex space-x-4 border-b border-border/40', className)}
+      data-focus-zone
+    >
       {items.map((item) => (
         <Button
           className={cn(

@@ -128,7 +128,7 @@ export const CommentPanel = ({ playlistId }: CommentPanelProps) => {
           <p className="text-xs">暂无评论</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4" data-focus-zone>
           {/* 精彩评论 */}
           {hotComments.length > 0 && (
             <div className="space-y-0.5">

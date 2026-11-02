@@ -99,7 +99,7 @@ export function SearchResults({
         <>
           {/* Song results */}
           {results.type === SearchType.SONG && (
-            <div className="space-y-0.5">
+            <div className="space-y-0.5" data-focus-zone>
               {results.items.map((track, index) => (
                 <TrackRow
                   artistTag={originCoverTag(track.originCoverType)}
@@ -114,7 +114,10 @@ export function SearchResults({
 
           {/* Album results */}
           {results.type === SearchType.ALBUM && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            <div
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
+              data-focus-zone
+            >
               {results.items.map((item) => (
                 <AlbumCard album={item} key={item.id} />
               ))}
@@ -123,7 +126,10 @@ export function SearchResults({
 
           {/* Artist results */}
           {results.type === SearchType.ARTIST && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            <div
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
+              data-focus-zone
+            >
               {results.items.map((item) => (
                 <SearchArtistCard item={item} key={item.id} />
               ))}
@@ -132,7 +138,10 @@ export function SearchResults({
 
           {/* User results */}
           {results.type === SearchType.USER && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            <div
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
+              data-focus-zone
+            >
               {results.items.map((item) => (
                 <SearchUserCard item={item} key={item.id} />
               ))}

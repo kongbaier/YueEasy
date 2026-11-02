@@ -17,7 +17,10 @@ export default function DailyRecommend() {
 
   if (!isLoggedIn) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
+      <div
+        className="flex flex-col items-center justify-center h-full gap-4"
+        data-focus-zone
+      >
         <Sparkles className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">登录后查看每日推荐</p>
         <Button onClick={openLogin}>立即登录</Button>
@@ -36,7 +39,7 @@ export default function DailyRecommend() {
 
   return (
     <div className="py-2 h-full flex flex-col">
-      <div className="px-6 flex items-center justify-between">
+      <div className="px-6 flex items-center justify-between" data-focus-zone>
         <p className="text-sm text-muted-foreground">
           共 <span className="text-primary px-2">{songs.length}</span>
           首推荐歌曲
@@ -53,7 +56,7 @@ export default function DailyRecommend() {
       </div>
 
       <ScrollArea className="mt-3 flex-1 px-6" ref={scrollRef}>
-        <div className="space-y-0.5">
+        <div className="space-y-0.5" data-focus-zone>
           {songs.map((track, index) => (
             <TrackRow
               index={index}

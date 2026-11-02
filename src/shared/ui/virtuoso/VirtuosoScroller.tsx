@@ -35,6 +35,9 @@ export const VirtuosoScroller = forwardRef<
       className="h-full w-full"
       scrollableNodeProps={{ ...props, ref: scrollableRef }}
       style={{ height: style?.height, width: style?.width }}
+      // SimpleBar 默认把滚动内容层放进 tab 序列（tabIndex=0）：那会让「整块列表」
+      // 变成一个可聚焦控件，键盘焦点停在容器上。键盘滚动由区域焦点导航负责。
+      tabIndex={-1}
     >
       {children}
     </SimpleBar>

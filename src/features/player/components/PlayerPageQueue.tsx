@@ -38,12 +38,21 @@ const QueueItem = ({
 }) => {
   return (
     <div
+      aria-current={isCurrent || undefined}
       className={cn(
         'group flex items-center h-13 gap-3 px-2 py-2 w-full text-left cursor-pointer transition-colors hover:bg-accent rounded-md',
         isCurrent && 'bg-primary/10',
       )}
       onDoubleClick={() => onPlay(index)}
-      onKeyDown={() => onPlay(index)}
+      onKeyDown={(e) => {
+        // 只有回车才是「播放」（之前是任意按键都触发，方向键移焦点会误播）；
+        // 空格是全站播放/暂停热键，不激活控件
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        onPlay(index);
+      }}
+      // 整行是一个条目（不是区域内的包裹层）：行内移除按钮仍是子条目
+      data-focus-item
       role="option"
       tabIndex={0}
     >

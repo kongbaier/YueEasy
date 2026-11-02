@@ -45,6 +45,13 @@ const QueueItem = ({
     <button
       className="flex-1 min-w-0 items-center flex text-left gap-3"
       onDoubleClick={() => onPlay(index)}
+      onKeyDown={(e) => {
+        // 鼠标是双击播放，键盘给回车（否则键盘用户无法播队列里的歌）；
+        // 空格是全站播放/暂停热键，不激活控件
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        onPlay(index);
+      }}
       tabIndex={0}
       type="button"
     >
@@ -124,7 +131,10 @@ export const QueuePanel = () => {
   return (
     <AnimatePresence onExitComplete={handlePanelExitComplete}>
       {isOpen && (
-        <div className="isolate fixed inset-0 z-50 flex justify-end">
+        <div
+          className="isolate fixed inset-0 z-50 flex justify-end"
+          data-focus-layer
+        >
           <button
             aria-label="关闭播放列表"
             className="absolute inset-0"
@@ -139,7 +149,10 @@ export const QueuePanel = () => {
             initial={{ x: '100%' }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
           >
-            <header className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+            <header
+              className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0"
+              data-focus-zone
+            >
               <h2 className="text-sm font-medium flex items-center gap-1.5">
                 播放列表
                 {queueLength > 0 && (
@@ -186,7 +199,7 @@ export const QueuePanel = () => {
                   <p className="text-[10px] opacity-60">双击歌曲即可加入队列</p>
                 </div>
               ) : (
-                <div className={cn('h-full')}>
+                <div className={cn('h-full')} data-focus-zone>
                   <QueueList
                     currentIndex={currentIndex}
                     itemHeight={ROW_HEIGHT}

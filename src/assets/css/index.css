@@ -8,11 +8,19 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  /* 焦点环只在**键盘导航**后出现（`<html data-focus-mode>` 由焦点引擎维护）：
+     · 鼠标点击立即回到 pointer 模态 → 不画环（点完控件不会留下看得见的焦点态）；
+     · 只有 Tab / 方向键 / Home / End 或程序化搬焦点才切回 keyboard 模态，
+       所以「随手按个数字键」不会让上次点过的控件莫名其妙亮起来。
+     ring 用 box-shadow，**不加 border**：border 会改变盒模型尺寸，键盘逐个移动时整行会抖 2px。 */
   *:focus:not(:focus-visible) {
     outline: none;
   }
   *:focus-visible {
-    @apply outline-none border border-ring ring-2 ring-ring/40;
+    @apply outline-none ring-2 ring-ring/40;
+  }
+  [data-focus-mode='pointer'] *:focus-visible {
+    @apply outline-none ring-0;
   }
 
   /* 手型光标 = 「跳转 / 无控件外观的点击面」的补偿，不是「可点」的装饰。

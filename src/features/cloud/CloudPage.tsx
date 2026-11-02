@@ -46,7 +46,10 @@ export default function CloudPage() {
 
   if (userId == null) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
+      <div
+        className="flex flex-col items-center justify-center h-full gap-4"
+        data-focus-zone
+      >
         <Cloud className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">登录后查看音乐云盘</p>
         <Button onClick={openLogin}>立即登录</Button>
@@ -65,7 +68,10 @@ export default function CloudPage() {
 
   return (
     <div className="py-2 h-full flex flex-col">
-      <div className="px-6 flex items-center justify-between gap-4">
+      <div
+        className="px-6 flex items-center justify-between gap-4"
+        data-focus-zone
+      >
         <p className="text-sm text-muted-foreground tabular-nums">
           共 <span className="text-primary px-2">{count}</span>
           个文件
@@ -99,7 +105,7 @@ export default function CloudPage() {
         ) : (
           <div className="space-y-3 pb-4">
             <CloudFileRowHeader />
-            <div className="space-y-0.5">
+            <div className="space-y-0.5" data-focus-zone>
               {tracks.map((track, index) => (
                 <CloudFileRow
                   index={index}
@@ -117,7 +123,7 @@ export default function CloudPage() {
             )}
 
             {more && (
-              <div className="flex justify-center">
+              <div className="flex justify-center" data-focus-zone>
                 <Button
                   disabled={isLoadingMore}
                   onClick={() => setLimit((n) => n + CLOUD_PAGE_SIZE)}

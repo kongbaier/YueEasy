@@ -83,7 +83,7 @@ export default function Album() {
     <ScrollArea className="h-full py-8 pl-8 pr-4" ref={scrollRef}>
       <div className="space-y-8">
         {/* ═══ Header ═══ */}
-        <div className="flex gap-8 items-center">
+        <div className="flex gap-8 items-center" data-focus-zone>
           {album.picUrl ? (
             <Cover
               alt={album.name}
@@ -150,7 +150,7 @@ export default function Album() {
 
         {/* ═══ Track list ═══ */}
         {tracks.length > 0 && (
-          <div className="space-y-0.5">
+          <div className="space-y-0.5" data-focus-zone>
             <div className="flex items-center gap-3 px-3 pb-3 border-b border-border/30 mb-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 歌曲列表

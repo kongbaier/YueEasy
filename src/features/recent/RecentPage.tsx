@@ -30,7 +30,10 @@ export default function RecentPlays() {
   // 未登录且未开启本地播放记录时才需要登录；否则可用本地记录兜底。
   if (!isLoggedIn && !savePlaybackHistory) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
+      <div
+        className="flex flex-col items-center justify-center h-full gap-4"
+        data-focus-zone
+      >
         <Clock className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">登录后查看最近播放</p>
         <Button onClick={openLogin}>立即登录</Button>
@@ -54,7 +57,7 @@ export default function RecentPlays() {
           <p className="text-sm text-muted-foreground">还没有播放记录</p>
         </div>
       ) : (
-        <div className="space-y-0.5">
+        <div className="space-y-0.5" data-focus-zone>
           {items.map((item, index) => (
             <TrackRow
               badge={item.source === 'local' ? '本地' : undefined}

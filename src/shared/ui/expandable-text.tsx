@@ -23,7 +23,8 @@ export const ExpandableText = ({ text, className }: ExpandableTextProps) => {
   }, [text]);
 
   return (
-    <div className="space-y-1.5">
+    // 展开 / 收起是独立点击面：单列一个区域，键盘能 Tab 到它
+    <div className="space-y-1.5" data-focus-zone>
       <p
         ref={ref}
         className={cn(

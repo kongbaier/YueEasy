@@ -314,7 +314,10 @@ export default function Settings() {
                 </Select.Portal>
               </Select.Root>
             </Row>
-            <Row description={audioCacheDir || '音频文件缓存位置'} label="音频缓存占用">
+            <Row
+              description={audioCacheDir || '音频文件缓存位置'}
+              label="音频缓存占用"
+            >
               <span className="text-sm text-muted-foreground">
                 {audioCache === null
                   ? '--'
@@ -418,6 +421,7 @@ function SectionCard({
   return (
     <div
       className="rounded-lg border border-border/40 bg-background px-5 py-4 animate-content-enter"
+      data-focus-zone
       style={style}
     >
       {children}

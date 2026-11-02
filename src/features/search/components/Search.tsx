@@ -22,7 +22,11 @@ export function SearchHeader({
   children?: React.ReactNode;
   className?: string;
 }) {
-  return <div className={cn('shrink-0 px-6 pt-6', className)}>{children}</div>;
+  return (
+    <div className={cn('shrink-0 px-6 pt-6', className)} data-focus-zone>
+      {children}
+    </div>
+  );
 }
 
 // ---- search input ----
@@ -123,7 +127,7 @@ export function SearchResultsDisplay() {
   const results = data ?? null;
 
   return (
-    <ScrollArea className="flex-1 px-6 pb-6" ref={scrollRef}>
+    <ScrollArea className="flex-1 px-6 pb-6" data-focus-zone ref={scrollRef}>
       <SearchResults
         error={error instanceof Error ? error.message : ''}
         hasSearched={hasSearched}

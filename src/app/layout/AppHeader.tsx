@@ -31,6 +31,7 @@ export const AppHeader = () => {
     <header
       className="h-12 flex items-center shrink-0 select-none"
       data-drag-region
+      data-focus-zone
     >
       {canGoBack && (
         <Button

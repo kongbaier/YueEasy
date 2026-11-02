@@ -68,6 +68,7 @@ export default function PlayerPage() {
         <motion.div
           animate={{ y: 0 }}
           className="fixed inset-0 z-50 bg-[#fafafa] dark:bg-[#0a0a0a]"
+          data-focus-layer
           exit={{ y: '100%' }}
           initial={{ y: '100%' }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
@@ -83,6 +84,7 @@ export default function PlayerPage() {
                 'w-4/5 max-w-md',
                 'overflow-x-visible',
               )}
+              data-focus-zone
             >
               {currentTrack && (
                 <React.Fragment>
@@ -96,7 +98,7 @@ export default function PlayerPage() {
               )}
             </div>
 
-            <div className="col-span-1 min-h-0">
+            <div className="col-span-1 min-h-0" data-focus-zone>
               {tabs.map((tab) => {
                 return (
                   <Activity
@@ -119,7 +121,11 @@ const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
   const { state, toggleFullscreen } = useWindowState();
 
   return (
-    <header className="h-12 flex items-center shrink-0" data-drag-region>
+    <header
+      className="h-12 flex items-center shrink-0"
+      data-drag-region
+      data-focus-zone
+    >
       <button
         className="flex items-center justify-center size-10 rounded-md ml-2 hover:bg-accent"
         onClick={handleBack}

@@ -71,6 +71,8 @@ export const TrackRow = ({
         onKeyDown={(e) => {
           if (e.key === 'Enter') onPlay(track);
         }}
+        // 整行是一个条目（不是区域内的包裹层）：行内的专辑链接 / 红心仍是子条目
+        data-focus-item
         role="button"
         style={{ containIntrinsicSize: 'auto 52px' }}
         tabIndex={0}

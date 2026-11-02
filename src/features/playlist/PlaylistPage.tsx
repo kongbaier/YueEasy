@@ -61,7 +61,7 @@ export default function PlaylistPage() {
             /* 歌曲列表 */
             playlist.tracks &&
             playlist.tracks.length > 0 && (
-              <div className="space-y-0.5">
+              <div className="space-y-0.5" data-focus-zone>
                 {playlist.tracks.map((track, index) => (
                   <TrackRow
                     index={index}

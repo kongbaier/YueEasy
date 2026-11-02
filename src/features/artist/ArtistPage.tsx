@@ -102,7 +102,7 @@ export default function ArtistPage() {
     <ScrollArea className="h-full py-8 pl-8 pr-4" ref={scrollRef}>
       <div className="space-y-8">
         {/* ═══ Header ═══ */}
-        <header className="flex gap-8 items-center">
+        <header className="flex gap-8 items-center" data-focus-zone>
           {artist.picUrl ? (
             <Cover
               alt={artist.name}
@@ -172,7 +172,7 @@ export default function ArtistPage() {
 
           {activeTab === 'songs' ? (
             hotSongs.length > 0 ? (
-              <div className="space-y-0.5">
+              <div className="space-y-0.5" data-focus-zone>
                 {hotSongs.map((track, index) => (
                   <TrackRow
                     index={index}
@@ -202,13 +202,16 @@ export default function ArtistPage() {
             </div>
           ) : albums.length > 0 ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+              <div
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
+                data-focus-zone
+              >
                 {albums.map((album) => (
                   <AlbumCard album={album} key={album.id} />
                 ))}
               </div>
               {moreAlbums && (
-                <div className="flex justify-center">
+                <div className="flex justify-center" data-focus-zone>
                   <Button
                     disabled={albumsLoadingMore}
                     onClick={() => setAlbumLimit((n) => n + 30)}

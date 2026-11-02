@@ -63,7 +63,7 @@ export const PlaylistInfo = ({ playlist, onPlayAll }: PlaylistInfoProps) => {
     usePlaylistSubscription(playlist);
 
   return (
-    <header className="flex gap-8">
+    <header className="flex gap-8" data-focus-zone>
       {/* 封面 */}
       {playlist.coverUrl && (
         <Cover

@@ -75,6 +75,9 @@ export const ParallaxCarousel = <T,>({
             >
               <div
                 className="relative h-full w-full"
+                // 焦点进到某一屏就把它滚到视野内：键盘 ↑↓←→ 与 Tab 都会触发，
+                // 否则焦点环会落在不可见的那一屏上
+                onFocusCapture={() => api?.scrollTo(index)}
                 style={{
                   transform: `translateX(${parallaxOffset * 100}%)`,
                 }}

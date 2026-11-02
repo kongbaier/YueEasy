@@ -101,6 +101,7 @@ export const AppSidebar = () => {
         // 折叠态侧栏只有 3rem 宽，横向 padding 收到 4px 才能容纳 40px 的折叠按钮。
         className="h-12 flex-row items-center shrink-0 justify-between overflow-hidden px-2 py-0 group-data-[collapsible=icon]:justify-center"
         data-drag-region
+        data-focus-zone
       >
         <SidebarBrand expanded={state === 'expanded'} />
 
@@ -109,7 +110,7 @@ export const AppSidebar = () => {
         />
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent data-focus-zone>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
@@ -158,7 +159,7 @@ export const AppSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter data-focus-zone>
         <SidebarMenu className="space-y-1">
           {!isLoggedIn && (
             <SidebarMenuItem>

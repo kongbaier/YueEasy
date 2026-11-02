@@ -1,5 +1,6 @@
 import KeepAliveRouteOutlet from 'keepalive-for-react-router';
 import { SidebarProvider } from '@/shared/ui/sidebar';
+import { useFocusNavigation } from '@/shared/hooks/useFocusNavigation';
 import { AppHeader } from './AppHeader';
 import { AppSidebar } from './AppSidebar';
 import { PageTitleProvider } from './PageTitleContext';
@@ -7,10 +8,18 @@ import { PlayerBar } from '@/features/player/components/PlayerBar';
 import { QueuePanel } from '@/features/player/components/QueueDrawer';
 
 export function AppLayout() {
+  // 全应用只装一次：Tab 走区域、方向键走区域内条目（见 shared/lib/focus）
+  useFocusNavigation();
+
   return (
     <PageTitleProvider>
       <SidebarProvider defaultOpen={true}>
-        <div className="flex h-screen w-screen flex-col text-foreground">
+        {/* data-focus-shell：模态浮层（播放页 / 队列抽屉）打开时，
+            引擎把「浮层之外的外壳」标 inert，被盖住的页面既不能 Tab 也读不到 */}
+        <div
+          className="flex h-screen w-screen flex-col text-foreground"
+          data-focus-shell
+        >
           <div className="relative flex flex-1 overflow-hidden">
             <AppSidebar />
 

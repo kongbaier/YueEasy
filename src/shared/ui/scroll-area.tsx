@@ -22,5 +22,12 @@ export const ScrollArea = ({
   className,
   ...props
 }: ComponentProps<typeof SimpleBar>) => (
-  <SimpleBar className={cn('min-h-0', className)} {...props} />
+  <SimpleBar
+    className={cn('min-h-0', className)}
+    // SimpleBar 默认给滚动内容层挂 `tabIndex=0` + `role="region"`，等于把「整个滚动区」
+    // 变成一个可聚焦的巨型控件：Tab 会停在那一块上，而不是停第一个真实条目。
+    // 键盘滚动不需要它——焦点导航会调 `scrollIntoView`，边缘方向键也会命中最近的滚动祖先。
+    tabIndex={-1}
+    {...props}
+  />
 );
