@@ -16,8 +16,6 @@ interface LyricLineProps {
   status: 'past' | 'active' | 'future';
   /** 是否展示该行的「跳转」按钮：由 Lyrics 统一裁决（展示哪行 + 是否展示） */
   hintVisible: boolean;
-  /** 指针进出「跳转」按钮：停在按钮上期间不参与 idle 收起判定 */
-  onHintButtonHoverChange: (hovered: boolean) => void;
   /** 获得可见焦点：歌词列表以该行为滚动跟随目标 */
   onHintFocus: (lineIndex: number) => void;
   /** 失焦：跟随目标交还给播放行 */
@@ -30,7 +28,6 @@ export const LyricLine = ({
   lineIndex,
   status,
   hintVisible,
-  onHintButtonHoverChange,
   onHintFocus,
   onHintBlur,
 }: LyricLineProps) => {
@@ -40,17 +37,11 @@ export const LyricLine = ({
     seek(line.startMs / 1000);
   }, [seek, line.startMs]);
 
+  const timeLabel = formatTime(line.startMs);
+
   // 行级 hover 一律不做：内容滚动也会触发合成 mouseenter/mousemove，
   // “展示哪行”统一由列表容器上的真实指针移动判定（见 useLyricSeekHint）。
-  // 停在按钮上 → 暂停自动收起，按钮一直可点（否则「正要点击时按钮从脚下消失」最糟）；
-  // 移开按钮后由列表层重新计时。
-  const handleSeekButtonEnter = useCallback(() => {
-    onHintButtonHoverChange(true);
-  }, [onHintButtonHoverChange]);
-
-  const handleSeekButtonLeave = useCallback(() => {
-    onHintButtonHoverChange(false);
-  }, [onHintButtonHoverChange]);
+  // 显形规则即 hover 语义：指针在该行上就显形，离开列表或内容位移才收起（无计时器）。
 
   // 只有「可见焦点」（Tab / 焦点环可见）才参与跟随：鼠标点击也会让按钮拿到焦点，
   // 但那不该把视图钉在这一行 —— 否则点一次跳转后歌词就再也不跟播放走了。
@@ -85,27 +76,25 @@ export const LyricLine = ({
         )}
       </p>
       {tline && <TranslatedText text={tline.text} />}
+      {/* 提示按钮：贴第一行（有翻译时不再落到两行交界上）；隐藏态必须 pointer-events-none，
+          否则透明度为 0 的整块仍是可点热区。键盘焦点由 focus-visible:opacity-100 单独放开。 */}
       <Button
-        aria-label="跳转到这句歌词"
+        aria-label={`跳转到这句歌词（${timeLabel}）`}
         className={cn(
-          'absolute block right-0 top-1/2 -translate-y-1/2 rounded-md',
+          'absolute right-0 top-0 gap-1 px-2 py-1 h-auto',
           'tabular-nums text-xs text-muted-foreground',
-          'flex items-center',
-          'rounded-full px-2 py-1 h-auto',
-          'hover:text-primary focus-visible:opacity-100 focus-visible:pointer-events-auto',
+          'hover:bg-transparent hover:text-primary',
+          'focus-visible:opacity-100 focus-visible:pointer-events-auto',
           hintVisible ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
         onBlur={onHintBlur}
         onClick={handleSeek}
         onFocus={handleSeekButtonFocus}
-        onMouseEnter={handleSeekButtonEnter}
-        onMouseLeave={handleSeekButtonLeave}
-        title="跳转到这句歌词"
-        variant={'outline'}
         type="button"
+        variant="ghost"
       >
         <PlayCircle className="size-3.5" />
-        {formatTime(line.startMs)}
+        {timeLabel}
       </Button>
     </li>
   );

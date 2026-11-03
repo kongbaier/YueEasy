@@ -20,12 +20,11 @@ export const Lyrics = ({ className }: { className?: string }) => {
     tlyric,
   } = useLyricViewModel();
 
-  // 行「跳转」按钮的展示裁决统一在列表层：展示哪行看真实指针移动，是否展示看 idle + 是否停在按钮上
+  // 行「跳转」按钮的展示裁决统一在列表层：展示哪行看真实指针移动（hover 语义，无计时器）
   const {
     visibleLine,
     handlePointerMove,
     handlePointerLeave,
-    setButtonHovered,
     handleContentMoved,
     handleHintFocus,
     handleHintBlur,
@@ -94,7 +93,6 @@ export const Lyrics = ({ className }: { className?: string }) => {
                   lineIndex={i}
                   onHintBlur={handleHintBlur}
                   onHintFocus={handleLineFocus}
-                  onHintButtonHoverChange={setButtonHovered}
                   status={status}
                   tline={tlyric[i]}
                 />
