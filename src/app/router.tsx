@@ -30,8 +30,6 @@ export function AppRouter() {
           <Route element={<Playlist />} path="playlist/:id" />
           <Route element={<DailyRecommend />} path="daily" />
           <Route element={<Liked />} path="my/liked" />
-          {/* 守卫重定向后的落地路由，与 playlist/:id 共用 PlaylistPage */}
-          <Route element={<Playlist />} path="my/liked/:id" />
           <Route element={<RecentPlays />} path="my/recent" />
           <Route element={<Cloud />} path="my/cloud" />
           {/* 我的主页：一级页，与 user/:id 共用 UserProfile 主体 */}

@@ -28,6 +28,7 @@ import {
   useSidebar,
 } from '@/shared/ui/sidebar';
 import { useAuthViewModel } from '@/features/auth/hooks/useAuthViewModel';
+import { usePrefetchLikedSongs } from '@/features/like/hooks/usePrefetchLikedSongs';
 import { getNcmImageUrl } from '@/shared/utils/image';
 
 const items = [
@@ -72,6 +73,10 @@ export const AppSidebar = () => {
   const navigate = useNavigate();
   const { state } = useSidebar();
   const { isLoggedIn, userId, avatarUrl, openLogin } = useAuthViewModel();
+  // 入口预热（避免首次进入骨架屏闪一下）：按路由登记，悬停 / 聚焦时触发
+  const prefetchers: Record<string, (() => void) | undefined> = {
+    '/my/liked': usePrefetchLikedSongs(),
+  };
 
   // 双层路由：一级页更新高亮，二级页（playlist/album 详情）保持来源高亮
   const [activeKey, setActiveKey] = useState<string | null>(() =>
@@ -147,6 +152,8 @@ export const AppSidebar = () => {
                       className="h-8 gap-x-3 [&_svg]:size-4  group-data-[collapsible=icon]:[&_svg]:size-4"
                       isActive={isActive}
                       onClick={() => navigate(item.to)}
+                      onFocus={prefetchers[item.to]}
+                      onMouseEnter={prefetchers[item.to]}
                     >
                       <item.icon className={cn(isActive && 'fill-primary')} />
                       <span>{item.label}</span>

@@ -23,8 +23,9 @@ const PlaylistSkeleton = () => (
 );
 
 /**
- * 歌单详情页：id 一律来自路由参数 `:id`（`playlist/:id` 与 `my/liked/:id` 共用）。
- * 「我喜欢」场景由 LikedPage 守卫后重定向到 `my/liked/:id`，不再经 props 注入 id。
+ * 歌单详情页：id 一律来自路由参数 `:id`。
+ * 「我喜欢」不走这里（见 `features/like/LikedPage`）：它需要「页内喜欢立刻出现」的
+ * 动态添加语义，而歌单详情只是服务端快照。
  */
 export default function PlaylistPage() {
   const { id } = useParams<{ id: string }>();
