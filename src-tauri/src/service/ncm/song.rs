@@ -6,7 +6,7 @@ use super::{call, NcmService};
 use crate::model::entity::{AlbumDetail, LikeList, Lyric, RecentSongs, Song, SongUrlResult};
 use crate::model::error::Result;
 use crate::model::{mapper, response};
-use crate::netease::client::QueryExt;
+use crate::netease::client::{self, QueryExt};
 use crate::netease::NcmState;
 
 /// 歌词来源：`/lyric`（旧）与 `/lyric/new`（新，带逐字 yrc）响应同形。
@@ -80,5 +80,20 @@ impl NcmService {
         let dto: response::RecentSongResponseDto =
             call!(state, Query::new().p("uid", uid), record_recent_song).await?;
         Ok(mapper::map_recent_songs(dto))
+    }
+
+    /// 听歌上报：写入云端「最近听过」（桌面端 `startplay` 日志，clientlog eapi）。
+    ///
+    /// `source_id` 是来源歌单 / 专辑 id（不知道就传 `None` → 上报为 `0`）。
+    /// 请求方言（clientlog 域名 + eapi + 桌面端 cookie）全部封装在
+    /// [`client::report_recent_play`]，所以这里只用 `call` 拿「取数 + 业务 code 校验」。
+    pub async fn scrobble(state: &NcmState, id: i64, source_id: Option<i64>) -> Result<()> {
+        let source_id = source_id.unwrap_or(0);
+        let _: response::ScrobbleResponseDto =
+            Self::call(state, Query::new(), |api, _q| async move {
+                client::report_recent_play(&api, &state.cookie(), id, source_id).await
+            })
+            .await?;
+        Ok(())
     }
 }

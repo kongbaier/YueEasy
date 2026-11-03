@@ -29,6 +29,15 @@ export async function fetchFm(): Promise<QueueItem[]> {
 }
 
 /**
+ * 听歌上报（Rust `scrobble` → clientlog eapi `startplay`）：写入云端「最近听过」。
+ *
+ * `sourceId` 为来源歌单 / 专辑 id（不知道传 0）。
+ */
+export async function scrobble(trackId: number, sourceId = 0): Promise<void> {
+  await ncm.scrobble(trackId, sourceId);
+}
+
+/**
  * 「不感兴趣」上报（Rust `fm_trash`）。
  */
 export async function trashFm(trackId: number): Promise<void> {

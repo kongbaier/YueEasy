@@ -3,7 +3,6 @@
 
 pub mod accent;
 pub mod audio_cache;
-pub mod history;
 pub mod like;
 pub mod media_session;
 pub mod ncm;

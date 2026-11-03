@@ -226,6 +226,16 @@ pub struct LikeResponseDto {
     pub message: Option<String>,
 }
 
+/// `/api/feedback/weblog`（听歌上报）：成功只回 `code`，无数据体。
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ScrobbleResponseDto {
+    #[serde(default)]
+    pub code: Option<i64>,
+    #[serde(default, alias = "msg")]
+    pub message: Option<String>,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LikeListResponseDto {
@@ -969,6 +979,7 @@ impl_envelope!(
     LyricResponseDto,
     AlbumDetailResponseDto,
     LikeResponseDto,
+    ScrobbleResponseDto,
     LikeListResponseDto,
     RecentSongResponseDto,
     ArtistDetailResponseDto,

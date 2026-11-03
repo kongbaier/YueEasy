@@ -3,13 +3,6 @@ use std::path::PathBuf;
 /// 应用标识（与 `tauri.conf.json` 的 `identifier` 一致，也是数据 / 缓存目录名）。
 const APP_ID: &str = "com.kongbai.yueeasy";
 
-/// 应用数据目录（数据库、cookie、播放历史等本地数据的统一根目录）。
-///
-/// Windows 上 `dirs::data_dir()` = `%APPDATA%`（Roaming）：需要随用户漫游的数据放这里。
-pub fn data_dir() -> PathBuf {
-    dirs::data_dir().expect("failed to resolve app data dir").join(APP_ID)
-}
-
 /// 应用缓存根目录：`%LOCALAPPDATA%\<identifier>\cache`。
 ///
 /// Windows 上 `dirs::data_local_dir()` = `%LOCALAPPDATA%`（Local）：可再生的缓存不进 Roaming，

@@ -144,6 +144,67 @@ impl QueryExt for Query {
     }
 }
 
+/// 「最近播放」上报的日志域名。
+///
+/// 桌面端只往 `clientlog.music.163.com` 发这日志；`music.163.com/weapi/...` 上的老 weblog
+/// 已被服务端**静默丢弃**：照样回 `{"code":200,"data":"success"}`，但条目不会进「最近听过」。
+const CLIENTLOG_DOMAIN: &str = "https://clientlog.music.163.com";
+
+/// 桌面端 (macOS) 设备字段。
+///
+/// eapi 的 `header` **完全由 cookie 里的这些键构造**（见 ncm-api-rs `request.rs`），
+/// 缺省时 crate 会退回 `os=pc` 的形态——clientlog 只认客户端形态的日志，
+/// 设备字段不对同样是「回 success 但不落库」。
+const CLIENTLOG_DEVICE_COOKIE: &str = "os=osx; appver=3.1.10.5100; osver=15.5; channel=netease; \
+     versioncode=140; mobilename=; resolution=1920x1080";
+
+/// 上报「开始播放」（`action: "startplay"`）→ 写入云端「最近听过」。
+///
+/// 不走 `NcmService::call` 的原因：这条日志的**接口方言**有两处硬性差异（不是普通端点）——
+///
+/// 1. 域名是 [`CLIENTLOG_DOMAIN`]（用 `CryptoType::Eapi` + `domain` 覆盖）；
+/// 2. cookie 需追加桌面端设备字段 [`CLIENTLOG_DEVICE_COOKIE`]。
+///
+/// `source_id` 是来源歌单 / 专辑 id，写进日志的 `content`（`id=<source_id>`）。
+///
+/// 注意：crate 自带的 `scrobble` / `weblog`（weapi + `music.163.com` + `action: "play"`）
+/// 只影响听歌量统计、**不写「最近听过」**，所以不能用它们。
+pub async fn report_recent_play(
+    api: &ApiClient,
+    session_cookie: &str,
+    id: i64,
+    source_id: i64,
+) -> ApiResult {
+    // 克隆只复制 Arc 句柄，连接池与会话 cookie 都复用；追加的设备字段只作用于这次请求
+    let mut client = api.clone();
+    client.set_cookie(format!("{session_cookie}; {CLIENTLOG_DEVICE_COOKIE}"));
+
+    let logs = json!([{
+        "action": "startplay",
+        "json": {
+            "id": id.to_string(),
+            "type": "song",
+            "mainsite": "1",
+            "mainsiteWeb": "1",
+            "content": format!("id={source_id}"),
+        }
+    }]);
+    // `logs` 是「JSON 字符串化的数组」而不是嵌套数组，与服务端约定一致
+    let data = json!({ "logs": logs.to_string() });
+
+    client
+        .request(
+            "/api/feedback/weblog",
+            data,
+            RequestOption {
+                crypto: CryptoType::Eapi,
+                domain: Some(CLIENTLOG_DOMAIN.to_string()),
+                ..Default::default()
+            },
+        )
+        .await
+}
+
 /// 验证码（短信）登录 `/api/w/login/cellphone`。
 ///
 /// 不用 `ApiClient::login_cellphone` 走这条路的原因：ncm-api-rs 在读 Query 里的 `captcha` 时

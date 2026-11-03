@@ -11,3 +11,4 @@ command!(ncm_lyric_new(state, id: i64) -> Lyric => lyric_new);
 command!(ncm_like(state, id: i64, like: Option<bool>) => like);
 command!(ncm_likelist(state, uid: i64) -> LikeList => like_list);
 command!(ncm_record_recent_song(state, uid: i64) -> RecentSongs => recent_song);
+command!(ncm_scrobble(state, id: i64, source_id: Option<i64>) => scrobble);

@@ -1,47 +1,43 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getCombinedRecent } from '../recent-service';
+import { useEffectOnActive } from 'keepalive-for-react';
+import { getRecentSongs } from '../recent-service';
 import { toast } from '@/shared/lib/toast';
 import { reportError } from '@/shared/utils/error';
 import type { Song } from '@/shared/types/uiModels';
 import { playerService } from '@/features/player/services/PlayerService';
-import { onLocalHistoryChanged } from '@/features/player/services/PlayHistoryService';
 
 /**
- * 最近播放页 viewmodel：React Query 取数（云 + 本地综合）+ playerService 命令。
- * userId 为空时仅取本地记录；localEnabled 控制本地来源是否并入。
+ * 最近播放页 viewmodel：React Query 取云端「最近听过」+ playerService 命令。
  *
- * 用非 Suspense 的 useQuery + enabled 门控（与 playlist / user 一致）：
- * 页面自身不挂起，加载态与登录门禁都由页面 early return 承载，
- * 从而省掉「为承载 Suspense 边界而多包一层 Content 组件」。
- * throwOnError 让取数失败照旧抛给上层错误边界，与 suspense 模式行为一致。
+ * 取数走非 Suspense 的 `useQuery`（页面自身不挂起，加载态 / 登录门禁由页面
+ * early return 承载）；`enabled: userId != null` 是登录门禁的唯一真相，
+ * `throwOnError` 让失败照旧抛给错误边界。
  *
- * 订阅本地播放记录变更事件，播放后实时失效综合查询（后台重取）。
+ * 数据只有一个来源（云端）：播放时上报由播放器负责，本页无需订阅任何本地写入事件；
+ * KeepAlive 下页面常驻，所以用 `useEffectOnActive` 在**每次进入**时失效查询，
+ * 保证刚播过的歌立刻出现在列表里。
+ *
  * 页面组件只 import 本 hook，不直接触碰 store / service。
  */
-export function useRecentPlaysViewModel(
-  userId: number | null,
-  localEnabled: boolean,
-) {
+export function useRecentPlaysViewModel(userId: number | null) {
   const play = playerService.play;
   const queryClient = useQueryClient();
 
   const { data, isPending } = useQuery({
-    queryKey: ['recentSongs', userId, localEnabled],
-    queryFn: () => getCombinedRecent(userId, localEnabled),
-    // 云（已登录）与本地（开关打开）任一可用即可取数，全不可用时不发请求。
-    enabled: localEnabled || userId != null,
+    queryKey: ['recentSongs', userId],
+    queryFn: () => getRecentSongs(userId as number),
+    enabled: userId != null,
     throwOnError: true,
   });
 
-  const items = useMemo(() => data ?? [], [data]);
-
-  // 本地记录变化（有新的播放落库）→ 失效综合查询，后台重取实现实时更新。
-  useEffect(() => {
-    return onLocalHistoryChanged(() => {
+  useEffectOnActive(() => {
+    if (userId != null) {
       void queryClient.invalidateQueries({ queryKey: ['recentSongs'] });
-    });
-  }, [queryClient]);
+    }
+  }, [queryClient, userId]);
+
+  const items = useMemo(() => data ?? [], [data]);
 
   const handlePlay = useCallback(
     async (track: Song) => {
@@ -54,8 +50,5 @@ export function useRecentPlaysViewModel(
     [play],
   );
 
-  return useMemo(
-    () => ({ items, isPending, handlePlay }),
-    [items, isPending, handlePlay],
-  );
+  return useMemo(() => ({ items, isPending, handlePlay }), [items, isPending, handlePlay]);
 }

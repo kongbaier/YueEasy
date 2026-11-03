@@ -301,26 +301,6 @@ export interface AudioCacheStats {
 }
 
 /**
- * 本地播放记录（Rust `storage::play_history::PlayRecord` wire 镜像）。
- * 字段即 Rust 字段名（snake_case，与 QueueItem 同约定）；由播放器每次实际播放落库。
- */
-export interface LocalPlayRecord {
-  id: number;
-  song_id: number;
-  song_name: string;
-  /** 歌手名拼接串（`A / B`，兼容旧库与文本展示）。 */
-  artist: string;
-  album: string;
-  cover_url: string;
-  duration_secs: number;
-  played_at_ms: number;
-  /** 歌手 id/名快照（跳歌手页需要；旧库为空，前端回退到 `artist` 串）。 */
-  artists?: { id: number; name: string }[];
-  /** 专辑 id（跳专辑页需要；旧库为 0）。 */
-  album_id?: number;
-}
-
-/**
  * 播放器队列条目：前端队列持久化的扁平形状（snake_case wire 名）。
  * 与前端 Song 实体（Ui Model）通过 `shared/utils/mappers` 互转（queue store 命令层内）。
  */

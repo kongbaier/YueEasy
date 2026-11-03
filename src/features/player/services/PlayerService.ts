@@ -16,7 +16,7 @@ import type { PlayerCoreTrack } from '@/shared/lib/player-core/models/track';
 import { Player } from '../core/player';
 import type { ContentSource, QueueSnapshot } from '../stores/queueStore';
 import { fmPolicy, queuePolicy, useQueueStore } from '../stores/queueStore';
-import { fetchFm, resolveUrl, trashFm } from './PlayerDataService';
+import { fetchFm, resolveUrl, scrobble as scrobblePlay, trashFm } from './PlayerDataService';
 import {
   applyLimitFromSettings,
   invalidate as invalidateAudioCache,
@@ -24,7 +24,7 @@ import {
   requestCache as requestAudioCache,
 } from './AudioCacheService';
 import { usePlayerStore } from '../stores/playerStore';
-import { recordPlay } from './PlayHistoryService';
+import { useAuthStore } from '@/features/auth/stores/authStore';
 import { usePlayerSettingsStore } from '../stores/playerSettingsStore';
 import { toast } from '@/shared/lib/toast';
 import { reportError } from '@/shared/utils/error';
@@ -204,8 +204,28 @@ async function resolveAndPlay(item: QueueItem): Promise<void> {
     await skipUnavailable(item);
     return;
   }
-  recordPlay(item); // 成功装载后才记本地播放记录（fire-and-forget，受开关控制）
+  void reportPlayToCloud(item); // 确认可播后上报云端「最近听过」（fire-and-forget，受开关控制）
   prefetchNext(); // 预取下一首 URL，把解析失败移出下一次切歌事务
+}
+
+/**
+ * 云端「最近听过」上报：只在**确认能播**（已装载）后发一次。
+ *
+ * 未登录 / `savePlaybackHistory` 关闭时直接跳过（云端记录也属于播放历史）；
+ * 失败仅告警，绝不打断播放。
+ *
+ * 关于接口：`/api/feedback/weblog` 上有两种日志，**只有 clientlog eapi 的
+ * `startplay` 会写「最近听过」**；crate 自带的 `scrobble`（weapi + `music.163.com`
+ * + `action: "play"`）服务端会回 `success` 但静默丢弃（不落库）。
+ */
+async function reportPlayToCloud(item: QueueItem): Promise<void> {
+  const { savePlaybackHistory } = usePlayerSettingsStore.getState().player;
+  if (!savePlaybackHistory || useAuthStore.getState().userId == null) return;
+  try {
+    await scrobblePlay(item.track_id, item.album_id ?? 0);
+  } catch (e) {
+    console.warn('[player] scrobble failed', item.track_id, e);
+  }
 }
 
 /**

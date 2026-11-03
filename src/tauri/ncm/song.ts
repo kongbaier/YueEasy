@@ -93,3 +93,12 @@ export const likeList = (uid: number): Promise<LikeList> =>
 
 export const recentSong = (uid: number): Promise<RecentSongs> =>
   invoke<RecentSongs>('ncm_record_recent_song', { uid });
+
+/**
+ * 听歌上报（写入云端「最近听过」）。
+ *
+ * 走桌面端的 clientlog eapi `startplay` 日志（Rust 侧封装）；`sourceId` 是来源歌单 / 专辑 id。
+ * 未登录时后端会返回业务错误，调用方应自行按登录态门禁。
+ */
+export const scrobble = (id: number, sourceId = 0): Promise<void> =>
+  invoke<void>('ncm_scrobble', { id, sourceId });

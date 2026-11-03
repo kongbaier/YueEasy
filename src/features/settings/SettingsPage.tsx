@@ -265,8 +265,8 @@ export default function Settings() {
               <span className="text-sm text-muted-foreground">极高</span>
             </Row>
             <Row
-              description="在最近播放中综合展示本机播放记录"
-              label="本地播放记录"
+              description="把听过的歌同步到网易云「最近播放」（用官方客户端也能看到）"
+              label="上报播放记录"
             >
               <Switch
                 checked={savePlaybackHistory}

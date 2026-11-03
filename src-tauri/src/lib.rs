@@ -11,7 +11,6 @@ use tauri::Manager;
 use crate::app::state::LikeState;
 use crate::netease::NcmState;
 use crate::storage::audio_cache::AudioCache;
-use crate::storage::db::Database;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -37,7 +36,6 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_cache::init())
-        .manage(Database::default())
         .manage(LikeState::default())
         // 音频缓存目录由 dirs 解析（不依赖 AppHandle），可以在这里就 manage。
         .manage(AudioCache::default())
@@ -90,6 +88,7 @@ pub fn run() {
             commands::ncm::song::ncm_like,
             commands::ncm::song::ncm_likelist,
             commands::ncm::song::ncm_record_recent_song,
+            commands::ncm::song::ncm_scrobble,
             commands::ncm::artist::ncm_artist_detail,
             commands::ncm::artist::ncm_artist_albums,
             commands::ncm::user::ncm_user_detail,
@@ -117,9 +116,6 @@ pub fn run() {
             commands::audio_cache::audio_cache_stats,
             commands::audio_cache::audio_cache_clear,
             commands::audio_cache::audio_cache_remove,
-            commands::history::history_add,
-            commands::history::history_get,
-            commands::history::history_mark_synced,
             commands::like::like_init,
             commands::like::like_toggle,
             commands::like::like_get_ids,
