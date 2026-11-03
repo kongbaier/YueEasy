@@ -6701,7 +6701,7 @@ dependencies = [
 
 [[package]]
 name = "yueeasy"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "dirs 5.0.1",
  "image",
