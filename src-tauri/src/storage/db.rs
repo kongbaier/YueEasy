@@ -31,7 +31,9 @@ impl Database {
                 album         TEXT DEFAULT '',
                 cover_url     TEXT DEFAULT '',
                 duration_secs INTEGER DEFAULT 0,
-                played_at_ms  INTEGER DEFAULT 0
+                played_at_ms  INTEGER DEFAULT 0,
+                artists       TEXT DEFAULT '',
+                album_id      INTEGER DEFAULT 0
             );",
         )?;
         // 兼容既有库：CREATE TABLE IF NOT EXISTS 不会给旧表补列，逐列检查缺失后 ALTER。
@@ -48,6 +50,16 @@ impl Database {
             (
                 "played_at_ms",
                 "ALTER TABLE play_history ADD COLUMN played_at_ms INTEGER DEFAULT 0",
+            ),
+            // 歌手 / 专辑快照：此前只存拼接后的 artist 名字串，列表只能显示名字、
+            // 无法链接到歌手页 / 专辑页（老行保持空，前端回退到名字串展示）。
+            (
+                "artists",
+                "ALTER TABLE play_history ADD COLUMN artists TEXT DEFAULT ''",
+            ),
+            (
+                "album_id",
+                "ALTER TABLE play_history ADD COLUMN album_id INTEGER DEFAULT 0",
             ),
         ] {
             if !existing_columns(conn, "play_history")?.contains(&col.to_string()) {

@@ -39,6 +39,10 @@ export function recordPlay(item: QueueItem): void {
     // QueueItem.duration_secs 为毫秒换算的小数秒，Rust 侧为 i64 → 取整
     duration_secs: Math.round(item.duration_secs),
     played_at_ms: Date.now(),
+    // 歌手 / 专辑快照：不带 id 的话，最近播放页只能显示名字串，
+    // 连歌手名都拼不出来（此前只存了名字串却又不读，本地记录全是「未知歌手」）。
+    artists: item.artists ?? [],
+    album_id: item.album_id ?? 0,
   })
     .then(() => emitHistoryChanged())
     .catch((e) => console.warn('[history] record play failed', e));

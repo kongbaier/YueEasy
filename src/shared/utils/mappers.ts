@@ -3,7 +3,7 @@
 // 播放器已前端权威化，本模块是 Song 实体与 QueueItem 之间的唯一转换落点。
 
 import type { Track } from '@/shared/types/player';
-import type { QueueItem } from '@/shared/types/uiModels';
+import type { LocalPlayRecord, QueueItem } from '@/shared/types/uiModels';
 
 /**
  * Track(Song) → QueueItem：NCM 实体进入前端队列前的扁平化（如 FM 取歌）。
@@ -44,4 +44,32 @@ export function queueItemToSong(item: QueueItem): Track {
     },
     durationMs: Math.round(item.duration_secs * 1000),
   };
+}
+
+/**
+ * 本地播放记录 → Song：最近播放页里「本地」来源的最小曲目实体。
+ *
+ * 歌手优先用写入时的 `{ id, name }` 快照（能点进歌手页）；旧库只有拼接后的
+ * `artist` 名字串，则拆回只带名字的条目（id = 0，渲染成纯文本）。
+ * 此前漏掉 `artists`，导致所有本地记录的歌手列都显示「未知歌手」。
+ */
+export function localPlayRecordToSong(record: LocalPlayRecord): Track {
+  const artists = (record.artists ?? []).filter((a) => a.name.trim().length > 0);
+  return queueItemToSong({
+    track_id: record.song_id,
+    title: record.song_name,
+    artist: record.artist,
+    album: record.album,
+    cover_url: record.cover_url,
+    duration_secs: record.duration_secs,
+    artists:
+      artists.length > 0
+        ? artists
+        : record.artist
+            .split(' / ')
+            .map((name) => name.trim())
+            .filter(Boolean)
+            .map((name) => ({ id: 0, name })),
+    album_id: record.album_id ?? 0,
+  });
 }

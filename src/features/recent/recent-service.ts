@@ -1,7 +1,7 @@
 import type { LocalPlayRecord, Song } from '@/shared/types/uiModels';
 import { ncm } from '@/tauri/ncm';
 import { getLocalHistory } from '@/features/player/services/PlayHistoryService';
-import { queueItemToSong } from '@/shared/utils/mappers';
+import { localPlayRecordToSong } from '@/shared/utils/mappers';
 
 /** 最近播放综合条目：统一 Song + 播放时间 + 来源（云/本地）。 */
 export interface UnifiedRecentItem {
@@ -9,18 +9,6 @@ export interface UnifiedRecentItem {
   /** 毫秒时间戳，云 `playTimeMs` 与本地 `played_at_ms` 同单位。 */
   playedAtMs: number;
   source: 'cloud' | 'local';
-}
-
-/** 本地记录 → 最小 Song（复用 queueItemToSong，字段即 wire 名）。 */
-function localRecordToSong(r: LocalPlayRecord): Song {
-  return queueItemToSong({
-    track_id: r.song_id,
-    title: r.song_name,
-    artist: r.artist,
-    album: r.album,
-    cover_url: r.cover_url,
-    duration_secs: r.duration_secs,
-  });
 }
 
 /**
@@ -50,7 +38,7 @@ export async function getCombinedRecent(
     // 本地更新则整条采用本地记录；否则保留云端条目
     if (!prev || r.played_at_ms > prev.playedAtMs) {
       map.set(r.song_id, {
-        song: localRecordToSong(r),
+        song: localPlayRecordToSong(r),
         playedAtMs: r.played_at_ms,
         source: 'local',
       });

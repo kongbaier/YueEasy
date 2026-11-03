@@ -15,8 +15,9 @@ interface ArtistLinkProps {
 /**
  * 歌手名链接（全站唯一的「进入歌手页」入口）。
  *
- * 歌手实体一定带 id（接口与队列快照都保证），所以无条件渲染成 `<Link>`，
- * 不做「有没有 id」的判定——那层判定只会让 UI 出现「有时能点、有时不能点」的分叉。
+ * 歌手实体带 id 时渲染成 `<Link>`；id 缺失（=0）时退化成纯文本、不可点：
+ * 这类条目来自没有 id 的数据源（云盘扁平字段、旧本地播放记录的 `artist` 名字串），
+ * 拿 0 去拼 `/artist/0` 只会跳到一个不存在的页面。
  */
 export const ArtistLink = ({
   artist,
@@ -28,6 +29,10 @@ export const ArtistLink = ({
     if (stopPropagation) e.stopPropagation();
     beforeOpen?.();
   };
+
+  if (artist.id <= 0) {
+    return <span className={className}>{artist.name}</span>;
+  }
 
   return (
     <Link

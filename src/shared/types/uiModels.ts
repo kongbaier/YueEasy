@@ -308,11 +308,16 @@ export interface LocalPlayRecord {
   id: number;
   song_id: number;
   song_name: string;
+  /** 歌手名拼接串（`A / B`，兼容旧库与文本展示）。 */
   artist: string;
   album: string;
   cover_url: string;
   duration_secs: number;
   played_at_ms: number;
+  /** 歌手 id/名快照（跳歌手页需要；旧库为空，前端回退到 `artist` 串）。 */
+  artists?: { id: number; name: string }[];
+  /** 专辑 id（跳专辑页需要；旧库为 0）。 */
+  album_id?: number;
 }
 
 /**

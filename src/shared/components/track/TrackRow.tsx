@@ -117,14 +117,21 @@ export const TrackRow = ({
             )}
           </p>
         </div>
-        <Link
-          className="flex-1 min-w-0 truncate text-xs text-muted-foreground hover:text-primary hover:underline"
-          onClick={(e) => e.stopPropagation()}
-          onDoubleClick={(e) => e.stopPropagation()}
-          to={`/album/${track.album.id}`}
-        >
-          {track.album.name || '-'}
-        </Link>
+        {track.album.id > 0 ? (
+          <Link
+            className="flex-1 min-w-0 truncate text-xs text-muted-foreground hover:text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+            onDoubleClick={(e) => e.stopPropagation()}
+            to={`/album/${track.album.id}`}
+          >
+            {track.album.name || '-'}
+          </Link>
+        ) : (
+          // 旧本地播放记录没快照专辑 id，拼 `/album/0` 只会跳到空页
+          <span className="flex-1 min-w-0 truncate text-xs text-muted-foreground">
+            {track.album.name || '-'}
+          </span>
+        )}
         <span className={ROW_LIKE} onClick={(e) => e.stopPropagation()}>
           <LikeButton track={track} size="icon-sm" />
         </span>

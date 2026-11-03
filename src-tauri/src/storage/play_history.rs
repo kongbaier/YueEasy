@@ -3,6 +3,14 @@
 use crate::storage::db::Database;
 use serde::{Deserialize, Serialize};
 
+/// 记录里的歌手快照（`{ id, name }`）：id 用于「最近播放」列表点进歌手页，
+/// 只存拼接后的名字串就只能展示、不能跳转。
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
+pub struct RecordArtist {
+    pub id: i64,
+    pub name: String,
+}
+
 /// 前端写入的本地播放记录（字段即 IPC wire 名，snake_case 与 QueueItem 同约定）。
 #[derive(Deserialize)]
 pub struct NewPlayRecord {
@@ -13,6 +21,12 @@ pub struct NewPlayRecord {
     pub cover_url: String,
     pub duration_secs: i64,
     pub played_at_ms: i64,
+    /// 歌手 id/名快照（旧前端不传，缺省为空）。
+    #[serde(default)]
+    pub artists: Vec<RecordArtist>,
+    /// 专辑 id（跳专辑页需要；旧前端不传，缺省 0）。
+    #[serde(default)]
+    pub album_id: i64,
 }
 
 #[derive(Serialize)]
@@ -27,6 +41,17 @@ pub struct PlayRecord {
     pub synced: bool,
     pub played_at: String,
     pub played_at_ms: i64,
+    /// 歌手 id/名快照（库里存 JSON 文本，出库时反序列化成数组）。
+    pub artists: Vec<RecordArtist>,
+    pub album_id: i64,
+}
+
+/// 库里 `artists` 列是 JSON 文本；解析失败（老库 / 脏数据）按空数组处理，
+/// 前端会退回用 `artist` 名字串展示。
+fn parse_artists(raw: Option<String>) -> Vec<RecordArtist> {
+    raw.filter(|s| !s.is_empty())
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_default()
 }
 
 /// 本地播放记录上限（对齐网易云云记录约 300 首；去重后每首一行）。
@@ -37,8 +62,9 @@ pub fn add(db: &Database, record: &NewPlayRecord) -> Result<(), String> {
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
     conn.execute(
         "INSERT INTO play_history
-            (song_id, song_name, artist, album, cover_url, duration_secs, played_at_ms)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            (song_id, song_name, artist, album, cover_url, duration_secs, played_at_ms,
+             artists, album_id)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
         rusqlite::params![
             record.song_id,
             record.song_name,
@@ -46,7 +72,9 @@ pub fn add(db: &Database, record: &NewPlayRecord) -> Result<(), String> {
             record.album,
             record.cover_url,
             record.duration_secs,
-            record.played_at_ms
+            record.played_at_ms,
+            serde_json::to_string(&record.artists).unwrap_or_else(|_| "[]".to_string()),
+            record.album_id
         ],
     )
     .map_err(|e| e.to_string())?;
@@ -80,7 +108,7 @@ pub fn get(db: &Database, limit: i64, offset: i64) -> Result<Vec<PlayRecord>, St
     let mut stmt = conn
         .prepare(
             "SELECT h.id, h.song_id, h.song_name, h.artist, h.album, h.cover_url, h.duration_secs,
-                    h.synced, h.played_at, h.played_at_ms
+                    h.synced, h.played_at, h.played_at_ms, h.artists, h.album_id
              FROM play_history h
              WHERE h.played_at_ms = (
                  SELECT MAX(played_at_ms) FROM play_history WHERE song_id = h.song_id
@@ -103,6 +131,8 @@ pub fn get(db: &Database, limit: i64, offset: i64) -> Result<Vec<PlayRecord>, St
                 synced: row.get::<_, i32>(7)? != 0,
                 played_at: row.get(8)?,
                 played_at_ms: row.get(9)?,
+                artists: parse_artists(row.get::<_, Option<String>>(10)?),
+                album_id: row.get::<_, Option<i64>>(11)?.unwrap_or(0),
             })
         })
         .map_err(|e| e.to_string())?
