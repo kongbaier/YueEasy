@@ -22,7 +22,9 @@
  *   区域内可聚焦控件自动成为条目，**区域之间**用 Tab 跳转。
  * - `data-focus-layer`：模态浮层根（播放页 / 队列抽屉…）。引擎自动负责
  *   ① 给外壳加 `inert`（被盖住的页面退出 Tab 序列与辅助技术树）、
- *   ② 把焦点搬进浮层的首个区域、③ Tab 圈在浮层内（背景已 inert）。
+ *   ② Tab 圈在浮层内（背景已 inert）、③ 关闭时把焦点还给打开前的控件。
+ *   **不会**把焦点搬进浮层的某个条目（「打开就有一个控件是亮的」不是这里的语义）；
+ *   需要「打开即聚焦第一项」的表单型浮层显式写 `data-focus-layer="focus"`。
  * - `data-focus-shell`：应用外壳（`AppLayout` 那层）。浮层在外壳外（如播放页）时整体
  *   inert 外壳；浮层在外壳内（如队列抽屉）时只 inert 沿途的兄弟分支，外层门户
  *   （`Toaster` 之类）保持可用。
@@ -311,7 +313,7 @@ const jumpToZone = (active: Element | null, forward: boolean): boolean => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  模态浮层：inert 背景 + 焦点搬入                                     */
+/*  模态浮层：inert 背景 + 焦点交接                                     */
 /* ------------------------------------------------------------------ */
 
 /** 本模块加上的 inert（关闭浮层时逐个还原，不误伤别人加的 inert）。 */
@@ -366,7 +368,37 @@ const applyLayerInert = (layer: Element | null) => {
   }
 };
 
-/** 浮层打开时的焦点入口：搬进浮层首个区域的第一项。 */
+/**
+ * 浮层是否**显式**要求「打开即聚焦」：`data-focus-layer="focus"`。
+ *
+ * 默认不搬焦点。播放页 / 队列抽屉这类浮层是「整块视图」，不是表单对话框，
+ * 自动聚焦只会打在文档序第一个可聚焦控件上（返回键、清空播放列表…），
+ * 表现为「一打开就有个控件亮着」，`scrollIntoView` 还可能把列表滚走。
+ * 焦点交给用户：焦点在 body 时第一步 Tab 就会进浮层首个区域（`zonesForTab` 已收在浮层内）。
+ */
+const wantsFocusOnOpen = (layer: Element): boolean =>
+  layer.getAttribute(LAYER_ATTR) === 'focus';
+
+/** 打开前的焦点位置：浮层关闭时还给它（开关浮层不该让键盘用户丢掉原地）。 */
+let focusBeforeLayer: HTMLElement | null = null;
+
+const captureFocusBeforeLayer = () => {
+  const active = document.activeElement;
+  focusBeforeLayer =
+    active instanceof HTMLElement && active !== document.body ? active : null;
+};
+
+const restoreFocusAfterLayer = () => {
+  const target = focusBeforeLayer;
+  focusBeforeLayer = null;
+  if (!target || !target.isConnected || !isVisible(target)) return;
+  // 用户已经在别处建立了焦点（点开了别的控件）就别抢回来
+  const active = document.activeElement;
+  if (active && active !== document.body) return;
+  target.focus({ preventScroll: true });
+};
+
+/** 浮层打开时的焦点入口（仅在 `data-focus-layer="focus"` 时使用）：首个区域的第一项。 */
 const focusIntoLayer = (layer: Element): boolean => {
   for (const zone of visibleZonesIn(layer)) {
     const entry = entryOf(zone, true);
@@ -490,9 +522,16 @@ export const installFocusNavigation = (): (() => void) => {
   const syncLayer = () => {
     const top = topLayer();
     if (top === lastTopLayer) return;
+    const previous = lastTopLayer;
     lastTopLayer = top;
+    // 只在「无浮层 → 有浮层」时记录焦点；浮层之间切换不覆盖（那时焦点已在浮层里）
+    if (top && !previous) captureFocusBeforeLayer();
     applyLayerInert(top);
-    if (top) focusIntoLayer(top);
+    if (top) {
+      if (wantsFocusOnOpen(top)) focusIntoLayer(top);
+    } else if (previous) {
+      restoreFocusAfterLayer();
+    }
   };
 
   const observer = new MutationObserver(syncLayer);
@@ -517,6 +556,7 @@ export const installFocusNavigation = (): (() => void) => {
     document.removeEventListener('mousedown', handleMouseDown, true);
     observer.disconnect();
     lastTopLayer = null;
+    focusBeforeLayer = null;
     applyLayerInert(null);
     document.documentElement.removeAttribute(MODALITY_ATTR);
     modality = null;
