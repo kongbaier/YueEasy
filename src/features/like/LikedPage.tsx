@@ -3,7 +3,7 @@ import { Heart } from 'lucide-react';
 import { usePageTitle } from '@/app/layout/PageTitleContext';
 import { Button } from '@/shared/ui/button';
 import { ScrollArea } from '@/shared/ui/scroll-area';
-import { TrackRow, TrackRowSkeletonList } from '@/shared/components/track';
+import { TrackList, TrackRowSkeletonList } from '@/shared/components/track';
 import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import { CommentPanel } from '@/features/comment/components';
 import { TabBar, type TabKey } from '@/features/playlist/components/TabBar';
@@ -74,20 +74,13 @@ export default function LikedPage() {
           />
           {activeTab === 'songs' ? (
             songs.length > 0 ? (
-              <div className="space-y-0.5" data-focus-zone>
-                {songs.map((track, index) => (
-                  <TrackRow
-                    index={index}
-                    key={track.id}
-                    onPlay={handlePlay}
-                    track={track}
-                  />
-                ))}
-              </div>
+              <TrackList onPlay={handlePlay} tracks={songs} />
             ) : (
               <div className="flex flex-col items-center justify-center gap-2 py-20">
                 <Heart className="h-8 w-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">还没有喜欢的歌曲</p>
+                <p className="text-sm text-muted-foreground">
+                  还没有喜欢的歌曲
+                </p>
               </div>
             )
           ) : (

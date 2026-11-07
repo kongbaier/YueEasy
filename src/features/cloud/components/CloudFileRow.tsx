@@ -16,6 +16,7 @@ import { getNcmImageUrl } from '@/shared/utils/image';
 import { ArtistLink } from '@/features/artist/components/ArtistLink';
 import { LikeButton } from '@/features/like/components/LikeButton';
 import { useLikeAction } from '@/features/like/hooks/useLikeAction';
+import { useIsLiked } from '@/features/like/hooks/useIsLiked';
 import { useTrackActions } from '@/features/player/hooks/useTrackActions';
 import type { CloudTrack } from '../constants';
 
@@ -86,8 +87,8 @@ interface CloudFileRowProps {
  * 而在本功能内按表格式布局自建，交互（双击播放 / 右键菜单 / 红心）保持一致。
  */
 export const CloudFileRow = ({ track, index, onPlay }: CloudFileRowProps) => {
-  const { like, isLiked } = useLikeAction();
-  const liked = isLiked(track.song.id);
+  const { like } = useLikeAction();
+  const liked = useIsLiked(track.song.id);
   const { handlePlayNext, handleAddToQueue } = useTrackActions();
   const handleLike = () => like(track.song);
 

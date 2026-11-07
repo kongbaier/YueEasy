@@ -1,5 +1,6 @@
 import type { Track } from '@/shared/types/player';
 import { useLikeAction } from '@/features/like/hooks/useLikeAction';
+import { useIsLiked } from '@/features/like/hooks/useIsLiked';
 import { cn } from '@/shared/utils/cn';
 import { Button } from '@/shared/ui/button';
 import { Heart } from 'lucide-react';
@@ -15,9 +16,8 @@ export const LikeButton = ({
   size?: 'icon' | 'icon-sm' | 'icon-lg';
   iconSize?: number;
 }) => {
-  const { like, isLiked } = useLikeAction();
-
-  const liked = track && isLiked(track.id);
+  const { like } = useLikeAction();
+  const liked = useIsLiked(track?.id);
   const handleLike = () => {
     if (!track) return;
     like(track);
