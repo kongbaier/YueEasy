@@ -30,6 +30,28 @@
         "decorations": false,
         "visible": false,
         "additionalBrowserArgs": "--disable-features=MediaSessionService,msWebOOUI,msPdfOOUI,msSmartScreenProtection"
+      },
+      {
+        "label": "desktop-lyrics",
+        "title": "桌面歌词",
+        "url": "desktop-lyrics.html",
+        "width": 960,
+        "height": 200,
+        "minWidth": 320,
+        "maxWidth": 760,
+        "minHeight": 48,
+        "maxHeight": 360,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "focus": false,
+        "visible": false,
+        "additionalBrowserArgs": "--disable-features=MediaSessionService,msWebOOUI,msPdfOOUI,msSmartScreenProtection"
       }
     ]
   },

@@ -26,6 +26,15 @@ export default defineConfig(async () => ({
       '@': resolve(__dirname, 'src'),
     },
   },
+  build: {
+    rollupOptions: {
+      // 一个窗口一个 HTML 入口：主窗口 / 桌面歌词窗口各走自己的模块图
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        'desktop-lyrics': resolve(__dirname, 'desktop-lyrics.html'),
+      },
+    },
+  },
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
     port: 1420,

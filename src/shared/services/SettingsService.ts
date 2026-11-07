@@ -59,7 +59,15 @@ async function load(): Promise<void> {
     appearance: { ...DEFAULTS_APPEARANCE, ...state.appearance },
   });
   usePlayerSettingsStore.setState({
-    player: { ...DEFAULTS_PLAYER, ...state.player },
+    player: {
+      ...DEFAULTS_PLAYER,
+      ...state.player,
+      // 嵌套对象要单独合并：浅合并会丢掉后来新增的键（如 desktopLyrics 的排版项）
+      desktopLyrics: {
+        ...DEFAULTS_PLAYER.desktopLyrics,
+        ...state.player?.desktopLyrics,
+      },
+    },
   });
   ready = true;
 }

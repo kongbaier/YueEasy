@@ -2,6 +2,7 @@ import { settingsService } from '@/shared/services/SettingsService';
 import { initAuth } from '@/features/auth/stores/authStore';
 import { usePlayerSettingsStore } from '@/features/player/stores/playerSettingsStore';
 import { playerService } from '@/features/player/services/PlayerService';
+import { desktopLyricsService } from '@/features/lyrics/desktop-lyrics-service';
 import { useQueueStore } from '@/features/player/stores/queueStore';
 
 /**
@@ -14,7 +15,16 @@ export async function bootstrap() {
   await settingsService.load();
   await initAuth();
   applyPlayerSettings();
+  initDesktopLyrics();
   await restorePlayerState();
+}
+
+/**
+ * 桌面歌词发布器：settings 落盘后立刻启动（恢复上次的开关 / 锁定状态）。
+ * 必须在 `settingsService.load()` 之后 —— 否则读到的开关永远是默认值。
+ */
+function initDesktopLyrics(): void {
+  desktopLyricsService.start();
 }
 
 /**

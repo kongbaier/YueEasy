@@ -1,6 +1,7 @@
 export * from './accent';
 export * from './app';
 export * from './cache';
+export * from './desktopLyrics';
 export * from './effect';
 export * from './like';
 export * from './mediaSession';

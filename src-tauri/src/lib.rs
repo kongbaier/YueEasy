@@ -50,6 +50,11 @@ pub fn run() {
             // 顺序颠倒会让窗口先以「无材质」状态呈现一帧。
             platform::window::setup(handle)?;
 
+            // 桌面歌词窗口（配置声明的第二窗口）：拦截关闭 + 首次落点
+            if let Err(e) = platform::desktop_lyrics::setup(handle) {
+                eprintln!("Failed to setup desktop lyrics window: {e}");
+            }
+
             if let Some(w) = handle.get_webview_window("main") {
                 let _ = w.show();
             }
@@ -109,6 +114,9 @@ pub fn run() {
             commands::ncm::comment::ncm_comment_playlist,
             commands::ncm::comment::ncm_comment_music,
             commands::accent::get_accent_color,
+            commands::desktop_lyrics::desktop_lyrics_set_enabled,
+            commands::desktop_lyrics::desktop_lyrics_set_locked,
+            commands::desktop_lyrics::desktop_lyrics_set_height,
             commands::audio_cache::audio_cache_get,
             commands::audio_cache::audio_cache_dir,
             commands::audio_cache::audio_cache_request,

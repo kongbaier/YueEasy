@@ -15,6 +15,14 @@ export const DEFAULTS_PLAYER: PlayerSettings = {
   savePlaybackHistory: true,
   // 2GB：320kbps 约 200 首 / 128kbps 约 500 首，兼顾「够用」与「不抢磁盘」
   audioCacheLimitMB: 2048,
+  desktopLyrics: {
+    enabled: false,
+    locked: false,
+    // 36px ≈ 原 text-4xl；上下一句默认 0.6 倍 + 55% 白（旧版是 text-lg + 30% 白，偏小偏淡）
+    fontSize: 36,
+    sideLineOpacity: 0.55,
+    showTranslation: true,
+  },
 };
 
 /** 音频缓存上限候选值（MB）：`0` = 关闭。 */

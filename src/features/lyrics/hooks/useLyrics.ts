@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { LyricLine } from '@/features/lyrics/parser';
 import type { LyricsResult } from '@/features/lyrics/lyrics-service';
 import { usePlayerStore } from '@/features/player/stores/playerStore';
+import { computeActiveLine } from '@/features/lyrics/active-line';
+import { resolveLyricLines } from '@/features/lyrics/lines';
 
 interface LyricsState {
   lines: LyricLine[];
@@ -11,33 +13,11 @@ interface LyricsState {
   tlyric: LyricLine[];
 }
 
-/**
- * Synchronously compute active line index from the given time and lyric data.
- * Pure function — no side effects, safe for lazy state init and subscriber callbacks.
- */
-function computeActiveLine(currentTime: number, lines: LyricLine[]): number {
-  if (lines.length === 0) return -1;
-
-  const ms = currentTime * 1000;
-
-  // Reverse scan for the last line whose start is reached
-  for (let i = lines.length - 1; i >= 0; i--) {
-    if (ms >= lines[i].startMs) return i;
-  }
-
-  return -1;
-}
-
 export const useLyrics = (
   lyricResult: LyricsResult | undefined,
 ): LyricsState => {
-  const yrc = lyricResult?.yrc ?? [];
-  const lyric = lyricResult?.lyric ?? [];
+  const { lines, hasYrc } = resolveLyricLines(lyricResult);
   const tlyric = lyricResult?.tlyric ?? [];
-
-  const hasYrc = yrc.length > 0;
-  const mainLines = hasYrc ? yrc : lyric;
-  const lines = mainLines.length > 0 ? mainLines : tlyric;
 
   const linesRef = useRef(lines);
 
