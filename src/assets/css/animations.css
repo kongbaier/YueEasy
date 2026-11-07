@@ -41,8 +41,27 @@
       rgba(128, 128, 128, 0.06) 65%,
       transparent 100%
     );
-    animation: shimmer 2s ease-in-out infinite;
+    /* linear 而非 ease-in-out：infinite 循环里用缓动，每轮回合末尾减速、开头加速，
+       扫光节奏会一顿一顿的（shadcn 的 tw-shimmer 也是 linear）。 */
+    animation: shimmer 2s linear infinite;
     pointer-events: none;
+  }
+
+  /* 深色底上灰高光几乎看不见：`--muted` 本身就是深灰，灰上加灰等于没有。
+     换成低透明度白光（50% 处 10% 白），与浅色主题的观感对齐。
+     用 `@variant dark` 而不是 `prefers-color-scheme`：本项目的主题是 class 驱动
+     （`@custom-variant dark` → `.dark`），跟随系统只是其中一种取值。 */
+  @variant dark {
+    &::after {
+      background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.04) 35%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0.04) 65%,
+        transparent 100%
+      );
+    }
   }
 
   /* 尊重系统「减少动态效果」：直接去掉扫光层（保留 bg-muted 底色）。
