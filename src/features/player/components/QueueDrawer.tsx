@@ -128,6 +128,16 @@ export const QueuePanel = () => {
     fn?.();
   };
 
+  // 同播放页：只在位移动画期间挂 will-change（motion 逐帧写 inline style，不会被
+  // 浏览器当成合成动画自动升层），动画结束即撤 —— 抽屉里是 virtuoso + 每行封面，
+  // 不升层就是每帧重光栅化整个面板。本组件不卸载，靠 `opened` 在每次打开时重新点火。
+  const [sliding, setSliding] = useState(true);
+  const [opened, setOpened] = useState(isOpen);
+  if (isOpen !== opened) {
+    setOpened(isOpen);
+    if (isOpen) setSliding(true);
+  }
+
   return (
     <AnimatePresence onExitComplete={handlePanelExitComplete}>
       {isOpen && (
@@ -147,6 +157,9 @@ export const QueuePanel = () => {
             className="relative w-80 h-full bg-white dark:bg-black shadow-xl dark:shadow-black/30 flex flex-col z-10"
             exit={{ x: '100%' }}
             initial={{ x: '100%' }}
+            onAnimationComplete={() => setSliding(false)}
+            onAnimationStart={() => setSliding(true)}
+            style={{ willChange: sliding ? 'transform' : 'auto' }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
           >
             <header
