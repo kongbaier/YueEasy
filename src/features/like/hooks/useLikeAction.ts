@@ -27,13 +27,17 @@ function removeLikedSong(trackId: number) {
   });
 }
 
+/**
+ * 点赞命令门面：鉴权 + 远程切换 + toast + 喜欢页缓存乐观插入。
+ *
+ * 只暴露写命令 `like`；「某首歌是否已喜欢」用 `useIsLiked(id)` 按 id 单独订阅。
+ * 两者拆开是为了把点赞态的订阅粒度落到行/按钮上，而不是让整张列表共用一个 Set ——
+ * 否则往一首歌点心，千行歌单的每一行都会重渲染。
+ */
 export function useLikeAction() {
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const setLoginModalOpen = useLoginModal((s) => s.setOpen);
   const toggleLikeRemote = useLikeStore((s) => s.toggleLikeRemote);
-  // 订阅 likedIds（Set 引用变化触发重渲染），保证 isLiked(id) 结果随点赞状态更新
-  const likedIds = useLikeStore((s) => s.likedIds);
-  const isLiked = (id: number) => likedIds.has(id);
 
   const like = useCallback(
     async (track: Song) => {
@@ -64,5 +68,5 @@ export function useLikeAction() {
     [isLoggedIn, setLoginModalOpen, toggleLikeRemote],
   );
 
-  return { like, isLiked };
+  return { like };
 }

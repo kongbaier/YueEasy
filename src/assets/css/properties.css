@@ -59,18 +59,7 @@
   initial-value: #e5e7eb;
 }
 
-html.theme-transition {
-  transition:
-    --background 0.4s ease,
-    --card 0.4s ease,
-    --popover 0.4s ease,
-    --sidebar 0.4s ease,
-    --secondary 0.4s ease,
-    --muted 0.4s ease,
-    --accent 0.4s ease,
-    --border 0.4s ease,
-    --input 0.4s ease,
-    --surface-hover 0.4s ease,
-    --surface-active 0.4s ease,
-    --sidebar-border 0.4s ease;
-}
+/* 主题切换不再用「过渡这些变量」的方式：那要在这 400ms 里对整棵文档每帧重算样式
+   并重绘（十几个 inherits 变量每帧都变），是一次稳定可感知的掩帧。
+   现在走 View Transition 双快照交叉淡出，见 shared/hooks/useThemeSync.ts。
+   上面的 @property 声明保留：它们给出变量的类型与 initial-value fallback。 */

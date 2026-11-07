@@ -37,6 +37,23 @@ export default function PlayerPage() {
   const { currentTrack, queue } = usePlayer();
   const { close, isOpen, runAfterExit } = usePlayerPage();
   const [showTab, setShowTab] = useState<TabKeys>('lyrics');
+  /**
+   * 进场/退场期间才挂 `will-change: transform`：
+   * motion 是逐帧写 inline style 的 JS 动画，浏览器的合成策略不会把它当成“合成动画”自动升层；
+   * 不升层的话，整页（封面 + 光晕滤镜 + 歌词）在 0.3s 位移里会**每帧重新光栅化**。
+   * 升层后只移纹理；动画一结束立刻撤掉，不做常驻全屏层（那是白占一块视口大小的纹理内存）。
+   *
+   * `opened` 跟踪「本次打开」：本组件本身不会卸载（PlayerPage 挂在路由外），只有内部的
+   * motion 节点每次开合重新挂载，所以必须在 `isOpen` 翻 true 的那一次把提示重新点火 ——
+   * 否则只有第一次打开能享受到升层。渲染期调整 state（React 允许的同组件写法）
+   * 保证它和首帧在同一个提交里生效。
+   */
+  const [sliding, setSliding] = useState(true);
+  const [opened, setOpened] = useState(isOpen);
+  if (isOpen !== opened) {
+    setOpened(isOpen);
+    if (isOpen) setSliding(true);
+  }
 
   const changeShowTab = (tab: TabKeys) => {
     setShowTab(tab);
@@ -71,6 +88,9 @@ export default function PlayerPage() {
           data-focus-layer
           exit={{ y: '100%' }}
           initial={{ y: '100%' }}
+          onAnimationComplete={() => setSliding(false)}
+          onAnimationStart={() => setSliding(true)}
+          style={{ willChange: sliding ? 'transform' : 'auto' }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
         >
           <PlayerHeader handleBack={handleBack} />

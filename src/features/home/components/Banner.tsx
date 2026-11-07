@@ -16,6 +16,22 @@ import type { Banner as BannerModel } from '@/shared/types/uiModels';
 const WIDE_BREAKPOINT = 672; // 与 CSS @min-2xl: 对齐（64rem = 1024px，按默认 16px 根字号）
 
 /**
+ * 卡片 hover 的「提亮」叠层。
+ *
+ * 之前用的是 `hover:brightness-110`（`filter`）：滤镜会让元素脱离合成快路径，
+ * 300ms 过渡里**每一帧都要重算整块卡片的亮度**（卡片面积 ≈ 400×220，DPR 2 下
+ * 每帧重绘一块大图并重新上传纹理），首次 hover 还要现建滤镜层 —— 典型「hover 一下就卡一帧」。
+ * 改成白色叠加层的不透明度过渡：**纯合成**，只在首帧绘制一次。
+ * 叠层盖在所有内容之上（与原亮度滤镜的影响范围一致），但 `pointer-events-none` 不挡交互。
+ */
+const CardHoverLight = () => (
+  <div
+    aria-hidden
+    className="pointer-events-none absolute inset-0 bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-10"
+  />
+);
+
+/**
  * Banner → 站内路由。只处理能落到二级页的目标类型：
  * 10=专辑、1000=歌单；歌曲（1）/ MV（1004）/ 广告不在站内页面体系里，返回 null 保持不可点。
  */
@@ -101,7 +117,10 @@ const BannerCarousel = () => {
               containerClassName="absolute inset-0"
               decoding="async"
               lazy
-              src={banner.bigImageUrl}
+              // 横幅原图通常是 1920×1080 起步（部分 3000+）：直接挂 URL 等于给每屏都留一张
+              // 全尺寸解码位图 + 全尺寸纹理。按卡片实际渲染尺寸（9:5，窗口再宽也到不了 1280）
+              // 限宽，和 FM / 雷达卡用 640 是同一个道理。
+              src={getNcmImageUrl(banner.bigImageUrl, 1280, 712)}
             />
             <div className="absolute right-3 top-3 drop-shadow-2xl text-xs bg-background rounded-sm px-1 py-0.5">
               {banner.typeTitle}
@@ -129,7 +148,7 @@ const FmCard = () => {
 
   return (
     <div
-      className="row-span-1 col-span-2 group relative overflow-hidden rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+      className="row-span-1 col-span-2 group relative overflow-hidden rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       onClick={() => startFm(true)}
       onKeyDown={(e) => {
         // 只认回车：空格是全站播放/暂停热键，不激活控件
@@ -223,6 +242,7 @@ const FmCard = () => {
               播放中
             </span>
           )}
+          <CardHoverLight />
         </>
       )}
     </div>
@@ -249,7 +269,7 @@ const RadarCard = () => {
 
   return (
     <div
-      className="row-span-1 col-span-1 group relative overflow-hidden rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 transition duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+      className="row-span-1 col-span-1 group relative overflow-hidden rounded-xl shadow-lg dark:shadow-none dark:ring-1 dark:ring-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       onClick={goRadar}
       onKeyDown={(e) => {
         // 只认回车：空格是全站播放/暂停热键，不激活控件
@@ -309,6 +329,7 @@ const RadarCard = () => {
               </p>
             </div>
           )}
+          <CardHoverLight />
         </>
       )}
     </div>

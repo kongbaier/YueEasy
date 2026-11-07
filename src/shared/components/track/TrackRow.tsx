@@ -15,6 +15,7 @@ import { cn } from '@/shared/utils/cn';
 import { formatDuration } from '@/shared/utils/format';
 import { getNcmImageUrl } from '@/shared/utils/image';
 import { useLikeAction } from '@/features/like/hooks/useLikeAction';
+import { useIsLiked } from '@/features/like/hooks/useIsLiked';
 import { LikeButton } from '@/features/like/components/LikeButton';
 import { useTrackActions } from '@/features/player/hooks/useTrackActions';
 import { ArtistLink } from '@/features/artist/components/ArtistLink';
@@ -55,8 +56,8 @@ export const TrackRow = ({
   badge,
   artistTag,
 }: TrackRowProps) => {
-  const { like, isLiked } = useLikeAction();
-  const liked = isLiked(track.id);
+  const { like } = useLikeAction();
+  const liked = useIsLiked(track.id);
 
   const { handlePlayNext, handleAddToQueue } = useTrackActions();
   const handleLike = () => like(track);
@@ -83,6 +84,10 @@ export const TrackRow = ({
             alt={track.album.name}
             className="size-full object-cover"
             containerClassName={ROW_COVER}
+            // lazy：歌单可以上千行，全量挂载时每行都立即 decode 等于一次并发上千次解码
+            // （50px 封面在 DPR 2 下约 40KB 位图，加起来就是几十 MB）。
+            // 进视口前 200px 才开始解码（见 useDecodedSrc），滚到时已就绪。
+            lazy
             src={getNcmImageUrl(track.album.picUrl, 50)}
           />
         )}

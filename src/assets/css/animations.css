@@ -1,9 +1,9 @@
 @keyframes shimmer {
-  0% {
-    background-position: 200% 0;
+  from {
+    transform: translate3d(-100%, 0, 0);
   }
-  100% {
-    background-position: -200% 0;
+  to {
+    transform: translate3d(100%, 0, 0);
   }
 }
 
@@ -19,22 +19,67 @@
 }
 
 @utility bg-shimmer {
-  background-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(128, 128, 128, 0.06) 35%,
-    rgba(128, 128, 128, 0.12) 50%,
-    rgba(128, 128, 128, 0.06) 65%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
+  /* 骨架扫光：**只动 transform**（跑在合成器线程），不再逐帧改 background-position。
+     background-position 是非合成属性，每帧都要重绘整块渐变并重新上传瓦片；而页面上
+     同时存在的骨架动辄几十个（TrackRowSkeletonList 8 行 × 6 个 + 每张解码中的图一层），
+     加载期就是几十块矩形持续 60fps 重绘。伪元素扫光则是一条合成动画，绘制只发生一次。 */
+  &:not(.absolute, .fixed, .sticky, .relative) {
+    /* 绝对定位的骨架（ImagePlaceholder 铺在图片容器上）自带定位，不能再被覆盖成 relative */
+    position: relative;
+  }
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(128, 128, 128, 0.06) 35%,
+      rgba(128, 128, 128, 0.12) 50%,
+      rgba(128, 128, 128, 0.06) 65%,
+      transparent 100%
+    );
+    /* linear 而非 ease-in-out：infinite 循环里用缓动，每轮回合末尾减速、开头加速，
+       扫光节奏会一顿一顿的（shadcn 的 tw-shimmer 也是 linear）。 */
+    animation: shimmer 2s linear infinite;
+    pointer-events: none;
+  }
+
+  /* 深色底上灰高光几乎看不见：`--muted` 本身就是深灰，灰上加灰等于没有。
+     换成低透明度白光（50% 处 10% 白），与浅色主题的观感对齐。
+     用 `@variant dark` 而不是 `prefers-color-scheme`：本项目的主题是 class 驱动
+     （`@custom-variant dark` → `.dark`），跟随系统只是其中一种取值。 */
+  @variant dark {
+    &::after {
+      background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.04) 35%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0.04) 65%,
+        transparent 100%
+      );
+    }
+  }
+
+  /* 尊重系统「减少动态效果」：直接去掉扫光层（保留 bg-muted 底色）。
+     与 CrossfadeImage 在 reduce-motion 下不排交叉淡出是同一个口径。 */
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      display: none;
+    }
+  }
 }
 
 @utility animate-content-enter {
   animation: content-enter 250ms ease-out backwards;
 }
 
-@utility shadow-reflect {
-  -webkit-box-reflect: below 10px
-    linear-gradient(to bottom, rgba(0, 0, 0, 0) 70%, rgba(0, 0, 0, 0.4) 100%);
+/* 主题切换的交叉淡出时长（View Transition 的双快照，见 shared/hooks/useThemeSync）。
+   默认 250ms，这里对齐到 300ms；这对伪元素只在过渡期间存在。 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 300ms;
 }

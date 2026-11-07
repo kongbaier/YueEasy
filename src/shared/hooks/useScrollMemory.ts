@@ -49,24 +49,75 @@ export function useScrollMemory() {
     if (!el) return;
 
     const saved = positions.get(key);
-    if (saved) el.scrollTop = saved;
 
-    // 复核一次：缓存节点刚被 append 回来时（或页面仍在首帧渲染）这次赋值可能被吞掉，
-    // 下一帧若仍是 0 且内容确实可滚，则补写。仅在 saved > 0 时复核，避免覆盖用户此刻的滚动。
-    const raf = saved
+    /**
+     * 恢复态：目标位置在「内容还没长够」时会被 clamp（浏览器把 scrollTop 钳到最大可滚值）。
+     * 两处会遇到：
+     * - 缓存节点刚 append 回来、首帧布局未完成（既有场景，靠下一帧复核）；
+     * - 列表渐进挂载（`shared/components/track/TrackList`）：尾部的行还没挂上，
+     *   scrollHeight 只有首个分块那么高，滚回深层位置的用户会被悄悄拽到分块末尾。
+     * 因此恢复期间观察内容尺寸，长高就把目标再写一次，直到到达或超时。
+     * 期间**不记录**滚动位置（否则记下的是被 clamp 的中间值，真实位置就丢了）。
+     */
+    const restoreTarget = saved ?? 0;
+    let restoring = restoreTarget > 0;
+    let observer: ResizeObserver | undefined;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+
+    const stopRestoring = () => {
+      restoring = false;
+      observer?.disconnect();
+      if (timeout) clearTimeout(timeout);
+    };
+
+    const restore = () => {
+      if (!restoring) return;
+      el.scrollTop = restoreTarget;
+      if (el.scrollTop >= restoreTarget) stopRestoring();
+    };
+
+    if (restoring) {
+      restore();
+      if (restoring) {
+        const content = el.firstElementChild;
+        if (content) {
+          // 内容长高（新分块挂上 / 图片布局完成）就再试一次
+          observer = new ResizeObserver(restore);
+          observer.observe(content);
+        }
+        // 兜底：最多补写 2s，之后把滚动所有权交回用户
+        timeout = setTimeout(stopRestoring, 2000);
+      }
+    }
+
+    // 首帧复核：缓存节点刚被 append 回来时上一次赋值可能被吞掉
+    const raf = restoring
       ? requestAnimationFrame(() => {
-          if (el.scrollTop === 0 && el.scrollHeight > el.clientHeight) {
-            el.scrollTop = saved;
-          }
+          if (restoring && el.scrollTop === 0) restore();
         })
       : 0;
 
-    const handleScroll = () => remember(key, el.scrollTop);
+    // 用户自己动了滚轮 / 按下指针 → 立刻放弃回填（不跟用户抢滚动）
+    const yieldToUser = () => {
+      if (el.scrollTop === restoreTarget) return;
+      stopRestoring();
+    };
+
+    const handleScroll = () => {
+      if (restoring) return;
+      remember(key, el.scrollTop);
+    };
+
     el.addEventListener('scroll', handleScroll, { passive: true });
+    el.addEventListener('wheel', yieldToUser, { passive: true });
+    el.addEventListener('pointerdown', yieldToUser, { passive: true });
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
+      stopRestoring();
       el.removeEventListener('scroll', handleScroll);
+      el.removeEventListener('wheel', yieldToUser);
+      el.removeEventListener('pointerdown', yieldToUser);
     };
   }, []);
 

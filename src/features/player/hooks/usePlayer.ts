@@ -8,7 +8,6 @@ import {
   selectIsLoggedIn,
   useAuthStore,
 } from '@/features/auth/stores/authStore';
-import { useLikeStore } from '@/features/like/stores/like';
 import { queueItemToSong } from '@/shared/utils/mappers';
 
 /**
@@ -56,12 +55,6 @@ export function usePlayer() {
   );
   const playerSettings = usePlayerSettingsStore((s) => s.player);
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
-  const like = useLikeStore(
-    useShallow((s) => ({
-      isLiked: s.isLiked,
-      likedIds: s.likedIds,
-    })),
-  );
 
   // 派生值按来源身份 memo：只有队列增删 / 切歌才重建。
   // 否则每次 transport 变化（loading/buffering 翻转）都会重映射整条队列、
@@ -136,7 +129,5 @@ export function usePlayer() {
     volume: playerSettings.volume,
     isMuted: playerSettings.isMuted,
     isLoggedIn,
-    isLiked: like.isLiked,
-    likedIds: like.likedIds,
   };
 }

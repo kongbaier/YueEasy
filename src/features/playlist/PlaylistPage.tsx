@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CommentPanel } from '@/features/comment/components';
-import { TrackRow, TrackRowSkeletonList } from '@/shared/components/track';
+import { TrackList, TrackRowSkeletonList } from '@/shared/components/track';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import { usePlaylistViewModel } from './hooks/usePlaylistViewModel';
@@ -59,19 +59,10 @@ export default function PlaylistPage() {
             songCount={playlist.trackCount}
           />
           {activeTab === 'songs' ? (
-            /* 歌曲列表 */
+            /* 歌曲列表：上千首的歌单靠 TrackList 渐进挂载（见该组件注释） */
             playlist.tracks &&
             playlist.tracks.length > 0 && (
-              <div className="space-y-0.5" data-focus-zone>
-                {playlist.tracks.map((track, index) => (
-                  <TrackRow
-                    index={index}
-                    key={track.id}
-                    onPlay={handlePlay}
-                    track={track}
-                  />
-                ))}
-              </div>
+              <TrackList onPlay={handlePlay} tracks={playlist.tracks} />
             )
           ) : (
             <CommentPanel playlistId={playlist.id} />
