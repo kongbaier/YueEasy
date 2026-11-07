@@ -44,6 +44,14 @@
     animation: shimmer 2s ease-in-out infinite;
     pointer-events: none;
   }
+
+  /* 尊重系统「减少动态效果」：直接去掉扫光层（保留 bg-muted 底色）。
+     与 CrossfadeImage 在 reduce-motion 下不排交叉淡出是同一个口径。 */
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      display: none;
+    }
+  }
 }
 
 @utility animate-content-enter {
