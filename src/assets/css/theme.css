@@ -133,7 +133,3 @@
   --radius-lg: var(--radius-overlay);
   --font-sans: var(--font-family);
 }
-
-@theme inline {
-  --animate-shimmer: shimmer 2s ease-in-out infinite;
-}

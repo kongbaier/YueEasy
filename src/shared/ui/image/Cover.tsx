@@ -10,16 +10,21 @@ const COVER_GLOW_FILTER_ID = 'cover-glow';
 /**
  * 应用根挂载一次的共享滤镜定义。SVG 光晕（feGaussianBlur + 半透明合并）作用于根容器，
  * 跟随 CrossfadeImage 的过渡。渲染为 0 尺寸、不影响布局。
+ *
+ * 滤镜区域（x/y/width/height）必须贴着 `stdDeviation` 收紧：滤镜区域决定**离屏表面的像素面积**，
+ * 200%×200% 就是元素面积的 4 倍（播放页 448px 封面在 DPR 2 下 ≈ 1792² ≈ 12.8MB 一张），
+ * 而 gaussian 在 3σ（=24px）之外已经衰减到不可见 —— 留 20% 边（1.96 倍面积、192px 封面上仍有
+ * 38px = 3σ 边距）视觉完全一致，滤镜表面的像素量直接砍半。
  */
 export const CoverGlowDefs = () => (
   <svg style={{ position: 'absolute', width: 0, height: 0 }}>
     <defs>
       <filter
+        height="140%"
         id={COVER_GLOW_FILTER_ID}
-        x="-50%"
-        y="-50%"
-        width="200%"
-        height="200%"
+        width="140%"
+        x="-20%"
+        y="-20%"
       >
         <feGaussianBlur stdDeviation="8" result="blur" />
         <feComponentTransfer>

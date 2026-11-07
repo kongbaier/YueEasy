@@ -10,9 +10,9 @@ function Skeleton({ className, shimmer, ...props }: SkeletonProps) {
     <div
       className={cn(
         'rounded-md bg-muted',
-        shimmer
-          ? 'animate-shimmer bg-shimmer bg-size-[200%_100%]'
-          : 'animate-pulse',
+        // shimmer = 伪元素扫光（transform 动画，跑在合成器线程）；
+        // 具体结构与动画都在 `bg-shimmer` 里，这里不要再加 `animate-shimmer`。
+        shimmer ? 'bg-shimmer' : 'animate-pulse',
         className,
       )}
       data-slot="skeleton"
