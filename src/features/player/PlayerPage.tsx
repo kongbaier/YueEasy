@@ -146,13 +146,16 @@ const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
       data-drag-region
       data-focus-zone
     >
-      <button
-        className="flex items-center justify-center size-10 rounded-md ml-2 hover:bg-accent"
-        onClick={handleBack}
-        type="button"
-      >
-        <ChevronDown className="size-5" />
-      </button>
+      {state !== 'fullscreen' && (
+        <button
+          className="flex items-center justify-center size-8 rounded-md ml-2 hover:bg-accent"
+          onClick={handleBack}
+          type="button"
+        >
+          <ChevronDown className="size-5" />
+        </button>
+      )}
+
       <div className="ml-auto flex items-center">
         <button
           className="size-12 text-foreground flex items-center justify-center rounded-none hover:bg-gray-500/20"
@@ -161,9 +164,9 @@ const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
           title={state === 'fullscreen' ? '退出全屏' : '全屏'}
         >
           {state === 'fullscreen' ? (
-            <Minimize className="size-5" />
+            <Minimize className="size-4" />
           ) : (
-            <Maximize className="size-5" />
+            <Maximize className="size-4" />
           )}
         </button>
         {state !== 'fullscreen' && <WindowControls />}
