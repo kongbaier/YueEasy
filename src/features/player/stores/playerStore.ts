@@ -14,6 +14,15 @@ export interface PlayerState {
   buffering: boolean;
   currentTime: number;
   duration: number;
+  /**
+   * 当前曲目**实际到手**的音质档位（本地缓存命中时 = 该文件的档位）。
+   *
+   * 与服务端返回一致，因此可能低于设置里请求的档位（非 VIP 请求无损 → `exhigh`）。
+   * 解析前为 `null`（UI 此时退回展示请求档位）。
+   */
+  quality: string | null;
+  /** 当前曲目的实际码率（bps）；未知为 `null`。 */
+  bitrate: number | null;
 }
 
 export const usePlayerStore = create<PlayerState>()(() => ({
@@ -23,4 +32,6 @@ export const usePlayerStore = create<PlayerState>()(() => ({
   buffering: false,
   currentTime: 0,
   duration: 0,
+  quality: null,
+  bitrate: null,
 }));

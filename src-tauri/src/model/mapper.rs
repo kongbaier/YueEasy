@@ -159,9 +159,28 @@ pub fn map_song_url(d: response::SongUrlResponseDto) -> ent::SongUrlResult {
                 id: u.id,
                 url: u.url.unwrap_or_default(),
                 level: u.level,
+                br: u.br,
             })
             .collect(),
     }
+}
+
+/// 播放地址：取第一个「真能播」的条目（NCM 一次只回一条）。
+///
+/// `url` 为空 / 缺省 = **不可播**（VIP / 无版权 / 仅试听），对应 [`ent::PlayUrl`] 的
+/// `None` —— 这是正常业务值，不是错误。顺着带上服务端给出的真实档位与码率，
+/// 供前端展示「实际到手」的音质（请求无损被降级成极高时也能看出来）。
+pub fn map_play_url(d: ent::SongUrlResult) -> Option<ent::PlayUrl> {
+    d.data.into_iter().find_map(|u| {
+        if u.url.is_empty() {
+            return None;
+        }
+        Some(ent::PlayUrl {
+            url: u.url,
+            level: u.level,
+            br: u.br,
+        })
+    })
 }
 
 fn map_lyric_version(d: Option<response::LyricVersionDto>) -> Option<ent::LyricVersion> {

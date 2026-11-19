@@ -144,7 +144,7 @@ export const audioCacheApi = {
 export async function localUrl(trackId: number): Promise<string | null>; // convertFileSrc
 /** 起播成功后 fire-and-forget 落盘。 */
 export function requestCache(trackId: number, remoteUrl: string): void;
-/** 音质标识（当前恒 null，留接口）。 */
+/** 缓存 key 里的音质段 = 设置项 `player.audioQuality`（见 §2「文件命名」）。 */
 export function applyLimitFromSettings(): void;  // 读 playerSettingsStore → setLimit
 export function invalidate(trackId: number): void;   // 音频 error 用
 export async function getStats(): Promise<AudioCacheStats>;
@@ -156,13 +156,16 @@ export async function clear(): Promise<void>;
 
 ### 3.3 `src/features/player/services/PlayerService.ts`（核心改造点）
 
-`resolveTrackUrl` 变成三级：
+`resolveTrackUrl` 解析链（**带音质**，见 §9）：
 
 ```
-1) 内存 URL 缓存命中（且未过期）        → 返回
-2) audioCache.localUrl(track_id) 命中   → 以 { url, at: Infinity, local: true } 写回内存 → 返回
-3) resolveUrl(track_id) 网络解析        → 写内存（原有 TTL 逻辑）
-                                        → 成功后 requestCache(track_id, url)
+1) 内存 URL 缓存命中（且未过期）              → 返回（key = `${trackId}:${请求档位}`）
+2) audioCache.localUrl(trackId, 请求档位) 命中 → 写回内存（local: true，不设 TTL）→ 返回
+3) 本会话已知「这首只能拿到 X 档」且 X 档本地命中 → 返回（不再白打一次网络）
+4) resolveUrl(trackId, 请求档位) 网络解析      → 实际档位 = res.level
+     · 实际 ≠ 请求 → 该档位本地命中就直接播本地；否则按**实际**档位落盘
+     · 实际 = 请求 → 写内存（原有 TTL 逻辑）+ 按实际档位落盘
+5) 网络失败（离线）                            → 退回已缓存的最高档本地文件（5min 后重试网络）
 ```
 
 - `UrlEntry` 增加 `local?: boolean`：本地路径**不设 TTL**（没有签名过期问题），只有远端 URL 才有 5min TTL
@@ -228,7 +231,7 @@ export interface AudioCacheStats { count: number; totalBytes: number }
 | 下载中用户已切歌 | 不中断（数据量不大），落盘完成即可 |
 | 超限淘汰命中正在播的那首 | 120s mtime 豁免兜住；即使被删，`<audio>` 已把数据读进缓冲，不中断当前播放 |
 | 关闭缓存（0） | `get` 直接返回 null、`store` 直接返回；已缓存文件保留，用户可手动清除 |
-| 音质切换后旧文件占坑 | 文件名含 level；将来接音质设置时换 key 即可，不冲突 |
+| 音质切换后旧文件占坑 | 文件名含 level（且写的是**实际档位**，见 §9）；切档位 = 换 key，旧文件由 LRU 淘汰，不串音质 |
 | 磁盘满 / 无写权限 | `store` 返回 Err → 只 log；不影响播放 |
 
 ---
@@ -265,7 +268,8 @@ cd src-tauri && cargo test && cargo check
 5. 上限设为 512MB 后再连播若干首 → 目录总大小 ≤ 512MB，最老文件被淘汰，**当前播放文件未被删**
 6. 上限设为「关闭」→ 不再新增文件；清除按钮可清空
 7. 启动（含重启）后设置页「音频缓存」显示已用/上限正确
-8. 登录/换音质后行为不变（level 目前恒 null）
+8. 换音质后行为正确：当前曲按新档位重载（进度/播放态保留），文件名换成 `{id}-{新档位}.{ext}`，
+   旧档位的文件不再命中，由 LRU 自然淘汰
 
 **分层自查**（AGENTS §10）
 
@@ -305,3 +309,48 @@ rg "invoke\(" src/features --glob "*.ts" -l        # 只应出现在 services/*
 
 待人工验证（需真实网络 / 音频）：验收清单 §6 的第 1~7 条（首次落盘、断网播放、循环无空隙、淘汰不吃正在播的那首）。
 
+
+---
+
+## 9. 音质设置接入（`player.audioQuality`）
+
+> 回答三个「用户会问」的问题：没权限怎么办、同一首的多档位与缓存怎么处、某首歌没有该档位算不算问题。
+
+### 9.1 没有权限时会发生什么
+
+- **不报错、不拦截**：`level` 只是「请求档位」，服务端按账号权限**静默降级**（实测非 VIP 请求
+  `lossless`/`hires`/`jymaster`/`sky` 回 `exhigh` 320k mp3），播放照常。
+- 所以前端**从不**把「无权限」当错误分支，也不做前置拦截（`enabled` / 禁用选项那种）。
+- 但降级必须**可见**（以前是静默到用户以为设置没生效）：
+  - `resolve_play_url` 回传服务端**实际**档位 + 码率（`PlayUrl.level` / `br`）；
+  - 播放栏徽标展示实际档位（悬浮提示带 kbps；降级时说明「请求：无损」）；
+  - 每种「请求 → 实际」组合**每会话提示一次** toast（`toast.info`，`id: quality-downgrade` 去重）；
+  - 设置页下拉的选项文案里写明「黑胶 VIP / SVIP」，副标题写明会被自动降级。
+- 账号变化（登录 / 登出 / 换号）会**清空解析缓存**（`resetResolutionCaches`）：权限跟着账号走，
+  否则负缓存（60s）与「降级记忆」会把这个变化压后很久才生效。
+
+### 9.2 同一首的不同音质与缓存
+
+| 问题 | 结论 |
+|---|---|
+| 缓存 key 用哪个档位？ | **服务端实际给出的档位**（`{id}-{actual}.{ext}`），不是设置里请求的 |
+| 为什么不用请求档位？ | 非 VIP 请求无损拿到的 320k mp3 会被存进「无损」命名空间，账号升 VIP 后仍命中那份低档文件 —— 音质设置等于没生效，徽标也会说错 |
+| 同一首能有多份吗？ | **能**（不同 key 互不覆盖）。切档位回来不用重下；空间由统一 LRU 上限淘汰 |
+| 降级档位还落盘吗？ | 落（存进**实际**档位），所以无权限时缓存依旧可用 |
+| 切档位时当前曲怎么办？ | 原地按新档位重载（保留进度与播放/暂停态，元数据就绪后才 seek），并清空内存 URL 缓存 |
+| 升级账号后旧文件怎么办？ | 请求档位变了 → 精确命中不了旧档位文件 → 走一次网络 → 拿到更高档就另存（旧文件留给 LRU） |
+
+### 9.3 「某些歌没有对应音质」存在吗
+
+**存在，而且很常见**：老歌 / 版权受限曲只有 128k；320k、无损、Hi-Res、超清母带、沉浸环绕
+都是**逐曲**可用的（`sky` 还要额外 `immerseType`）。所以：
+
+- 前端永不假设「请求到 = 拿到」，一律以响应里的 `level` 为准（本期就是这么实现的）；
+- 这类降级与 §9.1 同一条提示路径，不额外弹窗、不中断播放；
+- 若响应里没有 `level` 字段（少数接口方言），按「请求档位」处理（不误报降级）。
+
+### 9.4 离线与缓存的关系
+
+- 断网时 `resolve_play_url` 会失败（`Err`），此时回退到**已缓存的最高档**本地文件继续播，
+  徽标显示该文件的档位（真话），5 分钟内不再重试网络。
+- 精确命中（请求档位 == 缓存档位）走最快路径：零网络、命中即起播，且不设 TTL。

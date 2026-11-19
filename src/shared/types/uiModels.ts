@@ -118,10 +118,25 @@ export interface SongUrl {
   id: number;
   url: string;
   level?: string;
+  /** 实际码率（bps） */
+  br?: number;
 }
 
 export interface SongUrlResult {
   data: SongUrl[];
+}
+
+/**
+ * 播放地址解析结果（对应 Rust `PlayUrl`，`resolve_play_url` 的 wire 形状）。
+ *
+ * `level` 是服务端**实际给出**的音质档位：请求 `lossless` 但账号无权限时回 `exhigh`，
+ * UI 因此能展示真实音质（而不是只显示设置里请求了什么）。
+ */
+export interface PlayUrl {
+  url: string;
+  level?: string;
+  /** 实际码率（bps） */
+  br?: number;
 }
 
 export interface LyricVersion {
@@ -298,6 +313,14 @@ export interface RecentSongs {
 export interface AudioCacheStats {
   count: number;
   totalBytes: number;
+}
+
+/** 一首歌的某个已缓存音质变体（Rust `storage::audio_cache::CachedAudio` wire 镜像）。 */
+export interface CachedAudio {
+  /** 落盘时真正拿到的音质档位；`default` = 旧的无档位文件 */
+  level: string;
+  /** 绝对路径（用 `convertFileSrc` 转 asset URL） */
+  path: string;
 }
 
 /**

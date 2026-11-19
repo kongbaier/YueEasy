@@ -17,8 +17,12 @@ import { useScrollMemory } from '@/shared/hooks/useScrollMemory';
 import { useSettingsViewModel } from './hooks/useSettingsViewModel';
 import { toast } from '@/shared/lib/toast';
 import { formatBytes } from '@/shared/utils/format';
-import { AUDIO_CACHE_LIMIT_OPTIONS } from '@/shared/constants/player';
-import type { Theme } from '@/shared/types/settings';
+import {
+  AUDIO_CACHE_LIMIT_OPTIONS,
+  AUDIO_QUALITY_OPTIONS,
+  audioQualityLabel,
+} from '@/shared/constants/player';
+import type { AudioQuality, Theme } from '@/shared/types/settings';
 import { Button } from '@/shared/ui/button';
 import { Select } from '@/shared/ui/select';
 import { Switch } from '@/shared/ui/switch';
@@ -52,6 +56,10 @@ export default function Settings() {
   );
   const [audioCacheLimitMB, setAudioCacheLimitMB] =
     usePlayerSetting('audioCacheLimitMB');
+  const [audioQuality, setAudioQuality] = usePlayerSetting('audioQuality');
+  const audioQualityOption = AUDIO_QUALITY_OPTIONS.find(
+    (o) => o.value === audioQuality,
+  );
   const {
     isLoggedIn,
     nickname,
@@ -261,8 +269,42 @@ export default function Settings() {
             <Row description="新播放队列的默认模式" label="默认播放模式">
               <span className="text-sm text-muted-foreground">顺序播放</span>
             </Row>
-            <Row description="音频流传输质量" label="播放音质">
-              <span className="text-sm text-muted-foreground">极高</span>
+            <Row
+              description={`${audioQualityOption?.description ?? ''} · 无权限 / 该曲无此档时会自动降级（播放栏徽标显示实际档位）`}
+              label="播放音质"
+            >
+              <Select.Root
+                onValueChange={(v) => {
+                  setAudioQuality(v as AudioQuality);
+                  toast.success(`音质已切换为「${audioQualityLabel(v)}」`);
+                }}
+                value={audioQuality}
+              >
+                <Select.Trigger className="w-28">
+                  <Select.Value>{audioQualityLabel(audioQuality)}</Select.Value>
+                </Select.Trigger>
+                <Select.Portal>
+                  <Select.Positioner>
+                    <Select.Popup>
+                      <Select.List className="space-y-0.5">
+                        {AUDIO_QUALITY_OPTIONS.map((option) => (
+                          <Select.Item key={option.value} value={option.value}>
+                            <Select.ItemText>
+                              {option.label}
+                              <span className="ml-2 text-xs text-muted-foreground">
+                                {option.description}
+                              </span>
+                            </Select.ItemText>
+                            <Select.ItemIndicator>
+                              <Check className="size-4" />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.List>
+                    </Select.Popup>
+                  </Select.Positioner>
+                </Select.Portal>
+              </Select.Root>
             </Row>
             <Row
               description="把听过的歌同步到网易云「最近播放」（用官方客户端也能看到）"

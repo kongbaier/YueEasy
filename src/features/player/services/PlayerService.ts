@@ -9,16 +9,26 @@
 
 import type { QueueItem } from '@/shared/types/uiModels';
 import type { RepeatMode, Track } from '@/shared/types/player';
-import { NEXT_REPEAT } from '@/shared/constants/player';
+import {
+  AUDIO_QUALITY_OPTIONS,
+  NEXT_REPEAT,
+  audioQualityLabel,
+} from '@/shared/constants/player';
 import { songToQueueItem } from '@/shared/utils/mappers';
 import { AudioCore } from '@/shared/lib/player-core/audio';
 import type { PlayerCoreTrack } from '@/shared/lib/player-core/models/track';
 import { Player } from '../core/player';
 import type { ContentSource, QueueSnapshot } from '../stores/queueStore';
 import { fmPolicy, queuePolicy, useQueueStore } from '../stores/queueStore';
-import { fetchFm, resolveUrl, scrobble as scrobblePlay, trashFm } from './PlayerDataService';
+import {
+  fetchFm,
+  resolveUrl,
+  scrobble as scrobblePlay,
+  trashFm,
+} from './PlayerDataService';
 import {
   applyLimitFromSettings,
+  cachedLevels,
   invalidate as invalidateAudioCache,
   localUrl as localAudioUrl,
   requestCache as requestAudioCache,
@@ -44,16 +54,98 @@ const UNAVAILABLE_TTL_MS = 60 * 1000;
  * 内存 URL 缓存条目。
  * - `url == null` = 「不可播」（VIP / 无版权 / 仅试听），是正常业务值而非错误
  * - `local: true` = 本地磁盘缓存命中的 asset URL：没有签名 / 永不过期（不套 TTL）
+ * - `level` / `br` = **实际到手**的档位与码率（可能低于请求档位）
  */
-type UrlEntry = { url: string | null; at: number; local?: boolean };
+type UrlEntry = {
+  url: string | null;
+  at: number;
+  local?: boolean;
+  level?: string | null;
+  br?: number | null;
+};
 const lastUrlCache = new Map<string, UrlEntry>();
-/** 在途请求：预取与切歌可能同时解析同一首，合并为一次网络请求。 */
+/** 在途请求：预取与切歌可能同时解析同一首，合并为一次网络请求（键含音质，不跨档位合并）。 */
 const inflightUrl = new Map<
   string,
   { gen: number; promise: Promise<string | null> }
 >();
-/** 缓存代际：invalidate 时递增，用于丢弃「作废后到达」的在途结果。 */
-const urlGeneration = new Map<string, number>();
+/** 缓存代际（按曲目计）：invalidate 时递增，用于丢弃「作废后到达」的在途结果。 */
+const urlGeneration = new Map<number, number>();
+/**
+ * 本会话里「这首歌实际拿到的档位」。
+ *
+ * 服务端降级是**按账号 + 曲目**的稳定事实（非 VIP 选无损 → 永远是 exhigh），记下来后
+ * 第二次起播就不再白打一次网络（直接拿该档位的本地文件）。换音质 / 换账号时清空重学。
+ */
+const grantedLevels = new Map<number, string>();
+
+/** 档位高低序（未知档位 / 旧的 `default` 文件算最低）。 */
+const QUALITY_RANK = new Map<string, number>(
+  AUDIO_QUALITY_OPTIONS.map((option, index) => [option.value, index]),
+);
+
+/** 当前**请求**的音质档位（设置项 `player.audioQuality`，即 NCM 的 `level` 参数）。 */
+function requestedQuality(): string {
+  return usePlayerSettingsStore.getState().player.audioQuality;
+}
+
+/**
+ * URL 缓存键：同一首的不同音质是不同地址（签名里带档位），必须分开存。
+ * 用请求档位（而非实际档位）：本地命中要在网络解析之前发生，那时还不知道实际档位。
+ */
+function urlKey(trackId: number, quality: string): string {
+  return `${trackId}:${quality}`;
+}
+
+/** 当前档位下该曲目已解析到的条目（音质徽标 / 码率展示用）。 */
+function resolvedEntry(trackId: number): UrlEntry | undefined {
+  return lastUrlCache.get(urlKey(trackId, requestedQuality()));
+}
+
+/** 回填 URL 缓存（仅当该曲目还没被 invalidate / 重新切歌作废）。 */
+function remember(
+  key: string,
+  trackId: number,
+  gen: number,
+  entry: UrlEntry,
+): void {
+  if ((urlGeneration.get(trackId) ?? 0) !== gen) return;
+  lastUrlCache.set(key, entry);
+}
+
+/** 已缓存的本地变体里挑最高档（离线兜底用；`default` 等未知档位排最后）。 */
+async function bestCachedLevel(trackId: number): Promise<string | null> {
+  const levels = await cachedLevels(trackId);
+  if (levels.length === 0) return null;
+  return levels.reduce((best, level) =>
+    (QUALITY_RANK.get(level) ?? -1) > (QUALITY_RANK.get(best) ?? -1)
+      ? level
+      : best,
+  );
+}
+
+/** 已提示过的「请求 → 实际」组合：每会话每种组合只提示一次，避免逐首刷屏。 */
+const downgradeNotified = new Set<string>();
+
+/**
+ * 实际档位低于请求档位 → 提示一次（之前是静默降级，用户会以为设置没生效）。
+ *
+ * 发生场景：非 VIP 选无损 / Hi-Res / 母带、未登录只能拿标准档、某首歌本身没有更高档。
+ * **不阻断播放** —— 降级是正常业务值，能出声就比失败好。
+ */
+function notifyDowngrade(granted: string | null | undefined): void {
+  const requested = requestedQuality();
+  if (!granted || granted === requested) return;
+  const id = `${requested}>${granted}`;
+  if (downgradeNotified.has(id)) return;
+  downgradeNotified.add(id);
+  toast.info(
+    `已按「${audioQualityLabel(granted)}」播放（当前无法提供「${audioQualityLabel(
+      requested,
+    )}」）`,
+    { id: 'quality-downgrade' },
+  );
+}
 let playSeq = 0;
 /** FM 续歌防死循环上限（对齐旧实现）。 */
 const FM_CONTINUE_MAX = 8;
@@ -75,9 +167,12 @@ let audioRetriedId: number | null = null;
 let lastMediaError: unknown = null;
 
 function invalidateUrl(trackId: number): void {
-  const key = String(trackId);
-  lastUrlCache.delete(key);
-  urlGeneration.set(key, (urlGeneration.get(key) ?? 0) + 1);
+  // 清掉该曲目所有音质变体（缓存与在途都以 `${trackId}:${quality}` 为键）
+  const prefix = `${trackId}:`;
+  for (const key of lastUrlCache.keys()) {
+    if (key.startsWith(prefix)) lastUrlCache.delete(key);
+  }
+  urlGeneration.set(trackId, (urlGeneration.get(trackId) ?? 0) + 1);
   // 本地文件也可能损坏（半截 / 编码异常）：一并删掉，否则下次仍会命中同一个坏文件
   invalidateAudioCache(trackId);
 }
@@ -91,8 +186,9 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** 解析并缓存播放 URL。`null` = 不可播（值）；抛错 = 真失败，由调用方兜底。 */
 async function resolveTrackUrl(trackId: number): Promise<string | null> {
-  const key = String(trackId);
-  const gen = urlGeneration.get(key) ?? 0;
+  const quality = requestedQuality();
+  const key = urlKey(trackId, quality);
+  const gen = urlGeneration.get(trackId) ?? 0;
   const hit = lastUrlCache.get(key);
   if (hit) {
     // 本地缓存命中永不过期；远端签名 URL 有 TTL
@@ -107,30 +203,87 @@ async function resolveTrackUrl(trackId: number): Promise<string | null> {
   if (pending && pending.gen === gen) return pending.promise;
   lastUrlCache.delete(key);
 
-  // ① 本地磁盘缓存优先：文件没有签名、不会 403，命中即起播
-  const local = await localAudioUrl(trackId).catch((e) => {
+  // ① 本地磁盘优先：按**请求档位**精确命中（零网络、命中即起播）
+  const local = await localAudioUrl(trackId, quality).catch((e) => {
     console.warn('[player] 本地缓存查询失败', trackId, e);
     return null;
   });
   if (local) {
-    if ((urlGeneration.get(key) ?? 0) === gen) {
-      lastUrlCache.set(key, { url: local, at: Date.now(), local: true });
-    }
+    remember(key, trackId, gen, {
+      url: local,
+      at: Date.now(),
+      local: true,
+      level: quality,
+    });
     return local;
+  }
+
+  // ② 本会话已知「这首只能拿到 X」→ 直接用 X 档的本地文件，不再白打一次网络
+  const known = grantedLevels.get(trackId);
+  if (known && known !== quality) {
+    const cached = await localAudioUrl(trackId, known).catch(() => null);
+    if (cached) {
+      remember(key, trackId, gen, {
+        url: cached,
+        at: Date.now(),
+        local: true,
+        level: known,
+      });
+      return cached;
+    }
   }
   // 本地查询是异步的：其间可能已有别的调用发起了网络解析 → 合并
   const raced = inflightUrl.get(key);
   if (raced && raced.gen === gen) return raced.promise;
 
-  // ② 网络解析（成功后请求后台落盘，下次播放走本地）
-  const promise = resolveUrl(trackId)
-    .then((url) => {
-      // 已被 invalidate（音频 error 后绕过缓存重解析）→ 不回填，避免又拿到同一个坏 URL
-      if ((urlGeneration.get(key) ?? 0) === gen) {
-        lastUrlCache.set(key, { url, at: Date.now() });
+  // ③ 网络解析（落盘按**实际**档位，见 AudioCacheService 头注释）
+  const promise = resolveUrl(trackId, quality)
+    .then(async (res) => {
+      if (!res?.url) {
+        remember(key, trackId, gen, { url: null, at: Date.now() });
+        return null;
       }
-      if (url) requestAudioCache(trackId, url);
-      return url;
+      const { url, br } = res;
+      const granted = res.level ?? quality;
+      grantedLevels.set(trackId, granted);
+      let playUrl = url;
+      let local = false;
+      if (granted !== quality) {
+        // 降级了：该档位若已缓存过，直接播本地文件（不重复下载，也能断网续听）
+        const cached = await localAudioUrl(trackId, granted).catch(() => null);
+        if (cached) {
+          playUrl = cached;
+          local = true;
+        } else {
+          requestAudioCache(trackId, url, granted);
+        }
+      } else {
+        requestAudioCache(trackId, url, granted);
+      }
+      remember(key, trackId, gen, {
+        url: playUrl,
+        at: Date.now(),
+        local,
+        level: granted,
+        br: br ?? null,
+      });
+      return playUrl;
+    })
+    .catch(async (e) => {
+      // ④ 网络失败（离线 / 接口挂了）→ 退回已缓存的任意档位：能出声比报错好
+      const fallback = await bestCachedLevel(trackId);
+      if (!fallback) throw e;
+      const cached = await localAudioUrl(trackId, fallback).catch(() => null);
+      if (!cached) throw e;
+      console.warn('[player] 解析失败，退回本地缓存', trackId, fallback, e);
+      // 不标 `local: true`（那会让缓存永不过期）：离线退回的可能是低一档的文件，
+      // 等网络回来以后重新走一遍流程，才有机会拿到真正请求的档位
+      remember(key, trackId, gen, {
+        url: cached,
+        at: Date.now(),
+        level: fallback,
+      });
+      return cached;
     })
     .finally(() => {
       if (inflightUrl.get(key)?.gen === gen) inflightUrl.delete(key);
@@ -186,6 +339,9 @@ async function resolveAndPlay(item: QueueItem): Promise<void> {
     currentTime: 0,
     duration: item.duration_secs,
     loading: true,
+    // 上一首的实际档位不沿用：解析结果回来前不展示（UI 退回显示请求档位）
+    quality: null,
+    bitrate: null,
   });
 
   let loaded: boolean;
@@ -205,6 +361,13 @@ async function resolveAndPlay(item: QueueItem): Promise<void> {
     return;
   }
   void reportPlayToCloud(item); // 确认可播后上报云端「最近听过」（fire-and-forget，受开关控制）
+  // 展示「实际到手」的音质：服务端可能静默降级（非 VIP 请求无损 → exhigh）
+  const entry = resolvedEntry(item.track_id);
+  usePlayerStore.setState({
+    quality: entry?.level ?? null,
+    bitrate: entry?.br ?? null,
+  });
+  notifyDowngrade(entry?.level); // 降级只提示一次，不阻断播放
   prefetchNext(); // 预取下一首 URL，把解析失败移出下一次切歌事务
 }
 
@@ -261,6 +424,99 @@ async function replayCurrent(item: QueueItem): Promise<void> {
   await player.play();
   prefetchNext();
 }
+
+/**
+ * 音质切换后原地重载当前曲（保留进度与播放/暂停状态）。
+ *
+ * 两种“尽量不动”的情况直接返回：
+ * - 没有当前曲 / 尚未装载（`idle`）：下一首起播自然用新档位；
+ * - 解析失败或期间又切了歌/曲目不可播：不打断当前正在放的音频。
+ *
+ * 本地磁盘缓存按档位分文件（`{id}-{level}.{ext}`），所以这里会命中该档位的文件或重新下载。
+ */
+async function reloadCurrentForQuality(): Promise<void> {
+  const item = usePlayerStore.getState().currentTrack;
+  // `idle` = 尚未装载；`ended` = 本首已自然结束（下次起播本来就重新解析）→ 都不需要原地重载
+  const status = audioCore.getStatus();
+  if (!item || status === 'idle' || status === 'ended') return;
+  const position = audioCore.getPosition();
+  const wasPlaying = audioCore.playing;
+  const seq = ++playSeq; // 使在途解析失效（旧档位的地址不再可用）
+  let url: string | null;
+  try {
+    url = await resolveTrackUrl(item.track_id);
+  } catch (e) {
+    toast.error(reportError('player.quality', e, '切换音质失败'));
+    return;
+  }
+  if (seq !== playSeq || !url) return;
+  const entry = resolvedEntry(item.track_id);
+  usePlayerStore.setState({
+    quality: entry?.level ?? null,
+    bitrate: entry?.br ?? null,
+  });
+  notifyDowngrade(entry?.level);
+  audioCore.load(url);
+  // 元数据就绪（loading → paused）后才能定位：之前设 currentTime 会被浏览器重置为 0
+  const offs: (() => void)[] = [];
+  const cleanup = () => {
+    for (const off of offs.splice(0)) off();
+  };
+  offs.push(
+    audioCore.on('status', (status) => {
+      if (status !== 'paused') return;
+      cleanup();
+      audioCore.seek(position);
+      if (wasPlaying) void player.play();
+    }),
+    audioCore.on('error', cleanup),
+  );
+  prefetchNext(); // 下一首也按新档位预取
+}
+
+/** 设置里的音质档位上一次已应用的值（订阅据此判断是不是真的变了）。 */
+let appliedQuality = requestedQuality();
+
+/**
+ * 清空解析缓存：URL 与「实际档位」都是「账号 + 请求档位」下的结论，换任何一个都得重学。
+ *
+ * 不清的话会踩两个坑：旧签名的 URL 不可再用；该曲目的「降级记忆」会把新档位/新账号
+ * 直接压到旧结论上（换账号后明明有无损权限，却还按之前的降级档播）。
+ */
+function resetResolutionCaches(): void {
+  lastUrlCache.clear();
+  urlGeneration.clear();
+  grantedLevels.clear();
+  downgradeNotified.clear();
+}
+
+/**
+ * 音质变更 → 清解析缓存 + 原地重载当前曲。
+ *
+ * 只订阅 settings store（设置页/其他入口改的都是它）；同档位反复 set 不做事，
+ * 因为 volume / desktopLyrics 等其他字段也在同一个 store 里变。
+ */
+usePlayerSettingsStore.subscribe(() => {
+  const quality = requestedQuality();
+  if (quality === appliedQuality) return;
+  appliedQuality = quality;
+  resetResolutionCaches();
+  void reloadCurrentForQuality();
+});
+
+/**
+ * 登录态变更（登录 / 登出 / 换号）→ 清解析缓存。
+ *
+ * 音质权限跟着账号走：登出后高音质会被降级，登录 VIP 后才真能拿到无损；
+ * 不重建的话，负缓存（60s）与「降级记忆」会把这个变化延迟很久才生效。
+ */
+let appliedUserId = useAuthStore.getState().userId;
+useAuthStore.subscribe(() => {
+  const userId = useAuthStore.getState().userId;
+  if (userId === appliedUserId) return;
+  appliedUserId = userId;
+  resetResolutionCaches();
+});
 
 /** 失败兜底：连续失败达上限即停（避免断网时无限跳歌），否则提示并推进下一首。 */
 async function failover(message: string): Promise<void> {
@@ -322,7 +578,10 @@ async function handleAudioError(): Promise<void> {
   if (audioRetriedId !== item.track_id) {
     audioRetriedId = item.track_id;
     invalidateUrl(item.track_id);
-    console.warn('[player] audio error, retrying with fresh url:', item.track_id);
+    console.warn(
+      '[player] audio error, retrying with fresh url:',
+      item.track_id,
+    );
     await resolveAndPlay(item);
     return;
   }
@@ -431,6 +690,8 @@ function resetTransport(): void {
     buffering: false,
     currentTime: 0,
     duration: 0,
+    quality: null,
+    bitrate: null,
   });
 }
 
@@ -471,7 +732,8 @@ export const playerService: PlayerController = {
   restore: (snapshot) => {
     useQueueStore.getState().restore(snapshot);
     playSeq += 1;
-    lastUrlCache.clear(); // 内存缓存清空（磁盘缓存在 Rust 侧，跨重启保留）
+    resetResolutionCaches(); // 内存缓存清空（磁盘缓存在 Rust 侧，跨重启保留）
+    appliedQuality = requestedQuality(); // 启动播种的档位视为「已应用」（无需重载）
     applyLimitFromSettings(); // 启动即把设置里的缓存上限下发给 Rust
     resetStreaks();
     audioRetriedId = null;

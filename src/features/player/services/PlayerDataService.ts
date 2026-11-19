@@ -4,19 +4,20 @@
 
 import { resolvePlayUrl } from '@/tauri/player';
 import { ncm } from '@/tauri/ncm';
-import type { QueueItem } from '@/shared/types/uiModels';
+import type { PlayUrl, QueueItem } from '@/shared/types/uiModels';
 import { songToQueueItem } from '@/shared/utils/mappers';
 
 /**
  * 解析曲目播放 URL（Rust `resolve_play_url`）。
  *
  * 返回 `null` 表示**不可播**（VIP / 无版权 / 仅试听）——正常业务值，调用方应跳过；
- * 抛错才是失败（网络 / 业务 code）。
+ * 抛错才是失败（网络 / 业务 code）。返回值带服务端**实际给出**的档位 / 码率
+ * （请求 `lossless` 但账号无权限时回 `exhigh`）。
  */
 export async function resolveUrl(
   trackId: number,
   quality?: string | null,
-): Promise<string | null> {
+): Promise<PlayUrl | null> {
   return resolvePlayUrl(trackId, quality);
 }
 

@@ -149,8 +149,12 @@ pub struct SongUrlItemDto {
     /// 无版权/VIP 歌曲该字段为 null，必须用 Option 兜底，否则整包解码失败
     #[serde(default)]
     pub url: Option<String>,
+    /// 服务端实际给出的音质档位（可能低于请求档位：非 VIP 请求 `lossless` 回 `exhigh`）
     #[serde(default)]
     pub level: Option<String>,
+    /// 实际码率（bps）
+    #[serde(default)]
+    pub br: Option<i64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

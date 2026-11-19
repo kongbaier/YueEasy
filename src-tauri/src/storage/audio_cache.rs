@@ -38,6 +38,17 @@ pub struct AudioCacheStats {
     pub total_bytes: u64,
 }
 
+/// 一首歌的某个已缓存音质变体（IPC wire 形状）。
+///
+/// 前端在「服务端降级到已缓存的档位」/「离线解析不到地址」时用它挑本地文件；
+/// `level` 是落盘时真正拿到的档位（`default` = 旧的无档位文件）。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CachedAudio {
+    pub level: String,
+    pub path: String,
+}
+
 /// 音频缓存句柄。内部 `Arc`，可廉价 clone 后移进后台任务。
 #[derive(Clone)]
 pub struct AudioCache {
@@ -160,6 +171,38 @@ impl AudioCache {
 
         self.trim();
         Ok(path)
+    }
+
+    /// 该曲目已缓存的所有音质变体（`(level, path)`，`level` 从文件名解析）。
+    ///
+    /// 供前端在「服务端降级到已缓存的档位」与「离线解析不到地址」时挑本地文件。
+    /// 不 touch mtime（不知道前端会选哪个）：选定后用 [`Self::get`] 再确认一次（那次会记账）。
+    pub fn variants(&self, track_id: u64) -> Vec<(String, PathBuf)> {
+        if self.limit() == 0 {
+            return Vec::new();
+        }
+        let prefix = format!("{track_id}-");
+        let entries = self.with_index(|index| {
+            index
+                .iter()
+                .filter(|(key, _)| key.starts_with(&prefix))
+                .map(|(key, path)| (key.clone(), path.clone()))
+                .collect::<Vec<_>>()
+        });
+        let mut out = Vec::new();
+        for (key, path) in entries {
+            // 与 `get` 同样的自愈：半截 / 被外部删掉 / 0 字节 → 剔除索引并删文件
+            match fs::metadata(&path) {
+                Ok(meta) if meta.is_file() && meta.len() >= MIN_VALID_BYTES => {
+                    out.push((key[prefix.len()..].to_string(), path));
+                }
+                _ => {
+                    self.with_index(|index| index.remove(&key));
+                    let _ = fs::remove_file(&path);
+                }
+            }
+        }
+        out
     }
 
     /// 删除该曲目的所有音质变体（音频报错后重解析用）。
@@ -432,6 +475,60 @@ mod tests {
         let _ = cache.store(22, None, "mp3", &payload(size)).unwrap();
         assert!(a.exists(), "豁免窗口内的文件不应被删");
         assert!(!b.exists(), "过期文件应被淘汰");
+    }
+
+    #[test]
+    fn variants_lists_every_level_of_the_track() {
+        let (cache, _dir) = temp_cache(1024 * 1024);
+        cache
+            .store(70, Some("exhigh"), "mp3", &payload(5000))
+            .unwrap();
+        cache
+            .store(70, Some("lossless"), "flac", &payload(6000))
+            .unwrap();
+        cache
+            .store(71, Some("exhigh"), "mp3", &payload(5000))
+            .unwrap();
+
+        let mut levels: Vec<String> = cache
+            .variants(70)
+            .into_iter()
+            .map(|(level, _)| level)
+            .collect();
+        levels.sort();
+        assert_eq!(levels, vec!["exhigh", "lossless"]);
+        // 不串到别的曲目
+        assert_eq!(cache.variants(71).len(), 1);
+        assert!(cache.variants(72).is_empty());
+    }
+
+    #[test]
+    fn variants_skips_broken_files() {
+        let (cache, _dir) = temp_cache(1024 * 1024);
+        let path = cache
+            .store(80, Some("exhigh"), "mp3", &payload(5000))
+            .unwrap();
+        cache
+            .store(80, Some("lossless"), "flac", &payload(6000))
+            .unwrap();
+        fs::write(&path, b"ab").unwrap(); // 半截文件
+        let levels: Vec<String> = cache
+            .variants(80)
+            .into_iter()
+            .map(|(level, _)| level)
+            .collect();
+        assert_eq!(levels, vec!["lossless"]);
+        assert!(!path.exists());
+    }
+
+    #[test]
+    fn disabled_cache_has_no_variants() {
+        let (cache, _dir) = temp_cache(1024 * 1024);
+        cache
+            .store(90, Some("exhigh"), "mp3", &payload(5000))
+            .unwrap();
+        cache.set_limit(0);
+        assert!(cache.variants(90).is_empty());
     }
 
     #[test]

@@ -5,7 +5,7 @@
 use tauri::State;
 
 use crate::service::audio_cache as audio_cache_service;
-use crate::storage::audio_cache::{AudioCache, AudioCacheStats};
+use crate::storage::audio_cache::{AudioCache, AudioCacheStats, CachedAudio};
 
 /// 命中返回本地绝对路径（前端用 `convertFileSrc` 转 asset URL），未命中 `null`。
 #[tauri::command]
@@ -17,6 +17,25 @@ pub(crate) fn audio_cache_get(
     cache
         .get(track_id, level.as_deref())
         .map(|p| p.to_string_lossy().into_owned())
+}
+
+/// 该曲目已缓存的所有音质变体（`level` + 绝对路径），无缓存返回空数组。
+///
+/// 前端在「服务端降级到已缓存档位」/「离线」时用它挑本地文件（选定后再调
+/// [`audio_cache_get`] 确认并记 LRU 账）。
+#[tauri::command]
+pub(crate) fn audio_cache_variants(
+    cache: State<'_, AudioCache>,
+    track_id: u64,
+) -> Vec<CachedAudio> {
+    cache
+        .variants(track_id)
+        .into_iter()
+        .map(|(level, path)| CachedAudio {
+            level,
+            path: path.to_string_lossy().into_owned(),
+        })
+        .collect()
 }
 
 /// 缓存目录绝对路径（设置页展示用）。

@@ -152,7 +152,8 @@ const PlayerControls = () => {
 };
 
 const PlayerInfo = () => {
-  const { currentTrack } = usePlayer();
+  const { currentTrack, qualityLabel, qualityHint, qualityDowngraded } =
+    usePlayer();
   const { open: openPlayerPage } = usePlayerPage();
 
   return (
@@ -213,8 +214,23 @@ const PlayerInfo = () => {
           )}
         </Button>
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">
-            {currentTrack?.name ?? ''}
+          {/* 音质徽标 = 服务端**实际给出**的档位（非 VIP 请求无损会被降级成极高） */}
+          <p className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
+            <span className="truncate">{currentTrack?.name ?? ''}</span>
+            {currentTrack && qualityLabel && (
+              <span
+                className={cn(
+                  'shrink-0 rounded-sm px-1 text-[10px] leading-4 font-medium ring-1',
+                  // 降级（无权限 / 该曲无此档）用灰色：不抢主色，也不假装是「请求的档位」
+                  qualityDowngraded
+                    ? 'text-muted-foreground ring-border/60'
+                    : 'text-primary ring-primary/40',
+                )}
+                title={qualityHint}
+              >
+                {qualityLabel}
+              </span>
+            )}
           </p>
           <p className="truncate text-xs text-muted-foreground">
             {currentTrack?.artists && currentTrack.artists.length > 0

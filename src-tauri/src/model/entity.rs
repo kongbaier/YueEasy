@@ -181,12 +181,29 @@ pub struct SongUrl {
     pub url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub level: Option<String>,
+    /// 实际码率（bps）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub br: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SongUrlResult {
     pub data: Vec<SongUrl>,
+}
+
+/// 播放地址解析结果（IPC wire）：`resolve_play_url` 的返回值。
+///
+/// `level` 是服务端**实际给出**的音质档位（请求 `lossless` 但账号无权限时回 `exhigh`），
+/// 前端据此展示真实音质；`None` 表示服务端没回该字段（本地缓存命中路径不会走这里）。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlayUrl {
+    pub url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub level: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub br: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize)]

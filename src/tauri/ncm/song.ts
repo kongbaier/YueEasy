@@ -73,8 +73,14 @@ export const albumDetail = (id: number): Promise<AlbumDetail> =>
 export const searchHot = (): Promise<HotSearchItem[]> =>
   invoke<HotSearchItem[]>('ncm_search_hot');
 
-export const songUrl = (id: number): Promise<SongUrlResult> =>
-  invoke<SongUrlResult>('ncm_song_url_v1', { id, level: 'standard' });
+/**
+ * 播放地址（原始响应，含实际档位 / 码率）。
+ *
+ * 播放链路不用它：走 `@/tauri/player` 的 `resolvePlayUrl`（带「不可播」归一）。
+ * `level` = NCM 音质档位（`standard` / `higher` / `exhigh` / `lossless` / `hires` …）。
+ */
+export const songUrl = (id: number, level = 'exhigh'): Promise<SongUrlResult> =>
+  invoke<SongUrlResult>('ncm_song_url_v1', { id, level });
 
 export const songDetail = (ids: number[]): Promise<Song[]> =>
   invoke<Song[]>('ncm_song_detail', { ids });

@@ -4,7 +4,7 @@
 // `storage::audio_cache`，下载编排在 `service::audio_cache`。
 
 import { invoke } from '@tauri-apps/api/core';
-import type { AudioCacheStats } from '@/shared/types/uiModels';
+import type { AudioCacheStats, CachedAudio } from '@/shared/types/uiModels';
 
 /** 命中返回本地绝对路径（供 `convertFileSrc` 转 asset URL），未命中 `null`。 */
 export function audioCacheGetPath(
@@ -15,6 +15,11 @@ export function audioCacheGetPath(
     trackId,
     level: level ?? null,
   });
+}
+
+/** 该曲目已缓存的所有音质变体（挑本地文件用；选定后再 `audioCacheGetPath` 确认）。 */
+export function audioCacheVariants(trackId: number): Promise<CachedAudio[]> {
+  return invoke<CachedAudio[]>('audio_cache_variants', { trackId });
 }
 
 /** 缓存目录绝对路径（设置页展示）。 */

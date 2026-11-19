@@ -118,6 +118,7 @@ pub fn run() {
             commands::desktop_lyrics::desktop_lyrics_set_locked,
             commands::desktop_lyrics::desktop_lyrics_set_height,
             commands::audio_cache::audio_cache_get,
+            commands::audio_cache::audio_cache_variants,
             commands::audio_cache::audio_cache_dir,
             commands::audio_cache::audio_cache_request,
             commands::audio_cache::audio_cache_set_limit,

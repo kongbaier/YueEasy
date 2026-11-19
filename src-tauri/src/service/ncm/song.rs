@@ -3,7 +3,7 @@
 use ncm_api_rs::Query;
 
 use super::{call, NcmService};
-use crate::model::entity::{AlbumDetail, LikeList, Lyric, RecentSongs, Song, SongUrlResult};
+use crate::model::entity::{AlbumDetail, LikeList, Lyric, PlayUrl, RecentSongs, Song, SongUrlResult};
 use crate::model::error::Result;
 use crate::model::{mapper, response};
 use crate::netease::client::{self, QueryExt};
@@ -25,6 +25,10 @@ impl NcmService {
 
     /// 播放地址（`/api/song/enhance/player/url/v1`，**eapi 通道**）。
     ///
+    /// `level` 是 NCM 客户端的音质档位（`standard` / `higher` / `exhigh` / `lossless` /
+    /// `hires` / `jymaster` / `sky`）。`None` 时请求 `exhigh`（320k）——crate 缺省会回
+    /// `standard`（128k），与「默认听得过去」不符。
+    ///
     /// 走 [`client::song_url_v1`] 而不是 crate 的同名方法：后者用 crate 内置的默认客户端
     /// 指纹（`OS_PC`）发 eapi，而取流接口对那套指纹回风控（`-460`，实测表见
     /// [`client::EAPI_DEVICE_COOKIE`]）。通道仍是 eapi，只是把设备字段换成能过的一份。
@@ -33,14 +37,28 @@ impl NcmService {
         id: i64,
         level: Option<String>,
     ) -> Result<SongUrlResult> {
+        let level = level.unwrap_or_else(|| "exhigh".to_string());
         let cookie = state.cookie();
         let dto: response::SongUrlResponseDto = Self::call(
             state,
-            Query::new().p("id", id).o("level", level),
+            Query::new().p("id", id).p("level", level),
             move |api, q| async move { client::song_url_v1(&api, &cookie, &q).await },
         )
         .await?;
         Ok(mapper::map_song_url(dto))
+    }
+
+    /// 播放地址（归一后的前端入口）：在 [`Self::song_url`] 的原始响应上取「首条可播项」。
+    ///
+    /// `None` = 不可播（值，不是错误）；`Some` 带服务端实际给出的 `level` / `br`，
+    /// 前端据此展示真实音质（请求档位可能被账号权限降级）。
+    pub async fn play_url(
+        state: &NcmState,
+        id: i64,
+        level: Option<String>,
+    ) -> Result<Option<PlayUrl>> {
+        let result = Self::song_url(state, id, level).await?;
+        Ok(mapper::map_play_url(result))
     }
 
     pub async fn song_detail(state: &NcmState, ids: Vec<i64>) -> Result<Vec<Song>> {

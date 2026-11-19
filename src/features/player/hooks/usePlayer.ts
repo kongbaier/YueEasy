@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/shallow';
 import { usePlayerStore } from '@/features/player/stores/playerStore';
+import { audioQualityLabel } from '@/shared/constants/player';
 import { useQueueStore } from '@/features/player/stores/queueStore';
 import { playerService } from '@/features/player/services/PlayerService';
 import { usePlayerSettingsStore } from '@/features/player/stores/playerSettingsStore';
@@ -26,6 +27,8 @@ export function usePlayer() {
       buffering: s.buffering,
       duration: s.duration,
       currentTrack: s.currentTrack,
+      quality: s.quality,
+      bitrate: s.bitrate,
     })),
   );
   const queueView = useQueueStore(
@@ -93,12 +96,37 @@ export function usePlayer() {
     playerService.toggleShuffle();
   }, []);
 
+  // 「实际到手」vs「请求」：档位展示与降级标记的唯一派生点（UI 只读结果，不自己比）。
+  const grantedLabel = audioQualityLabel(transport.quality);
+  const requestedLabel = audioQualityLabel(playerSettings.audioQuality);
+  const qualityDowngraded =
+    transport.quality != null &&
+    transport.quality !== playerSettings.audioQuality;
+  const qualityLabel = grantedLabel || requestedLabel;
+  const kbps = transport.bitrate
+    ? ` · ${Math.round(transport.bitrate / 1000)} kbps`
+    : '';
+  const qualityHint = `当前音质：${qualityLabel}${kbps}${
+    qualityDowngraded ? `（已按账号权限降级，请求：${requestedLabel}）` : ''
+  }`;
+
   return {
     playing: transport.playing,
     loading: transport.loading,
     buffering: transport.buffering,
     duration: transport.duration,
     currentTrack,
+    /**
+     * 当前曲目**实际到手**的档位（`null` = 尚未解析）；可能与设置里的请求档位不同。
+     */
+    quality: transport.quality,
+    /** 展示用档位名：优先实际档位，未知时退回设置里的请求档位。 */
+    qualityLabel,
+    /** 徽标悬浮提示（含实际码率；降级时说明请求档位）。 */
+    qualityHint,
+    /** 实际档位低于请求档位：无权限 / 该曲无此档 / 离线退缓存。 */
+    qualityDowngraded,
+    bitrate: transport.bitrate,
     queue,
     queueLength: queue.length,
     /**
