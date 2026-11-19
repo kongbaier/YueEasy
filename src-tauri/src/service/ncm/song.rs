@@ -23,15 +23,21 @@ impl NcmService {
         Ok(mapper::map_album_detail(dto))
     }
 
+    /// 播放地址（`/api/song/enhance/player/url/v1`，**eapi 通道**）。
+    ///
+    /// 走 [`client::song_url_v1`] 而不是 crate 的同名方法：后者用 crate 内置的默认客户端
+    /// 指纹（`OS_PC`）发 eapi，而取流接口对那套指纹回风控（`-460`，实测表见
+    /// [`client::EAPI_DEVICE_COOKIE`]）。通道仍是 eapi，只是把设备字段换成能过的一份。
     pub async fn song_url(
         state: &NcmState,
         id: i64,
         level: Option<String>,
     ) -> Result<SongUrlResult> {
-        let dto: response::SongUrlResponseDto = call!(
+        let cookie = state.cookie();
+        let dto: response::SongUrlResponseDto = Self::call(
             state,
             Query::new().p("id", id).o("level", level),
-            song_url_v1
+            move |api, q| async move { client::song_url_v1(&api, &cookie, &q).await },
         )
         .await?;
         Ok(mapper::map_song_url(dto))

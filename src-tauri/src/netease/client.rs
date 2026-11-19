@@ -144,26 +144,54 @@ impl QueryExt for Query {
     }
 }
 
+/// eapi 请求的**客户端设备字段**（桌面端 macOS 形态）。
+///
+/// eapi 的 `header`（`os` / `osver` / `appver` / `deviceId` / `versioncode` / `mobilename` /
+/// `resolution` / `requestId` / `__csrf` + `MUSIC_U`）**完全由 cookie 里的同名键构造**
+/// （见 ncm-api-rs `request.rs`，那张表同时也是本次请求的 `Cookie` 头）。cookie 没有的键，
+/// crate 用内置默认值兜底 —— 而默认那套是 `OS_PC`：`os=pc` + `appver=3.1.17.204416`
+/// + `osver=Microsoft-Windows-10-Professional-build-19045-64bit`。
+///
+/// 问题出在这套默认指纹上。实测（同一 cookie、同一时刻，`/eapi/song/enhance/player/url/v1`）：
+///
+/// | header 指纹 | 结果 |
+/// | --- | --- |
+/// | crate 默认 `os=pc` + `appver=3.1.17.204416` | ❌ `{"code":-460,"message":"检测到您的网络环境存在风险"}`（连续 4/4） |
+/// | 只改 `os=osx`（`appver` 仍是默认） | ✅ 200 |
+/// | 只改 `appver=2.10.6`（`os` 仍是 `pc`） | ✅ 200 |
+/// | 只改 `osver` / 只改 `versioncode` / 只改 `channel` | ❌ 仍然 -460 |
+///
+/// 所以是 **`os` × `appver` 这一对组合被风控**，不是"缺字段"。下面这份 macOS 桌面客户端
+/// 指纹（与 clientlog 上报共用，本来就存在）实测稳定 200。
+///
+/// 注入方式：只追加到**克隆出来的 client** 上（`set_cookie` 只作用于那个 clone），
+/// 不写回会话 cookie，也不影响其它端点。通道机制详见 `docs/netease-api-channels.md`。
+pub const EAPI_DEVICE_COOKIE: &str = "os=osx; appver=3.1.10.5100; osver=15.5; channel=netease; versioncode=140; mobilename=; resolution=1920x1080";
+
+/// 播放地址 v1（`/api/song/enhance/player/url/v1`），**eapi 通道**。
+///
+/// 唯一的定制动作是给这次请求换一份能过风控的客户端指纹（[`EAPI_DEVICE_COOKIE`]）：
+/// crate 的 `ApiClient::song_url_v1` 用内置 `OS_PC` 指纹发 eapi，而取流接口对那套指纹
+/// 回 `-460 网络环境存在风险`（实测见常量的表）。通道仍然是 eapi。
+pub async fn song_url_v1(api: &ApiClient, session_cookie: &str, query: &Query) -> ApiResult {
+    let mut client = api.clone();
+    client.set_cookie(format!("{session_cookie}; {EAPI_DEVICE_COOKIE}"));
+    client.song_url_v1(query).await
+}
+
 /// 「最近播放」上报的日志域名。
 ///
 /// 桌面端只往 `clientlog.music.163.com` 发这日志；`music.163.com/weapi/...` 上的老 weblog
 /// 已被服务端**静默丢弃**：照样回 `{"code":200,"data":"success"}`，但条目不会进「最近听过」。
 const CLIENTLOG_DOMAIN: &str = "https://clientlog.music.163.com";
 
-/// 桌面端 (macOS) 设备字段。
-///
-/// eapi 的 `header` **完全由 cookie 里的这些键构造**（见 ncm-api-rs `request.rs`），
-/// 缺省时 crate 会退回 `os=pc` 的形态——clientlog 只认客户端形态的日志，
-/// 设备字段不对同样是「回 success 但不落库」。
-const CLIENTLOG_DEVICE_COOKIE: &str = "os=osx; appver=3.1.10.5100; osver=15.5; channel=netease; \
-     versioncode=140; mobilename=; resolution=1920x1080";
-
 /// 上报「开始播放」（`action: "startplay"`）→ 写入云端「最近听过」。
 ///
 /// 不走 `NcmService::call` 的原因：这条日志的**接口方言**有两处硬性差异（不是普通端点）——
 ///
 /// 1. 域名是 [`CLIENTLOG_DOMAIN`]（用 `CryptoType::Eapi` + `domain` 覆盖）；
-/// 2. cookie 需追加桌面端设备字段 [`CLIENTLOG_DEVICE_COOKIE`]。
+/// 2. cookie 需追加 eapi 客户端设备字段 [`EAPI_DEVICE_COOKIE`]（clientlog 只认客户端形态的日志，
+///    设备字段不对同样是「回 success 但不落库」）。
 ///
 /// `source_id` 是来源歌单 / 专辑 id，写进日志的 `content`（`id=<source_id>`）。
 ///
@@ -177,7 +205,7 @@ pub async fn report_recent_play(
 ) -> ApiResult {
     // 克隆只复制 Arc 句柄，连接池与会话 cookie 都复用；追加的设备字段只作用于这次请求
     let mut client = api.clone();
-    client.set_cookie(format!("{session_cookie}; {CLIENTLOG_DEVICE_COOKIE}"));
+    client.set_cookie(format!("{session_cookie}; {EAPI_DEVICE_COOKIE}"));
 
     let logs = json!([{
         "action": "startplay",
