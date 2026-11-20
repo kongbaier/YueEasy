@@ -48,6 +48,8 @@ fn apply_window_effect(handle: &tauri::AppHandle) {
             color: None,
             radius: None,
             state: Some(EffectState::FollowsWindowActiveState),
+            // macOS 27+ Liquid Glass 交互反馈；本应用只用 Windows 材质（Mica/Acrylic）
+            interactive: false,
         })
         .ok();
     }
