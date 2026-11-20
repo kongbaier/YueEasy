@@ -43,7 +43,7 @@ export const PlayerTabPanel = ({
 
 /** 普通（非虚拟）列表页签的滚动容器；虚拟列表自带 Scroller，不套这个。 */
 export const PlayerTabBody = ({ children }: { children: ReactNode }) => (
-  <ScrollArea className="h-full">{children}</ScrollArea>
+  <ScrollArea className="h-full max-w-full">{children}</ScrollArea>
 );
 
 /** 页签内居中状态占位（加载中 / 暂无数据）。 */
