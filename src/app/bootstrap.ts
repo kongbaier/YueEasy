@@ -4,6 +4,7 @@ import { usePlayerSettingsStore } from '@/features/player/stores/playerSettingsS
 import { playerService } from '@/features/player/services/PlayerService';
 import { desktopLyricsService } from '@/features/lyrics/desktop-lyrics-service';
 import { useQueueStore } from '@/features/player/stores/queueStore';
+import { installWindowState } from '@/shared/stores/windowStore';
 
 /**
  * Application-level initialization that must complete before React mounts.
@@ -14,6 +15,7 @@ import { useQueueStore } from '@/features/player/stores/queueStore';
 export async function bootstrap() {
   await settingsService.load();
   await initAuth();
+  void installWindowState();
   applyPlayerSettings();
   initDesktopLyrics();
   await restorePlayerState();

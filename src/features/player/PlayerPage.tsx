@@ -60,8 +60,8 @@ export default function PlayerPage() {
   };
 
   // 安全网：播放页打开时若无歌可播，自动关闭。
-  // 用户触发的清空类操作（清空/移除最后一首/退出漫游且无队列可恢复）已在
-  // 处理器里统一“先 close、退出动画结束再变更”处理（见 PlayerPageQueue）；
+  // 用户触发的空队列类操作（清空/移除最后一首/退出漫游且无队列可恢复）已在
+  // 处理器里统一"先 close、退出动画结束再变更"处理（见 PlayerPageQueue）；
   // 本约束兜底领域驱动的空队列（如自然播完最后一首）及未来新增的路径。
   useLayoutEffect(() => {
     if (isOpen && !currentTrack) close();
@@ -146,15 +146,18 @@ const PlayerHeader = ({ handleBack }: { handleBack: () => void }) => {
       data-drag-region
       data-focus-zone
     >
-      {state !== 'fullscreen' && (
-        <button
-          className="flex items-center justify-center size-8 rounded-md ml-2 hover:bg-accent"
-          onClick={handleBack}
-          type="button"
-        >
-          <ChevronDown className="size-5" />
-        </button>
-      )}
+      {/*
+        返回键始终存在：全屏下它一步完成「退出全屏 + 收起播放页」，
+        策略在 `playerPageStore.close` 根部（不在 JSX 里按全屏态隐藏按钮）。
+      */}
+      <button
+        className="flex items-center justify-center size-8 rounded-md ml-2 hover:bg-accent"
+        onClick={handleBack}
+        title="收起播放页"
+        type="button"
+      >
+        <ChevronDown className="size-5" />
+      </button>
 
       <div className="ml-auto flex items-center">
         <button
@@ -187,7 +190,7 @@ const PlayerTitle = ({ currentTrack }: { currentTrack: Track }) => {
         {currentTrack.artists?.map((artist, i) => (
           <Fragment key={artist.id > 0 ? artist.id : artist.name}>
             {i > 0 && ' / '}
-            {/* 播放页是覆盖层：点歌手先关掉它，否则跳转后的页面会被盖住 */}
+            {/* 播放页是覆盖层：点歌手先关掉它（含全屏，close 自带收全屏），否则跳转后的页面会被盖住 */}
             <ArtistLink artist={artist} beforeOpen={() => close()} />
           </Fragment>
         ))}

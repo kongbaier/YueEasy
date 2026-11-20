@@ -1,121 +1,34 @@
-import { useEffect, useRef, useState } from 'react';
-import { useAppSettingsStore } from '@/shared/stores/appSettingsStore';
-import * as windowApi from '@/tauri/window';
+import { useEffect } from 'react';
+import { useShallow } from 'zustand/shallow';
+import {
+  installWindowState,
+  useWindowStore,
+  type WindowState,
+} from '@/shared/stores/windowStore';
 
-export type WindowState = 'normal' | 'maximized' | 'fullscreen';
+export type { WindowState };
 
-const resolveState = (max: boolean, full: boolean): WindowState => {
-  if (full) return 'fullscreen';
-  if (max) return 'maximized';
-  return 'normal';
-};
-
+/**
+ * 窗口态 / 窗口命令的 VM 门面：组件只从这里读 `state`、发命令，不直接碰 store。
+ *
+ * 真值在 `shared/stores/windowStore`（全站单例、单一 `onResized` 订阅）：
+ * 全屏与否是**业务命令的输入**（如播放页退出守卫），命令层要能同步读，
+ * 所以不能再由每个使用点各持一份局部 state。
+ */
 export function useWindowState() {
-  const [state, setState] = useState<WindowState>('normal');
-  const wasMaximizedRef = useRef(false);
-
+  // 兜底：直接渲染 App 而不走 bootstrap（如单测/组件预览）时也能拿到窗口态
   useEffect(() => {
-    const getWindowState = async () => {
-      const [max, full] = await Promise.all([
-        windowApi.isMaximized(),
-        windowApi.isFullscreen(),
-      ]);
-      setState(resolveState(max, full));
-    };
-
-    getWindowState();
-
-    const unlistenPromise = windowApi.onResized(getWindowState);
-
-    return () => {
-      unlistenPromise.then((fn) => fn());
-    };
+    void installWindowState();
   }, []);
 
-  const toMaximize = async () => {
-    if (state === 'fullscreen') {
-      wasMaximizedRef.current = false;
-      await windowApi.setFullscreen(false);
-      await windowApi.maximize();
-    } else if (state === 'normal') {
-      await windowApi.maximize();
-    }
-  };
-
-  const toFullscreen = async () => {
-    if (state === 'maximized') {
-      wasMaximizedRef.current = true;
-      await windowApi.unmaximize();
-      await windowApi.setFullscreen(true);
-    } else if (state === 'normal') {
-      wasMaximizedRef.current = false;
-      await windowApi.setFullscreen(true);
-    }
-  };
-
-  const toNormal = async () => {
-    if (state === 'maximized') {
-      await windowApi.unmaximize();
-    } else if (state === 'fullscreen') {
-      await windowApi.setFullscreen(false);
-      if (wasMaximizedRef.current) {
-        wasMaximizedRef.current = false;
-        await windowApi.maximize();
-      }
-    }
-  };
-
-  const toggleMaximize = async () => {
-    if (state === 'fullscreen') {
-      wasMaximizedRef.current = false;
-      await windowApi.setFullscreen(false);
-      await windowApi.maximize();
-    } else if (state === 'maximized') {
-      await windowApi.unmaximize();
-    } else {
-      await windowApi.maximize();
-    }
-  };
-
-  const toggleFullscreen = async () => {
-    if (state === 'fullscreen') {
-      await windowApi.setFullscreen(false);
-      if (wasMaximizedRef.current) {
-        wasMaximizedRef.current = false;
-        await windowApi.maximize();
-      }
-    } else {
-      if (state === 'maximized') {
-        wasMaximizedRef.current = true;
-        await windowApi.unmaximize();
-      } else {
-        wasMaximizedRef.current = false;
-      }
-      await windowApi.setFullscreen(true);
-    }
-  };
-
-  const minimize = async () => {
-    await windowApi.minimize();
-  };
-
-  const close = async () => {
-    const { closeBehavior } = useAppSettingsStore.getState().appearance;
-    if (closeBehavior === 'hide') {
-      await windowApi.hide();
-    } else {
-      await windowApi.close();
-    }
-  };
-
-  return {
-    state,
-    toMaximize,
-    toFullscreen,
-    toNormal,
-    toggleMaximize,
-    toggleFullscreen,
-    minimize,
-    close,
-  };
+  return useWindowStore(
+    useShallow((s) => ({
+      state: s.state,
+      toggleMaximize: s.toggleMaximize,
+      toggleFullscreen: s.toggleFullscreen,
+      exitFullscreen: s.exitFullscreen,
+      minimize: s.minimize,
+      close: s.close,
+    })),
+  );
 }
