@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { usePlayer } from '../hooks/usePlayer';
-import type { TabKeys } from '../PlayerPage';
+import type { TabKeys } from '../PlayerPanel';
 
 export const PlayerMenu = ({
   tabKey,

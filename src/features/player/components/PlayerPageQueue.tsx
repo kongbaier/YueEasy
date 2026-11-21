@@ -108,8 +108,8 @@ export const PlayerPageQueue = () => {
   const { close } = usePlayerPage();
 
   const handleClear = () => {
-    // 清空队列：先关闭播放页（退出动画展示清空前的内容），
-    // 页面退出动画结束后（AnimatePresence onExitComplete）才真正清空。
+    // 清空队列：先退播放页（旧画面由转场快照淡出，展示的是清空前的内容），
+    // 退出去之后再清空，不让列表在眼前先变空。
     close(() => {
       clearQueue();
     });

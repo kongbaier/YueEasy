@@ -1,0 +1,74 @@
+/**
+ * 视图转场（View Transitions）的样式层。
+ *
+ * 伪元素树只在转场期间存在（~200ms），这里定义的是「谁在动、往哪动」：
+ *
+ * ```
+ * ::view-transition
+ * ├── group(root)                 … 整窗快照（页面本体）：瞬时换掉，不做位移 / 淡入淡出
+ * │   └── group(vt-playlist-xxx)  … 共享元素：只有它做动画（旧框 → 新框）
+ * ```
+ *
+ * 三条互不干扰的转场靠 `<html data-vt>` 分流（发起方负责写）：
+ * - `data-vt="route"`：路由切页（KeepAliveRouteOutlet）；页面本体硬切，只有共享元素飞
+ * - `data-vt="theme"`：主题切换（useThemeSync）；整窗双快照交叉淡出
+ * 播放页开合**不在**这里：它是两块 live 板子的交叉淡变 + 封面的 live FLIP
+ * （见 `features/player/PlayerPanel`），一个快照都不用 —— 快照做不到「一块板子降、
+ * 另一块升」，也盖不住飞行中的元素。
+ *
+ * 为什么页面本体**不**做动画：
+ * - 整窗交叉淡出会让侧栏 / 标题栏 / 播放栏跟着闪（它们在切页前后像素完全相同，
+ *   跟着淡只有抖动、没有信息量）；
+ * - 内容区单独的位移 + 淡入淡出是一套「预设效果」，不是转场的必要条件：转场真正
+ *   提供的是「旧状态还在」这件事，用来让**共享元素**从旧位置飞到新位置。页面本体
+ *   直接换，观感更干净（硬切 + hero 飞行）。
+ * 想要「方向感知的位移」时再加：需要一份方向来源（`history.state.idx`）和一个
+ * 具名的内容区，两者都已从当前实现里去掉，不要再从注释里猜。
+ */
+
+:root {
+  /* 共享元素飞行的时长（唯一还需要调的时长） */
+  --vt-shared-duration: 240ms;
+  --vt-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --vt-theme-duration: 300ms;
+}
+
+/* ── 根：瞬时切换 ─────────────────────────────────────────────────────────
+   1ms 而不是 `animation: none`：`none` 会让旧快照一直留在顶层直到整场结束
+   （旧页面盖住新页面），1ms 是「立刻换掉」。 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 1ms;
+}
+
+/* ── 共享元素 ────────────────────────────────────────────────────────────
+   默认的 `group(*)` 动画就是「旧框 → 新框」的位置/尺寸插值，正是 morph 需要的，
+   不做覆盖；只对齐时长与曲线（`--vt-shared-duration` 也是整场转场的时长）。 */
+::view-transition-group(*) {
+  animation-duration: var(--vt-shared-duration);
+  animation-timing-function: var(--vt-ease);
+}
+
+/* ── 主题切换：整窗交叉淡出 ───────────────────────────────────────────────
+   换主题是「同一屏换个颜色」，不是导航：不做位移、不做缩放，只有双快照交叉淡出
+   （见 shared/hooks/useThemeSync）。 */
+[data-vt='theme'] ::view-transition-old(root),
+[data-vt='theme'] ::view-transition-new(root) {
+  animation-duration: var(--vt-theme-duration);
+}
+
+[data-vt='theme'] ::view-transition-group(*) {
+  animation-duration: var(--vt-theme-duration);
+}
+
+/* ── 减少动态效果 ─────────────────────────────────────────────────────────
+   JS 侧 `canRunViewTransition()` 已经会退化成瞬时切换，这里是第二道闸：
+   有些路径（keepalive 直接调 startViewTransition）不经过 JS 判断。 */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

@@ -188,6 +188,8 @@ const PlayerInfo = () => {
         )}
       >
         <Button
+          // 这块 40px 的封面是「板子 B」里封面的 FLIP 起点/终点：面板按它实时量 rect
+          data-player-cover
           className={cn(
             'size-10 shrink-0 transition-colors',
             'transition-transform duration-100 origin-bottom-left hover:brightness-105 hover:scale-110',

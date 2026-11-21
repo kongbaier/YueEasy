@@ -15,7 +15,8 @@ const Liked = lazy(() => import('@/features/like/LikedPage'));
 const RecentPlays = lazy(() => import('@/features/recent/RecentPage'));
 const Cloud = lazy(() => import('@/features/cloud/CloudPage'));
 const Settings = lazy(() => import('@/features/settings/SettingsPage'));
-const PlayerPage = lazy(() => import('@/features/player/PlayerPage'));
+/** `/player` 只做 URL / 返回键镜像：画面由布局层的播放页面板负责（见 playerPanelStore）。 */
+const PlayerRoute = () => null;
 
 export function AppRouter() {
   return (
@@ -35,9 +36,11 @@ export function AppRouter() {
           {/* 我的主页：一级页，与 user/:id 共用 UserProfile 主体 */}
           <Route element={<MyHome />} path="my" />
           <Route element={<Settings />} path="settings" />
+          {/* /player 只是 URL 镜像：面板挂在布局层，不参与 outlet 换页（否则两块板子
+              不可能同时在文档里）。路由存在的意义是返回键 / 深链 / 焦点语义。 */}
+          <Route element={<PlayerRoute />} path="player" />
         </Route>
       </Routes>
-      <PlayerPage />
       <LoginModal />
     </BrowserRouter>
   );

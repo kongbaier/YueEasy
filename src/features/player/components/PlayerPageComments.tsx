@@ -13,7 +13,6 @@ import {
   PlayerTabState,
 } from './PlayerTabPanel';
 import { usePlayer } from '../hooks/usePlayer';
-import { usePlayerPage } from '../hooks/usePlayerPage';
 
 function relativeTime(timestamp: number): string {
   const now = Date.now();
@@ -37,14 +36,10 @@ interface CommentItemProps {
 }
 
 const CommentItem = ({ comment, isHot }: CommentItemProps) => {
-  // 播放页是覆盖层：跳转前先关掉，否则目标页面被挡住
-  const { close } = usePlayerPage();
-
   return (
     <div className="group flex gap-3 px-2 py-3 w-full text-left rounded-md">
       <Link
         className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden"
-        onClick={() => close()}
         to={`/user/${comment.user.id}`}
       >
         {comment.user.avatarUrl ? (
@@ -64,7 +59,6 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
         <div className="flex items-center gap-2">
           <Link
             className="text-xs text-muted-foreground truncate max-w-30 hover:text-primary hover:underline"
-            onClick={() => close()}
             to={`/user/${comment.user.id}`}
           >
             {comment.user.nickname}
@@ -87,7 +81,6 @@ const CommentItem = ({ comment, isHot }: CommentItemProps) => {
                 {reply.user ? (
                   <Link
                     className="text-foreground/70 hover:text-primary hover:underline"
-                    onClick={() => close()}
                     to={`/user/${reply.user.id}`}
                   >
                     @{reply.user.nickname}

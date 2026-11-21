@@ -76,10 +76,3 @@
 @utility animate-content-enter {
   animation: content-enter 250ms ease-out backwards;
 }
-
-/* 主题切换的交叉淡出时长（View Transition 的双快照，见 shared/hooks/useThemeSync）。
-   默认 250ms，这里对齐到 300ms；这对伪元素只在过渡期间存在。 */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 300ms;
-}
